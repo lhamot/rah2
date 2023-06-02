@@ -6,6 +6,12 @@
 #define RAH_STD std
 #define RAH_NAMESPACE rah
 
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202000L) || __cplusplus >= 2020000L)
+#define RAH_CPP20 1
+#else
+#define RAH_CPP20 0
+#endif
+
 namespace rah
 {
     template <typename T>
@@ -53,6 +59,34 @@ namespace rah
         }
     };
 
+#define MAKE_CONCEPT(NAME, CHECK, REQUIRE)                                                         \
+    template <typename T, typename = int>                                                          \
+    struct NAME##_impl                                                                             \
+    {                                                                                              \
+        static constexpr bool value = false;                                                       \
+    };                                                                                             \
+    template <typename T>                                                                          \
+    struct NAME##_impl<T, decltype(std::enable_if_t<CHECK, int>{}, REQUIRE, 0)>                    \
+    {                                                                                              \
+        static constexpr bool value = true;                                                        \
+    };                                                                                             \
+    template <typename T>                                                                          \
+    constexpr bool NAME = NAME##_impl<T>::value;
+
+#define MAKE_CONCEPT_2(NAME, CHECK, REQUIRE)                                                       \
+    template <typename U, typename V, bool check, typename = int>                                  \
+    struct NAME##_impl                                                                             \
+    {                                                                                              \
+        static constexpr bool value = false;                                                       \
+    };                                                                                             \
+    template <typename U, typename V>                                                              \
+    struct NAME##_impl<U, V, true, decltype(REQUIRE, 0)>                                           \
+    {                                                                                              \
+        static constexpr bool value = true;                                                        \
+    };                                                                                             \
+    template <typename U, typename V>                                                              \
+    constexpr bool NAME = NAME##_impl<U, V, CHECK>::value;
+
     // **************************** standard traits ***********************************************
 
     template <class T>
@@ -93,10 +127,19 @@ namespace rah
         return array;
     }
 
-    template <typename R>
-    auto begin(R&& range) -> decltype(range.begin())
+    MAKE_CONCEPT(has_begin_member, true, (details::declval<T>().begin()));
+    MAKE_CONCEPT(has_begin_ADL, true, (begin(details::declval<T>())));
+
+    template <typename R, std::enable_if_t<has_begin_member<R>>* = nullptr>
+    auto begin(R&& range)
     {
         return range.begin();
+    }
+
+    template <typename R, std::enable_if_t<not has_begin_member<R> && has_begin_ADL<R>>* = nullptr>
+    auto begin(R&& range)
+    {
+        return begin(range);
     }
 
     template <class T, size_t N>
@@ -141,27 +184,15 @@ namespace rah
         return range.cend();
     }
 
-#define MAKE_CONCEPT(NAME, CHECK)                                                                  \
-    template <typename T, typename = int>                                                          \
-    struct NAME##_impl                                                                             \
-    {                                                                                              \
-        static constexpr bool value = false;                                                       \
-    };                                                                                             \
-    template <typename T>                                                                          \
-    struct NAME##_impl<T, decltype(CHECK, 0)>                                                      \
-    {                                                                                              \
-        static constexpr bool value = true;                                                        \
-    };                                                                                             \
-    template <typename T>                                                                          \
-    constexpr bool NAME = NAME##_impl<T>::value;
-
-    MAKE_CONCEPT(has_rbegin_member, details::declval<std::remove_reference_t<T>>().rbegin())
-    MAKE_CONCEPT(has_rbegin_ADL, rbegin(details::declval<std::remove_reference_t<T>>()))
-    MAKE_CONCEPT(has_rend_member, details::declval<std::remove_reference_t<T>>().rend())
-    MAKE_CONCEPT(has_rend_ADL, rend(details::declval<std::remove_reference_t<T>>()))
+    MAKE_CONCEPT(has_rbegin_member, true, details::declval<std::remove_reference_t<T>>().rbegin())
+    MAKE_CONCEPT(has_rbegin_ADL, true, rbegin(details::declval<std::remove_reference_t<T>>()))
+    MAKE_CONCEPT(has_rend_member, true, details::declval<std::remove_reference_t<T>>().rend())
+    MAKE_CONCEPT(has_rend_ADL, true, rend(details::declval<std::remove_reference_t<T>>()))
     MAKE_CONCEPT(
         range,
-        (RAH_NAMESPACE::begin(details::declval<T>()), RAH_NAMESPACE::end(details::declval<T>())))
+        true,
+        (RAH_NAMESPACE::begin(details::declval<std::remove_reference_t<T>>()),
+         RAH_NAMESPACE::end(details::declval<std::remove_reference_t<T>>())))
 
     template <typename R, typename = std::enable_if_t<has_rbegin_member<remove_cvref_t<R>>>>
     auto rbegin(R&& range)
@@ -190,7 +221,7 @@ namespace rah
     //};
 
     template <typename T>
-    using iterator_t = decltype(RAH_NAMESPACE::begin(details::declval<T>()));
+    using iterator_t = decltype(RAH_NAMESPACE::begin(std::declval<T&>()));
 
     template <typename T>
     using sentinel_t = decltype(RAH_NAMESPACE::end(details::declval<T>()));
@@ -294,9 +325,85 @@ namespace rah
     template <class I>
     constexpr bool input_or_output_iterator = input_iterator<I> or output_iterator<I>;
 
-    template <class I>
-    constexpr bool forward_iterator =
-        derived_from<typename RAH_STD::iterator_traits<I>::iterator_category, RAH_STD::forward_iterator_tag>;
+    template <class T, class U, typename>
+    struct __WeaklyEqualityComparableWith
+    {
+        constexpr static bool value = false;
+    };
+
+    template <class T, class U>
+    struct __WeaklyEqualityComparableWith<
+        T,
+        U,
+        decltype(std::declval<T>() == std::declval<U>(), std::declval<T>() != std::declval<U>(), std::declval<U>() == std::declval<T>(), std::declval<U>() != std::declval<T>())>
+    {
+        constexpr static bool value = true;
+    };
+
+#define VAL_V std::declval<V>()
+#define VAL_U std::declval<U>()
+
+    MAKE_CONCEPT_2(
+        WeaklyEqualityComparableWith,
+        true,
+        VAL_V == VAL_U || VAL_V != VAL_U || VAL_U == VAL_V || VAL_U != VAL_V);
+
+    template <class T>
+    constexpr bool equality_comparable = WeaklyEqualityComparableWith<T, T>;
+
+    template <class T>
+    constexpr bool destructible = std::is_nothrow_destructible_v<T>;
+
+    template <class T, class... Args>
+    constexpr bool constructible_from =
+        RAH_NAMESPACE::destructible<T> && std::is_constructible_v<T, Args...>;
+
+    MAKE_CONCEPT_2(convertible_to, (std::is_convertible_v<U, V>), (static_cast<V>(std::declval<U>())));
+
+    template <class T>
+    constexpr bool move_constructible =
+        RAH_NAMESPACE::constructible_from<T, T> && RAH_NAMESPACE::convertible_to<T, T>;
+
+    template <class T>
+    constexpr bool copy_constructible =
+        RAH_NAMESPACE::move_constructible<T> && RAH_NAMESPACE::constructible_from<T, T&>
+        && RAH_NAMESPACE::convertible_to<T&, T> && RAH_NAMESPACE::constructible_from<T, const T&>
+        && RAH_NAMESPACE::convertible_to<const T&, T>
+        && RAH_NAMESPACE::constructible_from<T, const T> && RAH_NAMESPACE::convertible_to<const T, T>;
+
+    MAKE_CONCEPT_2(
+        assignable_from, (std::is_lvalue_reference_v<U>), (details::declval<U>() = std::declval<V>()));
+
+    MAKE_CONCEPT(swappable, true, std::swap(details::declval<T>(), details::declval<T>()));
+
+    template <class T>
+    constexpr bool movable = std::is_object_v<T> && RAH_NAMESPACE::move_constructible<T>
+                             && RAH_NAMESPACE::assignable_from<T&, T> && RAH_NAMESPACE::swappable<T>;
+
+    template <class U, typename V>
+    constexpr bool same_as = std::is_same_v<U, V>;
+
+    template <class T>
+    constexpr bool copyable =
+        RAH_NAMESPACE::copy_constructible<T> && RAH_NAMESPACE::movable<T>
+        && RAH_NAMESPACE::assignable_from<T&, T&> && RAH_NAMESPACE::assignable_from<T&, const T&>
+        && RAH_NAMESPACE::assignable_from<T&, const T>;
+
+    MAKE_CONCEPT(default_initializable, RAH_NAMESPACE::constructible_from<T>, T{});
+
+    template <class T>
+    constexpr bool semiregular =
+        RAH_NAMESPACE::copyable<T> && RAH_NAMESPACE::default_initializable<T>;
+
+    template <class S, class I>
+    constexpr bool sentinel_for =
+        RAH_NAMESPACE::semiregular<S> && RAH_NAMESPACE::input_or_output_iterator<I>
+        && WeaklyEqualityComparableWith<I, S>;
+
+    MAKE_CONCEPT(
+        forward_iterator,
+        (derived_from<typename RAH_STD::iterator_traits<T>::iterator_category, RAH_STD::forward_iterator_tag>),
+        0);
 
     template <class I>
     constexpr bool bidirectional_iterator =
@@ -320,7 +427,7 @@ namespace rah
         input_iterator<T> && RAH_STD::is_same_v<iter_const_reference_t<T>, iter_reference_t<T>>;
 
     template <class T>
-    using iter_difference_t = decltype(RAH_STD::declval<T const&>() - RAH_STD::declval<T const&>());
+    using iter_difference_t = decltype(RAH_STD::declval<T>() - RAH_STD::declval<T>());
 
     template <class T>
     constexpr auto iter_move(T&& t)
@@ -330,6 +437,21 @@ namespace rah
 
     template <typename T>
     using iter_rvalue_reference_t = decltype(RAH_NAMESPACE::iter_move(RAH_STD::declval<T&>()));
+
+    template <class S, class I>
+    static constexpr bool disable_sized_sentinel_for = false;
+
+    MAKE_CONCEPT_2(
+        sized_sentinel_for,
+        (RAH_NAMESPACE::sentinel_for<U, V>
+         && !RAH_NAMESPACE::disable_sized_sentinel_for<std::remove_cv_t<U>, std::remove_cv_t<V>>
+         && RAH_NAMESPACE::same_as<
+             decltype(std::declval<U>() - std::declval<V>()),
+             RAH_NAMESPACE::iter_difference_t<V>>
+         && RAH_NAMESPACE::same_as<
+             decltype(std::declval<U>() - std::declval<V>()),
+             RAH_NAMESPACE::iter_difference_t<V>>),
+        (std::declval<U>() - std::declval<V>(), std::declval<U>() - std::declval<V>()));
 
     // **************************** range traits **************************************************
 
@@ -375,7 +497,8 @@ namespace rah
         RAH_NAMESPACE::iter_rvalue_reference_t<RAH_NAMESPACE::iterator_t<R>>;
 
     template <typename R>
-    using range_iter_categ_t = typename RAH_STD::iterator_traits<iterator_t<R>>::iterator_category;
+    using range_iter_categ_t =
+        typename RAH_STD::iterator_traits<RAH_NAMESPACE::iterator_t<R>>::iterator_category;
 
     // ******************************** ranges concepts *******************************************
 
@@ -414,19 +537,21 @@ namespace rah
     constexpr bool view = range<T> && enable_view<T>;
 
     template <class T>
-    constexpr bool output_range = range<T> && output_iterator<iterator_t<T>>;
+    constexpr bool output_range = range<T> && output_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
     template <class T>
-    constexpr bool input_range = range<T> && input_iterator<iterator_t<T>>;
+    constexpr bool input_range = range<T> && input_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
     template <class T>
-    constexpr bool forward_range = range<T> && forward_iterator<iterator_t<T>>;
+    constexpr bool forward_range = range<T> && forward_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
     template <class T>
-    constexpr bool bidirectional_range = range<T> && bidirectional_iterator<iterator_t<T>>;
+    constexpr bool bidirectional_range =
+        range<T> && bidirectional_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
     template <class T>
-    constexpr bool random_access_range = range<T> && random_access_iterator<iterator_t<T>>;
+    constexpr bool random_access_range =
+        range<T> && random_access_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
     template <typename R, typename = int>
     struct has_ranges_data
@@ -444,7 +569,8 @@ namespace rah
     constexpr bool contiguous_range = random_access_range<R> && has_ranges_data<R>::value;
 
     template <class T>
-    constexpr bool constant_range = input_range<T> && constant_iterator<iterator_t<T>>;
+    constexpr bool constant_range =
+        input_range<T> && constant_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
     // ****************************** utility functions *******************************************
 
@@ -509,6 +635,78 @@ namespace rah
         return n;
     }
 
+    template <
+        typename I,
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I>>* = nullptr,
+        std::enable_if_t<not RAH_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+    constexpr void advance(I& i, RAH_NAMESPACE::iter_difference_t<I> n)
+    {
+        while (n > 0)
+        {
+            --n;
+            ++i;
+        }
+    }
+
+    template <
+        typename I,
+        std::enable_if_t<RAH_NAMESPACE::bidirectional_iterator<I>>* = nullptr,
+        std::enable_if_t<not RAH_NAMESPACE::random_access_iterator<I>>* = nullptr>
+    constexpr void advance(I& i, RAH_NAMESPACE::iter_difference_t<I> n)
+    {
+        while (n > 0)
+        {
+            --n;
+            ++i;
+        }
+
+        while (n < 0)
+        {
+            ++n;
+            --i;
+        }
+    }
+
+    template <typename I, std::enable_if_t<RAH_NAMESPACE::random_access_iterator<I>>* = nullptr>
+    constexpr void advance(I& i, RAH_NAMESPACE::iter_difference_t<I> n)
+    {
+        i += n;
+    }
+
+    template <
+        typename I,
+        typename S,
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr,
+        std::enable_if_t<RAH_NAMESPACE::assignable_from<I&, S>>* = nullptr,
+        std::enable_if_t<not RAH_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+    constexpr void advance(I& i, S bound)
+    {
+        i = std::move(bound);
+    }
+
+    template <
+        typename I,
+        typename S,
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr,
+        std::enable_if_t<not RAH_NAMESPACE::assignable_from<I&, S>>* = nullptr,
+        std::enable_if_t<RAH_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+    constexpr void advance(I& i, S bound)
+    {
+        advance(i, bound - i);
+    }
+
+    template <
+        typename I,
+        typename S,
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr,
+        std::enable_if_t<not RAH_NAMESPACE::assignable_from<I&, S>>* = nullptr,
+        std::enable_if_t<not RAH_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+    constexpr void advance(I& i, S bound)
+    {
+        while (i != bound)
+            ++i;
+    }
+
     /// Apply the '<' operator on two values of any type
     struct is_lesser
     {
@@ -521,17 +719,17 @@ namespace rah
 
     // ******************************* views ******************************************************
 
-#define RAH_SELF (*static_cast<T*>(this))
-#define RAH_SELF_CONST (*static_cast<T const*>(this))
+#define RAH_SELF (*static_cast<T* const>(this))
+#define RAH_SELF_CONST (*static_cast<T const* const>(this))
 
     template <typename T>
     struct view_interface
     {
         DeleteCheck<view_interface<T>> deleteCheck;
 
-        auto empty() const
+        auto empty()
         {
-            return RAH_SELF_CONST.begin() == RAH_SELF_CONST.end();
+            return RAH_SELF.begin() == RAH_SELF.end();
         }
 
         //template <typename = std::enable_if_t<RAH_NAMESPACE::forward_range<T>>>
@@ -539,56 +737,117 @@ namespace rah
         //{
         //    return RAH_SELF_CONST.begin() != RAH_SELF_CONST.end();
         //}
+        template <
+            typename D = T,
+            std::enable_if_t<
+                RAH_NAMESPACE::forward_range<D>
+                && RAH_NAMESPACE::
+                    sized_sentinel_for<RAH_NAMESPACE::sentinel_t<D>, RAH_NAMESPACE::iterator_t<D>>>* = nullptr>
+        auto size()
+        {
+            return RAH_SELF.begin() - RAH_SELF.end();
+        }
 
+        template <
+            typename D = T,
+            std::enable_if_t<
+                RAH_NAMESPACE::forward_range<const D>
+                && RAH_NAMESPACE::sized_sentinel_for<
+                    RAH_NAMESPACE::sentinel_t<const D>,
+                    RAH_NAMESPACE::iterator_t<const D>>>* = nullptr>
         auto size() const
         {
             return RAH_SELF_CONST.begin() - RAH_SELF_CONST.end();
         }
 
-        auto front() const // -> decltype(*(details::template declval<T const>().begin()))
+        auto front() // -> decltype(*(details::template declval<T const>().begin()))
         {
-            return *(RAH_SELF_CONST.begin());
+            return *(RAH_SELF.begin());
         }
 
-        auto back() const // -> decltype(*(RAH_SELF_CONST.end()))
+        auto back() // -> decltype(*(RAH_SELF_CONST.end()))
         {
-            auto last = RAH_SELF_CONST.end();
+            auto last = RAH_SELF.end();
             --last;
             return *last;
         }
 
-        auto operator[](size_t index) const // -> decltype(*(RAH_SELF_CONST.begin()))
+        auto operator[](size_t index) // -> decltype(*(RAH_SELF_CONST.begin()))
         {
-            return *(RAH_SELF_CONST.begin() + index);
+            return *(RAH_SELF.begin() + index);
         }
     };
 
-    template <typename I>
-    struct subrange : view_interface<subrange<I>>
+    template <typename I, typename S = I>
+    struct subrange : view_interface<subrange<I, S>>
     {
-        I begin_iter;
-        I end_iter;
+        I iterator;
+        S sentinel;
 
         subrange() = default;
-        subrange(I a, I b)
-            : begin_iter(RAH_STD::move(a))
-            , end_iter(RAH_STD::move(b))
+        subrange(I a, S b)
+            : iterator(RAH_STD::move(a))
+            , sentinel(RAH_STD::move(b))
         {
         }
 
-        I begin() const
+        I begin()
         {
-            return begin_iter;
+            return iterator;
         }
-        I end() const
+        S end()
         {
-            return end_iter;
+            return sentinel;
         }
     };
 
-    template <typename I>
-    auto make_subrange(I b, I e)
+    template <typename I, typename S>
+    auto make_subrange(I b, S e)
     {
-        return subrange<I>{b, e};
+        return subrange<I, S>{b, e};
+    }
+
+    struct default_sentinel
+    {
+    };
+
+    template <typename I, std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
+    constexpr I next(I i)
+    {
+        ++i;
+        return i;
+    }
+
+    template <typename I, std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
+    constexpr I next(I i, RAH_NAMESPACE::iter_difference_t<I> n)
+    {
+        RAH_NAMESPACE::advance(i, n);
+        return i;
+    }
+
+    template <
+        typename I,
+        typename S,
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I>
+                         //&& RAH_NAMESPACE::sentinel_for<S, I>
+                         >* = nullptr>
+    constexpr I next(I i, S bound)
+    {
+        static_assert(RAH_NAMESPACE::semiregular<S>);
+        static_assert(RAH_NAMESPACE::input_or_output_iterator<I>);
+        static_assert(WeaklyEqualityComparableWith<I, S>);
+        //static_assert(RAH_NAMESPACE::sentinel_for<S, I>);
+        RAH_NAMESPACE::advance(i, bound);
+        return i;
+    }
+
+    template <
+        typename I,
+        typename S,
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr>
+    constexpr I next(I i, RAH_NAMESPACE::iter_difference_t<I> n, S bound)
+    {
+        RAH_NAMESPACE::advance(i, n, bound);
+        return i;
     }
 } // namespace rah

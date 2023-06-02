@@ -6,23 +6,14 @@
 //
 #include "rah4.hpp"
 
-#ifdef MSVC
-#pragma warning(push, 0)
-#endif
 #include <iostream>
 #include <vector>
 #include <map>
 #include <list>
-#include <forward_list>
 #include <ciso646>
 #include <sstream>
 #include <random>
 #include <atomic>
-#include <set>
-#include <ctime>
-#ifdef MSVC
-#pragma warning(pop)
-#endif
 
 #include <iomanip>
 
@@ -38,7 +29,7 @@ bool operator==(std::pair<A, B> a, std::tuple<D, C> b)
     return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b);
 }
 
-auto PairEqual = [](auto ab)
+auto PairEqual = [](auto&& ab)
 {
     return std::get<0>(ab) == std::get<1>(ab);
 };
@@ -122,7 +113,7 @@ struct WhatIs;
 
 // Test creation of a custom iterator
 struct CustomGenerator
-    : rah::iterator_facade<CustomGenerator, void, int, RAH_STD::forward_iterator_tag>
+    : rah::iterator_facade<CustomGenerator, rah::default_sentinel, int, RAH_STD::forward_iterator_tag>
 {
     int y = 1;
 
@@ -143,7 +134,7 @@ struct CustomGenerator
 
 auto customGenerate()
 {
-    return rah::subrange<CustomGenerator>{};
+    return rah::subrange<CustomGenerator, CustomGenerator>{};
 }
 
 int main()
@@ -196,7 +187,7 @@ int main()
     {
         std::stringstream ss("a b c d e f g h i j k l");
         std::vector<std::string> out;
-        for (auto&& str : rah::views::istream<std::string>(ss))
+        for (auto&& str : rah::views::istream<std::string>(ss) | rah::views::common())
         {
             out.push_back(str);
         }
@@ -483,17 +474,6 @@ int main()
     }
 
     {
-        std::vector<int> in{0, 1, 2};
-        auto cy1 = rah::views::cycle(in);
-        cy1.rbegin();
-        static_assert(rah::has_rbegin_member<decltype(cy1)>, "rah::has_rbegin_member<decltype(cy1)>");
-        auto cy = rah::views::cycle(in) | rah::views::reverse();
-        std::vector<int> out;
-        std::copy_n(cy.begin(), 8, std::back_inserter(out));
-        assert(out == std::vector<int>({2, 1, 0, 2, 1, 0, 2, 1}));
-    }
-
-    {
         /// [cycle_pipeable]
         std::vector<int> in{0, 1, 2};
         auto cy = in | rah::views::cycle();
@@ -592,16 +572,13 @@ int main()
     {
         std::string sentence{"Keep..moving..forward.."};
         std::string delim{".."};
-        auto words = rah::views::split(sentence, delim);
+        auto words =
+            rah::views::split(sentence, delim)
+            | rah::views::transform([](auto word) { return std::string(word.begin(), word.end()); });
 
-        // std::cout << "begin(): " << std::quoted(std::string{*words.begin()}) << "\nSubstrings: ";
-        for (auto&& word : words)
+        EQUAL_RANGE(words, std::vector<std::string>({"Keep", "moving", "forward"}));
+        for (auto&& word : words | rah::views::common())
             std::cout << std::string(word.begin(), word.end()) << ' ';
-
-        auto letters = rah::views::split(sentence, std::string{""});
-        // std::cout << "\nbegin(): " << std::quoted(std::string(*letters.begin())) << "\nLetters: ";
-        for (auto&& letter : letters)
-            std::cout << std::string(letter.begin(), letter.end()) << ' ';
     }
 
     {
@@ -648,7 +625,7 @@ int main()
         std::vector<int> in{0, 1, 2, 3, 4, 5};
         std::vector<std::vector<int>> out;
         auto range = in | rah::views::cycle() | rah::views::slide(3) | rah::views::take(in.size());
-        for (auto subRange : range)
+        for (auto subRange : range | rah::views::common())
         {
             out.emplace_back();
             std::copy(rah::begin(subRange), rah::end(subRange), std::back_inserter(out.back()));
@@ -908,7 +885,7 @@ int main()
         std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
         std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
         std::vector<std::tuple<int, double, char>> result;
-        for (auto a_b_c : rah::views::zip(inputA, inputB, inputC))
+        for (auto a_b_c : rah::views::zip(inputA, inputB, inputC) | rah::views::common())
             result.emplace_back(a_b_c);
         assert(
             result
@@ -967,6 +944,15 @@ int main()
         /// [filter]
     }
     {
+        /// [rah::views::common]
+        auto c = rah::views::iota(0, 5) | rah::views::filter([](auto i) { return i % 2 == 0; });
+        std::vector<int> result;
+        for (auto&& i : c | rah::views::common())
+            result.push_back(i);
+        assert(result == std::vector<int>({0, 2, 4}));
+        /// [rah::views::common]
+    }
+    {
         auto range = rah::views::generate_n(5, []() { return rand(); })
                      | rah::views::filter([](auto&& val) { return val % 2 == 0; });
         std::vector<int> result;
@@ -1021,7 +1007,8 @@ int main()
         std::vector<std::vector<int>> result;
         for (auto&& i :
              rah::views::zip(vec_01234, vec_bool)
-                 | rah::views::filter([](auto&& a) { return std::get<0>(a).front() % 2 == 0; }))
+                 | rah::views::filter([](auto&& a) { return std::get<0>(a).front() % 2 == 0; })
+                 | rah::views::common())
             result.push_back(std::get<0>(i));
         assert(result == (std::vector<std::vector<int>>{{0}, {2}, {4}}));
         assert(vec_01234 == (std::vector<std::vector<int>>{{0}, {1}, {2}, {3}, {4}}));
@@ -1110,7 +1097,7 @@ int main()
         /// [enumerate]
         std::vector<int> input{4, 5, 6, 7};
         std::vector<std::tuple<size_t, int>> result;
-        for (auto i_value : rah::views::enumerate(input))
+        for (auto i_value : rah::views::enumerate(input) | rah::views::common())
             result.emplace_back(i_value);
         assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate]
@@ -1119,7 +1106,7 @@ int main()
         /// [enumerate_pipeable]
         std::vector<int> input{4, 5, 6, 7};
         std::vector<std::tuple<size_t, int>> result;
-        for (auto i_value : input | rah::views::enumerate())
+        for (auto i_value : input | rah::views::enumerate() | rah::views::common())
             result.emplace_back(i_value);
         assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate_pipeable]

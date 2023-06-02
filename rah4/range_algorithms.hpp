@@ -665,7 +665,7 @@ namespace rah
     /// Complexity: At most (last1 first1) * (last2 first2) applications of the corresponding predicate.
     ///
     template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2, typename ForwardSentinel2>
-    RAH_NAMESPACE::subrange<ForwardIterator1> search(
+    RAH_NAMESPACE::subrange<ForwardIterator1, ForwardSentinel1> search(
         ForwardIterator1 first1, ForwardSentinel1 last1, ForwardIterator2 first2, ForwardSentinel2 last2)
     {
         if (first2 != last2) // If there is anything to search for...
@@ -723,7 +723,8 @@ namespace rah
     }
 
     template <typename Range1, typename Range2>
-    RAH_NAMESPACE::subrange<RAH_NAMESPACE::iterator_t<Range1>> search(Range1&& range1, Range2&& range2)
+    RAH_NAMESPACE::subrange<RAH_NAMESPACE::iterator_t<Range1>, RAH_NAMESPACE::iterator_t<Range2>>
+    search(Range1&& range1, Range2&& range2)
     {
         return RAH_NAMESPACE::search(
             RAH_NAMESPACE::begin(range1),
