@@ -2420,8 +2420,6 @@ namespace RAH_NAMESPACE
 
         // ***************************************** reverse **********************************************
 
-        // TODO : Make the range to be a RAH_NAMESPACE::sentinel_range_base IF NEEDED
-
         template <typename R>
         class reverse_view : public view_interface<reverse_view<R>>
         {
@@ -2468,7 +2466,125 @@ namespace RAH_NAMESPACE
                                  { return reverse(RAH_STD::forward<decltype(range)>(range)); });
         }
 
-        // ********************************** empty ******************************************************
+        // **************************** element_view **********************************************
+
+        template <typename R, size_t N>
+        class elements_view : public view_interface<elements_view<R, N>>
+        {
+            R base_;
+
+            using inner_iterator = iterator_t<R>;
+            using inner_sentinel = sentinel_t<R>;
+
+        public:
+            elements_view() = default;
+            elements_view(R base)
+                : base_(std::move(base))
+            {
+            }
+
+            using reference = decltype(std::get<N>(std::declval<range_reference_t<R>>()));
+
+            struct sentinel
+            {
+                inner_sentinel sent;
+            };
+
+            struct iterator : iterator_facade<iterator, sentinel, reference, range_iter_categ_t<R>>
+            {
+                inner_iterator iter_;
+
+                iterator(inner_iterator it)
+                    : iter_(std::move(it))
+                {
+                }
+
+                reference operator*()
+                {
+                    return std::get<N>(*iter_);
+                }
+
+                iterator& operator++()
+                {
+                    ++iter_;
+                    return *this;
+                }
+
+                iterator& operator--()
+                {
+                    --iter_;
+                    return *this;
+                }
+
+                friend bool operator==(iterator it, iterator it2)
+                {
+                    return it.iter_ == it2.iter_;
+                }
+                friend bool operator==(iterator it, sentinel sent)
+                {
+                    return it.iter_ == sent.sent;
+                }
+            };
+
+            auto begin()
+            {
+                return iterator{RAH_NAMESPACE::begin(base_)};
+            }
+
+            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::common_range<U>>* = nullptr>
+            auto end()
+            {
+                return iterator(RAH_NAMESPACE::end(base_));
+            }
+
+            template <typename U = R, std::enable_if_t<!RAH_NAMESPACE::common_range<U>>* = nullptr>
+            auto end()
+            {
+                return sentinel(RAH_NAMESPACE::end(base_));
+            }
+        };
+
+        template <size_t N, typename T>
+        auto elements(T&& range)
+        {
+            auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
+            return elements_view<decltype(ref), N>(std::move(ref));
+        }
+
+        template <size_t N>
+        auto elements()
+        {
+            return make_pipeable([=](auto&& range)
+                                 { return elements<N>(RAH_STD::forward<decltype(range)>(range)); });
+        }
+
+        template <typename T>
+        auto keys(T&& range)
+        {
+            auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
+            return elements_view<decltype(ref), 0>(std::move(ref));
+        }
+
+        inline auto keys()
+        {
+            return make_pipeable([=](auto&& range)
+                                 { return keys(RAH_STD::forward<decltype(range)>(range)); });
+        }
+
+        template <typename T>
+        auto values(T&& range)
+        {
+            auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
+            return elements_view<decltype(ref), 1>(std::move(ref));
+        }
+
+        inline auto values()
+        {
+            return make_pipeable([=](auto&& range)
+                                 { return values(RAH_STD::forward<decltype(range)>(range)); });
+        }
+
+        // ********************************** empty ***********************************************
 
         template <typename T>
         struct empty_iter : iterator_facade<empty_iter<T>, void, T&, RAH_STD::forward_iterator_tag>
@@ -3033,13 +3149,95 @@ namespace RAH_NAMESPACE
 
         // *************************** enumerate **********************************************************
 
-        template <typename R> //, RAH_STD::enable_if_t<not RAH_STD::is_rvalue_reference_v<R&&>, int> = 0>
+        template <typename R>
+        class enumerate_view : public view_interface<enumerate_view<R>>
+        {
+            R base_;
+            using inner_iterator = iterator_t<R>;
+            using inner_sentinel = iterator_t<R>;
+
+        public:
+            enumerate_view(R base)
+                : base_(std::move(base))
+            {
+            }
+
+            using value_type = std::pair<int64_t, range_reference_t<R>>;
+
+            struct sentinel
+            {
+                inner_sentinel sent;
+            };
+
+            struct iterator : iterator_facade<iterator, sentinel, value_type, range_iter_categ_t<R>>
+            {
+                inner_iterator current_;
+                int64_t pos_;
+
+                iterator(inner_iterator current, int64_t pos)
+                    : current_(current)
+                    , pos_(pos)
+                {
+                }
+
+                iterator& operator++()
+                {
+                    ++current_;
+                    ++pos_;
+                    return *this;
+                }
+
+                iterator& operator--()
+                {
+                    ++current_;
+                    ++pos_;
+                    return *this;
+                }
+
+                value_type operator*()
+                {
+                    return {pos_, *current_};
+                }
+
+                friend bool operator==(iterator const& iter, sentinel const& sent)
+                {
+                    return iter.current_ == sent.sent;
+                }
+                friend bool operator==(iterator const& iter, iterator const& iter2)
+                {
+                    return iter.pos_ == iter2.pos_;
+                }
+            };
+
+            auto begin()
+            {
+                return iterator(RAH_NAMESPACE::begin(base_), 0);
+            }
+
+            template <
+                typename U = R,
+                std::enable_if_t<
+                    RAH_NAMESPACE::random_access_range<U> and RAH_NAMESPACE::common_range<U>>* = nullptr>
+            auto end()
+            {
+                return iterator(RAH_NAMESPACE::end(base_), RAH_NAMESPACE::size(base_));
+            }
+
+            template <
+                typename U = R,
+                std::enable_if_t<not(
+                    RAH_NAMESPACE::random_access_range<U> and RAH_NAMESPACE::common_range<U>)>* = nullptr>
+            auto end()
+            {
+                return sentinel(RAH_NAMESPACE::end(base_));
+            }
+        };
+
+        template <typename R>
         auto enumerate(R&& range)
         {
-            auto views = all(range);
-            size_t const dist =
-                RAH_STD::distance(RAH_NAMESPACE::begin(views), RAH_NAMESPACE::end(views));
-            return zip(iota(size_t(0), dist), views);
+            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
+            return enumerate_view<decltype(ref)>(std::move(ref));
         }
 
         inline auto enumerate()
@@ -3048,49 +3246,6 @@ namespace RAH_NAMESPACE
                                  { return enumerate(RAH_STD::forward<decltype(range)>(range)); });
         }
 
-        // ****************************** map_value ********************************************************
-
-        template <size_t I>
-        struct get_tuple_elt
-        {
-            template <typename T>
-            auto operator()(T&& nvp) const
-                -> decltype(RAH_STD::get<I>(RAH_STD::forward<decltype(nvp)>(nvp)))
-            {
-                static_assert(
-                    not RAH_STD::is_rvalue_reference<decltype(nvp)>::value,
-                    "map_value/map_key only apply only apply on lvalue pairs. "
-                    "Pairs from map are ok but for generated pairs, prefer use "
-                    "views::tranform");
-                return RAH_STD::get<I>(RAH_STD::forward<decltype(nvp)>(nvp));
-            }
-        };
-
-        template <typename R>
-        auto map_value(R&& range)
-        {
-            return transform(RAH_STD::forward<R>(range), get_tuple_elt<1>{});
-        }
-
-        inline auto map_value()
-        {
-            return make_pipeable([=](auto&& range)
-                                 { return map_value(RAH_STD::forward<decltype(range)>(range)); });
-        }
-
-        // ****************************** map_key **********************************************************
-
-        template <typename R>
-        auto map_key(R&& range)
-        {
-            return RAH_NAMESPACE::views::transform(RAH_STD::forward<R>(range), get_tuple_elt<0>{});
-        }
-
-        inline auto map_key()
-        {
-            return make_pipeable([=](auto&& range)
-                                 { return map_key(RAH_STD::forward<decltype(range)>(range)); });
-        }
     } // namespace views
 
 } // namespace RAH_NAMESPACE

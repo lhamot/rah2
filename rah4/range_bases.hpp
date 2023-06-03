@@ -129,6 +129,8 @@ namespace rah
 
     MAKE_CONCEPT(has_begin_member, true, (details::declval<T>().begin()));
     MAKE_CONCEPT(has_begin_ADL, true, (begin(details::declval<T>())));
+    MAKE_CONCEPT(has_end_member, true, (details::declval<T>().end()));
+    MAKE_CONCEPT(has_end_ADL, true, (end(details::declval<T>())));
 
     template <typename R, std::enable_if_t<has_begin_member<R>>* = nullptr>
     auto begin(R&& range)
@@ -154,10 +156,16 @@ namespace rah
         return array + N;
     }
 
-    template <typename R>
-    auto end(R&& range) -> decltype(range.end())
+    template <typename R, std::enable_if_t<has_end_member<R>>* = nullptr>
+    auto end(R&& range)
     {
         return range.end();
+    }
+
+    template <typename R, std::enable_if_t<not has_end_member<R> and has_end_ADL<R>>* = nullptr>
+    auto end(R&& range)
+    {
+        return end(range);
     }
 
     template <class T, size_t N>
@@ -167,9 +175,9 @@ namespace rah
     }
 
     template <typename R>
-    auto cbegin(R&& range) -> decltype(range.cbegin())
+    auto cbegin(R const& range)
     {
-        return range.cbegin();
+        return range.begin();
     }
 
     template <class T, size_t N>
@@ -179,9 +187,9 @@ namespace rah
     }
 
     template <typename R>
-    auto cend(R&& range) -> decltype(range.cend())
+    auto cend(R const& range)
     {
-        return range.cend();
+        return range.end();
     }
 
     MAKE_CONCEPT(has_rbegin_member, true, details::declval<std::remove_reference_t<T>>().rbegin())
@@ -191,8 +199,8 @@ namespace rah
     MAKE_CONCEPT(
         range,
         true,
-        (RAH_NAMESPACE::begin(details::declval<std::remove_reference_t<T>>()),
-         RAH_NAMESPACE::end(details::declval<std::remove_reference_t<T>>())))
+        (RAH_NAMESPACE::begin(std::declval<std::remove_reference_t<T&>>()),
+         RAH_NAMESPACE::end(std::declval<std::remove_reference_t<T&>>())))
 
     template <typename R, typename = std::enable_if_t<has_rbegin_member<remove_cvref_t<R>>>>
     auto rbegin(R&& range)
@@ -224,7 +232,7 @@ namespace rah
     using iterator_t = decltype(RAH_NAMESPACE::begin(std::declval<T&>()));
 
     template <typename T>
-    using sentinel_t = decltype(RAH_NAMESPACE::end(details::declval<T>()));
+    using sentinel_t = decltype(RAH_NAMESPACE::end(std::declval<T&>()));
 
     template <class T>
     constexpr bool common_range = range<T> && RAH_STD::is_same_v<iterator_t<T>, sentinel_t<T>>;
@@ -750,6 +758,10 @@ namespace rah
 
         template <
             typename D = T,
+            std::enable_if_t<not(
+                RAH_NAMESPACE::forward_range<D>
+                && RAH_NAMESPACE::
+                    sized_sentinel_for<RAH_NAMESPACE::sentinel_t<D>, RAH_NAMESPACE::iterator_t<D>>)>* = nullptr,
             std::enable_if_t<
                 RAH_NAMESPACE::forward_range<const D>
                 && RAH_NAMESPACE::sized_sentinel_for<
@@ -791,11 +803,11 @@ namespace rah
         {
         }
 
-        I begin()
+        I begin() const
         {
             return iterator;
         }
-        S end()
+        S end() const
         {
             return sentinel;
         }

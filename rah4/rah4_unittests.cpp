@@ -31,6 +31,9 @@ bool operator==(std::pair<A, B> a, std::tuple<D, C> b)
 
 auto PairEqual = [](auto&& ab)
 {
+    static_assert(
+        RAH_NAMESPACE::WeaklyEqualityComparableWith<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
+        "second not assignable to first");
     return std::get<0>(ab) == std::get<1>(ab);
 };
 
@@ -47,17 +50,25 @@ auto PairEqual = [](auto&& ab)
         }                                                                                          \
     }
 
-#define EQUAL_RANGE(RANGE, IL)                                                                     \
-    {                                                                                              \
-        std::cout << "assert : " << #RANGE << " == " << #IL << std::endl;                          \
-        if (rah::views::zip(RANGE, IL) | rah::all_of(PairEqual))                                   \
-            std::cout << "OK" << std::endl;                                                        \
-        else                                                                                       \
-        {                                                                                          \
-            std::cout << "NOT OK" << std::endl;                                                    \
-            abort();                                                                               \
-        }                                                                                          \
+template <typename R, typename I>
+void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
+{
+    static_assert(
+        RAH_NAMESPACE::WeaklyEqualityComparableWith<
+            rah::range_reference_t<decltype(RANGE)>,
+            rah::range_reference_t<decltype(IL)>>,
+        "Can't compare");
+    std::cout << "assert : " << rangeName << " == " << ILName << std::endl;
+    if (rah::views::zip(std::forward<R>(RANGE), std::forward<I>(IL)) | rah::all_of(PairEqual))
+        std::cout << "OK" << std::endl;
+    else
+    {
+        std::cout << "NOT OK" << std::endl;
+        abort();
     }
+}
+
+#define EQUAL_RANGE(RANGE, IL) equalRange(RANGE, IL, #RANGE, #IL)
 
 template <typename T>
 using il = std::initializer_list<T>;
@@ -859,6 +870,49 @@ int main()
         assert(result == std::vector<int>({3, 2, 1, 0}));
         /// [reverse]
     }
+
+    {
+        /// [elements_view]
+        std::vector<std::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
+        std::vector<int> result;
+        for (auto i : vec | rah::views::elements<2>())
+            result.push_back(i);
+        assert(result == std::vector<int>({1000, 1001, 1002, 1003}));
+        /// [elements_view]
+    }
+    {
+        /// [values_view]
+        std::vector<std::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
+        std::vector<char> result;
+        for (auto i : vec | rah::views::values())
+            result.push_back(i);
+        assert(result == std::vector<char>({'a', 'b', 'c', 'd'}));
+        /// [values_view]
+    }
+    {
+        /// [keys_view]
+        std::vector<std::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
+        std::vector<bool> result;
+        for (auto i : vec | rah::views::keys())
+            result.push_back(i);
+        assert(result == std::vector<bool>({true, false, true, false}));
+        /// [keys_view]
+    }
     /*{
         // Can't pass a rvalue container to a views
         auto getVec = [] {
@@ -1097,7 +1151,7 @@ int main()
         /// [enumerate]
         std::vector<int> input{4, 5, 6, 7};
         std::vector<std::tuple<size_t, int>> result;
-        for (auto i_value : rah::views::enumerate(input) | rah::views::common())
+        for (auto i_value : rah::views::enumerate(input))
             result.emplace_back(i_value);
         assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate]
@@ -1113,58 +1167,16 @@ int main()
     }
 
     {
-        /// [map_value]
-        std::map<int, double> input{{1, 1.5}, {2, 2.5}, {3, 3.5}, {4, 4.5}};
-        std::vector<double> result;
-        for (double value : rah::views::map_value(input))
-            result.push_back(value);
-        assert(result == (std::vector<double>{1.5, 2.5, 3.5, 4.5}));
-        /// [map_value]
-    }
-
-    {
         // This can't work since enumerate return an rvalue pairs since map_key want an lvalue
         bool bools[] = {false, true, true, false, false, true};
-        // TODO : Allow to use enumerate on C-style array witohut rah::views::all()
-        auto range = bools | rah::views::all() | rah::views::enumerate()
+        auto range = bools | rah::views::enumerate()
                      | rah::views::filter([](auto&& index_bool) { return std::get<1>(index_bool); })
-                     //| rah::views::map_key();
-                     | rah::views::transform([](auto&& a_b) { return std::get<0>(a_b); });
+                     | rah::views::keys();
 
         std::vector<size_t> ref;
         rah::copy(range, std::back_inserter(ref));
         assert(ref == (std::vector<size_t>{1, 2, 5}));
     }
-
-    {
-        /// [map_value_pipeable]
-        std::map<int, double> input{{1, 1.5}, {2, 2.5}, {3, 3.5}, {4, 4.5}};
-        std::vector<double> result;
-        for (double value : input | rah::views::map_value())
-            result.push_back(value);
-        assert(result == (std::vector<double>{1.5, 2.5, 3.5, 4.5}));
-        /// [map_value_pipeable]
-    }
-
-    {
-        /// [map_key]
-        std::map<int, double> input{{1, 1.5}, {2, 2.5}, {3, 3.5}, {4, 4.5}};
-        std::vector<int> result;
-        for (int key : rah::views::map_key(input))
-            result.push_back(key);
-        assert(result == (std::vector<int>{1, 2, 3, 4}));
-        /// [map_key]
-    }
-    {
-        /// [map_key_pipeable]
-        std::map<int, double> input{{1, 1.5}, {2, 2.5}, {3, 3.5}, {4, 4.5}};
-        std::vector<int> result;
-        for (int key : input | rah::views::map_key())
-            result.push_back(key);
-        assert(result == (std::vector<int>{1, 2, 3, 4}));
-        /// [map_key_pipeable]
-    }
-
     {
         /// [views::set_difference]
         std::vector<int> in1 = {1, 2, 3, 4, 5, 6};
@@ -1782,9 +1794,13 @@ int main()
     struct Elt
     {
         int member;
-        bool operator==(Elt elt) const
+        bool operator==(Elt const& elt) const
         {
             return member == elt.member;
+        }
+        bool operator!=(Elt const& elt) const
+        {
+            return member != elt.member;
         }
     };
 
@@ -1867,7 +1883,7 @@ int main()
 
         EQUAL_RANGE(
             globalRange,
-            (il<std::pair<size_t, size_t>>{
+            (il<std::tuple<size_t, size_t>>{
                 {0, 0},
                 {0, 1},
                 {0, 2},
@@ -1884,12 +1900,12 @@ int main()
 
     EQUAL_RANGE(
         (iota(0, 3) | transform([](auto i) { return i * 2; }) | enumerate()),
-        (il<std::pair<size_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
+        (il<std::pair<int64_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
 
     std::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
     EQUAL_RANGE(
-        (vec_abcd | transform([](char i) { return i + 1; }) | enumerate()),
-        (il<std::pair<size_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
+        (vec_abcd | transform([](char i) { return char(i + 1); }) | enumerate()),
+        (il<std::pair<int64_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
 
     // TODO : Make Zip bidirectional when possible
     //EQUAL_RANGE(
