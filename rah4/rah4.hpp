@@ -291,12 +291,16 @@ namespace RAH_NAMESPACE
         static_assert(not RAH_STD::is_reference<value_type>::value, "value_type can't be a reference");
 
 #if !RAH_CPP20
-        template <typename Sent = S, std::enable_if_t<!std::is_same_v<Sent, void>>* = nullptr>
+        template <
+            typename Sent = S,
+            std::enable_if_t<!std::is_same_v<Sent, void> and !std::is_same_v<Sent, I>>* = nullptr>
         friend bool operator!=(Sent const& sent, I const& it)
         {
             return !(it == sent);
         }
-        template <typename Sent = S, std::enable_if_t<!std::is_same_v<Sent, void>>* = nullptr>
+        template <
+            typename Sent = S,
+            std::enable_if_t<!std::is_same_v<Sent, void> and !std::is_same_v<Sent, I>>* = nullptr>
         friend bool operator!=(I const& it, Sent const& sent)
         {
             return !(it == sent);
@@ -468,9 +472,9 @@ namespace RAH_NAMESPACE
                     *(istream_->stream_) >> istream_->value_;
                     return *this;
                 }
-                bool operator==(sentinel const&) const
+                friend bool operator==(iterator const& it, sentinel const&)
                 {
-                    return !(*istream_->stream_);
+                    return !(*it.istream_->stream_);
                 }
                 friend bool operator==(sentinel const&, iterator const& it)
                 {
@@ -478,13 +482,13 @@ namespace RAH_NAMESPACE
                 }
             };
 
-            constexpr auto begin()
+            auto begin()
             {
                 *stream_ >> value_;
                 return iterator(this);
             }
 
-            constexpr auto end()
+            auto end()
             {
                 return sentinel{};
             }
@@ -718,20 +722,20 @@ namespace RAH_NAMESPACE
                 {
                     return *iter_;
                 }
-                bool operator==(iterator const& r) const
+                friend bool operator==(iterator const& it, iterator const& it2)
                 {
                     // Have to stop when to count over OR if the range is end
-                    return count_ == r.count_ or iter_ == r.iter_;
+                    return it.count_ == it2.count_ or it.iter_ == it2.iter_;
                 }
-                bool operator==(sentinel const& r) const
+                friend bool operator==(iterator const& it, sentinel const& sent)
                 {
                     // Have to stop when to count over OR if the range is end
-                    return count_ == r.count or iter_ == r.sent;
+                    return it.count_ == sent.count or it.iter_ == sent.sent;
                 }
-                friend bool operator==(sentinel const& r, iterator const& it)
+                friend bool operator==(sentinel const& sent, iterator const& it)
                 {
                     // Have to stop when to count over OR if the range is end
-                    return it.count_ == r.count or it.iter_ == r.sent;
+                    return it.count_ == sent.count or it.iter_ == sent.sent;
                 }
             };
 
@@ -775,118 +779,8 @@ namespace RAH_NAMESPACE
 
         // ******************************************* sliding ********************************************
 
-        template <typename R, bool IsCommonRange>
-        struct slide_view;
-
-        // common_range. iterator/iterator
         template <typename R>
-        struct slide_view<R, true> : view_interface<slide_view<R, true>>
-        {
-            R inputView_;
-            intptr_t count_;
-
-            using base_iterator = iterator_t<R>;
-
-            struct iterator : iterator_facade<
-                                  iterator,
-                                  void,
-                                  subrange<base_iterator, base_iterator>,
-                                  typename RAH_NAMESPACE::range_iter_categ_t<R>>
-            {
-                // Actually store a closed range [begin, last]
-                //   to avoid to exceed the end iterator of the underlying range
-                // The last valid iterator will have subRangeLast_ equal to the end iterator of base
-                // So the "past-the-end" range will overcome the end iterator of base
-                base_iterator subRangeBegin_;
-                base_iterator subRangeLast_;
-
-                iterator() = default;
-                iterator(base_iterator subRangeBegin, base_iterator subRangeLast)
-                    : subRangeBegin_(std::move(subRangeBegin))
-                    , subRangeLast_(std::move(subRangeLast))
-                {
-                }
-
-                iterator& operator++()
-                {
-                    ++subRangeBegin_;
-                    ++subRangeLast_;
-                    return *this;
-                }
-                iterator& operator+=(intptr_t off)
-                {
-                    subRangeBegin_ += off;
-                    subRangeLast_ += off;
-                    return *this;
-                }
-                iterator& operator--()
-                {
-                    --subRangeBegin_;
-                    --subRangeLast_;
-                    return *this;
-                }
-                auto operator-(iterator const& r) const
-                {
-                    return subRangeBegin_ - r.subRangeBegin_;
-                }
-                auto operator*() const
-                {
-                    base_iterator endIter = subRangeLast_;
-                    ++endIter;
-                    return make_subrange(subRangeBegin_, endIter);
-                }
-                bool operator==(iterator const& r) const
-                {
-                    return subRangeBegin_ == r.subRangeBegin_;
-                }
-            };
-
-            slide_view(R inputView, intptr_t count)
-                : inputView_(std::move(inputView))
-                , count_(count)
-            {
-            }
-
-            auto begin()
-            {
-                auto const rangeEnd = RAH_NAMESPACE::end(inputView_);
-                if (count_ == 0)
-                {
-                    return iterator(rangeEnd, rangeEnd);
-                }
-                auto const subRangeBegin = RAH_NAMESPACE::begin(inputView_);
-                auto subRangeLast = subRangeBegin;
-                auto const left = RAH_NAMESPACE::advance(subRangeLast, count_, rangeEnd);
-                if (left != 0)
-                {
-                    return iterator(rangeEnd, rangeEnd);
-                }
-                --subRangeLast;
-                return iterator(subRangeBegin, subRangeLast);
-            }
-
-            auto end()
-            {
-                auto const rangeEnd = RAH_NAMESPACE::end(inputView_);
-                if (count_ == 0)
-                {
-                    return iterator(rangeEnd, rangeEnd);
-                }
-                auto const subRangeBegin = RAH_NAMESPACE::begin(inputView_);
-                auto subRangeFirst = rangeEnd;
-                auto const left = RAH_NAMESPACE::advance(subRangeFirst, -count_, subRangeBegin);
-                if (left != 0)
-                {
-                    return iterator(rangeEnd, rangeEnd);
-                }
-                ++subRangeFirst;
-                return iterator(subRangeFirst, rangeEnd);
-            }
-        };
-
-        // No common_range. iterator/sentinel
-        template <typename R>
-        struct slide_view<R, false> : view_interface<slide_view<R, false>>
+        struct slide_view : view_interface<slide_view<R>>
         {
             R inputView_;
             intptr_t count_;
@@ -898,6 +792,7 @@ namespace RAH_NAMESPACE
             {
                 base_sentinel sent;
             };
+
             struct iterator : iterator_facade<
                                   iterator,
                                   sentinel,
@@ -946,13 +841,17 @@ namespace RAH_NAMESPACE
                     ++endIter;
                     return make_subrange(subRangeBegin_, endIter);
                 }
-                bool operator==(iterator const& r) const
+                friend bool operator==(iterator const& i, iterator const& i2)
                 {
-                    return subRangeBegin_ == r.subRangeBegin_ or subRangeLast_ == r.subRangeLast_;
+                    return i.subRangeBegin_ == i2.subRangeBegin_;
                 }
-                bool operator==(sentinel const& r) const
+                friend bool operator==(iterator const& i, sentinel const& s)
                 {
-                    return subRangeLast_ == r.sent;
+                    return i.subRangeLast_ == s.sent;
+                }
+                friend bool operator==(sentinel const& s, iterator const& i)
+                {
+                    return i.subRangeLast_ == s.sent;
                 }
             };
 
@@ -967,16 +866,38 @@ namespace RAH_NAMESPACE
                 auto const rangeEnd = RAH_NAMESPACE::end(inputView_);
                 auto const subRangeBegin = RAH_NAMESPACE::begin(inputView_);
                 auto subRangeLast = subRangeBegin;
-                auto const left = RAH_NAMESPACE::advance(subRangeLast, count_, rangeEnd);
-                if (left != 0)
+                if (count_ == 0)
                 {
-                    // subRangeLast should be att end
                     return iterator(subRangeLast, subRangeLast);
                 }
-                --subRangeLast;
+                auto const left = RAH_NAMESPACE::advance(subRangeLast, count_ - 1, rangeEnd);
+                if (left != 0)
+                {
+                    return iterator(subRangeLast, subRangeLast);
+                }
                 return iterator(subRangeBegin, subRangeLast);
             }
 
+            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::common_range<U>>* = nullptr>
+            auto end()
+            {
+                auto const rangeEnd = RAH_NAMESPACE::end(inputView_);
+                if (count_ == 0)
+                {
+                    return iterator(rangeEnd, rangeEnd);
+                }
+                auto const subRangeBegin = RAH_NAMESPACE::begin(inputView_);
+                auto subRangeFirst = rangeEnd;
+                auto const left = RAH_NAMESPACE::advance(subRangeFirst, -count_, subRangeBegin);
+                if (left != 0)
+                {
+                    return iterator(rangeEnd, rangeEnd);
+                }
+                ++subRangeFirst;
+                return iterator(subRangeFirst, rangeEnd);
+            }
+
+            template <typename U = R, std::enable_if_t<not RAH_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
                 return sentinel{RAH_NAMESPACE::end(inputView_)};
@@ -987,8 +908,7 @@ namespace RAH_NAMESPACE
         auto slide(R&& range, size_t n)
         {
             auto rangeView = all(range);
-            return slide_view<decltype(rangeView), RAH_NAMESPACE::common_range<remove_cvref_t<R>>>(
-                std::move(rangeView), n);
+            return slide_view<decltype(rangeView)>(std::move(rangeView), n);
         }
 
         inline auto slide(size_t n)
@@ -1521,7 +1441,7 @@ namespace RAH_NAMESPACE
         /// @see rah::iota
         template <typename T>
         struct iota_iterator
-            : iterator_facade<iota_iterator<T>, void, T, RAH_STD::random_access_iterator_tag>
+            : iterator_facade<iota_iterator<T>, default_sentinel, T, RAH_STD::random_access_iterator_tag>
         {
             T val_ = T();
 
@@ -1564,9 +1484,17 @@ namespace RAH_NAMESPACE
             {
                 return val_;
             }
-            bool operator==(iota_iterator const& other) const
+            friend bool operator==(iota_iterator const& it, iota_iterator const& it2)
             {
-                return val_ == other.val_;
+                return it.val_ == it2.val_;
+            }
+            friend bool operator==(iota_iterator const&, default_sentinel)
+            {
+                return false;
+            }
+            friend bool operator==(default_sentinel, iota_iterator const&)
+            {
+                return false;
             }
         };
 
@@ -1580,10 +1508,7 @@ namespace RAH_NAMESPACE
         template <typename T = size_t>
         constexpr auto iota(T start = 0)
         {
-            // TODO : Make the range to be a RAH_NAMESPACE::sentinel_range_base
-            auto stop = start;
-            --stop;
-            return subrange<iota_iterator<T>>{start, stop};
+            return subrange<iota_iterator<T>, default_sentinel>{start, {}};
         }
 
         // ********************************** irange **********************************************
@@ -1658,7 +1583,7 @@ namespace RAH_NAMESPACE
         /// @see rah::repeat
         template <typename V>
         struct repeat_iterator
-            : iterator_facade<repeat_iterator<V>, void, V const&, RAH_STD::forward_iterator_tag>
+            : iterator_facade<repeat_iterator<V>, default_sentinel, V const&, RAH_STD::forward_iterator_tag>
         {
             V val_ = V();
 
@@ -1688,7 +1613,11 @@ namespace RAH_NAMESPACE
             {
                 return val_;
             }
-            bool operator==(repeat_iterator) const
+            friend bool operator==(repeat_iterator, default_sentinel)
+            {
+                return false;
+            }
+            friend bool operator==(default_sentinel, repeat_iterator)
             {
                 return false;
             }
@@ -1697,8 +1626,8 @@ namespace RAH_NAMESPACE
         template <typename V>
         auto repeat(V&& value)
         {
-            return subrange<repeat_iterator<RAH_STD::remove_const_t<RAH_STD::remove_reference_t<V>>>>{
-                {value}, {value}};
+            return subrange<repeat_iterator<RAH_STD::remove_const_t<RAH_STD::remove_reference_t<V>>>, default_sentinel>{
+                {value}, {}};
         }
 
         // ********************************** join ********************************************************
@@ -2142,17 +2071,17 @@ namespace RAH_NAMESPACE
                 {
                     return (*func_)(*iter_);
                 }
-                bool operator==(iterator const& r) const
+                friend bool operator==(iterator const& it, iterator const& it2)
                 {
-                    return iter_ == r.iter_;
+                    return it.iter_ == it2.iter_;
                 }
-                bool operator==(sentinel const& r) const
+                friend bool operator==(iterator const& it, sentinel const& sent)
                 {
-                    return iter_ == r.sent;
+                    return it.iter_ == sent.sent;
                 }
-                friend bool operator==(sentinel const& r, iterator const& it)
+                friend bool operator==(sentinel const& sent, iterator const& it)
                 {
-                    return it.iter_ == r.sent;
+                    return it.iter_ == sent.sent;
                 }
             };
 
@@ -2598,7 +2527,11 @@ namespace RAH_NAMESPACE
             {
                 terminate();
             }
-            constexpr bool operator==(empty_iter) const
+            friend bool operator==(empty_iter, default_sentinel)
+            {
+                return true;
+            }
+            friend bool operator==(default_sentinel, empty_iter)
             {
                 return true;
             }
@@ -2607,7 +2540,7 @@ namespace RAH_NAMESPACE
         template <typename T>
         auto empty()
         {
-            return subrange<empty_iter<T>>();
+            return subrange<empty_iter<T>, default_sentinel>();
         }
 
         // ********************************** single ******************************************************

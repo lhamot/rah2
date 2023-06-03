@@ -633,6 +633,16 @@ int main()
         /// [sliding]
     }
     {
+        // With non common_range
+        std::vector<std::vector<int>> out;
+        for (auto subRange : rah::views::iota(0) | rah::views::take(6) | rah::views::slide(3))
+        {
+            out.emplace_back();
+            rah::copy(subRange, std::back_inserter(out.back()));
+        }
+        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+    }
+    {
         std::vector<int> in{0, 1, 2, 3, 4, 5};
         std::vector<std::vector<int>> out;
         auto range = in | rah::views::cycle() | rah::views::slide(3) | rah::views::take(in.size());
@@ -696,7 +706,7 @@ int main()
             out.emplace_back();
             std::copy(rah::begin(subRange), rah::end(subRange), std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{}));
+        assert(out == (std::vector<std::vector<int>>{{0}, {1}, {2}, {3}}));
     }
 
     {

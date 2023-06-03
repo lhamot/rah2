@@ -348,8 +348,8 @@ namespace rah
         constexpr static bool value = true;
     };
 
-#define VAL_V std::declval<V>()
-#define VAL_U std::declval<U>()
+#define VAL_V std::declval<V&>()
+#define VAL_U std::declval<U&>()
 
     MAKE_CONCEPT_2(
         WeaklyEqualityComparableWith,
@@ -452,14 +452,8 @@ namespace rah
     MAKE_CONCEPT_2(
         sized_sentinel_for,
         (RAH_NAMESPACE::sentinel_for<U, V>
-         && !RAH_NAMESPACE::disable_sized_sentinel_for<std::remove_cv_t<U>, std::remove_cv_t<V>>
-         && RAH_NAMESPACE::same_as<
-             decltype(std::declval<U>() - std::declval<V>()),
-             RAH_NAMESPACE::iter_difference_t<V>>
-         && RAH_NAMESPACE::same_as<
-             decltype(std::declval<U>() - std::declval<V>()),
-             RAH_NAMESPACE::iter_difference_t<V>>),
-        (std::declval<U>() - std::declval<V>(), std::declval<U>() - std::declval<V>()));
+         && !RAH_NAMESPACE::disable_sized_sentinel_for<std::remove_cv_t<U>, std::remove_cv_t<V>>),
+        (std::declval<U>() - std::declval<V>(), std::declval<V>() - std::declval<U>()));
 
     // **************************** range traits **************************************************
 
@@ -582,7 +576,7 @@ namespace rah
 
     // ****************************** utility functions *******************************************
 
-    template <typename I, typename S, typename = std::enable_if_t<RAH_NAMESPACE::random_access_iterator<I>>>
+    template <typename I, typename S, typename = std::enable_if_t<RAH_NAMESPACE::sized_sentinel_for<S, I>>>
     constexpr intptr_t advance(I& i, intptr_t n, S const& bound)
     {
         // std::abs is not constexpr until C++23
@@ -608,7 +602,7 @@ namespace rah
     template <
         typename I,
         typename S,
-        typename = std::enable_if_t<not RAH_NAMESPACE::random_access_iterator<I>>,
+        typename = std::enable_if_t<not RAH_NAMESPACE::sized_sentinel_for<S, I>>,
         typename = std::enable_if_t<RAH_NAMESPACE::bidirectional_iterator<I>>>
     constexpr intptr_t advance(I& i, intptr_t n, S const& bound)
     {
@@ -630,6 +624,7 @@ namespace rah
     template <
         typename I,
         typename S,
+        typename = std::enable_if_t<not RAH_NAMESPACE::sized_sentinel_for<S, I>>,
         typename = std::enable_if_t<not RAH_NAMESPACE::bidirectional_iterator<I>>,
         int = 0>
     constexpr intptr_t advance(I& i, intptr_t n, S const& bound)
