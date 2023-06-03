@@ -2693,6 +2693,19 @@ namespace RAH_NAMESPACE
                 return deref_impl(t, RAH_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
+            template <typename F, typename... Args, size_t... Is>
+            auto
+            derefCall_impl(F const& func, RAH_STD::tuple<Args...>& t, RAH_STD::index_sequence<Is...>)
+            {
+                return func((*RAH_STD::get<Is>(t))...);
+            }
+
+            template <typename F, typename... Args>
+            auto derefCall(F const& func, RAH_STD::tuple<Args...>& t)
+            {
+                return derefCall_impl(func, t, RAH_STD::make_index_sequence<sizeof...(Args)>{});
+            }
+
             template <size_t Index>
             struct Equal
             {
@@ -2747,7 +2760,6 @@ namespace RAH_NAMESPACE
         } // namespace details
         /// \endcond
 
-        // RAH_STD::make_tuple(RAH_NAMESPACE::begin(details::declval<Ranges>())...)
         template <typename RangeTuple>
         class zip_view : public view_interface<zip_view<RangeTuple>>
         {
@@ -2817,13 +2829,13 @@ namespace RAH_NAMESPACE
                 {
                     return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(other.iters_);
                 }
-                bool operator==(iterator const& other) const
+                friend bool operator==(iterator const& iter, iterator const& iter2)
                 {
-                    return details::equal(iters_, other.iters_);
+                    return details::equal(iter.iters_, iter2.iters_);
                 }
-                bool operator==(sentinel const& other) const
+                friend bool operator==(iterator const& iter, sentinel const& sent)
                 {
-                    return details::equal(iters_, other.sentinels);
+                    return details::equal(iter.iters_, sent.sentinels);
                 }
                 friend bool operator==(sentinel const& sent, iterator const& it)
                 {
@@ -2857,7 +2869,129 @@ namespace RAH_NAMESPACE
             return zip_view<decltype(refTuple)>(RAH_STD::move(refTuple));
         }
 
-        // ************************************ chunk *****************************************************
+        // ************************************ zip_transform *************************************
+
+        template <typename Func, typename RangeTuple>
+        class zip_transform_view : public view_interface<zip_transform_view<Func, RangeTuple>>
+        {
+            // Can't use a lambda in decltype, but can use a functor
+            struct range_begin
+            {
+                template <typename R>
+                auto operator()(R&& r) const
+                {
+                    return RAH_NAMESPACE::begin(r);
+                }
+            };
+            struct range_end
+            {
+                template <typename R>
+                auto operator()(R&& r) const
+                {
+                    return RAH_NAMESPACE::end(r);
+                }
+            };
+            Func func_;
+            RangeTuple bases_;
+            using IterTuple = decltype(details::transform_each(bases_, range_begin()));
+            using SentinelTuple = decltype(details::transform_each(bases_, range_end()));
+
+        public:
+            struct sentinel
+            {
+                SentinelTuple sentinels;
+            };
+
+            struct iterator
+                : iterator_facade<
+                      iterator,
+                      sentinel,
+                      decltype(details::deref(RAH_NAMESPACE::details::declval<IterTuple>())),
+                      RAH_STD::bidirectional_iterator_tag>
+            {
+                zip_transform_view* parent_;
+                IterTuple iters_;
+
+                iterator()
+                {
+                }
+                iterator(zip_transform_view* parent, IterTuple iterators)
+                    : parent_(parent)
+                    , iters_(iterators)
+                {
+                }
+                iterator& operator++()
+                {
+                    details::for_each(iters_, [](auto& iter) { ++iter; });
+                    return *this;
+                }
+                iterator& operator+=(intptr_t val)
+                {
+                    for_each(iters_, [val](auto& iter) { iter += val; });
+                    return *this;
+                }
+                iterator& operator--()
+                {
+                    details::for_each(iters_, [](auto& iter) { --iter; });
+                    return *this;
+                }
+                auto operator*()
+                {
+                    return details::derefCall_impl(
+                        parent_->func_,
+                        iters_,
+                        RAH_STD::make_index_sequence<std::tuple_size_v<RangeTuple>>{});
+                }
+                auto operator-(iterator const& other) const
+                {
+                    return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(parent_->other.iters_);
+                }
+                friend bool operator==(iterator const& iter, iterator const& iter2)
+                {
+                    return details::equal(iter.iters_, iter2.iters_);
+                }
+                friend bool operator==(iterator const& iter, sentinel const& sent)
+                {
+                    return details::equal(iter.iters_, sent.sentinels);
+                }
+                friend bool operator==(sentinel const& sent, iterator const& it)
+                {
+                    return details::equal(it.iters_, sent.sentinels);
+                }
+            };
+
+            zip_transform_view(Func f, RangeTuple rangeTuple)
+                : func_(std::move(f))
+                , bases_(RAH_STD::move(rangeTuple))
+            {
+            }
+
+            iterator begin()
+            {
+                return iterator(this, details::transform_each(bases_, range_begin()));
+            }
+
+            sentinel end()
+            {
+                return sentinel{details::transform_each(bases_, range_end())};
+            }
+        };
+
+        /// @brief that takes an invocable object and one or more views, and produces a view
+        /// whose ith element is the result of applying the invocable object
+        /// to the ith elements of all views.
+        ///
+        /// @snippet rah4_unittests.cpp zip_transform
+        template <typename F, typename... R>
+        auto zip_transform(F&& func, R&&... ranges)
+        {
+            auto refTuple =
+                RAH_STD::make_tuple(RAH_NAMESPACE::views::all(RAH_STD::forward<R>(ranges))...);
+            return zip_transform_view<std::remove_reference_t<F>, decltype(refTuple)>(
+                std::forward<F>(func), RAH_STD::move(refTuple));
+        }
+
+        // ************************************ chunk *********************************************
 
         template <typename R>
         struct chunk_iterator

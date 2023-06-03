@@ -949,6 +949,25 @@ int main()
     }
 
     {
+        /// [zip_transform]
+        std::vector<int> inputA{1, 2, 3, 4};
+        std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
+        std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+        std::vector<std::string> result;
+        auto func = [](int a, double d, char c)
+        {
+            std::stringstream ss;
+            ss << a << d << c;
+            return ss.str();
+        };
+        for (auto a_b_c :
+             rah::views::zip_transform(func, inputA, inputB, inputC) | rah::views::common())
+            result.emplace_back(a_b_c);
+        assert(result == (std::vector<std::string>{{"12.5a"}, {"24.5b"}, {"36.5c"}, {"48.5d"}}));
+        /// [zip_transform]
+    }
+
+    {
         std::vector<int> inputA{1, 2, 3, 4};
         std::vector<bool> inputB{false, true, true, false};
         auto range = rah::views::zip(inputA, inputB)
