@@ -2543,6 +2543,140 @@ namespace RAH_NAMESPACE
             return subrange<empty_iter<T>, default_sentinel>();
         }
 
+        // ******************************************* adjacent ***********************************
+
+        template <typename R, size_t N>
+        struct adjacent_view : view_interface<adjacent_view<R, N>>
+        {
+            R inputView_;
+
+            using base_iterator = iterator_t<R>;
+            using base_sentinel = sentinel_t<R>;
+            using base_value = range_value_t<R>;
+            using base_reference = range_reference_t<R>;
+
+            template <size_t I>
+            struct GetType
+            {
+                using type = base_value;
+            };
+
+            template <std::size_t... Is>
+            static auto make_tuple(std::index_sequence<Is...>)
+            {
+                return std::tuple<typename GetType<Is>::type...>();
+            }
+
+            using value = decltype(make_tuple(std::make_integer_sequence<size_t, N>{}));
+            using reference = value;
+
+            struct sentinel
+            {
+                base_sentinel sent;
+            };
+
+            struct iterator
+                : iterator_facade<iterator, sentinel, reference, std::forward_iterator_tag>
+            {
+                base_iterator subRangeBegin_;
+                base_value sliding_result[N];
+                size_t result_output_index = 0;
+
+                iterator() = default;
+                iterator(base_iterator subRangeBegin, base_sentinel sentinel)
+                    : subRangeBegin_(std::move(subRangeBegin))
+                {
+                    for (; result_output_index < (N - 1) && subRangeBegin_ != sentinel;
+                         ++result_output_index, ++subRangeBegin_)
+                    {
+                        sliding_result[result_output_index] = *subRangeBegin_;
+                    }
+                }
+
+                iterator& operator++()
+                {
+                    ++subRangeBegin_;
+                    result_output_index = (result_output_index + 1) % N;
+                    return *this;
+                }
+
+                template <std::size_t... Is>
+                auto make_result(std::index_sequence<Is...>)
+                {
+                    sliding_result[result_output_index] = *subRangeBegin_;
+                    return std::make_tuple((sliding_result[(result_output_index + 1 + Is) % N])...);
+                }
+
+                auto operator*()
+                {
+                    return make_result(std::make_integer_sequence<size_t, N>{});
+                }
+                friend bool operator==(iterator const& i, iterator const& i2)
+                {
+                    return i.subRangeBegin_ == i2.subRangeBegin_;
+                }
+                friend bool operator==(iterator const& i, sentinel const& s)
+                {
+                    return i.subRangeBegin_ == s.sent;
+                }
+                friend bool operator==(sentinel const& s, iterator const& i)
+                {
+                    return i.subRangeBegin_ == s.sent;
+                }
+            };
+
+            adjacent_view(R inputView)
+                : inputView_(std::move(inputView))
+            {
+            }
+
+            auto begin()
+            {
+                auto const rangeEnd = RAH_NAMESPACE::end(inputView_);
+                auto const subRangeBegin = RAH_NAMESPACE::begin(inputView_);
+                return iterator(subRangeBegin, rangeEnd);
+            }
+
+            auto end()
+            {
+                return sentinel{RAH_NAMESPACE::end(inputView_)};
+            }
+        };
+
+        template <size_t N, typename R, std::enable_if_t<N != 0>* = nullptr>
+        auto adjacent(R&& range)
+        {
+            auto rangeView = all(range);
+            return adjacent_view<decltype(rangeView), N>(std::move(rangeView));
+        }
+
+        template <size_t N, typename R, std::enable_if_t<N == 0>* = nullptr>
+        auto adjacent(R&& range)
+        {
+            auto rangeView = all(range);
+            return views::empty<std::tuple<>>();
+        }
+
+        template <size_t N>
+        auto adjacent()
+        {
+            return make_pipeable([=](auto&& range)
+                                 { return adjacent<N>(RAH_STD::forward<decltype(range)>(range)); });
+        }
+
+        template <typename R>
+        auto pairwise(R&& range)
+        {
+            auto rangeView = all(range);
+            return adjacent_view<decltype(rangeView), 2>(std::move(rangeView));
+        }
+
+        inline auto pairwise()
+        {
+            return make_pipeable([=](auto&& range)
+                                 { return adjacent<2>(RAH_STD::forward<decltype(range)>(range)); });
+        }
+
         // ********************************** single ******************************************************
 
         template <typename V>
