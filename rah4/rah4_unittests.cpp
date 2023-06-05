@@ -148,6 +148,19 @@ auto customGenerate()
     return rah::subrange<CustomGenerator, CustomGenerator>{};
 }
 
+struct Add
+{
+    auto operator()(int i) const
+    {
+        return i;
+    }
+    template <typename... Args>
+    auto operator()(int i, Args... ints) const
+    {
+        return i + (*this)(ints...);
+    }
+};
+
 int main()
 {
     /*{
@@ -683,7 +696,52 @@ int main()
         }
         assert(out == (std::vector<std::vector<int>>{}));
     }
-
+    {
+        /// [adjacent_transform]
+        std::vector<int> in{0, 1, 2, 3, 4, 5};
+        std::vector<int> out;
+        for (auto abc :
+             rah::views::adjacent_transform<3>(in, [](auto a, auto b, auto c) { return a + b + c; }))
+        {
+            out.push_back(abc);
+        }
+        assert(out == (std::vector<int>{3, 6, 9, 12}));
+        /// [adjacent_transform]
+    }
+    {
+        // adjacent_transform With non common_range
+        std::vector<int> out;
+        for (auto abc : rah::views::iota(0) | rah::views::take(6)
+                            | rah::views::adjacent_transform<3>([](auto a, auto b, auto c)
+                                                                { return a + b + c; }))
+        {
+            out.push_back(abc);
+        }
+        assert(out == (std::vector<int>{3, 6, 9, 12}));
+    }
+    {
+        // adjacent_transform With N > view.size()
+        std::vector<int> out;
+        for (auto abc :
+             rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent_transform<45>(Add{}))
+        {
+            out.push_back(abc);
+        }
+        assert(out == (std::vector<int>{}));
+    }
+    {
+        // adjacent_transform With N == 0
+        std::vector<std::vector<int>> out;
+        for (auto&& abc : rah::views::iota(0) | rah::views::take(6)
+                              | rah::views::adjacent_transform<0>([](auto i) { return i + 1; }))
+        {
+            static_assert(
+                std::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
+                "tuple should be empty");
+            out.push_back({});
+        }
+        assert(out == (std::vector<std::vector<int>>{}));
+    }
     {
         std::vector<int> in{0, 1, 2, 3, 4, 5};
         std::vector<std::vector<int>> out;

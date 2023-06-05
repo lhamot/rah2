@@ -2824,6 +2824,19 @@ namespace RAH_NAMESPACE
                 return get_end_tuple_impl(a, RAH_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
+            template <typename Function, typename Tuple, size_t... I>
+            auto apply(Function&& f, Tuple&& t, std::index_sequence<I...>)
+            {
+                return f(std::get<I>(t)...);
+            }
+
+            template <typename Function, typename Tuple>
+            auto apply(Function&& f, Tuple&& t)
+            {
+                static constexpr auto size = std::tuple_size<Tuple>::value;
+                return apply(f, t, std::make_index_sequence<size>{});
+            }
+
         } // namespace details
         /// \endcond
 
@@ -2962,6 +2975,7 @@ namespace RAH_NAMESPACE
             RangeTuple bases_;
             using IterTuple = decltype(details::transform_each(bases_, range_begin()));
             using SentinelTuple = decltype(details::transform_each(bases_, range_end()));
+            static constexpr size_t tuple_size = std::tuple_size_v<RangeTuple>;
 
         public:
             struct sentinel
@@ -3005,9 +3019,7 @@ namespace RAH_NAMESPACE
                 auto operator*()
                 {
                     return details::derefCall_impl(
-                        parent_->func_,
-                        iters_,
-                        RAH_STD::make_index_sequence<std::tuple_size_v<RangeTuple>>{});
+                        parent_->func_, iters_, std::make_index_sequence<tuple_size>{});
                 }
                 auto operator-(iterator const& other) const
                 {
@@ -3056,6 +3068,106 @@ namespace RAH_NAMESPACE
                 RAH_STD::make_tuple(RAH_NAMESPACE::views::all(RAH_STD::forward<R>(ranges))...);
             return zip_transform_view<std::remove_reference_t<F>, decltype(refTuple)>(
                 std::forward<F>(func), RAH_STD::move(refTuple));
+        }
+
+        // ********************************* adjacent_transform ***********************************
+
+        template <typename R, typename F, size_t N>
+        struct adjacent_transform_view : view_interface<adjacent_transform_view<R, F, N>>
+        {
+            F func_;
+
+            using inner_reference = range_reference_t<R>;
+
+            using inner_adjacent_view = adjacent_view<R, N>;
+            inner_adjacent_view inner_;
+
+            using adjacent_iterator = iterator_t<inner_adjacent_view>;
+            using adjacent_reference = range_reference_t<inner_adjacent_view>;
+            using adjacent_sentinel = sentinel_t<inner_adjacent_view>;
+
+            using reference = decltype(details::apply(func_, std::declval<adjacent_reference>()));
+            using value = reference;
+
+            struct sentinel
+            {
+                adjacent_sentinel sent;
+            };
+
+            struct iterator
+                : iterator_facade<iterator, sentinel, reference, std::forward_iterator_tag>
+            {
+                adjacent_transform_view* view_ = nullptr;
+                adjacent_iterator iter_;
+
+                iterator() = default;
+                iterator(adjacent_transform_view* parent, adjacent_iterator iter)
+                    : view_(parent)
+                    , iter_(std::move(iter))
+                {
+                }
+
+                iterator& operator++()
+                {
+                    ++iter_;
+                    return *this;
+                }
+
+                auto operator*()
+                {
+                    return details::apply(view_->func_, *iter_, std::make_index_sequence<N>{});
+                }
+                friend bool operator==(iterator const& i, iterator const& i2)
+                {
+                    return i.iter_ == i2.iter_;
+                }
+                friend bool operator==(iterator const& i, sentinel const& s)
+                {
+                    return i.iter_ == s.sent;
+                }
+                friend bool operator==(sentinel const& s, iterator const& i)
+                {
+                    return i.iter_ == s.sent;
+                }
+            };
+
+            adjacent_transform_view(R inputView, F func)
+                : func_(std::move(func))
+                , inner_(std::move(inputView))
+            {
+            }
+
+            auto begin()
+            {
+                return iterator(this, RAH_NAMESPACE::begin(inner_));
+            }
+
+            auto end()
+            {
+                return sentinel{RAH_NAMESPACE::end(inner_)};
+            }
+        };
+
+        template <size_t N, typename R, typename F, std::enable_if_t<N != 0>* = nullptr>
+        auto adjacent_transform(R&& range, F&& func)
+        {
+            auto rangeView = all(range);
+            return adjacent_transform_view<decltype(rangeView), F, N>(
+                std::move(rangeView), std::forward<F>(func));
+        }
+
+        template <size_t N, typename R, typename F, std::enable_if_t<N == 0>* = nullptr>
+        auto adjacent_transform(R&&, F&&)
+        {
+            return views::empty<std::tuple<>>();
+        }
+
+        template <size_t N, typename F>
+        auto adjacent_transform(F&& func)
+        {
+            return make_pipeable(
+                [=](auto&& range)
+                { return adjacent_transform<N>(RAH_STD::forward<decltype(range)>(range), func); });
         }
 
         // ************************************ chunk *********************************************
