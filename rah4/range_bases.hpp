@@ -586,6 +586,10 @@ namespace rah
         };
 
         auto const distToBound = bound - i;
+        if (distToBound == 0)
+        {
+            return n;
+        }
 
         if ((n * distToBound) > 0) // Same side
         {
@@ -815,6 +819,10 @@ namespace rah
     }
 
     struct default_sentinel
+    {
+    };
+
+    struct unreachable_sentinel
     {
     };
 

@@ -1116,6 +1116,14 @@ int main()
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
         /// [chunk_pipeable]
     }
+    {
+        /// Chunk with non-common_view
+        auto vec_01234 = rah::views::iota(0) | rah::views::take(5);
+        std::vector<std::vector<int>> result;
+        for (auto elts : rah::views::chunk(vec_01234, 2))
+            result.emplace_back(rah::begin(elts), rah::end(elts));
+        assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
+    }
 
     {
         /// [filter]
