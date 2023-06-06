@@ -865,4 +865,5 @@ namespace rah
         RAH_NAMESPACE::advance(i, n, bound);
         return i;
     }
+
 } // namespace rah

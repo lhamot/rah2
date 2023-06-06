@@ -614,26 +614,6 @@ int main()
     }
 
     {
-        /// [drop_exactly]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah::views::drop_exactly(in, 6);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
-        /// [drop_exactly]
-    }
-
-    {
-        /// [drop_exactly_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = in | rah::views::drop_exactly(6);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
-        /// [drop_exactly_pipeable]
-    }
-
-    {
         /// [sliding]
         std::vector<int> in{0, 1, 2, 3, 4, 5};
         std::vector<std::vector<int>> out;
