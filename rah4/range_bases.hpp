@@ -790,25 +790,26 @@ namespace rah
     };
 
     template <typename I, typename S = I>
-    struct subrange : view_interface<subrange<I, S>>
+    class subrange : public view_interface<subrange<I, S>>
     {
-        I iterator;
-        S sentinel;
+        I iterator_;
+        S sentinel_;
 
+    public:
         subrange() = default;
         subrange(I a, S b)
-            : iterator(RAH_STD::move(a))
-            , sentinel(RAH_STD::move(b))
+            : iterator_(RAH_STD::move(a))
+            , sentinel_(RAH_STD::move(b))
         {
         }
 
         I begin() const
         {
-            return iterator;
+            return iterator_;
         }
         S end() const
         {
-            return sentinel;
+            return sentinel_;
         }
     };
 
