@@ -22,6 +22,7 @@
     <ClInclude Include="rah4.hpp" />
     <ClInclude Include="range_algorithms.hpp" />
     <ClInclude Include="range_bases.hpp" />
+    <ClInclude Include="test_helpers.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rah4_unittests.cpp" />
@@ -151,6 +152,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <AdditionalIncludeDirectories>.</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

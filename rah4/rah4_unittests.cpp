@@ -17,6 +17,8 @@
 
 #include <iomanip>
 
+#include "test_helpers.hpp"
+
 template <typename A, typename B, typename C, typename D>
 bool operator==(std::tuple<A, B> a, std::pair<D, C> b)
 {
@@ -251,6 +253,12 @@ int main()
             result.push_back(i);
         assert(result == std::vector<int>());
         /// [empty]
+        // rah::bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>>::Check();
+        rah::random_access_iterator_impl<RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>>::Check();
+        static_assert(
+            rah::random_access_range<rah::views::empty_view<int>>, "Should be random_access_range");
+        static_assert(
+            rah::contiguous_range<rah::views::empty_view<int>>, "Should be contiguous_range");
     }
     {
         /// [single]
@@ -259,6 +267,8 @@ int main()
             result.push_back(i);
         assert(result == std::vector<int>({20}));
         /// [single]
+        static_assert(
+            rah::contiguous_range<rah::views::single_view<int>>, "Should be contiguous_range");
     }
 
     {
@@ -268,6 +278,10 @@ int main()
             result.push_back(i);
         assert(result == std::vector<int>({10, 11, 12, 13, 14}));
         /// [iota]
+        check_random_access_range<decltype(rah::views::iota(10, 15))>();
+        static_assert(
+            rah::random_access_range<decltype(rah::views::iota(10, 15))>,
+            "Should be random_access_range");
     }
 
     {
@@ -291,6 +305,7 @@ int main()
             result.push_back(i);
         assert(result == std::vector<int>({10, 12, 14, 16, 18}));
         /// [irange]
+        check_random_access_range<decltype(rah::views::irange(10, 19, 2))>();
     }
 
     {
@@ -322,6 +337,38 @@ int main()
         rah::copy(range, std::back_inserter(result));
         assert(result == std::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join]
+        // concepts :
+        // TODO : Allow join to be bidirectional
+        // OUTER and INNER are bidir => bidir
+        auto bidir = rah::views::join(
+            rah::views::repeat(test_view<Common, std::bidirectional_iterator_tag>(0, 10, 1)));
+        using bidirIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(bidir)>>;
+        // static_assert(std::is_same_v<bidirIterCateg, std::bidirectional_iterator_tag>, "");
+        // static_assert(rah::bidirectional_range<decltype(bidir)>, "");
+        // else if OUTER and INNER are forward => forward
+        {
+            auto forw = rah::views::join(
+                rah::views::repeat(test_view<Common, std::forward_iterator_tag>(0, 10, 1)));
+            using forwIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(forw)>>;
+            static_assert(std::is_same_v<forwIterCateg, std::forward_iterator_tag>, "");
+            static_assert(rah::forward_range<decltype(forw)>, "");
+            static_assert(not rah::bidirectional_range<decltype(forw)>, "");
+        }
+        {
+            auto forw = rah::views::join(
+                rah::views::repeat(test_view<Sentinel, std::forward_iterator_tag>(0, 10, 1)));
+            using forwIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(forw)>>;
+            static_assert(std::is_same_v<forwIterCateg, std::forward_iterator_tag>, "");
+            static_assert(rah::forward_range<decltype(forw)>, "");
+            static_assert(not rah::bidirectional_range<decltype(forw)>, "");
+        }
+        // else if OUTER and INNER are input => input
+        auto inputRange = rah::views::join(
+            rah::views::repeat(test_view<Sentinel, std::input_iterator_tag>(0, 10, 1)));
+        using inputIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(inputRange)>>;
+        // static_assert(std::is_same_v<inputIterCateg, std::input_iterator_tag>, "");
+        static_assert(rah::input_range<decltype(inputRange)>, "");
+        // static_assert(not rah::forward_range<decltype(forw)>, "");
     }
     {
         // Test join on a range of rvalue
@@ -469,22 +516,33 @@ int main()
         std::copy_n(begin(gen), 4, std::back_inserter(gen_copy));
         assert(gen_copy == std::vector<int>({1, 2, 4, 8}));
         /// [generate]
+        static_assert(rah::input_range<decltype(gen)>, "");
+        static_assert(
+            std::is_same_v<rah::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>, "");
+        static_assert(not rah::forward_range<decltype(gen)>, "");
+        static_assert(not rah::common_range<decltype(gen)>, "");
     }
     {
         /// [generate_n]
         std::vector<int> result;
         int y = 1;
-        for (int i : rah::views::generate_n(
-                 4,
-                 [&y]() mutable
-                 {
-                     auto prev = y;
-                     y *= 2;
-                     return prev;
-                 }))
+        auto gen = rah::views::generate_n(
+            4,
+            [&y]() mutable
+            {
+                auto prev = y;
+                y *= 2;
+                return prev;
+            });
+        for (int i : gen)
             result.push_back(i);
         assert(result == std::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
+        static_assert(rah::input_range<decltype(gen)>, "");
+        static_assert(
+            std::is_same_v<rah::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>, "");
+        static_assert(not rah::forward_range<decltype(gen)>, "");
+        static_assert(not rah::common_range<decltype(gen)>, "");
     }
 
     {
@@ -495,6 +553,51 @@ int main()
         std::copy_n(cy.begin(), 8, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
         /// [cycle]
+        check_bidirectional_range<decltype(cy)>();
+        // STATIC_ASSERT(rah::random_access_range<decltype(cy)>);
+        STATIC_ASSERT(not rah::common_range<decltype(cy)>);
+    }
+    { // Cycle + input/sentinel => input/sentinel
+        auto cyInputSent = rah::views::cycle(make_test_view<Sentinel, std::input_iterator_tag>());
+        STATIC_ASSERT(is_input_not_common<decltype(cyInputSent)>);
+    }
+    {
+        auto cyForwardSent = rah::views::cycle(make_test_view<Sentinel, std::forward_iterator_tag>());
+        STATIC_ASSERT(is_forward_not_common<decltype(cyForwardSent)>);
+    }
+    {
+        auto cyForwardCommon = rah::views::cycle(make_test_view<Common, std::forward_iterator_tag>());
+        STATIC_ASSERT(is_forward_not_common<decltype(cyForwardCommon)>);
+    }
+    { // Cycle can't be bidir if we can't assign sentinel to iterator
+        auto cyBidirSent =
+            rah::views::cycle(make_test_view<Sentinel, std::bidirectional_iterator_tag>());
+        STATIC_ASSERT(is_forward_not_common<decltype(cyBidirSent)>);
+    }
+    {
+        auto cyBidirCommon =
+            rah::views::cycle(make_test_view<Common, std::bidirectional_iterator_tag>());
+        STATIC_ASSERT(is_bidirectional_not_common<decltype(cyBidirCommon)>);
+    }
+    { // Cycle can't be bidir if we can't assign sentinel to iterator
+        auto cyRandomSent =
+            rah::views::cycle(make_test_view<Sentinel, std::random_access_iterator_tag>());
+        STATIC_ASSERT(is_forward_not_common<decltype(cyRandomSent)>);
+    }
+    {
+        auto cyRandomCommon =
+            rah::views::cycle(make_test_view<Common, std::random_access_iterator_tag>());
+        STATIC_ASSERT(is_bidirectional_not_common<decltype(cyRandomCommon)>);
+    }
+    { // Cycle can't be bidir if we can't assign sentinel to iterator
+        auto cyContiSent =
+            rah::views::cycle(make_test_view<Sentinel, rah::contiguous_iterator_tag>());
+        STATIC_ASSERT(is_forward_not_common<decltype(cyContiSent)>);
+    }
+    {
+        auto cyContiCommon =
+            rah::views::cycle(make_test_view<Common, rah::contiguous_iterator_tag>());
+        STATIC_ASSERT(is_bidirectional_not_common<decltype(cyContiCommon)>);
     }
 
     {
@@ -831,7 +934,7 @@ int main()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah::views::unbounded(in.begin()) | rah::views::slice(0, 5);
         std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        rah::copy(range, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     }
 
@@ -840,7 +943,7 @@ int main()
         auto range =
             rah::views::unbounded((int const* const)std::begin(in)) | rah::views::slice(0, 5);
         std::vector<int> out;
-        std::copy(begin(range), end(range), std::back_inserter(out));
+        rah::copy(range, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     }
 

@@ -273,6 +273,21 @@ namespace RAH_NAMESPACE
 #define RAH_SELF (*static_cast<I*>(this))
 #define RAH_SELF_CONST (*static_cast<I const*>(this))
 
+#define RAH_POST_INCR                                                                              \
+    auto operator++(int)                                                                           \
+    {                                                                                              \
+        auto it = *this;                                                                           \
+        ++(*this);                                                                                 \
+        return it;                                                                                 \
+    }
+#define RAH_POST_DECR                                                                              \
+    auto operator--(int)                                                                           \
+    {                                                                                              \
+        auto it = *this;                                                                           \
+        --(*this);                                                                                 \
+        return it;                                                                                 \
+    }
+
     struct sentinel_iterator
     {
     };
@@ -322,13 +337,6 @@ namespace RAH_NAMESPACE
         {
             return RAH_NAMESPACE::details::pointer_type<reference>::to_pointer(*RAH_SELF);
         }
-
-        auto operator++(int)
-        {
-            auto it = RAH_SELF;
-            ++(*this);
-            return it;
-        }
     };
 
     template <typename I, typename S, typename R>
@@ -355,6 +363,7 @@ namespace RAH_NAMESPACE
         {
             return *this;
         }
+        RAH_POST_INCR
         auto& operator*() const
         {
             return *this;
@@ -389,6 +398,64 @@ namespace RAH_NAMESPACE
     {
         DeleteCheck<iterator_facade<I, S, R, RAH_STD::random_access_iterator_tag>> deleteCheck;
         using iterator_category = RAH_STD::random_access_iterator_tag;
+
+#if !RAH_CPP20
+        friend bool operator<=(I const& it1, I const& it2)
+        {
+            return (it1 < it2) || (it1 == it2);
+        }
+        friend bool operator>(I const& it1, I const& it2)
+        {
+            return !((it1 < it2) || (it1 == it2));
+        }
+        friend bool operator>=(I const& it1, I const& it2)
+        {
+            return !(it1 < it2);
+        }
+        I& operator-=(int64_t amount)
+        {
+            RAH_SELF += -amount;
+            return *this;
+        }
+        friend I operator-(I const& it, int64_t amount)
+        {
+            auto copy = it;
+            copy += -amount;
+            return copy;
+        }
+        friend I operator+(I const& it, int64_t amount)
+        {
+            auto copy = it;
+            copy += amount;
+            return copy;
+        }
+        friend I operator+(int64_t amount, I const& it)
+        {
+            auto copy = it;
+            copy += amount;
+            return copy;
+        }
+        R operator[](int64_t index)
+        {
+            auto copy = RAH_SELF;
+            copy += index;
+            return *copy;
+        }
+        R operator[](int64_t index) const
+        {
+            auto copy = RAH_SELF_CONST;
+            copy += index;
+            return *copy;
+        }
+#endif
+    };
+
+    template <typename I, typename S, typename R>
+    struct iterator_facade<I, S, R, RAH_NAMESPACE::contiguous_iterator_tag>
+        : iterator_facade<I, S, R, RAH_STD::random_access_iterator_tag>
+    {
+        DeleteCheck<iterator_facade<I, S, R, RAH_NAMESPACE::contiguous_iterator_tag>> deleteCheck;
+        using iterator_category = RAH_NAMESPACE::contiguous_iterator_tag;
     };
 
     template <typename I>
@@ -415,6 +482,7 @@ namespace RAH_NAMESPACE
             --count_;
             return *this;
         }
+        RAH_POST_INCR
         counted_iterator& operator+=(intptr_t off)
         {
             iter_ += off;
@@ -554,31 +622,23 @@ namespace RAH_NAMESPACE
                 ++val_;
                 return *this;
             }
+            RAH_POST_INCR
             iota_iterator& operator+=(intptr_t value)
             {
                 val_ += W(value);
                 return *this;
-            }
-            iota_iterator operator+(intptr_t value)
-            {
-                iota_iterator copy = *this;
-                return copy += value;
             }
             iota_iterator& operator-=(intptr_t value)
             {
                 val_ -= W(value);
                 return *this;
             }
-            iota_iterator operator-(intptr_t value)
-            {
-                iota_iterator copy = *this;
-                return copy -= value;
-            }
             iota_iterator& operator--()
             {
                 --val_;
                 return *this;
             }
+            RAH_POST_DECR
             auto operator-(iota_iterator const& other) const
             {
                 return (val_ - other.val_);
@@ -598,6 +658,10 @@ namespace RAH_NAMESPACE
             friend bool operator==(default_sentinel, iota_iterator const&)
             {
                 return false;
+            }
+            friend bool operator<(iota_iterator const& it, iota_iterator const& it2)
+            {
+                return it.val_ < it2.val_;
             }
         };
 
@@ -658,6 +722,7 @@ namespace RAH_NAMESPACE
                     *(istream_->stream()) >> istream_->value_;
                     return *this;
                 }
+                RAH_POST_INCR
                 friend bool operator==(iterator const& it, sentinel const&)
                 {
                     return !(*it.istream_->stream());
@@ -694,54 +759,87 @@ namespace RAH_NAMESPACE
 
         // ********************************** repeat ******************************************************
 
-        // TODO : Make the range to be a RAH_NAMESPACE::sentinel_range_base
-
         /// @see rah::repeat
         template <typename V>
-        class repeat_iterator
-            : public iterator_facade<repeat_iterator<V>, default_sentinel, V const&, RAH_STD::forward_iterator_tag>
+        class repeat_view : public view_interface<repeat_view<V>>
         {
-            V val_ = V();
+            V value_;
 
         public:
-            repeat_iterator() = default;
-            template <typename U>
-            explicit repeat_iterator(U val)
-                : val_(RAH_STD::forward<U>(val))
+            class iterator
+                : public iterator_facade<iterator, default_sentinel, V, RAH_STD::random_access_iterator_tag>
+            {
+                V val_ = V();
+                size_t current_ = 0;
+
+            public:
+                iterator() = default;
+                template <typename U>
+                explicit iterator(U val)
+                    : val_(RAH_STD::forward<U>(val))
+                {
+                }
+
+                iterator& operator++()
+                {
+                    ++current_;
+                    return *this;
+                }
+                RAH_POST_INCR
+                iterator& operator+=(intptr_t value)
+                {
+                    current_ += value;
+                    return *this;
+                }
+                iterator& operator--()
+                {
+                    --current_;
+                    return *this;
+                }
+                RAH_POST_DECR
+                iterator& operator-=(intptr_t value)
+                {
+                    current_ -= value;
+                    return *this;
+                }
+                V operator*() const
+                {
+                    return val_;
+                }
+                friend bool operator==(iterator const& it1, iterator const& it2)
+                {
+                    return it1.current_ == it2.current_;
+                }
+                friend bool operator==(iterator, default_sentinel)
+                {
+                    return false;
+                }
+                friend bool operator==(default_sentinel, iterator)
+                {
+                    return false;
+                }
+            };
+
+            repeat_view(V value)
+                : value_(std::move(value))
             {
             }
 
-            repeat_iterator& operator++()
+            iterator begin() const
             {
-                return *this;
+                return iterator{value_};
             }
-            repeat_iterator& operator+(intptr_t value)
+
+            default_sentinel end() const
             {
-                return *this;
-            }
-            repeat_iterator& operator--()
-            {
-                return *this;
-            }
-            V const& operator*() const
-            {
-                return val_;
-            }
-            friend bool operator==(repeat_iterator, default_sentinel)
-            {
-                return false;
-            }
-            friend bool operator==(default_sentinel, repeat_iterator)
-            {
-                return false;
+                return {};
             }
         };
 
         template <typename V>
         auto repeat(V&& value)
         {
-            using iterator = repeat_iterator<RAH_NAMESPACE::remove_cvref_t<V>>;
-            return make_subrange(iterator(value), default_sentinel{});
+            return repeat_view<remove_cvref_t<V>>(std::forward<V>(value));
         }
 
         // ********************************* ref_view *********************************************
@@ -964,7 +1062,7 @@ namespace RAH_NAMESPACE
                     next_value();
                     return *this;
                 }
-
+                RAH_POST_INCR
                 iterator& operator--()
                 {
                     do
@@ -1005,18 +1103,18 @@ namespace RAH_NAMESPACE
                 return pred_;
             }
 
-            auto begin()
+            iterator begin()
             {
                 return iterator(this, RAH_NAMESPACE::begin(range_));
             }
 
             template <typename U = R, std::enable_if_t<is_common_range, U>* = nullptr>
-            auto end()
+            iterator end()
             {
                 return iterator{this, RAH_NAMESPACE::end(range_)};
             }
             template <typename U = R, std::enable_if_t<not is_common_range, U>* = nullptr>
-            auto end()
+            sentinel end()
             {
                 return sentinel{RAH_NAMESPACE::end(range_)};
             }
@@ -1080,6 +1178,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
+                RAH_POST_INCR
                 iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
@@ -1378,6 +1477,7 @@ namespace RAH_NAMESPACE
                     view_->next_valid();
                     return *this;
                 }
+                RAH_POST_INCR
                 auto operator*() const -> decltype(*view_->sub_range_iter_)
                 {
                     return *view_->sub_range_iter_;
@@ -1518,7 +1618,7 @@ namespace RAH_NAMESPACE
 
                     return *this;
                 }
-
+                RAH_POST_INCR
                 auto operator*()
                 {
                     return subrange<inner_iterator>{cur_, next_.begin()};
@@ -1618,7 +1718,7 @@ namespace RAH_NAMESPACE
                 ++mpark::get<I>(var_);
                 return *this;
             }
-
+            RAH_POST_INCR
             template <typename It = I, std::enable_if_t<RAH_NAMESPACE::equality_comparable<It>>* = nullptr>
             bool operator==(common_iterator const& it) const
             {
@@ -1816,7 +1916,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-
+                RAH_POST_INCR
                 iterator& operator--()
                 {
                     --iter_;
@@ -1932,7 +2032,7 @@ namespace RAH_NAMESPACE
                     ++pos_;
                     return *this;
                 }
-
+                RAH_POST_INCR
                 iterator& operator--()
                 {
                     ++current_;
@@ -1975,7 +2075,7 @@ namespace RAH_NAMESPACE
                     RAH_NAMESPACE::random_access_range<U> and RAH_NAMESPACE::common_range<U>)>* = nullptr>
             auto end()
             {
-                return sentinel(RAH_NAMESPACE::end(base_));
+                return sentinel{RAH_NAMESPACE::end(base_)};
             }
         };
 
@@ -2197,6 +2297,7 @@ namespace RAH_NAMESPACE
                     // details::for_each(iters_, [](auto& iter) { iter.deleteCheck.check(); });
                     return *this;
                 }
+                RAH_POST_INCR
                 iterator& operator+=(intptr_t val)
                 {
                     for_each(iters_, [val](auto& iter) { iter += val; });
@@ -2311,6 +2412,7 @@ namespace RAH_NAMESPACE
                     details::for_each(iters_, [](auto& iter) { ++iter; });
                     return *this;
                 }
+                RAH_POST_INCR
                 iterator& operator+=(intptr_t val)
                 {
                     for_each(iters_, [val](auto& iter) { iter += val; });
@@ -2432,7 +2534,7 @@ namespace RAH_NAMESPACE
                     result_output_index = (result_output_index + 1) % N;
                     return *this;
                 }
-
+                RAH_POST_INCR
                 template <std::size_t... Is>
                 auto make_result(std::index_sequence<Is...>)
                 {
@@ -2554,7 +2656,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-
+                RAH_POST_INCR
                 auto operator*()
                 {
                     return details::apply(view_->func_, *iter_, std::make_index_sequence<N>{});
@@ -2655,6 +2757,7 @@ namespace RAH_NAMESPACE
                     ++subRangeLast_;
                     return *this;
                 }
+                RAH_POST_INCR
                 iterator& operator+=(intptr_t off)
                 {
                     subRangeBegin_ += off;
@@ -2667,6 +2770,7 @@ namespace RAH_NAMESPACE
                     --subRangeLast_;
                     return *this;
                 }
+                template <typename U = R, std::enable_if_t<random_access_range<U>>* = nullptr>
                 auto operator-(iterator const& r) const
                 {
                     return subRangeBegin_ - r.subRangeBegin_;
@@ -2796,7 +2900,7 @@ namespace RAH_NAMESPACE
                     RAH_NAMESPACE::advance(iter2_, step_, end_);
                     return *this;
                 }
-
+                RAH_POST_INCR
                 auto operator*() const
                 {
                     return make_subrange(iter_, iter2_);
@@ -2898,7 +3002,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                 return *this;
             }
-
+            RAH_POST_INCR
             stride_iterator& operator--()
             {
                 for (size_t i = 0; i < step_; ++i)
@@ -2941,6 +3045,8 @@ namespace RAH_NAMESPACE
                                  { return stride(RAH_STD::forward<decltype(range)>(range), step); });
         }
 
+        // ******************************************* views extra ********************************
+
         // ******************************************* unbounded **********************************
 
         template <typename I>
@@ -2973,7 +3079,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-
+                RAH_POST_INCR
                 iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
@@ -3056,6 +3162,7 @@ namespace RAH_NAMESPACE
                     val_ += step_;
                     return *this;
                 }
+                RAH_POST_INCR
                 iterator& operator+=(intptr_t value)
                 {
                     val_ += T(step_ * value);
@@ -3066,6 +3173,7 @@ namespace RAH_NAMESPACE
                     val_ -= step_;
                     return *this;
                 }
+                RAH_POST_DECR
                 auto operator-(iterator const& other) const
                 {
                     return (val_ - other.val_) / step_;
@@ -3077,6 +3185,10 @@ namespace RAH_NAMESPACE
                 friend constexpr bool operator==(iterator const& it1, iterator const& it2)
                 {
                     return it1.val_ == it2.val_;
+                }
+                friend constexpr bool operator<(iterator const& it1, iterator const& it2)
+                {
+                    return it1.val_ < it2.val_;
                 }
                 friend constexpr bool operator==(default_sentinel const&, iterator const&)
                 {
@@ -3132,7 +3244,7 @@ namespace RAH_NAMESPACE
         {
             R base_;
             using base_iterator = iterator_t<R>;
-            using base_sentinel = iterator_t<R>;
+            using base_sentinel = sentinel_t<R>;
 
         public:
             class iterator
@@ -3167,6 +3279,12 @@ namespace RAH_NAMESPACE
                     }
                     return *this;
                 }
+                RAH_POST_INCR
+                template <
+                    typename U = R,
+                    std::enable_if_t<
+                        bidirectional_range<U>
+                        && assignable_from<std::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* = nullptr>
                 iterator& operator--()
                 {
                     assert(view_ != nullptr);
@@ -3177,6 +3295,12 @@ namespace RAH_NAMESPACE
                     --iter_;
                     return *this;
                 }
+                template <
+                    typename U = R,
+                    std::enable_if_t<
+                        bidirectional_range<U>
+                        && assignable_from<std::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* = nullptr>
+                RAH_POST_DECR;
                 RAH_NAMESPACE::range_reference_t<R> operator*()
                 {
                     assert(view_ != nullptr);
@@ -3200,6 +3324,11 @@ namespace RAH_NAMESPACE
             explicit cycle_view(R base)
                 : base_(std::move(base))
             {
+            }
+
+            auto base() const
+            {
+                return base_;
             }
 
             iterator begin()
@@ -3241,7 +3370,7 @@ namespace RAH_NAMESPACE
 
         public:
             class iterator
-                : public iterator_facade<iterator, default_sentinel, value, RAH_STD::forward_iterator_tag>
+                : public iterator_facade<iterator, default_sentinel, value, RAH_STD::input_iterator_tag>
             {
                 generate_view* parent_ = nullptr;
                 RAH_NAMESPACE::details::optional<value> value_;
@@ -3258,6 +3387,7 @@ namespace RAH_NAMESPACE
                     value_ = parent_->func_();
                     return *this;
                 }
+                RAH_POST_INCR
                 value operator*()
                 {
                     return *value_;
@@ -3358,6 +3488,7 @@ namespace RAH_NAMESPACE
                     next_value();
                     return *this;
                 }
+                RAH_POST_INCR
                 auto operator*() const -> decltype(*first1_)
                 {
                     return *first1_;
@@ -3537,7 +3668,7 @@ namespace RAH_NAMESPACE
                         ++iter2_;
                     return *this;
                 }
-
+                RAH_POST_INCR
                 auto operator*() const -> decltype(*iter1_)
                 {
                     if (range_index_ == 0)
