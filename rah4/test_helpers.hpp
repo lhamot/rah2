@@ -259,17 +259,3 @@ constexpr bool is_contiguous_common = rah::contiguous_range<R> && rah::common_ra
 
 template <typename R>
 constexpr bool is_contiguous_not_common = rah::contiguous_range<R> && not rah::common_range<R>;
-
-template <class T>
-struct check_bidirectional_range
-{
-    STATIC_ASSERT(rah::range<T>);
-    STATIC_ASSERT((rah::bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<T>, true>::value));
-};
-
-template <class T>
-struct check_random_access_range
-{
-    STATIC_ASSERT(rah::range<T>);
-    STATIC_ASSERT((rah::random_access_iterator_impl<RAH_NAMESPACE::iterator_t<T>, true>::value));
-};

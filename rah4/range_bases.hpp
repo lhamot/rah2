@@ -136,33 +136,44 @@ namespace rah
 
     // **************************** range access **************************************************
 
-    template <class T, size_t N>
-    T* begin(T (&array)[N])
-    {
-        return array;
-    }
-
-    template <class T, size_t N>
-    T const* begin(T const (&array)[N])
-    {
-        return array;
-    }
-
     MAKE_CONCEPT(has_begin_member, true, (details::declval<T>().begin()));
     MAKE_CONCEPT(has_begin_ADL, true, (begin(details::declval<T>())));
     MAKE_CONCEPT(has_end_member, true, (details::declval<T>().end()));
     MAKE_CONCEPT(has_end_ADL, true, (end(details::declval<T>())));
 
-    template <typename R, std::enable_if_t<has_begin_member<R>>* = nullptr>
-    auto begin(R&& range)
+    namespace details
     {
-        return range.begin();
-    }
+        struct begin_impl
+        {
+            template <class T, size_t N>
+            T* operator()(T (&array)[N]) const
+            {
+                return array;
+            }
 
-    template <typename R, std::enable_if_t<not has_begin_member<R> && has_begin_ADL<R>>* = nullptr>
-    auto begin(R&& range)
+            template <class T, size_t N>
+            T const* operator()(T const (&array)[N]) const
+            {
+                return array;
+            }
+
+            template <typename R, std::enable_if_t<has_begin_member<R>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return range.begin();
+            }
+
+            template <typename R, std::enable_if_t<not has_begin_member<R> && has_begin_ADL<R>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return begin(range);
+            }
+        };
+    } // namespace details
+
+    inline namespace begin_ns
     {
-        return begin(range);
+        constexpr auto begin = details::begin_impl();
     }
 
     template <class T, size_t N>
@@ -694,7 +705,6 @@ namespace rah
         using check_wrapper = decltype(check(std::declval<U>()));
 
         static constexpr bool value = compiles<Diagnostic, I, check_wrapper>;
-
     };
     template <typename I>
     constexpr bool bidirectional_iterator = bidirectional_iterator_impl<remove_cvref_t<I>>::value;
@@ -1077,7 +1087,7 @@ namespace rah
 #define RAH_SELF_CONST (*static_cast<T const* const>(this))
 
     template <typename T>
-    struct view_interface
+    struct view_interface : view_base
     {
         DeleteCheck<view_interface<T>> deleteCheck;
 

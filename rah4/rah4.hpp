@@ -3375,7 +3375,7 @@ namespace RAH_NAMESPACE
 
         // ********************************** generate ****************************************************
         template <typename F>
-        class generate_view : view_interface<generate_view<F>>
+        class generate_view : public view_interface<generate_view<F>>
         {
             using value =
                 RAH_NAMESPACE::remove_cvref_t<decltype(RAH_NAMESPACE::details::declval<F>()())>;
@@ -3622,11 +3622,11 @@ namespace RAH_NAMESPACE
             return slice_view<decltype(ref)>{std::move(ref), begin_idx, end_idx};
         }
 
-        inline auto slice(intptr_t begin, intptr_t end)
+        inline auto slice(intptr_t beg, intptr_t end)
         {
             return make_pipeable(
                 [=](auto&& range)
-                { return slice(RAH_STD::forward<decltype(range)>(range), begin, end); });
+                { return slice(RAH_STD::forward<decltype(range)>(range), beg, end); });
         }
 
         // ***************************************** concat ***********************************************
@@ -3759,6 +3759,11 @@ namespace RAH_NAMESPACE
                 concat(RAH_STD::forward<R1>(range1), RAH_STD::forward<R2>(range2)), ranges...);
         }
 
+        template <typename R, std::enable_if_t<rah::enable_view<std::remove_reference_t<R>>>* = nullptr>
+        auto begin(R&& r)
+        {
+            return r.begin();
+        }
     } // namespace views
 
 } // namespace RAH_NAMESPACE
