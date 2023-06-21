@@ -91,6 +91,15 @@ namespace rah
 
     // **************************** standard traits ***********************************************
 
+    using std::bidirectional_iterator_tag;
+    using std::forward_iterator_tag;
+    using std::input_iterator_tag;
+    using std::output_iterator_tag;
+    using std::random_access_iterator_tag;
+    struct contiguous_iterator_tag : std::random_access_iterator_tag
+    {
+    };
+
     template <class T>
     struct remove_cvref
     {
@@ -111,8 +120,14 @@ namespace rah
         template <typename T>
         T& declval();
 
+        template <typename I, std::enable_if_t<std::is_pointer_v<I>>* = nullptr>
+        auto get_iterator_category_impl() -> rah::contiguous_iterator_tag;
+
+        template <typename I, std::enable_if_t<!std::is_pointer_v<I>>* = nullptr>
+        auto get_iterator_category_impl() -> typename std::iterator_traits<I>::iterator_category;
+
         template <typename I>
-        using iterator_category = typename std::iterator_traits<I>::iterator_category;
+        using iterator_category = decltype(get_iterator_category_impl<I>());
     } // namespace details
 
     struct view_base
@@ -202,11 +217,22 @@ namespace rah
     MAKE_CONCEPT(has_rbegin_ADL, true, rbegin(details::declval<std::remove_reference_t<T>>()))
     MAKE_CONCEPT(has_rend_member, true, details::declval<std::remove_reference_t<T>>().rend())
     MAKE_CONCEPT(has_rend_ADL, true, rend(details::declval<std::remove_reference_t<T>>()))
-    MAKE_CONCEPT(
-        range,
-        true,
-        (RAH_NAMESPACE::begin(std::declval<std::remove_reference_t<T&>>()),
-         RAH_NAMESPACE::end(std::declval<std::remove_reference_t<T&>>())))
+
+    template <typename R, bool Diagnostic = false>
+    struct range_impl
+    {
+        template <typename R2>
+        static auto check(R2 r)
+            -> concepts::TypeList<decltype(RAH_NAMESPACE::begin(r)), decltype(RAH_NAMESPACE::end(r))>;
+
+        template <typename R2>
+        using check_wrapper = decltype(check(std::declval<R2>()));
+
+        static constexpr bool value = compiles<Diagnostic, R, check_wrapper>;
+    };
+
+    template <typename R>
+    constexpr bool range = range_impl<R>::value;
 
     template <typename R, typename = std::enable_if_t<has_rbegin_member<remove_cvref_t<R>>>>
     auto rbegin(R&& range)
@@ -328,15 +354,6 @@ namespace rah
 
     // *************************** iterator concepts **********************************************
 
-    using std::bidirectional_iterator_tag;
-    using std::forward_iterator_tag;
-    using std::input_iterator_tag;
-    using std::output_iterator_tag;
-    using std::random_access_iterator_tag;
-    struct contiguous_iterator_tag : std::random_access_iterator_tag
-    {
-    };
-
     template <class I>
     constexpr bool output_iterator =
         derived_from<typename RAH_STD::iterator_traits<I>::iterator_category, RAH_STD::output_iterator_tag>;
@@ -351,16 +368,18 @@ namespace rah
 
     namespace details
     {
-        template <typename I, std::enable_if_t<compiles<remove_cvref_t<I>, std::iterator_traits>>* = nullptr>
+        template <typename I, std::enable_if_t<compiles<false, remove_cvref_t<I>, std::iterator_traits>>* = nullptr>
         typename std::iterator_traits<remove_cvref_t<I>>::difference_type get_iter_difference();
 
-        template <typename I, std::enable_if_t<not compiles<remove_cvref_t<I>, std::iterator_traits>>* = nullptr>
+        template <
+            typename I,
+            std::enable_if_t<not compiles<false, remove_cvref_t<I>, std::iterator_traits>>* = nullptr>
         typename incrementable_traits<remove_cvref_t<I>>::difference_type get_iter_difference();
 
     } // namespace details
 
     template <typename I>
-    using iter_difference_t = decltype(details::get_iter_difference<I>());
+    using iter_difference_t = ptrdiff_t;
 
     template <class T>
     constexpr bool is_destructible_v = std::is_destructible<T>::value;
@@ -380,7 +399,8 @@ namespace rah
         template <class F>
         using can_static_cast = decltype(static_cast<To>(std::declval<F>()));
 
-        static constexpr bool value = is_convertible_v<From, To> && compiles<From, can_static_cast>;
+        static constexpr bool value =
+            is_convertible_v<From, To> && compiles<false, From, can_static_cast>;
     };
 
     template <class From, class To>
@@ -400,7 +420,8 @@ namespace rah
         using check_assign = std::enable_if_t<
             std::is_same_v<decltype(std::declval<LHS_>() = std::forward<RHS>(std::declval<RHS&&>())), LHS_>>;
 
-        static constexpr bool value = std::is_lvalue_reference_v<LHS> && compiles<LHS, check_assign>;
+        static constexpr bool value =
+            std::is_lvalue_reference_v<LHS> && compiles<false, LHS, check_assign>;
     };
 
     template <class LHS, class RHS>
@@ -427,14 +448,15 @@ namespace rah
         template <class T>
         using can_post_incr = decltype(std::declval<T&>()++);
 
-        static constexpr bool value =
-            movable<I> && compiles<I, diff_is_signed_integer> && compiles<I, can_post_incr>;
+        static constexpr bool value = movable<I> && compiles<false, I, diff_is_signed_integer>
+                                      && compiles<false, I, can_post_incr>;
 
         struct Check
         {
             static_assert(movable<I>, "movable<I>");
-            static_assert(compiles<I, diff_is_signed_integer>, "compiles<I, diff_is_signed_integer>");
-            static_assert(compiles<I, can_post_incr>, "compiles<I, can_post_incr>");
+            static_assert(
+                compiles<false, I, diff_is_signed_integer>, "compiles<I, diff_is_signed_integer>");
+            static_assert(compiles<false, I, can_post_incr>, "compiles<I, can_post_incr>");
         };
     };
 
@@ -447,13 +469,13 @@ namespace rah
         template <class T>
         using can_ref = std::enable_if_t<not std::is_same_v<decltype(*std::declval<T>()), void>>;
 
-        static constexpr bool value = weakly_incrementable<R> && compiles<R, can_ref>;
+        static constexpr bool value = weakly_incrementable<R> && compiles<false, R, can_ref>;
 
         struct Check
         {
             typename weakly_incrementable_impl<R>::Check incr_check;
             static_assert(weakly_incrementable<R>, "weakly_incrementable<R>");
-            static_assert(compiles<R, can_ref>, "compiles<R, can_ref>");
+            static_assert(compiles<false, R, can_ref>, "compiles<R, can_ref>");
         };
     };
 
@@ -493,7 +515,7 @@ namespace rah
             // compiles<In, has_value> &&
             // compiles<In, has_ref> &&
             // compiles<In, has_rval_ref> &&
-            compiles<In, deref>
+            compiles<false, In, deref>
             // && compiles<In, iter_move>
             ;
     };
@@ -506,7 +528,7 @@ namespace rah
     {
         static constexpr bool value =
             input_or_output_iterator<I> && indirectly_readable<I>
-            && compiles<I, details::iterator_category>
+            && compiles<false, I, details::iterator_category>
             && derived_from<details::iterator_category<I>, std::input_iterator_tag>;
 
         struct Check
@@ -515,7 +537,8 @@ namespace rah
             static_assert(input_or_output_iterator<I>, "input_or_output_iterator<I>");
             static_assert(indirectly_readable<I>, "indirectly_readable<I>");
             static_assert(
-                compiles<I, details::iterator_category>, "compiles<I, details::iterator_category>");
+                compiles<false, I, details::iterator_category>,
+                "compiles<I, details::iterator_category>");
             static_assert(
                 derived_from<details::iterator_category<I>, std::input_iterator_tag>,
                 "derived_from<details::iterator_category<I>, std::input_iterator_tag>");
@@ -588,7 +611,7 @@ namespace rah
         using check_incr = std::enable_if_t<std::is_same_v<decltype(std::declval<I&>()++), I>>;
 
         static constexpr bool value =
-            regular<I> && weakly_incrementable<I> && compiles<I, check_incr>;
+            regular<I> && weakly_incrementable<I> && compiles<false, I, check_incr>;
     };
     template <typename I>
     constexpr bool incrementable = incrementable_impl<I>::value;
@@ -604,7 +627,7 @@ namespace rah
 
     namespace details
     {
-        template <typename T, typename U>
+        template <typename T, typename U, bool Diagnostic = false>
         struct partially_ordered_with_impl
         {
             using NoRefT = std::remove_reference_t<T>;
@@ -618,77 +641,65 @@ namespace rah
             template <typename X, typename Y>
             using t_greaterequal_u = decltype((std::declval<X>() >= std::declval<Y>()) == true);
 
-            static constexpr bool value =
-                compiles2<NoRefT, NoRefU, t_lesser_u> && compiles2<NoRefT, NoRefU, t_greater_u>
-                && compiles2<NoRefT, NoRefU, t_lesserequal_u>
-                && compiles2<NoRefT, NoRefU, t_greaterequal_u>
-                && compiles2<NoRefU, NoRefT, t_lesser_u> && compiles2<NoRefU, NoRefT, t_greater_u>
-                && compiles2<NoRefU, NoRefT, t_lesserequal_u>
-                && compiles2<NoRefU, NoRefT, t_greaterequal_u>;
-
-            struct Check
-            {
-                static_assert(
-                    compiles2<NoRefT, NoRefU, t_lesser_u>, "compiles2<NoRefT, NoRefU, t_lesser_u>");
-                static_assert(
-                    compiles2<NoRefT, NoRefU, t_greater_u>, "compiles2<NoRefT, NoRefU, t_greater_u>");
-                static_assert(
-                    compiles2<NoRefT, NoRefU, t_lesserequal_u>,
-                    "compiles2<NoRefT, NoRefU, t_lesserequal_u>");
-                static_assert(
-                    compiles2<NoRefT, NoRefU, t_greaterequal_u>,
-                    "compiles2<NoRefT, NoRefU, t_greaterequal_u>");
-            };
+            static constexpr bool value = compiles2<Diagnostic, NoRefT, NoRefU, t_lesser_u>
+                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_greater_u>
+                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_lesserequal_u>
+                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_greaterequal_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_lesser_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_greater_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_lesserequal_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_greaterequal_u>;
         };
         template <typename T, typename U>
         constexpr bool partially_ordered_with = partially_ordered_with_impl<T, U>::value;
 
     } // namespace details
 
+    template <class T, bool Diagnostic = false>
+    struct totally_ordered_impl
+    {
+        static constexpr bool value =
+            is_true_v<Diagnostic, rah::equality_comparable<T>>
+            && details::partially_ordered_with_impl<T, T, Diagnostic>::value;
+    };
+
     template <class T>
-    constexpr bool totally_ordered =
-        rah::equality_comparable<T> && details::partially_ordered_with<T, T>;
+    constexpr bool totally_ordered = totally_ordered_impl<T>::value;
+
+    template <typename I, bool Diagnostic = false>
+    struct forward_iterator_impl
+    {
+        static constexpr bool value =
+            input_iterator<I>
+            && derived_from<details::iterator_category<I>, std::forward_iterator_tag>
+            && incrementable<I> && sentinel_for<I, I>;
+    };
 
     template <typename I>
-    constexpr bool forward_iterator =
-        input_iterator<I> && derived_from<details::iterator_category<I>, std::forward_iterator_tag>
-        && incrementable<I> && sentinel_for<I, I>;
+    constexpr bool forward_iterator = forward_iterator_impl<I>::value;
 
-    template <typename I>
+    template <typename I, bool Diagnostic = false>
     struct bidirectional_iterator_impl
     {
         template <typename U>
-        using check_pre_decr = std::enable_if_t<std::is_same_v<decltype(--std::declval<U&>()), U&>>;
+        static auto check(U i) -> concepts::TypeList<
+            decltype(is_true<Diagnostic, forward_iterator_impl<U, Diagnostic>::value>()),
+            decltype(is_true<
+                     Diagnostic,
+                     derived_from<details::iterator_category<U>, std::bidirectional_iterator_tag>>()),
+            decltype(is_true<Diagnostic, std::is_same_v<decltype(--i), U&>>()),
+            decltype(is_true<Diagnostic, std::is_same_v<decltype(i--), U>>())>;
 
-        template <typename U>
-        using check_post_decr = std::enable_if_t<std::is_same_v<decltype(std::declval<U&>()--), U>>;
+        template <typename U = I>
+        using check_wrapper = decltype(check(std::declval<U>()));
 
-        static constexpr bool value =
-            forward_iterator<I>
-            && derived_from<details::iterator_category<I>, std::bidirectional_iterator_tag>
-            && compiles<I, check_pre_decr> && compiles<I, check_post_decr>;
+        static constexpr bool value = compiles<Diagnostic, I, check_wrapper>;
 
-        struct Check
-        {
-            typename rah::input_iterator_impl<I>::Check input_check;
-            static_assert(input_iterator<I>, "input_iterator<I>");
-            static_assert(
-                derived_from<details::iterator_category<I>, std::forward_iterator_tag>,
-                "is forward_iterator_tag");
-            static_assert(incrementable<I>, "incrementable<I>");
-            static_assert(sentinel_for<I, I>, "sentinel_for<I, I>");
-            static_assert(forward_iterator<I>, "forward_iterator<I>");
-            static_assert(
-                derived_from<details::iterator_category<I>, std::bidirectional_iterator_tag>,
-                "derived_from<details::iterator_category<I>, std::bidirectional_iterator_tag>");
-            static_assert(compiles<I, check_pre_decr>, "compiles<I, check_pre_decr>");
-            static_assert(compiles<I, check_post_decr>, "compiles<I, check_post_decr>");
-        };
     };
     template <typename I>
     constexpr bool bidirectional_iterator = bidirectional_iterator_impl<remove_cvref_t<I>>::value;
 
-    template <typename I>
+    template <typename I, bool Diagnostic = false>
     struct random_access_iterator_impl
     {
         template <typename U>
@@ -716,35 +727,30 @@ namespace rah
             std::is_same_v<decltype(std::declval<U>()[rah::iter_difference_t<U>()]), rah::iter_reference_t<U>>>;
 
         static constexpr bool value =
-            rah::bidirectional_iterator<I>
-            && rah::derived_from<details::iterator_category<I>, std::random_access_iterator_tag>
-            && rah::totally_ordered<I> && rah::sized_sentinel_for<I, I> && compiles<I, addEqual>
-            && compiles<I, add> && compiles<I, add2> && compiles<I, subEqual> && compiles<I, sub>
-            && compiles<I, arr>;
-
-        struct Check
-        {
-            typename rah::bidirectional_iterator_impl<I>::Check bidir_check;
-            static_assert(rah::bidirectional_iterator<I>, "rah::bidirectional_iterator<I>");
-            static_assert(
-                rah::derived_from<details::iterator_category<I>, std::random_access_iterator_tag>,
-                "derived from random_access_iterator_tag");
-            static_assert(rah::equality_comparable<I>, "rah::equality_comparable<I>");
-            typename details::partially_ordered_with_impl<I, I>::Check lkhkh;
-            static_assert(details::partially_ordered_with<I, I>, "details::partially_ordered_with<I, I>");
-            static_assert(rah::totally_ordered<I>, "rah::totally_ordered<I>");
-            static_assert(rah::sized_sentinel_for<I, I>, "rah::sized_sentinel_for<I, I>");
-            static_assert(compiles<I, addEqual>, "compiles<I, addEqual>");
-            static_assert(compiles<I, add>, "compiles<I, add>");
-            static_assert(compiles<I, add2>, "compiles<I, add2>");
-            static_assert(compiles<I, subEqual>, "compiles<I, subEqual>");
-            static_assert(compiles<I, sub>, "compiles<I, sub>");
-            static_assert(compiles<I, arr>, "compiles<I, arr>");
-        };
+            rah::bidirectional_iterator_impl<I, Diagnostic>::value
+            && is_true_v<Diagnostic, rah::derived_from<details::iterator_category<I>, std::random_access_iterator_tag>>
+            && rah::totally_ordered_impl<I, Diagnostic>::value
+            && is_true_v<Diagnostic, rah::sized_sentinel_for<I, I>>
+            && compiles<Diagnostic, I, addEqual> && compiles<Diagnostic, I, add>
+            && compiles<Diagnostic, I, add2> && compiles<Diagnostic, I, subEqual>
+            && compiles<Diagnostic, I, sub> && compiles<Diagnostic, I, arr>;
     };
     template <typename I>
     constexpr bool random_access_iterator = random_access_iterator_impl<remove_cvref_t<I>>::value;
 
+    template <typename I, bool Diagnostic = false>
+    struct contiguous_iterator_impl
+    {
+        static constexpr bool value =
+            rah::random_access_iterator_impl<I, Diagnostic>::value
+            && is_true_v<Diagnostic, rah::derived_from<details::iterator_category<I>, rah::contiguous_iterator_tag>>
+            && is_true_v<Diagnostic, std::is_lvalue_reference_v<rah::iter_reference_t<I>>>
+            && is_true_v<
+                Diagnostic,
+                rah::same_as<rah::iter_value_t<I>, rah::remove_cvref_t<rah::iter_reference_t<I>>>>;
+    };
+    template <typename I>
+    static constexpr bool contiguous_iterator = contiguous_iterator_impl<I>::value;
     template <class T>
     constexpr bool constant_iterator =
         input_iterator<T> && RAH_STD::is_same_v<iter_const_reference_t<T>, iter_reference_t<T>>;
@@ -850,13 +856,35 @@ namespace rah
     template <class T>
     constexpr bool forward_range = range<T> && forward_iterator<RAH_NAMESPACE::iterator_t<T>>;
 
-    template <class T>
-    constexpr bool bidirectional_range =
-        range<T> && bidirectional_iterator<RAH_NAMESPACE::iterator_t<T>>;
+    template <class T, bool Diagnostic = false>
+    struct bidirectional_range_impl
+    {
+        template <typename U = T>
+        using check = concepts::TypeList<
+            decltype(is_true<Diagnostic, range_impl<U, Diagnostic>::value>()),
+            decltype(is_true<
+                     Diagnostic,
+                     bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<U>, Diagnostic>::value>())>;
+
+        static constexpr bool value = compiles<Diagnostic, T, check>;
+    };
 
     template <class T>
-    constexpr bool random_access_range =
-        range<T> && random_access_iterator<RAH_NAMESPACE::iterator_t<T>>;
+    constexpr bool bidirectional_range = bidirectional_range_impl<T>::value;
+
+    template <class T, bool Diagnostic = false>
+    struct random_access_range_impl
+    {
+        template <typename U>
+        using has_random_access_iterator =
+            std::enable_if_t<random_access_iterator_impl<RAH_NAMESPACE::iterator_t<U>, Diagnostic>::value>;
+
+        static constexpr bool value =
+            range_impl<T, Diagnostic>::value && compiles<Diagnostic, T, has_random_access_iterator>;
+    };
+
+    template <class T>
+    constexpr bool random_access_range = random_access_range_impl<T>::value;
 
     template <typename R, typename = int>
     struct has_ranges_data
@@ -870,8 +898,24 @@ namespace rah
         static constexpr bool value = true;
     };
 
+    template <typename R, bool Diagnostic = false>
+    struct contiguous_range_impl
+    {
+        template <typename T>
+        static auto requ(T& t) -> concepts::TypeList<std::enable_if_t<
+            std::is_same_v<decltype(rah::data(t)), std::add_pointer_t<rah::range_reference_t<T>>>>>;
+
+        template <typename U>
+        using check = concepts::TypeList<
+            std::enable_if_t<random_access_range_impl<U, Diagnostic>::value>,
+            std::enable_if_t<rah::contiguous_iterator_impl<rah::iterator_t<U>, Diagnostic>::value>,
+            decltype(requ(std::declval<U&>()))>;
+
+        static constexpr bool value = compiles<Diagnostic, R, check>;
+    };
+
     template <class R>
-    constexpr bool contiguous_range = random_access_range<R> && has_ranges_data<R>::value;
+    constexpr bool contiguous_range = contiguous_range_impl<R>::value;
 
     template <class T>
     constexpr bool constant_range =

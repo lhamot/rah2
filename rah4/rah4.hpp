@@ -489,12 +489,15 @@ namespace RAH_NAMESPACE
             count_ -= off;
             return this;
         }
+        template <typename U = I, std::enable_if_t<rah::bidirectional_iterator<U>>* = nullptr>
         counted_iterator& operator--()
         {
             --iter_;
             ++count_;
             return *this;
         }
+        template <typename U = I, std::enable_if_t<rah::bidirectional_iterator<U>>* = nullptr>
+        RAH_POST_DECR;
         auto operator-(counted_iterator const& r) const
         {
             return r.count_ - count_;
@@ -515,7 +518,17 @@ namespace RAH_NAMESPACE
         {
             return it.count_ == 0;
         }
+        friend bool operator<(counted_iterator const& it1, counted_iterator const& it2)
+        {
+            return it1.count_ < it2.count_;
+        }
     };
+
+    template <typename I>
+    auto make_counted_iterator(I it, size_t count)
+    {
+        return counted_iterator<I>{std::move(it), count};
+    }
 
     namespace views
     {

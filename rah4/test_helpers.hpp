@@ -18,7 +18,7 @@ class test_view : public rah::view_interface<test_view<Sent, Cat>>
     int step_ = 1;
 
 public:
-    class iterator : public rah::iterator_facade<iterator, rah::sentinel_iterator, int, Cat>
+    class iterator : public rah::iterator_facade<iterator, rah::sentinel_iterator, int&, Cat>
     {
         int val_ = int();
         int step_ = int(1);
@@ -73,7 +73,11 @@ public:
             val_ -= int(step_ * value);
             return *this;
         }
-        auto operator*() const
+        auto& operator*() const
+        {
+            return val_;
+        }
+        auto& operator*()
         {
             return val_;
         }
@@ -185,7 +189,7 @@ static_assert(
 static_assert(rah::input_range<BidirCommonView>, "Should be input");
 static_assert(not rah::output_range<BidirCommonView>, "Should be input");
 static_assert(rah::forward_range<BidirCommonView>, "Should be Forward");
-static_assert(rah::bidirectional_range<BidirCommonView>, "Should not be bidirectional");
+STATIC_ASSERT((rah::bidirectional_range_impl<BidirCommonView, true>::value));
 static_assert(!rah::random_access_range<BidirCommonView>, "Should not be random");
 static_assert(not rah::contiguous_range<BidirCommonView>, "Should not be contiguous");
 
@@ -200,10 +204,9 @@ using It = rah::iterator_t<RandomCommonView>;
 using cat = rah::range_iter_categ_t<RandomCommonView>;
 static_assert(rah::forward_iterator<It>, "");
 static_assert(std::is_same_v<decltype(--std::declval<It>()), It&>, "");
+STATIC_ASSERT((rah::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(rah::bidirectional_range<RandomCommonView>, "Should be bidirectional");
 using RandomCommonViewIter = RAH_NAMESPACE::iterator_t<RandomCommonView>;
-auto tutu = rah::random_access_iterator_impl<RandomCommonViewIter>::Check{};
-STATIC_ASSERT(rah::random_access_iterator<RAH_NAMESPACE::iterator_t<RandomCommonView>>);
 static_assert(rah::random_access_range<RandomCommonView>, "Should be random");
 static_assert(not rah::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
@@ -214,9 +217,10 @@ static_assert(
 static_assert(rah::input_range<ContiCommonView>, "Should be input");
 static_assert(not rah::output_range<ContiCommonView>, "Should be input");
 static_assert(rah::forward_range<ContiCommonView>, "Should be Forward");
-static_assert(rah::bidirectional_range<ContiCommonView>, "Should not be bidirectional");
-static_assert(rah::random_access_range<ContiCommonView>, "Should not be random");
-static_assert(rah::contiguous_range<ContiCommonView>, "Should not be contiguous");
+static_assert(rah::bidirectional_range<ContiCommonView>, "Should be bidirectional");
+static_assert(rah::random_access_range<ContiCommonView>, "Should be random");
+STATIC_ASSERT((rah::contiguous_range_impl<ContiCommonView, true>::value));
+static_assert(rah::contiguous_range<ContiCommonView>, "Should be contiguous");
 
 template <typename R>
 constexpr bool is_input_common =
@@ -260,12 +264,12 @@ template <class T>
 struct check_bidirectional_range
 {
     STATIC_ASSERT(rah::range<T>);
-    typename rah::bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<T>>::Check kjghjhg;
+    STATIC_ASSERT((rah::bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<T>, true>::value));
 };
 
 template <class T>
 struct check_random_access_range
 {
     STATIC_ASSERT(rah::range<T>);
-    typename rah::random_access_iterator_impl<RAH_NAMESPACE::iterator_t<T>>::Check kjghjhg;
+    STATIC_ASSERT((rah::random_access_iterator_impl<RAH_NAMESPACE::iterator_t<T>, true>::value));
 };

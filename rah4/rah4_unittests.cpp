@@ -163,31 +163,83 @@ struct Add
     }
 };
 
+#define CHECK_EQUAL(A, B) assert(A == B)
+
+auto inputSentView = make_test_view<Sentinel, std::input_iterator_tag>();
+auto fwdSentView = make_test_view<Sentinel, std::forward_iterator_tag>();
+auto fwdCommonView = make_test_view<Common, std::forward_iterator_tag>();
+auto bidirSentView = make_test_view<Sentinel, std::bidirectional_iterator_tag>();
+auto bidirCommonView = make_test_view<Common, std::bidirectional_iterator_tag>();
+auto rdmSentView = make_test_view<Sentinel, std::random_access_iterator_tag>();
+auto rdmCommonView = make_test_view<Common, std::random_access_iterator_tag>();
+auto contiSentView = make_test_view<Sentinel, rah::contiguous_iterator_tag>();
+auto contiCommonView = make_test_view<Common, rah::contiguous_iterator_tag>();
+
+void test_counted_iterator()
+{
+    {
+        /// [counted_iterator]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = rah::views::counted(in.begin(), 5);
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        /// [counted_iterator]
+    }
+
+    {
+        auto iter = rah::make_counted_iterator(begin(inputSentView), 10);
+        STATIC_ASSERT(rah::input_iterator<decltype(iter)>);
+        STATIC_ASSERT(not rah::forward_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(fwdSentView), 10);
+        STATIC_ASSERT(rah::forward_iterator<decltype(iter)>);
+        STATIC_ASSERT(not rah::bidirectional_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(fwdCommonView), 10);
+        STATIC_ASSERT(rah::forward_iterator<decltype(iter)>);
+        STATIC_ASSERT(not rah::bidirectional_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(bidirSentView), 10);
+        STATIC_ASSERT((rah::bidirectional_iterator_impl<decltype(iter), true>::value));
+        STATIC_ASSERT(not rah::random_access_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(bidirCommonView), 10);
+        constexpr auto fsdkjfgqs = rah::bidirectional_iterator_impl<decltype(iter), true>::value;
+        STATIC_ASSERT(fsdkjfgqs);
+        STATIC_ASSERT(rah::bidirectional_iterator<decltype(iter)>);
+        STATIC_ASSERT(not rah::random_access_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(rdmSentView), 10);
+        // STATIC_ASSERT(rah::totally_ordered<decltype(iter)>);
+        STATIC_ASSERT((rah::random_access_iterator_impl<decltype(iter), true>::value));
+        STATIC_ASSERT(rah::random_access_iterator<decltype(iter)>);
+        STATIC_ASSERT(not rah::contiguous_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(rdmCommonView), 10);
+        STATIC_ASSERT(rah::random_access_iterator<decltype(iter)>);
+        STATIC_ASSERT(not rah::contiguous_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(contiSentView), 10);
+        STATIC_ASSERT((rah::contiguous_iterator_impl<decltype(iter), true>::value));
+        STATIC_ASSERT(rah::contiguous_iterator<decltype(iter)>);
+    }
+    {
+        auto iter = rah::make_counted_iterator(begin(contiCommonView), 10);
+        STATIC_ASSERT(rah::contiguous_iterator<decltype(iter)>);
+    }
+}
+
 int main()
 {
-    /*{
-    // Benchmark
-    auto start = clock();
-    using namespace rah::views;
-    auto range = irange<size_t>(0, 10'000'000) | filter([](auto i) { return i % 2 == 0; })
-    | transform([](auto i) { return i * 2; })
-    | stride(2);
-    auto result = rah::reduce(range, 0llu, [](auto a, auto b) { return a + b; });
-    printf("%zu\n", result);
-    auto end = clock();
-    printf("Elapsed time : %f\n", float(end - start) / CLOCKS_PER_SEC);
-    if (end - start != 0)
-    return 0;
-    }*/
-
-    /*{
-
-        for (int i : rah::views::all(std::vector<int>{ 0, 1, 2, 3, 4, 5 }))
-        {
-            std::cout << i;
-        }
-        std::cout << std::endl;
-    }*/
+    test_counted_iterator();
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};
@@ -254,11 +306,12 @@ int main()
         assert(result == std::vector<int>());
         /// [empty]
         // rah::bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>>::Check();
-        rah::random_access_iterator_impl<RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>>::Check();
+        STATIC_ASSERT((rah::random_access_iterator_impl<
+                       RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>,
+                       true>::value));
         static_assert(
             rah::random_access_range<rah::views::empty_view<int>>, "Should be random_access_range");
-        static_assert(
-            rah::contiguous_range<rah::views::empty_view<int>>, "Should be contiguous_range");
+        STATIC_ASSERT((rah::contiguous_range_impl<rah::views::empty_view<int>, true>::value));
     }
     {
         /// [single]
@@ -959,16 +1012,6 @@ int main()
         std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [counted_pipeable]
-    }
-
-    {
-        /// [counted_iterator]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah::views::counted(in.begin(), 5);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
-        /// [counted_iterator]
     }
 
     // Test all
