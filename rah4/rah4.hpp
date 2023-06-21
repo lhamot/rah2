@@ -399,7 +399,6 @@ namespace RAH_NAMESPACE
         DeleteCheck<iterator_facade<I, S, R, RAH_STD::random_access_iterator_tag>> deleteCheck;
         using iterator_category = RAH_STD::random_access_iterator_tag;
 
-#if !RAH_CPP20
         friend bool operator<=(I const& it1, I const& it2)
         {
             return (it1 < it2) || (it1 == it2);
@@ -447,7 +446,6 @@ namespace RAH_NAMESPACE
             copy += index;
             return *copy;
         }
-#endif
     };
 
     template <typename I, typename S, typename R>

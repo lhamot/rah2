@@ -207,7 +207,7 @@ static_assert(std::is_same_v<decltype(--std::declval<It>()), It&>, "");
 STATIC_ASSERT((rah::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(rah::bidirectional_range<RandomCommonView>, "Should be bidirectional");
 using RandomCommonViewIter = RAH_NAMESPACE::iterator_t<RandomCommonView>;
-static_assert(rah::random_access_range<RandomCommonView>, "Should be random");
+STATIC_ASSERT((rah::random_access_range_impl<RandomCommonView, true>::value));
 static_assert(not rah::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
 // contiguous
