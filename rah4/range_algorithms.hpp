@@ -466,17 +466,6 @@ namespace rah
             RAH_STD::forward<P>(pred));
     }
 
-    // *************************************** size ***************************************************
-
-    /// @brief Get the size of range
-    ///
-    /// @snippet test.cpp rah::size
-    template <typename R>
-    auto size(R&& range)
-    {
-        return RAH_STD::distance(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
-    }
-
     // *************************************** equal **************************************************
 
     /// @brief Determines if two sets of elements are the same

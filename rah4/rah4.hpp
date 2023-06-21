@@ -877,7 +877,7 @@ namespace RAH_NAMESPACE
             {
                 return RAH_NAMESPACE::empty(*ref_);
             }
-            bool size() const
+            size_t size() const
             {
                 return RAH_NAMESPACE::size(*ref_);
             }
@@ -938,7 +938,7 @@ namespace RAH_NAMESPACE
             {
                 return RAH_NAMESPACE::empty(range_);
             }
-            bool size() const
+            size_t size() const
             {
                 return RAH_NAMESPACE::size(range_);
             }
@@ -2251,8 +2251,8 @@ namespace RAH_NAMESPACE
             template <typename Function, typename Tuple>
             auto apply(Function&& f, Tuple&& t)
             {
-                static constexpr auto size = std::tuple_size<Tuple>::value;
-                return apply(f, t, std::make_index_sequence<size>{});
+                static constexpr auto tup_size = std::tuple_size<Tuple>::value;
+                return apply(f, t, std::make_index_sequence<tup_size>{});
             }
 
         } // namespace details
@@ -3620,11 +3620,11 @@ namespace RAH_NAMESPACE
             return slice_view<decltype(ref)>{std::move(ref), begin_idx, end_idx};
         }
 
-        inline auto slice(intptr_t beg, intptr_t end)
+        inline auto slice(intptr_t beg, intptr_t sent)
         {
             return make_pipeable(
                 [=](auto&& range)
-                { return slice(RAH_STD::forward<decltype(range)>(range), beg, end); });
+                { return slice(RAH_STD::forward<decltype(range)>(range), beg, sent); });
         }
 
         // ***************************************** concat ***********************************************
@@ -3761,6 +3761,11 @@ namespace RAH_NAMESPACE
         auto begin(R&& r)
         {
             return r.begin();
+        }
+        template <typename R, std::enable_if_t<rah::enable_view<std::remove_reference_t<R>>>* = nullptr>
+        auto end(R&& r)
+        {
+            return r.end();
         }
     } // namespace views
 

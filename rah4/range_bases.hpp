@@ -140,6 +140,10 @@ namespace rah
     MAKE_CONCEPT(has_begin_ADL, true, (begin(details::declval<T>())));
     MAKE_CONCEPT(has_end_member, true, (details::declval<T>().end()));
     MAKE_CONCEPT(has_end_ADL, true, (end(details::declval<T>())));
+    MAKE_CONCEPT(has_rbegin_member, true, details::declval<std::remove_reference_t<T>>().rbegin())
+    MAKE_CONCEPT(has_rbegin_ADL, true, rbegin(details::declval<std::remove_reference_t<T>>()))
+    MAKE_CONCEPT(has_rend_member, true, details::declval<std::remove_reference_t<T>>().rend())
+    MAKE_CONCEPT(has_rend_ADL, true, rend(details::declval<std::remove_reference_t<T>>()))
 
     namespace details
     {
@@ -169,65 +173,73 @@ namespace rah
                 return begin(range);
             }
         };
+
+        struct end_impl
+        {
+            template <class T, size_t N>
+            T* operator()(T (&array)[N]) const noexcept
+            {
+                return array + N;
+            }
+
+            template <class T, size_t N>
+            T const* operator()(T const (&array)[N]) const noexcept
+            {
+                return array + N;
+            }
+
+            template <typename R, std::enable_if_t<has_end_member<R>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return range.end();
+            }
+
+            template <typename R, std::enable_if_t<not has_end_member<R> and has_end_ADL<R>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return end(range);
+            }
+        };
+
+        struct cbegin_impl
+        {
+            template <class T, size_t N>
+            T const* operator()(T const (&array)[N]) const
+            {
+                return array;
+            }
+
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.begin();
+            }
+        };
+
+        struct cend_impl
+        {
+            template <class T, size_t N>
+            T const* operator()(T const (&array)[N]) const noexcept
+            {
+                return array + N;
+            }
+
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.end();
+            }
+        };
     } // namespace details
 
-    inline namespace begin_ns
+    inline namespace customization_point_objects
     {
         constexpr auto begin = details::begin_impl();
-    }
+        constexpr auto end = details::end_impl();
+        constexpr auto cbegin = details::cbegin_impl();
+        constexpr auto cend = details::cend_impl();
 
-    template <class T, size_t N>
-    T* end(T (&array)[N]) noexcept
-    {
-        return array + N;
-    }
-
-    template <class T, size_t N>
-    T const* end(T const (&array)[N]) noexcept
-    {
-        return array + N;
-    }
-
-    template <typename R, std::enable_if_t<has_end_member<R>>* = nullptr>
-    auto end(R&& range)
-    {
-        return range.end();
-    }
-
-    template <typename R, std::enable_if_t<not has_end_member<R> and has_end_ADL<R>>* = nullptr>
-    auto end(R&& range)
-    {
-        return end(range);
-    }
-
-    template <class T, size_t N>
-    T const* cbegin(T const (&array)[N])
-    {
-        return array;
-    }
-
-    template <typename R>
-    auto cbegin(R const& range)
-    {
-        return range.begin();
-    }
-
-    template <class T, size_t N>
-    T const* cend(T const (&array)[N]) noexcept
-    {
-        return array + N;
-    }
-
-    template <typename R>
-    auto cend(R const& range)
-    {
-        return range.end();
-    }
-
-    MAKE_CONCEPT(has_rbegin_member, true, details::declval<std::remove_reference_t<T>>().rbegin())
-    MAKE_CONCEPT(has_rbegin_ADL, true, rbegin(details::declval<std::remove_reference_t<T>>()))
-    MAKE_CONCEPT(has_rend_member, true, details::declval<std::remove_reference_t<T>>().rend())
-    MAKE_CONCEPT(has_rend_ADL, true, rend(details::declval<std::remove_reference_t<T>>()))
+    } // namespace customization_point_objects
 
     template <typename R, bool Diagnostic = false>
     struct range_impl
@@ -244,21 +256,6 @@ namespace rah
 
     template <typename R>
     constexpr bool range = range_impl<R>::value;
-
-    template <typename R, typename = std::enable_if_t<has_rbegin_member<remove_cvref_t<R>>>>
-    auto rbegin(R&& range)
-    {
-        return range.rbegin();
-    }
-
-    template <
-        typename R,
-        typename = std::enable_if_t<not has_rbegin_member<remove_cvref_t<R>>>,
-        typename = std::enable_if_t<has_rbegin_ADL<remove_cvref_t<R>>>>
-    auto rbegin(R&& range) -> decltype(rbegin(range))
-    {
-        return rbegin(range);
-    }
 
     // To mark a range as an iterator/sentinel range, event if begin/end have the same type.
     // Since begin/end can't have a different type in C++ pre-17
@@ -279,89 +276,6 @@ namespace rah
 
     template <class T>
     constexpr bool common_range = range<T> && RAH_STD::is_same_v<iterator_t<T>, sentinel_t<T>>;
-
-    template <
-        typename R,
-        typename = std::enable_if_t<not has_rbegin_member<remove_cvref_t<R>>>,
-        typename = std::enable_if_t<not has_rbegin_ADL<remove_cvref_t<R>>>,
-        typename = std::enable_if_t<common_range<R>>>
-    auto rbegin(R&& range)
-    {
-        return std::make_reverse_iterator(RAH_NAMESPACE::end(range));
-    }
-
-    template <typename R, typename = std::enable_if_t<has_rend_member<remove_cvref_t<R>>>>
-    auto rend(R&& range)
-    {
-        return range.rend();
-    }
-
-    template <
-        typename R,
-        typename = std::enable_if_t<not has_rend_member<remove_cvref_t<R>>>,
-        typename = std::enable_if_t<has_rend_ADL<remove_cvref_t<R>>>>
-    auto rend(R&& range) -> decltype(rend(range))
-    {
-        return rend(range);
-    }
-
-    template <
-        typename R,
-        typename = std::enable_if_t<not has_rend_member<remove_cvref_t<R>>>,
-        typename = std::enable_if_t<not has_rend_ADL<remove_cvref_t<R>>>,
-        typename = std::enable_if_t<common_range<R>>>
-    auto rend(R&& range)
-    {
-        return std::make_reverse_iterator(RAH_NAMESPACE::begin(range));
-    }
-
-    template <typename R>
-    auto crbegin(R const& range) -> decltype(range.crbegin())
-    {
-        return range.crbegin();
-    }
-
-    template <typename R>
-    auto crend(R const& range) -> decltype(range.crend())
-    {
-        return range.crend();
-    }
-
-    template <class T, size_t N>
-    size_t size(T const (&)[N]) noexcept
-    {
-        return N;
-    }
-
-    template <typename R>
-    auto size(R const& range) -> decltype(range.size())
-    {
-        return range.size();
-    }
-
-    template <typename R>
-    auto ssize(R const& range) -> decltype(range.ssize())
-    {
-        return range.ssize();
-    }
-
-    template <typename R>
-    auto empty(R const& range) -> decltype(range.empty())
-    {
-        return range.empty();
-    }
-
-    template <typename R>
-    auto data(R&& range) -> decltype(range.data())
-    {
-        return range.data();
-    }
-
-    template <typename R>
-    auto cdata(R const& range) -> decltype(range.cdata())
-    {
-        return range.cdata();
-    }
 
     // *************************** iterator concepts **********************************************
 
@@ -770,6 +684,157 @@ namespace rah
     {
         return RAH_STD::move(*t);
     }
+
+    // **************************** More Range access *********************************************
+
+    namespace details
+    {
+        struct rbegin_impl
+        {
+            template <typename R, typename = std::enable_if_t<has_rbegin_member<remove_cvref_t<R>>>>
+            auto operator()(R&& range) const
+            {
+                return range.rbegin();
+            }
+
+            template <
+                typename R,
+                typename = std::enable_if_t<not has_rbegin_member<remove_cvref_t<R>>>,
+                typename = std::enable_if_t<has_rbegin_ADL<remove_cvref_t<R>>>>
+            auto operator()(R&& range) const
+            {
+                return rbegin(range);
+            }
+
+            template <
+                typename R,
+                typename = std::enable_if_t<not has_rbegin_member<remove_cvref_t<R>>>,
+                typename = std::enable_if_t<not has_rbegin_ADL<remove_cvref_t<R>>>,
+                typename = std::enable_if_t<common_range<R>>,
+                typename = std::enable_if_t<bidirectional_iterator<iterator_t<R>>>>
+            auto operator()(R&& range) const
+            {
+                return std::make_reverse_iterator(RAH_NAMESPACE::end(range));
+            }
+        };
+
+        struct rend_impl
+        {
+            template <typename R, typename = std::enable_if_t<has_rend_member<remove_cvref_t<R>>>>
+            auto operator()(R&& range) const
+            {
+                return range.rend();
+            }
+
+            template <
+                typename R,
+                typename = std::enable_if_t<not has_rend_member<remove_cvref_t<R>>>,
+                typename = std::enable_if_t<has_rend_ADL<remove_cvref_t<R>>>>
+            auto operator()(R&& range) const
+            {
+                return rend(range);
+            }
+
+            template <
+                typename R,
+                typename = std::enable_if_t<not has_rend_member<remove_cvref_t<R>>>,
+                typename = std::enable_if_t<not has_rend_ADL<remove_cvref_t<R>>>,
+                typename = std::enable_if_t<common_range<R>>,
+                typename = std::enable_if_t<bidirectional_iterator<iterator_t<R>>>>
+            auto operator()(R&& range) const
+            {
+                return std::make_reverse_iterator(RAH_NAMESPACE::begin(range));
+            }
+        };
+
+        struct crbegin_impl
+        {
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.crbegin();
+            }
+        };
+        struct crend_impl
+        {
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.crend();
+            }
+        };
+
+        struct size_impl
+        {
+            template <class T, size_t N>
+            size_t operator()(T const (&)[N]) const noexcept
+            {
+                return N;
+            }
+
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.size();
+            }
+
+            /*template <typename R>
+            auto size(R&& range)
+            {
+                return RAH_STD::distance(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
+            }*/
+        };
+
+        struct ssize_impl
+        {
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.ssize();
+            }
+        };
+
+        struct empty_impl
+        {
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.empty();
+            }
+        };
+
+        struct data_impl
+        {
+            template <typename R>
+            auto operator()(R&& range) const
+            {
+                return range.data();
+            }
+        };
+
+        struct cdata_impl
+        {
+            template <typename R>
+            auto operator()(R const& range) const
+            {
+                return range.cdata();
+            }
+        };
+
+    } // namespace details
+
+    inline namespace customization_point_objects
+    {
+        constexpr auto rbegin = details::rbegin_impl();
+        constexpr auto rend = details::rend_impl();
+        constexpr auto crbegin = details::crbegin_impl();
+        constexpr auto crend = details::crend_impl();
+        constexpr auto size = details::size_impl();
+        constexpr auto ssize = details::ssize_impl();
+        constexpr auto empty = details::empty_impl();
+        constexpr auto data = details::data_impl();
+        constexpr auto cdata = details::cdata_impl();
+    } // namespace customization_point_objects
 
     // **************************** range traits **************************************************
 
