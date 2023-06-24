@@ -995,14 +995,9 @@ namespace rah
     template <class T, bool Diagnostic = false>
     struct bidirectional_range_impl
     {
-        template <typename U = T>
-        using check = concepts::TypeList<
-            decltype(is_true<Diagnostic, range_impl<U, Diagnostic>::value>()),
-            decltype(is_true<
-                     Diagnostic,
-                     bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<U>, Diagnostic>::value>())>;
-
-        static constexpr bool value = compiles<Diagnostic, T, check>;
+        static constexpr bool value =
+            is_true_v<Diagnostic, range_impl<T, Diagnostic>::value>
+            && is_true_v<Diagnostic, bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<T>, Diagnostic>::value>;
     };
 
     template <class T>
@@ -1275,6 +1270,7 @@ namespace rah
     {
         I iterator_;
         S sentinel_;
+        using iter_cat = details::iterator_category<I>;
 
     public:
         subrange() = default;
@@ -1291,6 +1287,13 @@ namespace rah
         S end() const
         {
             return sentinel_;
+        }
+        template <
+            typename Cat = iter_cat,
+            std::enable_if_t<rah::derived_from<Cat, rah::contiguous_iterator_tag>>* = nullptr>
+        auto data()
+        {
+            return &(*iterator_);
         }
     };
 

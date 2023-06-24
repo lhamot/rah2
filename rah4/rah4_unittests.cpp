@@ -639,6 +639,88 @@ void test_split_view()
     check_all_cat<SentinelPolicy::AllSentinel, rah::input_iterator_tag>(make_split_view());
 }
 
+struct make_counted_view
+{
+    std::array<int, 2> delim = {3, 4};
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        auto r = make_test_view<CS, Tag>();
+        return rah::views::counted(r.begin(), 8);
+    }
+};
+void test_counted_view()
+{
+    /// [counted]
+    std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    auto range = rah::views::counted(in.begin(), 5);
+    std::vector<int> out;
+    std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+    assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+    /// [counted]
+
+    check_all_cat<SentinelPolicy::CommonIfSizedRandomAccess, rah::contiguous_iterator_tag>(
+        make_counted_view());
+}
+
+struct make_common_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::common(make_test_view<CS, Tag>());
+    }
+};
+void test_common_view()
+{
+    /// [rah::views::common]
+    auto c = rah::views::iota(0, 5) | rah::views::filter([](auto i) { return i % 2 == 0; });
+    std::vector<int> result;
+    for (auto&& i : c | rah::views::common())
+        result.push_back(i);
+    assert(result == std::vector<int>({0, 2, 4}));
+    /// [rah::views::common]
+
+    auto maker = make_common_view();
+    using CapCat = rah::contiguous_iterator_tag;
+    constexpr auto SentPolicy = SentinelPolicy::AllCommon;
+    {
+        auto r1 = maker.make<Sentinel, std::input_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r1)>();
+        check_sent<Sentinel, SentPolicy>(r1);
+        auto r2 = maker.make<Sentinel, std::forward_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
+        check_sent<Sentinel, SentPolicy>(r2);
+        auto r3 = maker.make<Sentinel, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Sentinel, SentPolicy>(r3);
+        auto r4 = maker.make<Sentinel, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Sentinel, SentPolicy>(r4);
+        auto r5 = maker.make<Sentinel, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::contiguous_iterator_tag, decltype(r5)>();
+        check_sent<Sentinel, SentPolicy>(r5);
+    }
+    {
+        // A common input range can't exist since it can't compare its begin ot its end
+        //auto r1 = maker.template make<Common, std::input_iterator_tag>();
+        //check_cat<std::input_iterator_tag, CapCat>(r1);
+        //check_sent<Common, SentPolicy>(r1);
+        auto r2 = maker.make<Common, std::forward_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
+        check_sent<Common, SentPolicy>(r2);
+        auto r3 = maker.make<Common, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Common, SentPolicy>(r3);
+        auto r4 = maker.make<Common, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Common, SentPolicy>(r4);
+        auto r5 = maker.make<Common, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::contiguous_iterator_tag, decltype(r5)>();
+        check_sent<Common, SentPolicy>(r5);
+    }
+}
+
 int main()
 {
     test_counted_iterator();
@@ -654,6 +736,9 @@ int main()
     test_take_view();
     test_drop_view();
     test_drop_while_view();
+    test_join_view();
+    test_split_view();
+    test_counted_view();
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};
@@ -1128,16 +1213,6 @@ int main()
     }
 
     {
-        /// [counted]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah::views::counted(in.begin(), 5);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
-        /// [counted]
-    }
-
-    {
         /// [unbounded]
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah::views::unbounded(in.begin());
@@ -1363,15 +1438,6 @@ int main()
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
 
-    {
-        /// [rah::views::common]
-        auto c = rah::views::iota(0, 5) | rah::views::filter([](auto i) { return i % 2 == 0; });
-        std::vector<int> result;
-        for (auto&& i : c | rah::views::common())
-            result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4}));
-        /// [rah::views::common]
-    }
     {
         auto range = rah::views::generate_n(5, []() { return rand(); })
                      | rah::views::filter([](auto&& val) { return val % 2 == 0; });

@@ -279,6 +279,7 @@ struct check_cat_impl<std::input_iterator_tag, R>
 template <typename R>
 struct check_cat_impl<std::forward_iterator_tag, R>
 {
+    STATIC_ASSERT((rah::forward_iterator_impl<rah::iterator_t<R>, true>::value));
     STATIC_ASSERT(rah::forward_range<R>);
     STATIC_ASSERT(not rah::bidirectional_range<R>);
 };

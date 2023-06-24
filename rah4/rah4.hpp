@@ -935,9 +935,17 @@ namespace RAH_NAMESPACE
             {
                 return range_;
             }
+            auto begin()
+            {
+                return range_.begin();
+            }
             auto begin() const
             {
                 return range_.begin();
+            }
+            auto end()
+            {
+                return range_.end();
             }
             auto end() const
             {
@@ -1756,95 +1764,17 @@ namespace RAH_NAMESPACE
 
         // ******************************************* common_view ********************************
 
-        template <typename I, typename S>
-        class common_iterator
-            : public iterator_facade<common_iterator<I, S>, void, iter_reference_t<I>, std::forward_iterator_tag>
-        {
-            static_assert(
-                RAH_NAMESPACE::input_or_output_iterator<I>,
-                "RAH_NAMESPACE::input_or_output_iterator<I>");
-            static_assert(!RAH_NAMESPACE::same_as<I, S>, "!RAH_NAMESPACE::same_as<I, S>");
-            static_assert(RAH_NAMESPACE::copyable<I>, "RAH_NAMESPACE::copyable<I>");
-            mpark::variant<I, S> var_;
-
-        public:
-            explicit common_iterator(I it)
-                : var_(std::move(it))
-            {
-            }
-            explicit common_iterator(S sent)
-                : var_(std::move(sent))
-            {
-            }
-
-            iter_reference_t<I> operator*()
-            {
-                return *mpark::get<I>(var_);
-            }
-
-            common_iterator& operator++()
-            {
-                ++mpark::get<I>(var_);
-                return *this;
-            }
-            RAH_POST_INCR
-            template <typename It = I, std::enable_if_t<RAH_NAMESPACE::equality_comparable<It>>* = nullptr>
-            bool operator==(common_iterator const& it) const
-            {
-                if (mpark::holds_alternative<S>(it.var_))
-                {
-                    if (mpark::holds_alternative<S>(var_))
-                        return true;
-                    else
-                        return mpark::get<I>(var_) == mpark::get<S>(it.var_);
-                }
-                else if (mpark::holds_alternative<S>(var_))
-                    return mpark::get<I>(it.var_) == mpark::get<S>(var_);
-                else
-                    return mpark::get<I>(var_) == mpark::get<I>(it.var_);
-            }
-
-            template <typename It = I, std::enable_if_t<not RAH_NAMESPACE::equality_comparable<It>>* = nullptr>
-            bool operator==(common_iterator const& it) const
-            {
-                if (mpark::holds_alternative<S>(it.var_))
-                {
-                    if (mpark::holds_alternative<S>(var_))
-                        return true;
-                    else
-                        return mpark::get<I>(var_) == mpark::get<S>(it.var_);
-                }
-                else if (mpark::holds_alternative<S>(var_))
-                    return mpark::get<S>(var_) == mpark::get<I>(it.var_);
-                else
-                {
-                    assert(false && "Can't compare this type of iterator");
-                    return false;
-                }
-            }
-
-            auto operator-(common_iterator const& it)
-            {
-                if (mpark::holds_alternative<S>(it.var_))
-                {
-                    if (mpark::holds_alternative<S>(var_))
-                        return 0;
-                    else
-                        return mpark::get<0>(var_) - mpark::get<1>(it.var_);
-                }
-                else if (mpark::holds_alternative<S>(var_))
-                    return mpark::get<1>(var_) - mpark::get<0>(it.var_);
-                else
-                    return mpark::get<0>(var_) - mpark::get<0>(it.var_);
-            }
-        };
-
         template <typename R>
         class common_view : public view_interface<common_view<R>>
         {
             R base_;
-            using iterator = iterator_t<R>;
-            using sentinel = sentinel_t<R>;
+            using base_iterator = iterator_t<R>;
+            using base_sentinel = sentinel_t<R>;
+            using input_iter_cat = range_iter_categ_t<R>;
+            using Cat = std::conditional_t<
+                std::is_same_v<input_iter_cat, std::input_iterator_tag>,
+                std::forward_iterator_tag,
+                input_iter_cat>;
 
             static_assert(not common_range<R>, "expect not common_range<R>");
             static_assert(RAH_NAMESPACE::copyable<iterator_t<R>>, "expect copyable<iterator_t<R>>");
@@ -1854,14 +1784,190 @@ namespace RAH_NAMESPACE
                 : base_(std::move(r))
             {
             }
+
+            class common_iterator
+                : public iterator_facade<common_iterator, void, iter_reference_t<base_iterator>, Cat>
+            {
+                static_assert(
+                    RAH_NAMESPACE::input_or_output_iterator<base_iterator>,
+                    "RAH_NAMESPACE::input_or_output_iterator<I>");
+                static_assert(
+                    !RAH_NAMESPACE::same_as<base_iterator, base_sentinel>,
+                    "!RAH_NAMESPACE::same_as<I, S>");
+                static_assert(RAH_NAMESPACE::copyable<base_iterator>, "RAH_NAMESPACE::copyable<I>");
+                mpark::variant<base_iterator, base_sentinel> var_;
+
+                struct lesser
+                {
+                    auto operator()(base_iterator const& it1, base_iterator const& it2)
+                    {
+                        return it1 < it2;
+                    }
+                    auto operator()(base_iterator const&, base_sentinel const&)
+                    {
+                        return true;
+                    }
+                    auto operator()(base_sentinel const&, base_iterator const&)
+                    {
+                        return false;
+                    }
+                    auto operator()(base_sentinel const&, base_sentinel const&)
+                    {
+                        return false;
+                    }
+                };
+
+                struct sub
+                {
+                    auto operator()(base_iterator const& it1, base_iterator const& it2)
+                    {
+                        return it1 - it2;
+                    }
+                    auto operator()(base_iterator const&, base_sentinel const&)
+                    {
+                        assert("Can't substract sentinel to iterator");
+                        return 0;
+                    }
+                    auto operator()(base_sentinel const&, base_iterator const&)
+                    {
+                        assert("Can't substract iterator to sentinel");
+                        return 0;
+                    }
+                    auto operator()(base_sentinel const&, base_sentinel const&)
+                    {
+                        return 0;
+                    }
+                };
+
+                struct equal
+                {
+                    template <typename I = base_iterator, std::enable_if_t<equality_comparable<I>>* = nullptr>
+                    auto operator()(base_iterator const& it1, base_iterator const& it2)
+                    {
+                        return it1 == it2;
+                    }
+                    template <typename I = base_iterator, std::enable_if_t<!equality_comparable<I>>* = nullptr>
+                    auto operator()(base_iterator const&, base_iterator const&)
+                    {
+                        assert("This iterator is not equality comparable");
+                        return false;
+                    }
+                    auto operator()(base_iterator const& it, base_sentinel const& sent)
+                    {
+                        return it == sent;
+                    }
+                    auto operator()(base_sentinel const& sent, base_iterator const& it)
+                    {
+                        return it == sent;
+                    }
+                    auto operator()(base_sentinel const&, base_sentinel const&)
+                    {
+                        return true;
+                    }
+                };
+
+                template <typename Apply>
+                static auto
+                dispatch(Apply&& apply, common_iterator const& it1, common_iterator const& it2)
+                {
+                    if (mpark::holds_alternative<base_sentinel>(it2.var_))
+                    {
+                        if (mpark::holds_alternative<base_sentinel>(it1.var_))
+                            return apply(mpark::get<1>(it1.var_), mpark::get<1>(it2.var_));
+                        else
+                            return apply(mpark::get<0>(it1.var_), mpark::get<1>(it2.var_));
+                    }
+                    else if (mpark::holds_alternative<base_sentinel>(it1.var_))
+                        return apply(mpark::get<1>(it1.var_), mpark::get<0>(it2.var_));
+                    else
+                        return apply(mpark::get<0>(it1.var_), mpark::get<0>(it2.var_));
+                }
+
+            public:
+                common_iterator() = default;
+
+                explicit common_iterator(base_iterator it)
+                    : var_(std::move(it))
+                {
+                }
+                explicit common_iterator(base_sentinel sent)
+                    : var_(std::move(sent))
+                {
+                }
+
+                iter_reference_t<base_iterator> operator*()
+                {
+                    return *mpark::get<base_iterator>(var_);
+                }
+
+                common_iterator& operator++()
+                {
+                    ++mpark::get<base_iterator>(var_);
+                    return *this;
+                }
+                RAH_POST_INCR
+                template <
+                    typename C = Cat,
+                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                common_iterator& operator--()
+                {
+                    --mpark::get<base_iterator>(var_);
+                    return *this;
+                }
+                template <
+                    typename C = Cat,
+                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
+                bool operator==(common_iterator const& it) const
+                {
+                    return dispatch(equal(), *this, it);
+                }
+
+                template <
+                    typename C = Cat,
+                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                common_iterator operator-(common_iterator const& it)
+                {
+                    return dispatch(sub(), *this, it);
+                }
+
+                template <
+                    typename C = Cat,
+                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                bool operator<(common_iterator const& it)
+                {
+                    return dispatch(lesser(), *this, it);
+                }
+                template <
+                    typename C = Cat,
+                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                common_iterator& operator+=(int64_t value)
+                {
+                    if (mpark::holds_alternative<base_iterator>(var_))
+                    {
+                        return mpark::get<0>(var_) += value;
+                    }
+                    else
+                    {
+                        assert("Can't increment a sentinel");
+                    }
+                }
+            };
+
             auto begin()
             {
-                return common_iterator<iterator, sentinel>(RAH_NAMESPACE::begin(base_));
+                return common_iterator(RAH_NAMESPACE::begin(base_));
             }
 
             auto end()
             {
-                return common_iterator<iterator, sentinel>(RAH_NAMESPACE::end(base_));
+                return common_iterator(RAH_NAMESPACE::end(base_));
+            }
+
+            template <typename C = Cat, std::enable_if_t<derived_from<C, rah::contiguous_iterator_tag>>* = nullptr>
+            auto data()
+            {
+                return &(*begin());
             }
         };
 
