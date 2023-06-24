@@ -1625,7 +1625,7 @@ namespace RAH_NAMESPACE
             P pattern_;
             using inner_iterator = RAH_NAMESPACE::iterator_t<R>;
             using inner_sentinel = RAH_NAMESPACE::sentinel_t<R>;
-            details::optional<subrange<inner_iterator, inner_sentinel>> cached_begin_;
+            details::optional<subrange<inner_iterator, inner_iterator>> cached_begin_;
 
             auto find_next(inner_iterator const& it)
             {

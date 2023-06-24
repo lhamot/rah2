@@ -312,13 +312,26 @@ namespace rah
 
     // ****************************************** find ************************************************
 
+    template <typename I, typename S, typename V>
+    auto find(I&& it, S&& sent, V&& value)
+    {
+        for (; it != sent; ++it)
+        {
+            if (*it == value)
+            {
+                return it;
+            }
+        }
+        return it;
+    }
+
     /// @brief Finds the first element equal to value
     ///
     /// @snippet test.cpp rah::find
     template <typename R, typename V>
     auto find(R&& range, V&& value)
     {
-        return RAH_STD::find(
+        return RAH_NAMESPACE::find(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::forward<V>(value));
     }
 
@@ -654,7 +667,7 @@ namespace rah
     /// Complexity: At most (last1 first1) * (last2 first2) applications of the corresponding predicate.
     ///
     template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2, typename ForwardSentinel2>
-    RAH_NAMESPACE::subrange<ForwardIterator1, ForwardSentinel1> search(
+    RAH_NAMESPACE::subrange<ForwardIterator1, ForwardIterator1> search(
         ForwardIterator1 first1, ForwardSentinel1 last1, ForwardIterator2 first2, ForwardSentinel2 last2)
     {
         if (first2 != last2) // If there is anything to search for...
@@ -685,34 +698,38 @@ namespace rah
                             while (*cur1 == *p2)
                             {
                                 if (++p2 == last2)
-                                    return RAH_NAMESPACE::make_subrange(first1, ++cur1);
+                                    return RAH_NAMESPACE::subrange<ForwardIterator1, ForwardIterator1>(
+                                        first1, ++cur1);
 
                                 if (++cur1 == last1)
-                                    return RAH_NAMESPACE::make_subrange(last1, last1);
+                                    return RAH_NAMESPACE::subrange<ForwardIterator1, ForwardIterator1>(
+                                        cur1, cur1);
                             }
 
                             ++first1;
                             continue;
                         }
                     }
-                    return RAH_NAMESPACE::make_subrange(last1, last1);
+                    return RAH_NAMESPACE::subrange<ForwardIterator1, ForwardIterator1>(
+                        first1, first1);
                 }
 
                 // Fall through to the end.
             }
             else
             {
-                auto found1 = RAH_STD::find(first1, last1, *first2);
+                auto found1 = RAH_NAMESPACE::find(first1, last1, *first2);
                 auto found1end = found1;
-                return RAH_NAMESPACE::make_subrange(found1, ++found1end);
+                return RAH_NAMESPACE::subrange<ForwardIterator1, ForwardIterator1>(
+                    found1, ++found1end);
             }
         }
 
-        return RAH_NAMESPACE::make_subrange(first1, first1);
+        return RAH_NAMESPACE::subrange<ForwardIterator1, ForwardIterator1>(first1, first1);
     }
 
     template <typename Range1, typename Range2>
-    RAH_NAMESPACE::subrange<RAH_NAMESPACE::iterator_t<Range1>, RAH_NAMESPACE::iterator_t<Range2>>
+    RAH_NAMESPACE::subrange<RAH_NAMESPACE::iterator_t<Range1>, RAH_NAMESPACE::iterator_t<Range1>>
     search(Range1&& range1, Range2&& range2)
     {
         return RAH_NAMESPACE::search(

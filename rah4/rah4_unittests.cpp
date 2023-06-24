@@ -14,6 +14,7 @@
 #include <sstream>
 #include <random>
 #include <atomic>
+#include <array>
 
 #include <iomanip>
 
@@ -457,6 +458,14 @@ void test_take_view()
         make_take_view());
 }
 
+struct make_drop_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::drop(make_test_view<CS, Tag>(), 2);
+    }
+};
 void test_drop_view()
 {
     {
@@ -479,65 +488,17 @@ void test_drop_view()
         /// [drop_pipeable]
     }
 
-    auto make_view = [](auto base)
-    {
-        return rah::views::drop(base, 2);
-    };
-    {
-        auto range = make_view(inputSentView);
-        STATIC_ASSERT(rah::input_range<decltype(range)>);
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(fwdSentView);
-        STATIC_ASSERT((rah::forward_range<decltype(range)>));
-        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(fwdCommonView);
-        STATIC_ASSERT(rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(bidirSentView);
-        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(bidirCommonView);
-        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
-    {
-        // filter is capped to bidirectional
-        auto range = make_view(rdmSentView);
-        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(rdmCommonView);
-        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(contiSentView);
-        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(contiCommonView);
-        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
+    check_all_cat<SentinelPolicy::Keep, rah::contiguous_iterator_tag>(make_drop_view());
 }
 
+struct make_drop_while_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::drop_while(make_test_view<CS, Tag>(), [](auto i) { return i < 4; });
+    }
+};
 void test_drop_while_view()
 {
     {
@@ -560,65 +521,18 @@ void test_drop_while_view()
         /// [drop_while_pipeable]
     }
 
-    auto make_view = [](auto base)
-    {
-        return rah::views::drop_while(base, [](auto i) { return i < 4; });
-    };
-    {
-        auto range = make_view(inputSentView);
-        STATIC_ASSERT(rah::input_range<decltype(range)>);
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(fwdSentView);
-        STATIC_ASSERT((rah::forward_range<decltype(range)>));
-        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(fwdCommonView);
-        STATIC_ASSERT(rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(bidirSentView);
-        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(bidirCommonView);
-        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
-    {
-        // filter is capped to bidirectional
-        auto range = make_view(rdmSentView);
-        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(rdmCommonView);
-        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(contiSentView);
-        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(contiCommonView);
-        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
-        STATIC_ASSERT(rah::common_range<decltype(range)>);
-    }
+    check_all_cat<SentinelPolicy::Keep, rah::contiguous_iterator_tag>(make_drop_while_view());
 }
 
+struct make_join_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::join(rah::views::transform(
+            make_test_view<CS, Tag>(), [](auto i) { return rah::views::iota(0, i); }));
+    }
+};
 void test_join_view()
 {
     {
@@ -696,66 +610,33 @@ void test_join_view()
         /// [join_pipeable]
     }
 
-    auto make_view = [](auto base)
+    check_all_cat<SentinelPolicy::AllSentinel, rah::input_iterator_tag>(make_join_view());
+}
+
+struct make_split_view
+{
+    std::array<int, 2> delim = {3, 4};
+    template <CommonOrSent CS, typename Tag>
+    auto make()
     {
-        return rah::views::join(
-            base | rah::views::transform([](auto i) { return rah::views::iota(0, i); }));
-    };
-    {
-        auto range = make_view(inputSentView);
-        STATIC_ASSERT(rah::input_range<decltype(range)>);
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+        return rah::views::split(make_test_view<CS, Tag>(), delim);
     }
-    {
-        auto range = make_view(fwdSentView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(fwdCommonView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(bidirSentView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(bidirCommonView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        // filter is capped to bidirectional
-        auto range = make_view(rdmSentView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(rdmCommonView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(contiSentView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
-    {
-        auto range = make_view(contiCommonView);
-        STATIC_ASSERT((rah::input_range<decltype(range)>));
-        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
-        STATIC_ASSERT(not rah::common_range<decltype(range)>);
-    }
+};
+void test_split_view()
+{
+    /// [views::split]
+    std::string sentence{"Keep..moving..forward.."};
+    std::string delim{".."};
+    auto words =
+        rah::views::split(sentence, delim)
+        | rah::views::transform([](auto word) { return std::string(word.begin(), word.end()); });
+
+    EQUAL_RANGE(words, std::vector<std::string>({"Keep", "moving", "forward"}));
+    for (auto&& word : words | rah::views::common())
+        std::cout << std::string(word.begin(), word.end()) << ' ';
+    /// [views::split]
+
+    check_all_cat<SentinelPolicy::AllSentinel, rah::input_iterator_tag>(make_split_view());
 }
 
 int main()
@@ -1042,18 +923,6 @@ int main()
         // static_assert(RAH_NAMESPACE::range<decltype(std::back_inserter(out))>, "dkjh");
         rah::copy(cy, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
-    }
-
-    {
-        std::string sentence{"Keep..moving..forward.."};
-        std::string delim{".."};
-        auto words =
-            rah::views::split(sentence, delim)
-            | rah::views::transform([](auto word) { return std::string(word.begin(), word.end()); });
-
-        EQUAL_RANGE(words, std::vector<std::string>({"Keep", "moving", "forward"}));
-        for (auto&& word : words | rah::views::common())
-            std::cout << std::string(word.begin(), word.end()) << ' ';
     }
 
     {
