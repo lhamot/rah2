@@ -721,6 +721,62 @@ void test_common_view()
     }
 }
 
+struct make_reverse_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::reverse(make_test_view<CS, Tag>());
+    }
+};
+void test_reverse_iterator()
+{
+    {
+        /// [reverse]
+        std::vector<int> vec{0, 1, 2, 3};
+        std::vector<int> result;
+        for (int i : rah::views::reverse(vec))
+            result.push_back(i);
+        assert(result == std::vector<int>({3, 2, 1, 0}));
+        /// [reverse]
+    }
+    {
+        /// [reverse_pipeable]
+        std::vector<int> vec{0, 1, 2, 3};
+        std::vector<int> result;
+        for (int i : vec | rah::views::reverse())
+            result.push_back(i);
+        assert(result == std::vector<int>({3, 2, 1, 0}));
+        /// [reverse_pipeable]
+    }
+
+    auto maker = make_reverse_view();
+    using CapCat = rah::random_access_iterator_tag;
+    constexpr auto SentPolicy = SentinelPolicy::AllCommon;
+    {
+        auto r3 = maker.make<Sentinel, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Sentinel, SentPolicy>(r3);
+        auto r4 = maker.make<Sentinel, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Sentinel, SentPolicy>(r4);
+        auto r5 = maker.make<Sentinel, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
+        check_sent<Sentinel, SentPolicy>(r5);
+    }
+    {
+        auto r3 = maker.make<Common, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Common, SentPolicy>(r3);
+        auto r4 = maker.make<Common, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Common, SentPolicy>(r4);
+        auto r5 = maker.make<Common, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
+        check_sent<Common, SentPolicy>(r5);
+    }
+}
+
 int main()
 {
     test_counted_iterator();
@@ -739,6 +795,7 @@ int main()
     test_join_view();
     test_split_view();
     test_counted_view();
+    test_reverse_iterator();
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};
@@ -1296,16 +1353,6 @@ int main()
     }
 
     {
-        /// [reverse]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
-        for (int i : rah::views::reverse(vec))
-            result.push_back(i);
-        assert(result == std::vector<int>({3, 2, 1, 0}));
-        /// [reverse]
-    }
-
-    {
         /// [elements_view]
         std::vector<std::tuple<bool, char, int>> vec{
             {true, 'a', 1000},
@@ -1347,24 +1394,17 @@ int main()
         assert(result == std::vector<bool>({true, false, true, false}));
         /// [keys_view]
     }
-    /*{
-        // Can't pass a rvalue container to a views
-        auto getVec = [] {
-            return std::vector<int>{ 0, 1, 2, 3 };
+
+    {
+        // Pass a rvalue container to a views is possible thought a owning_view
+        auto getVec = []
+        {
+            return std::vector<int>{0, 1, 2, 3};
         };
         std::vector<int> result;
         for (int i : rah::views::reverse(getVec()))
             result.push_back(i);
-        assert(result == std::vector<int>({ 3, 2, 1, 0 }));
-    }*/
-    {
-        /// [reverse_pipeable]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
-        for (int i : vec | rah::views::reverse())
-            result.push_back(i);
         assert(result == std::vector<int>({3, 2, 1, 0}));
-        /// [reverse_pipeable]
     }
 
     {

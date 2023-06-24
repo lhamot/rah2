@@ -1333,10 +1333,10 @@ namespace rah
                          >* = nullptr>
     constexpr I next(I i, S bound)
     {
-        static_assert(RAH_NAMESPACE::semiregular<S>);
-        static_assert(RAH_NAMESPACE::input_or_output_iterator<I>);
-        static_assert(WeaklyEqualityComparableWith<I, S>);
-        //static_assert(RAH_NAMESPACE::sentinel_for<S, I>);
+        static_assert(RAH_NAMESPACE::semiregular<S>, "RAH_NAMESPACE::semiregular<S>");
+        static_assert(
+            RAH_NAMESPACE::input_or_output_iterator<I>, "RAH_NAMESPACE::input_or_output_iterator<I>");
+        static_assert(WeaklyEqualityComparableWith<I, S>, "WeaklyEqualityComparableWith<I, S>");
         RAH_NAMESPACE::advance(i, bound);
         return i;
     }
