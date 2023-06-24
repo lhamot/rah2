@@ -237,93 +237,30 @@ void test_counted_iterator()
     }
 }
 
-int main()
+void test_empty_view()
 {
-    test_counted_iterator();
+    /// [empty]
+    std::vector<int> result;
+    for (int i : rah::views::empty<int>())
+        result.push_back(i);
+    assert(result == std::vector<int>());
+    /// [empty]
+    STATIC_ASSERT((rah::contiguous_range_impl<rah::views::empty_view<int>, true>::value));
+}
 
-    {
-        std::vector<int> vec{0, 1, 2, 2, 3};
-        std::vector<int> out;
-        auto ref = vec | rah::views::ref();
-        for (auto&& val : ref)
-        {
-            out.push_back(val);
-        }
-        assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
-    }
+void test_single_view()
+{
+    /// [single]
+    std::vector<int> result;
+    for (int i : rah::views::single(20))
+        result.push_back(i);
+    assert(result == std::vector<int>({20}));
+    /// [single]
+    STATIC_ASSERT(rah::contiguous_range<rah::views::single_view<int>>);
+}
 
-    {
-        std::vector<int> out;
-        auto ref = rah::views::owning(std::vector<int>{0, 1, 2, 2, 3});
-        for (auto&& val : ref)
-        {
-            out.push_back(val);
-        }
-        assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
-    }
-
-    {
-        std::stringstream ss("a b c d e f g h i j k l");
-        std::vector<std::string> out;
-        for (auto&& str : rah::views::istream<std::string>(ss) | rah::views::common())
-        {
-            out.push_back(str);
-        }
-        assert(
-            out
-            == std::vector<std::string>({"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}));
-    }
-
-    {
-        std::vector<int> vec{0, 1, 2, 2, 3};
-        toto(vec);
-        toto({0, 1, 2, 2, 3});
-    }
-    {
-        /// [make_pipeable use]
-        std::vector<int> vec{0, 1, 2, 2, 3};
-        assert((vec | test_count(2)) == 2);
-        /// [make_pipeable use]
-    }
-
-    // *********************************** views **************************************************
-
-    {
-        std::vector<int> result;
-        int value = 20;
-        auto&& r = rah::views::single(value);
-        auto i = begin(r);
-        auto e = end(r);
-        for (; i != e; ++i)
-            result.push_back(*i);
-        assert(result == std::vector<int>({20}));
-    }
-    {
-        /// [empty]
-        std::vector<int> result;
-        for (int i : rah::views::empty<int>())
-            result.push_back(i);
-        assert(result == std::vector<int>());
-        /// [empty]
-        // rah::bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>>::Check();
-        STATIC_ASSERT((rah::random_access_iterator_impl<
-                       RAH_NAMESPACE::iterator_t<rah::views::empty_view<int>>,
-                       true>::value));
-        static_assert(
-            rah::random_access_range<rah::views::empty_view<int>>, "Should be random_access_range");
-        STATIC_ASSERT((rah::contiguous_range_impl<rah::views::empty_view<int>, true>::value));
-    }
-    {
-        /// [single]
-        std::vector<int> result;
-        for (int i : rah::views::single(20))
-            result.push_back(i);
-        assert(result == std::vector<int>({20}));
-        /// [single]
-        static_assert(
-            rah::contiguous_range<rah::views::single_view<int>>, "Should be contiguous_range");
-    }
-
+void test_iota_view()
+{
     {
         /// [iota]
         std::vector<int> result;
@@ -331,10 +268,7 @@ int main()
             result.push_back(i);
         assert(result == std::vector<int>({10, 11, 12, 13, 14}));
         /// [iota]
-        check_random_access_range<decltype(rah::views::iota(10, 15))>();
-        static_assert(
-            rah::random_access_range<decltype(rah::views::iota(10, 15))>,
-            "Should be random_access_range");
+        STATIC_ASSERT(rah::random_access_range<decltype(rah::views::iota(10, 15))>);
     }
 
     {
@@ -350,31 +284,343 @@ int main()
             result.push_back(i);
         assert(result == std::vector<size_t>({2, 3, 4}));
     }
+}
 
+void test_istream_view()
+{
+    /// [views::istream]
+    std::stringstream ss("a b c d e f g h i j k l");
+    std::vector<std::string> out;
+    for (auto&& str : rah::views::istream<std::string>(ss) | rah::views::common())
     {
-        /// [irange]
+        out.push_back(str);
+    }
+    assert(
+        out == std::vector<std::string>({"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}));
+    /// [views::istream]
+    STATIC_ASSERT((rah::input_range<decltype(rah::views::istream<std::string>(ss))>));
+}
+
+void test_repeat_view()
+{
+    /// [repeat]
+    std::vector<int> out;
+    auto range = rah::views::repeat(42);
+    std::copy_n(begin(range), 5, std::back_inserter(out));
+    assert(out == std::vector<int>({42, 42, 42, 42, 42}));
+    /// [repeat]
+    STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
+}
+
+void test_owning_view()
+{
+    /// [views::owning_view]
+    std::vector<int> out;
+    auto owning = rah::views::owning(std::vector<int>{0, 1, 2, 2, 3});
+    for (auto&& val : owning)
+    {
+        out.push_back(val);
+    }
+    assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+    /// [views::owning_view]
+    STATIC_ASSERT((rah::random_access_range_impl<decltype(owning), true>::value));
+}
+
+void test_all_view()
+{
+    // Test all
+    // A views can't embbed a container
+    // EQUAL_RANGE((il<int>{ 0, 1, 2, 3 } | rah::views::all()), (il<int>{ 0, 1, 2, 3 }));
+    int intTab[] = {0, 1, 2, 3};
+    EQUAL_RANGE((intTab | rah::views::all()), (il<int>{0, 1, 2, 3}));
+
+    /// [views::all]
+    std::vector<int> out;
+    auto all = rah::views::all(std::vector<int>{0, 1, 2, 2, 3});
+    for (auto&& val : all)
+    {
+        out.push_back(val);
+    }
+    assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+    /// [views::all]
+    STATIC_ASSERT((rah::random_access_range_impl<decltype(all), true>::value));
+}
+
+struct make_filter_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::filter(make_test_view<CS, Tag>(), [](auto a) { return a % 2 == 0; });
+    }
+};
+void test_filter_view()
+{
+    /// [filter]
+    std::vector<int> vec_01234{0, 1, 2, 3, 4, 5};
+    std::vector<int> result;
+    for (int i : rah::views::filter(vec_01234, [](auto a) { return a % 2 == 0; }))
+        result.push_back(i);
+    assert(result == std::vector<int>({0, 2, 4}));
+    /// [filter]
+
+    check_all_cat<SentinelPolicy::Keep, rah::bidirectional_iterator_tag>(make_filter_view());
+}
+
+struct make_transform_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::transform(make_test_view<CS, Tag>(), [](auto a) { return a % 2 == 0; });
+    }
+};
+void test_transform_view()
+{
+    // Test transform
+    {
+        /// [rah::views::transform]
+        std::vector<int> vec{0, 1, 2, 3};
         std::vector<int> result;
-        for (int i : rah::views::irange(10, 19, 2))
+        for (int i : rah::views::transform(vec, [](auto a) { return a * 2; }))
             result.push_back(i);
-        assert(result == std::vector<int>({10, 12, 14, 16, 18}));
-        /// [irange]
-        check_random_access_range<decltype(rah::views::irange(10, 19, 2))>();
+        assert(result == std::vector<int>({0, 2, 4, 6}));
+        /// [rah::views::transform]
+    }
+    {
+        std::vector<int> vec{0, 1, 2, 3};
+        std::vector<int> result;
+        auto valueSelector = [](auto a)
+        {
+            return a * 2;
+        };
+        auto selectedValuesRange = rah::views::transform(vec, valueSelector);
+        auto bounds =
+            std::minmax_element(rah::begin(selectedValuesRange), rah::end(selectedValuesRange));
+        auto min = *bounds.first;
+        assert(min == 0);
+        auto max = *bounds.second;
+        assert(max == 6); // 3 * 2
+    }
+    {
+        /// [rah::views::transform_pipeable]
+        std::vector<int> vec{0, 1, 2, 3};
+        std::vector<int> result;
+        for (int i : vec | rah::views::transform([](auto a) { return a * 2; }))
+            result.push_back(i);
+        assert(result == std::vector<int>({0, 2, 4, 6}));
+        /// [rah::views::transform_pipeable]
+    }
+
+    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_transform_view());
+}
+
+struct make_take_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::take(make_test_view<CS, Tag>(), 8);
+    }
+};
+void test_take_view()
+{
+    {
+        /// [take]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = rah::views::take(in, 5);
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        auto range2 = rah::views::take(in, 1000);
+        std::vector<int> out2;
+        std::copy(rah::begin(range2), rah::end(range2), std::back_inserter(out2));
+        assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        /// [take]
     }
 
     {
-        std::vector<int> result;
-        for (int i : rah::views::irange(-5, 5, 2))
-            result.push_back(i);
-        assert(result == std::vector<int>({-5, -3, -1, 1, 3}));
+        /// [take_pipeable]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = in | rah::views::take(5);
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        auto range2 = in | rah::views::take(1000);
+        std::vector<int> out2;
+        std::copy(rah::begin(range2), rah::end(range2), std::back_inserter(out2));
+        assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        /// [take_pipeable]
+    }
+
+    check_all_cat<SentinelPolicy::CommonIfSizedRandomAccess, rah::contiguous_iterator_tag>(
+        make_take_view());
+}
+
+void test_drop_view()
+{
+    {
+        /// [drop]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = rah::views::drop(in, 6);
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({6, 7, 8, 9}));
+        /// [drop]
     }
 
     {
-        std::vector<int> result;
-        for (int i : rah::views::irange(-15, -6, 2))
-            result.push_back(i);
-        assert(result == std::vector<int>({-15, -13, -11, -9, -7}));
+        /// [drop_pipeable]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = in | rah::views::drop(6);
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({6, 7, 8, 9}));
+        /// [drop_pipeable]
     }
 
+    auto make_view = [](auto base)
+    {
+        return rah::views::drop(base, 2);
+    };
+    {
+        auto range = make_view(inputSentView);
+        STATIC_ASSERT(rah::input_range<decltype(range)>);
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(fwdSentView);
+        STATIC_ASSERT((rah::forward_range<decltype(range)>));
+        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(fwdCommonView);
+        STATIC_ASSERT(rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(bidirSentView);
+        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(bidirCommonView);
+        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+    {
+        // filter is capped to bidirectional
+        auto range = make_view(rdmSentView);
+        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(rdmCommonView);
+        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(contiSentView);
+        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(contiCommonView);
+        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+}
+
+void test_drop_while_view()
+{
+    {
+        /// [drop_while]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = rah::views::drop_while(in, [](auto v) { return v < 6; });
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({6, 7, 8, 9}));
+        /// [drop_while]
+    }
+
+    {
+        /// [drop_while_pipeable]
+        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        auto range = in | rah::views::drop_while([](auto v) { return v < 6; });
+        std::vector<int> out;
+        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
+        assert(out == std::vector<int>({6, 7, 8, 9}));
+        /// [drop_while_pipeable]
+    }
+
+    auto make_view = [](auto base)
+    {
+        return rah::views::drop_while(base, [](auto i) { return i < 4; });
+    };
+    {
+        auto range = make_view(inputSentView);
+        STATIC_ASSERT(rah::input_range<decltype(range)>);
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(fwdSentView);
+        STATIC_ASSERT((rah::forward_range<decltype(range)>));
+        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(fwdCommonView);
+        STATIC_ASSERT(rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::bidirectional_range<decltype(range)>);
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(bidirSentView);
+        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(bidirCommonView);
+        STATIC_ASSERT((rah::bidirectional_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::random_access_range<decltype(range)>);
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+    {
+        // filter is capped to bidirectional
+        auto range = make_view(rdmSentView);
+        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(rdmCommonView);
+        STATIC_ASSERT((rah::random_access_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::contiguous_range<decltype(range)>);
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(contiSentView);
+        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(contiCommonView);
+        STATIC_ASSERT((rah::contiguous_range_impl<decltype(range), true>::value));
+        STATIC_ASSERT(rah::common_range<decltype(range)>);
+    }
+}
+
+void test_join_view()
+{
     {
         /// [join]
         std::vector<std::vector<int>> in = {
@@ -403,16 +649,16 @@ int main()
             auto forw = rah::views::join(
                 rah::views::repeat(test_view<Common, std::forward_iterator_tag>(0, 10, 1)));
             using forwIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(forw)>>;
-            static_assert(std::is_same_v<forwIterCateg, std::forward_iterator_tag>, "");
-            static_assert(rah::forward_range<decltype(forw)>, "");
+            static_assert(std::is_same_v<forwIterCateg, std::input_iterator_tag>, "");
+            STATIC_ASSERT((rah::input_range<decltype(forw)>));
             static_assert(not rah::bidirectional_range<decltype(forw)>, "");
         }
         {
             auto forw = rah::views::join(
                 rah::views::repeat(test_view<Sentinel, std::forward_iterator_tag>(0, 10, 1)));
             using forwIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(forw)>>;
-            static_assert(std::is_same_v<forwIterCateg, std::forward_iterator_tag>, "");
-            static_assert(rah::forward_range<decltype(forw)>, "");
+            static_assert(std::is_same_v<forwIterCateg, std::input_iterator_tag>, "");
+            static_assert(rah::input_range<decltype(forw)>, "");
             static_assert(not rah::bidirectional_range<decltype(forw)>, "");
         }
         // else if OUTER and INNER are input => input
@@ -448,6 +694,133 @@ int main()
         rah::copy(range, std::back_inserter(result));
         assert(result == std::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join_pipeable]
+    }
+
+    auto make_view = [](auto base)
+    {
+        return rah::views::join(
+            base | rah::views::transform([](auto i) { return rah::views::iota(0, i); }));
+    };
+    {
+        auto range = make_view(inputSentView);
+        STATIC_ASSERT(rah::input_range<decltype(range)>);
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(fwdSentView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(fwdCommonView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(bidirSentView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(bidirCommonView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        // filter is capped to bidirectional
+        auto range = make_view(rdmSentView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(rdmCommonView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(contiSentView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+    {
+        auto range = make_view(contiCommonView);
+        STATIC_ASSERT((rah::input_range<decltype(range)>));
+        STATIC_ASSERT(not rah::forward_range<decltype(range)>);
+        STATIC_ASSERT(not rah::common_range<decltype(range)>);
+    }
+}
+
+int main()
+{
+    test_counted_iterator();
+    test_empty_view();
+    test_single_view();
+    test_iota_view();
+    test_istream_view();
+    test_repeat_view();
+    test_owning_view();
+    test_all_view();
+    test_filter_view();
+    test_transform_view();
+    test_take_view();
+    test_drop_view();
+    test_drop_while_view();
+
+    {
+        std::vector<int> vec{0, 1, 2, 2, 3};
+        std::vector<int> out;
+        auto ref = vec | rah::views::ref();
+        for (auto&& val : ref)
+        {
+            out.push_back(val);
+        }
+        assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+    }
+
+    {
+        std::vector<int> vec{0, 1, 2, 2, 3};
+        toto(vec);
+        toto({0, 1, 2, 2, 3});
+    }
+    {
+        /// [make_pipeable use]
+        std::vector<int> vec{0, 1, 2, 2, 3};
+        assert((vec | test_count(2)) == 2);
+        /// [make_pipeable use]
+    }
+
+    // *********************************** views **************************************************
+
+    {
+        /// [irange]
+        std::vector<int> result;
+        for (int i : rah::views::irange(10, 19, 2))
+            result.push_back(i);
+        assert(result == std::vector<int>({10, 12, 14, 16, 18}));
+        /// [irange]
+        STATIC_ASSERT((rah::random_access_range<decltype(rah::views::irange(10, 19, 2))>));
+    }
+
+    {
+        std::vector<int> result;
+        for (int i : rah::views::irange(-5, 5, 2))
+            result.push_back(i);
+        assert(result == std::vector<int>({-5, -3, -1, 1, 3}));
+    }
+
+    {
+        std::vector<int> result;
+        for (int i : rah::views::irange(-15, -6, 2))
+            result.push_back(i);
+        assert(result == std::vector<int>({-15, -13, -11, -9, -7}));
     }
 
     {
@@ -606,9 +979,8 @@ int main()
         std::copy_n(cy.begin(), 8, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
         /// [cycle]
-        check_bidirectional_range<decltype(cy)>();
-        // STATIC_ASSERT(rah::random_access_range<decltype(cy)>);
-        STATIC_ASSERT(not rah::common_range<decltype(cy)>);
+        STATIC_ASSERT((rah::bidirectional_range<decltype(cy)>));
+        STATIC_ASSERT((not rah::random_access_range<decltype(cy)>));
     }
     { // Cycle + input/sentinel => input/sentinel
         auto cyInputSent = rah::views::cycle(make_test_view<Sentinel, std::input_iterator_tag>());
@@ -670,83 +1042,6 @@ int main()
         // static_assert(RAH_NAMESPACE::range<decltype(std::back_inserter(out))>, "dkjh");
         rah::copy(cy, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
-    }
-
-    {
-        /// [repeat]
-        std::vector<int> out;
-        auto range = rah::views::repeat(42);
-        std::copy_n(begin(range), 5, std::back_inserter(out));
-        assert(out == std::vector<int>({42, 42, 42, 42, 42}));
-        /// [repeat]
-    }
-
-    {
-        /// [take]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah::views::take(in, 5);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
-        auto range2 = rah::views::take(in, 1000);
-        std::vector<int> out2;
-        std::copy(rah::begin(range2), rah::end(range2), std::back_inserter(out2));
-        assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
-        /// [take]
-    }
-
-    {
-        /// [take_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = in | rah::views::take(5);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
-        auto range2 = in | rah::views::take(1000);
-        std::vector<int> out2;
-        std::copy(rah::begin(range2), rah::end(range2), std::back_inserter(out2));
-        assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
-        /// [take_pipeable]
-    }
-
-    {
-        /// [drop]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah::views::drop(in, 6);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
-        /// [drop]
-    }
-
-    {
-        /// [drop_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = in | rah::views::drop(6);
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
-        /// [drop_pipeable]
-    }
-
-    {
-        /// [drop_while]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah::views::drop_while(in, [](auto v) { return v < 6; });
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
-        /// [drop_while]
-    }
-
-    {
-        /// [drop_while_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = in | rah::views::drop_while([](auto v) { return v < 6; });
-        std::vector<int> out;
-        std::copy(rah::begin(range), rah::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
-        /// [drop_while_pipeable]
     }
 
     {
@@ -1014,47 +1309,6 @@ int main()
         /// [counted_pipeable]
     }
 
-    // Test all
-    // A views can't embbed a container
-    // EQUAL_RANGE((il<int>{ 0, 1, 2, 3 } | rah::views::all()), (il<int>{ 0, 1, 2, 3 }));
-    int intTab[] = {0, 1, 2, 3};
-    EQUAL_RANGE((intTab | rah::views::all()), (il<int>{0, 1, 2, 3}));
-
-    // Test transform
-    {
-        /// [rah::views::transform]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
-        for (int i : rah::views::transform(vec, [](auto a) { return a * 2; }))
-            result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4, 6}));
-        /// [rah::views::transform]
-    }
-    {
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
-        auto valueSelector = [](auto a)
-        {
-            return a * 2;
-        };
-        auto selectedValuesRange = rah::views::transform(vec, valueSelector);
-        auto bounds =
-            std::minmax_element(rah::begin(selectedValuesRange), rah::end(selectedValuesRange));
-        auto min = *bounds.first;
-        assert(min == 0);
-        auto max = *bounds.second;
-        assert(max == 6); // 3 * 2
-    }
-    {
-        /// [rah::views::transform_pipeable]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
-        for (int i : vec | rah::views::transform([](auto a) { return a * 2; }))
-            result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4, 6}));
-        /// [rah::views::transform_pipeable]
-    }
-
     {
         /// [slice]
         std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
@@ -1208,18 +1462,7 @@ int main()
         std::vector<bool> inputB{false, true, true, false};
         auto range = rah::views::zip(inputA, inputB)
                      | rah::views::filter([](auto a_b) { return std::get<1>(a_b); });
-        // WhatIs<decltype(range)>();
-        //auto range2 = rah::views::filter(
-        //    rah::views::zip(inputA, inputB), [](auto a_b) { return std::get<1>(a_b); });
         std::vector<std::tuple<int, bool>> result;
-        /*auto i = begin(range);
-        auto e = end(range);
-        while (i != e)
-        {
-            // WhatIs<decltype(*i)>();
-            result.push_back(*i);
-            ++i;
-        }*/
 
         rah::copy(range, std::back_inserter(result));
         assert(rah::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
@@ -1251,15 +1494,6 @@ int main()
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
 
-    {
-        /// [filter]
-        std::vector<int> vec_01234{0, 1, 2, 3, 4, 5};
-        std::vector<int> result;
-        for (int i : rah::views::filter(vec_01234, [](auto a) { return a % 2 == 0; }))
-            result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4}));
-        /// [filter]
-    }
     {
         /// [rah::views::common]
         auto c = rah::views::iota(0, 5) | rah::views::filter([](auto i) { return i % 2 == 0; });
@@ -1414,6 +1648,8 @@ int main()
         /// [enumerate]
         std::vector<int> input{4, 5, 6, 7};
         std::vector<std::tuple<size_t, int>> result;
+        auto toto = rah::views::enumerate(input);
+        auto prout = toto.end();
         for (auto i_value : rah::views::enumerate(input))
             result.emplace_back(i_value);
         assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));

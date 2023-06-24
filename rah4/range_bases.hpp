@@ -144,6 +144,10 @@ namespace rah
     MAKE_CONCEPT(has_rbegin_ADL, true, rbegin(details::declval<std::remove_reference_t<T>>()))
     MAKE_CONCEPT(has_rend_member, true, details::declval<std::remove_reference_t<T>>().rend())
     MAKE_CONCEPT(has_rend_ADL, true, rend(details::declval<std::remove_reference_t<T>>()))
+    MAKE_CONCEPT(has_size_member, true, details::declval<std::remove_reference_t<T>>().size())
+    MAKE_CONCEPT(has_size_ADL, true, size(details::declval<std::remove_reference_t<T>>()))
+    MAKE_CONCEPT(has_data_member, true, details::declval<std::remove_reference_t<T>>().data())
+    MAKE_CONCEPT(has_data_ADL, true, data(details::declval<std::remove_reference_t<T>>()))
 
     namespace details
     {
@@ -597,7 +601,7 @@ namespace rah
         static constexpr bool value =
             input_iterator<I>
             && derived_from<details::iterator_category<I>, std::forward_iterator_tag>
-            && incrementable<I> && sentinel_for<I, I>;
+            && incrementable<I> && is_true_v<Diagnostic, sentinel_for<I, I>>;
     };
 
     template <typename I>
@@ -618,7 +622,16 @@ namespace rah
         template <typename U = I>
         using check_wrapper = decltype(check(std::declval<U>()));
 
-        static constexpr bool value = compiles<Diagnostic, I, check_wrapper>;
+        template <typename U>
+        using can_pre_decr = is_true<Diagnostic, std::is_same_v<decltype(--std::declval<U&>()), U&>>;
+        template <typename U>
+        using can_post_decr = is_true<Diagnostic, std::is_same_v<decltype(std::declval<U&>()--), U>>;
+
+        // static constexpr bool value = compiles<Diagnostic, I, check_wrapper>;
+        static constexpr bool value =
+            is_true_v<Diagnostic, forward_iterator_impl<I, Diagnostic>::value>
+            && is_true_v<Diagnostic, derived_from<details::iterator_category<I>, std::bidirectional_iterator_tag>>
+            && compiles<Diagnostic, I, can_pre_decr> && compiles<Diagnostic, I, can_post_decr>;
     };
     template <typename I>
     constexpr bool bidirectional_iterator = bidirectional_iterator_impl<remove_cvref_t<I>>::value;
@@ -685,7 +698,35 @@ namespace rah
         return RAH_STD::move(*t);
     }
 
+    // **************************************** iterator operations *******************************
+
+    template <
+        typename I,
+        typename S,
+        std::enable_if_t<!rah::sized_sentinel_for<S, I> && rah::WeaklyEqualityComparableWith<S, I>>* = nullptr>
+    rah::iter_difference_t<I> distance(I first, S last)
+    {
+        iter_difference_t<I> len = 0;
+        for (; first != last; ++first, ++len)
+        {
+        }
+        return len;
+    }
+
+    template <typename I, typename S, std::enable_if_t<rah::sized_sentinel_for<S, I>>* = nullptr>
+    auto distance(I first, S last)
+    {
+        return last - first;
+    }
+    template <typename R>
+    auto distance(R&& r)
+    {
+        return rah::distance(rah::begin(r), rah::end(r));
+    }
+
     // **************************** More Range access *********************************************
+    template <class>
+    constexpr bool disable_sized_range = false;
 
     namespace details
     {
@@ -767,22 +808,43 @@ namespace rah
         struct size_impl
         {
             template <class T, size_t N>
+            size_t operator()(T (&)[N]) const noexcept
+            {
+                return N;
+            }
+            template <class T, size_t N>
             size_t operator()(T const (&)[N]) const noexcept
             {
                 return N;
             }
 
-            template <typename R>
-            auto operator()(R const& range) const
+            template <
+                typename R,
+                std::enable_if_t<has_size_member<R> && !rah::disable_sized_range<std::remove_cv_t<R>>>* = nullptr>
+            auto operator()(R&& range) const
             {
                 return range.size();
             }
 
-            /*template <typename R>
-            auto size(R&& range)
+            template <
+                typename R,
+                std::enable_if_t<!(
+                    has_size_member<R>
+                    && !rah::disable_sized_range<std::remove_cv_t<R>>)&&has_size_ADL<R>>* = nullptr>
+            auto operator()(R&& range) const
             {
-                return RAH_STD::distance(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
-            }*/
+                return size(range);
+            }
+
+            template <
+                typename R,
+                std::enable_if_t<
+                    !has_size_member<R> && !has_size_ADL<R>
+                    && sized_sentinel_for<iterator_t<R>, sentinel_t<R>>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return RAH_NAMESPACE::end(range) - RAH_NAMESPACE::begin(range);
+            }
         };
 
         struct ssize_impl
@@ -805,7 +867,7 @@ namespace rah
 
         struct data_impl
         {
-            template <typename R>
+            template <typename R, std::enable_if_t<has_data_member<R>>* = nullptr>
             auto operator()(R&& range) const
             {
                 return range.data();
@@ -848,6 +910,8 @@ namespace rah
         RAH_STD::bidirectional_iterator_tag, RAH_STD::bidirectional_iterator_tag);
     RAH_STD::random_access_iterator_tag get_common_iterator_tag(
         RAH_STD::random_access_iterator_tag, RAH_STD::random_access_iterator_tag);
+    RAH_NAMESPACE::contiguous_iterator_tag get_common_iterator_tag(
+        RAH_NAMESPACE::contiguous_iterator_tag, RAH_NAMESPACE::contiguous_iterator_tag);
 
     template <typename A, typename B>
     using common_iterator_tag =
@@ -894,9 +958,6 @@ namespace rah
     template <class R>
     constexpr bool borrowed_range =
         range<R> && (RAH_STD::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
-
-    template <class>
-    constexpr bool disable_sized_range = false;
 
     template <typename R, typename = int>
     struct has_ranges_size
@@ -977,16 +1038,14 @@ namespace rah
     struct contiguous_range_impl
     {
         template <typename T>
-        static auto requ(T& t) -> concepts::TypeList<std::enable_if_t<
-            std::is_same_v<decltype(rah::data(t)), std::add_pointer_t<rah::range_reference_t<T>>>>>;
+        using has_data = std::enable_if_t<std::is_same_v<
+            decltype(rah::data(std::declval<T>())),
+            std::add_pointer_t<rah::range_reference_t<T>>>>;
 
-        template <typename U>
-        using check = concepts::TypeList<
-            std::enable_if_t<random_access_range_impl<U, Diagnostic>::value>,
-            std::enable_if_t<rah::contiguous_iterator_impl<rah::iterator_t<U>, Diagnostic>::value>,
-            decltype(requ(std::declval<U&>()))>;
-
-        static constexpr bool value = compiles<Diagnostic, R, check>;
+        static constexpr bool value =
+            random_access_range_impl<R, Diagnostic>::value
+            && is_true_v<Diagnostic, rah::contiguous_iterator_impl<rah::iterator_t<R>, Diagnostic>::value>
+            && compiles<Diagnostic, R, has_data>;
     };
 
     template <class R>
@@ -1177,7 +1236,7 @@ namespace rah
             return RAH_SELF.begin() - RAH_SELF.end();
         }
 
-        template <
+        /* template <
             typename D = T,
             std::enable_if_t<not(
                 RAH_NAMESPACE::forward_range<D>
@@ -1191,7 +1250,7 @@ namespace rah
         auto size() const
         {
             return RAH_SELF_CONST.begin() - RAH_SELF_CONST.end();
-        }
+        }*/
 
         auto front() // -> decltype(*(details::template declval<T const>().begin()))
         {

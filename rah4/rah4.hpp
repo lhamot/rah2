@@ -323,10 +323,6 @@ namespace RAH_NAMESPACE
         {
             return !(it == sent);
         }
-        friend bool operator!=(I const& it1, I const& it2)
-        {
-            return !(it1 == it2);
-        }
 #endif
 
         //bool operator!=(S const& rho) const
@@ -344,6 +340,11 @@ namespace RAH_NAMESPACE
         : iterator_facade<I, S, R, RAH_STD::input_iterator_tag>
     {
         using iterator_category = RAH_STD::forward_iterator_tag;
+
+        friend bool operator!=(I const& it1, I const& it2)
+        {
+            return !(it1 == it2);
+        }
     };
 
     template <typename I, typename S, typename R>
@@ -829,6 +830,14 @@ namespace RAH_NAMESPACE
                 {
                     return false;
                 }
+                friend bool operator<(iterator const& it1, iterator const& it2)
+                {
+                    return it1.current_ < it2.current_;
+                }
+                friend int64_t operator-(iterator const& it1, iterator const& it2)
+                {
+                    return it1.current_ - it2.current_;
+                }
             };
 
             repeat_view(V value)
@@ -861,8 +870,8 @@ namespace RAH_NAMESPACE
             R* ref_ = nullptr;
 
         public:
-            explicit ref_view(R* ref = nullptr)
-                : ref_(ref)
+            explicit ref_view(R& ref)
+                : ref_(&ref)
             {
             }
             auto begin() const
@@ -888,10 +897,10 @@ namespace RAH_NAMESPACE
         };
 
         template <typename R>
-        auto ref(R&& range)
+        auto ref(R& range)
         {
             static_assert(not std::is_rvalue_reference_v<R>, "range can't be a rvalue reference");
-            return RAH_NAMESPACE::views::ref_view<std::remove_reference_t<R>>(&range);
+            return RAH_NAMESPACE::views::ref_view<std::remove_reference_t<R>>(range);
         }
 
         inline auto ref()
@@ -965,27 +974,27 @@ namespace RAH_NAMESPACE
 
         // ********************************** all *************************************************
 
-        template <typename R, typename = RAH_STD::enable_if_t<view<RAH_STD::remove_reference_t<R>>>>
+        template <typename R, RAH_STD::enable_if_t<view<RAH_STD::remove_reference_t<R>>>* = nullptr>
         auto all(R&& range) -> decltype(RAH_STD::forward<R>(range))
         {
             return RAH_STD::forward<R>(range);
         }
         template <
             typename R,
-            typename = RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>, int>,
-            typename = RAH_STD::enable_if_t<RAH_STD::is_lvalue_reference_v<R>, int>>
-        auto all(R&& range, int = 0)
+            RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>>* = nullptr,
+            RAH_STD::enable_if_t<RAH_STD::is_lvalue_reference_v<R>>* = nullptr>
+        auto all(R&& range)
         {
             return RAH_NAMESPACE::views::ref(RAH_STD::forward<R>(range));
         }
 
         template <
             typename R,
-            typename = RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>, int>,
-            typename = RAH_STD::enable_if_t<not RAH_STD::is_lvalue_reference_v<R>, int>>
-        auto all(R&& range, short = 0)
+            RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>>* = nullptr,
+            RAH_STD::enable_if_t<not RAH_STD::is_lvalue_reference_v<R>>* = nullptr>
+        auto all(R&& range)
         {
-            return RAH_STD::forward<R>(range);
+            return owning_view<std::decay_t<R>>(RAH_STD::forward<R>(range));
         }
 
         template <typename V>
@@ -1016,11 +1025,12 @@ namespace RAH_NAMESPACE
             {
                 inner_sentinel sent;
             };
-            class iterator : public iterator_facade<
-                                 iterator,
-                                 sentinel,
-                                 typename RAH_STD::iterator_traits<inner_iterator>::reference,
-                                 RAH_STD::bidirectional_iterator_tag>
+            class iterator
+                : public iterator_facade<
+                      iterator,
+                      sentinel,
+                      typename RAH_STD::iterator_traits<inner_iterator>::reference,
+                      RAH_NAMESPACE::common_iterator_tag<RAH_STD::bidirectional_iterator_tag, range_iter_categ_t<R>>>
             {
                 filter_view* view_ = nullptr;
                 inner_iterator iter_;
@@ -1074,6 +1084,7 @@ namespace RAH_NAMESPACE
                     return *this;
                 }
                 RAH_POST_INCR
+                template <typename U = R, std::enable_if_t<bidirectional_range<U>>* = nullptr>
                 iterator& operator--()
                 {
                     do
@@ -1083,11 +1094,13 @@ namespace RAH_NAMESPACE
                              && iter_ != RAH_NAMESPACE::begin(view_->range_));
                     return *this;
                 }
-
+                template <typename U = R, std::enable_if_t<bidirectional_range<U>>* = nullptr>
+                RAH_POST_DECR;
                 auto operator*() const -> decltype(*value_pointer_)
                 {
                     return *value_pointer_;
                 }
+                template <typename U = R, std::enable_if_t<equality_comparable<iterator_t<U>>>* = nullptr>
                 friend bool operator==(iterator const& it, iterator const& other)
                 {
                     return it.iter_ == other.iter_;
@@ -1119,12 +1132,12 @@ namespace RAH_NAMESPACE
                 return iterator(this, RAH_NAMESPACE::begin(range_));
             }
 
-            template <typename U = R, std::enable_if_t<is_common_range, U>* = nullptr>
+            template <typename U = R, std::enable_if_t<common_range<U>>* = nullptr>
             iterator end()
             {
                 return iterator{this, RAH_NAMESPACE::end(range_)};
             }
-            template <typename U = R, std::enable_if_t<not is_common_range, U>* = nullptr>
+            template <typename U = R, std::enable_if_t<not common_range<U>>* = nullptr>
             sentinel end()
             {
                 return sentinel{RAH_NAMESPACE::end(range_)};
@@ -1154,6 +1167,8 @@ namespace RAH_NAMESPACE
             R base_;
             RAH_NAMESPACE::details::optional<F> func_;
             constexpr static bool is_common_range = RAH_NAMESPACE::common_range<R>;
+            using category =
+                rah::common_iterator_tag<std::random_access_iterator_tag, range_iter_categ_t<R>>;
 
         public:
             struct sentinel
@@ -1163,8 +1178,7 @@ namespace RAH_NAMESPACE
 
             using reference =
                 decltype(details::declval<F>()(details::declval<range_reference_t<R>>()));
-            class iterator
-                : public iterator_facade<iterator, sentinel, reference, range_iter_categ_t<R>>
+            class iterator : public iterator_facade<iterator, sentinel, reference, category>
             {
                 iterator_t<R> iter_;
                 RAH_NAMESPACE::details::optional<F> func_;
@@ -1200,11 +1214,21 @@ namespace RAH_NAMESPACE
                     iter_ -= off;
                     return *this;
                 }
+                template <
+                    typename C = category,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --iter_;
                     return *this;
                 }
+                template <
+                    typename C = category,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
+                template <
+                    typename C = category,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& r) const
                 {
                     return iter_ - r.iter_;
@@ -1212,6 +1236,13 @@ namespace RAH_NAMESPACE
                 auto operator*() -> decltype((*func_)(*iter_))
                 {
                     return (*func_)(*iter_);
+                }
+                template <
+                    typename C = category,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                bool operator<(iterator const it2) const
+                {
+                    return iter_ < it2.iter_;
                 }
                 friend bool operator==(iterator const& it, iterator const& it2)
                 {
@@ -1275,6 +1306,8 @@ namespace RAH_NAMESPACE
         {
             R input_view_;
             size_t count_;
+            static constexpr bool IsCommon =
+                RAH_NAMESPACE::random_access_range<R> && RAH_NAMESPACE::sized_range<R>;
 
         public:
             using base_iterator = RAH_NAMESPACE::iterator_t<R>;
@@ -1287,19 +1320,31 @@ namespace RAH_NAMESPACE
             {
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::contiguous_range<U>>* = nullptr>
+            auto data()
+            {
+                return input_view_.data();
+            }
+
+            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::contiguous_range<U>>* = nullptr>
+            auto data() const
+            {
+                return input_view_.data();
+            }
+
+            template <bool C = IsCommon, std::enable_if_t<C>* = nullptr>
             auto begin()
             {
                 return RAH_NAMESPACE::begin(input_view_);
             }
 
-            template <typename U = R, std::enable_if_t<not RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool C = IsCommon, std::enable_if_t<not C>* = nullptr>
             auto begin()
             {
-                return counted_iterator<iterator_t<U>>(RAH_NAMESPACE::begin(input_view_), count_);
+                return counted_iterator<iterator_t<R>>(RAH_NAMESPACE::begin(input_view_), count_);
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool C = IsCommon, std::enable_if_t<C>* = nullptr>
             auto end()
             {
                 auto iter = RAH_NAMESPACE::begin(input_view_);
@@ -1307,7 +1352,7 @@ namespace RAH_NAMESPACE
                 return iter;
             }
 
-            template <typename U = R, std::enable_if_t<not RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool C = IsCommon, std::enable_if_t<not C>* = nullptr>
             default_sentinel end()
             {
                 return default_sentinel{};
@@ -1334,6 +1379,7 @@ namespace RAH_NAMESPACE
         {
             R base_;
             size_t drop_count_ = 0;
+            using category = range_iter_categ_t<R>;
 
         public:
             using iterator = RAH_NAMESPACE::iterator_t<R>;
@@ -1345,16 +1391,24 @@ namespace RAH_NAMESPACE
             {
             }
 
-            iterator begin()
+            auto begin()
             {
                 auto iter = RAH_NAMESPACE::begin(base_);
                 RAH_NAMESPACE::advance(iter, drop_count_, RAH_NAMESPACE::end(base_));
                 return iter;
             }
 
-            iterator end()
+            auto end()
             {
                 return RAH_NAMESPACE::end(base_);
+            }
+
+            template <
+                typename C = category,
+                std::enable_if_t<RAH_NAMESPACE::derived_from<C, rah::contiguous_iterator_tag>>* = nullptr>
+            auto data()
+            {
+                return &(*begin());
             }
         };
 
@@ -1378,6 +1432,7 @@ namespace RAH_NAMESPACE
         {
             R base_;
             F pred_;
+            using category = range_iter_categ_t<R>;
 
         public:
             using iterator = RAH_NAMESPACE::iterator_t<R>;
@@ -1404,6 +1459,14 @@ namespace RAH_NAMESPACE
             sentinel end()
             {
                 return RAH_NAMESPACE::end(base_);
+            }
+
+            template <
+                typename C = category,
+                std::enable_if_t<RAH_NAMESPACE::derived_from<C, rah::contiguous_iterator_tag>>* = nullptr>
+            auto data()
+            {
+                return &(*begin());
             }
         };
 
@@ -1466,8 +1529,11 @@ namespace RAH_NAMESPACE
             }
 
         public:
-            class iterator
-                : public iterator_facade<iterator, void, range_reference_t<range_reference_t<R>>, RAH_STD::forward_iterator_tag>
+            class iterator : public iterator_facade<
+                                 iterator,
+                                 default_sentinel,
+                                 range_reference_t<range_reference_t<R>>,
+                                 RAH_STD::input_iterator_tag>
             {
                 join_view* view_ = nullptr;
 
@@ -1493,21 +1559,13 @@ namespace RAH_NAMESPACE
                 {
                     return *view_->sub_range_iter_;
                 }
-                bool operator==(iterator const& other) const
+                bool operator==(default_sentinel) const
                 {
-                    if (other.view_ == nullptr)
-                    {
-                        if (view_ == nullptr)
-                            return true;
-                        else
-                            return view_->range_iter_ == view_->range_end_;
-                    }
-                    else if (view_ == nullptr)
-                    {
-                        return other == *this;
-                    }
-                    assert(false && "join_view iterator can only be compared to the end");
-                    return false;
+                    return view_->range_iter_ == view_->range_end_;
+                }
+                friend bool operator==(default_sentinel sent, iterator const& it)
+                {
+                    return it == sent;
                 }
             };
 
@@ -1542,7 +1600,7 @@ namespace RAH_NAMESPACE
 
             auto end()
             {
-                return iterator();
+                return default_sentinel();
             }
         };
 
@@ -3766,6 +3824,12 @@ namespace RAH_NAMESPACE
         auto end(R&& r)
         {
             return r.end();
+        }
+
+        template <typename R, std::enable_if_t<rah::contiguous_range<R>>* = nullptr>
+        auto data(R&& r)
+        {
+            return r.data();
         }
     } // namespace views
 
