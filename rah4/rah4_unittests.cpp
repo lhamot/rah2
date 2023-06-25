@@ -923,6 +923,45 @@ void test_enumerate_view()
     }
 }
 
+struct make_zip_view1
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::zip(make_test_view<CS, Tag>());
+    }
+};
+void test_zip_view()
+{
+    {
+        /// [zip]
+        std::vector<int> inputA{1, 2, 3, 4};
+        std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
+        std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+        std::vector<std::tuple<int, double, char>> result;
+        for (auto a_b_c : rah::views::zip(inputA, inputB, inputC) | rah::views::common())
+            result.emplace_back(a_b_c);
+        assert(
+            result
+            == (std::vector<std::tuple<int, double, char>>{
+                {1, 2.5, 'a'}, {2, 4.5, 'b'}, {3, 6.5, 'c'}, {4, 8.5, 'd'}}));
+        /// [zip]
+    }
+
+    {
+        std::vector<int> inputA{1, 2, 3, 4};
+        std::vector<bool> inputB{false, true, true, false};
+        auto range = rah::views::zip(inputA, inputB)
+                     | rah::views::filter([](auto a_b) { return std::get<1>(a_b); });
+        std::vector<std::tuple<int, bool>> result;
+
+        rah::copy(range, std::back_inserter(result));
+        assert(rah::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
+    }
+
+    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_zip_view1());
+}
+
 int main()
 {
     test_counted_iterator();
@@ -944,6 +983,7 @@ int main()
     test_reverse_iterator();
     test_elements_view();
     test_enumerate_view();
+    test_zip_view();
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};
@@ -1131,8 +1171,10 @@ int main()
                 y *= 2;
                 return prev;
             });
-        for (int i : gen)
-            result.push_back(i);
+        auto i = rah::begin(gen);
+        auto e = rah::end(gen);
+        for (; i != e; ++i)
+            result.push_back(*i);
         assert(result == std::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
         static_assert(rah::input_range<decltype(gen)>, "");
@@ -1238,9 +1280,13 @@ int main()
     {
         // slide with non common_range
         std::vector<std::vector<int>> out;
-        for (auto subRange : rah::views::iota(0) | rah::views::take(6) | rah::views::slide(3))
+        auto r = rah::views::iota(0) | rah::views::take(6) | rah::views::slide(3);
+        auto it = rah::begin(r);
+        auto e = rah::end(r);
+        for (; it != e; ++it)
         {
             out.emplace_back();
+            auto&& subRange = *it;
             rah::copy(subRange, std::back_inserter(out.back()));
         }
         assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
@@ -1513,21 +1559,6 @@ int main()
     }
 
     {
-        /// [zip]
-        std::vector<int> inputA{1, 2, 3, 4};
-        std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
-        std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
-        std::vector<std::tuple<int, double, char>> result;
-        for (auto a_b_c : rah::views::zip(inputA, inputB, inputC) | rah::views::common())
-            result.emplace_back(a_b_c);
-        assert(
-            result
-            == (std::vector<std::tuple<int, double, char>>{
-                {1, 2.5, 'a'}, {2, 4.5, 'b'}, {3, 6.5, 'c'}, {4, 8.5, 'd'}}));
-        /// [zip]
-    }
-
-    {
         /// [zip_transform]
         std::vector<int> inputA{1, 2, 3, 4};
         std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
@@ -1546,16 +1577,6 @@ int main()
         /// [zip_transform]
     }
 
-    {
-        std::vector<int> inputA{1, 2, 3, 4};
-        std::vector<bool> inputB{false, true, true, false};
-        auto range = rah::views::zip(inputA, inputB)
-                     | rah::views::filter([](auto a_b) { return std::get<1>(a_b); });
-        std::vector<std::tuple<int, bool>> result;
-
-        rah::copy(range, std::back_inserter(result));
-        assert(rah::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
-    }
     {
         /// [chunk]
         std::vector<int> vec_01234{0, 1, 2, 3, 4};

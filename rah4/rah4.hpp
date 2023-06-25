@@ -2359,6 +2359,26 @@ namespace RAH_NAMESPACE
                     RAH_STD::make_index_sequence<N>{});
             }
 
+            template <typename Tuple, size_t Index, typename Check>
+            struct all_type_impl
+            {
+                static constexpr bool value =
+                    Check::template value<std::tuple_element_t<Index, Tuple>>
+                    && all_type_impl<Tuple, Index - 1, Check>::value;
+            };
+
+            template <typename Tuple, typename Check>
+            struct all_type_impl<Tuple, 0, Check>
+            {
+                static constexpr bool value = Check::template value<std::tuple_element_t<0, Tuple>>;
+            };
+
+            template <typename Tuple, typename Check>
+            constexpr bool all_type()
+            {
+                return all_type_impl<Tuple, std::tuple_size_v<Tuple> - 1, Check>::value;
+            }
+
             template <class F, typename... Args, size_t... Is>
             auto transform_each_impl(
                 const RAH_STD::tuple<Args...>& t, F&& f, RAH_STD::index_sequence<Is...>)
@@ -2431,6 +2451,8 @@ namespace RAH_NAMESPACE
                 template <typename... Args, typename... Args2>
                 bool operator()(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b) const
                 {
+                    // Used to find the end of the sequence, so if one iterator is end, it is the end
+                    // This is why OR is used.
                     return (RAH_STD::get<Index - 1>(a) == RAH_STD::get<Index - 1>(b))
                            || equal_tuple<Index - 1>{}(a, b);
                 }
@@ -2450,6 +2472,33 @@ namespace RAH_NAMESPACE
             auto equal(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b)
             {
                 return equal_tuple<sizeof...(Args)>{}(a, b);
+            }
+
+            template <size_t Index>
+            struct lesser_tuple
+            {
+                template <typename... Args, typename... Args2>
+                bool operator()(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b) const
+                {
+                    return (RAH_STD::get<Index - 1>(a) < RAH_STD::get<Index - 1>(b))
+                           && equal_tuple<Index - 1>{}(a, b);
+                }
+            };
+
+            template <>
+            struct lesser_tuple<0>
+            {
+                template <typename... Args, typename... Args2>
+                bool operator()(RAH_STD::tuple<Args...> const&, RAH_STD::tuple<Args2...> const&) const
+                {
+                    return false;
+                }
+            };
+
+            template <typename... Args, typename... Args2>
+            auto lesser(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b)
+            {
+                return lesser_tuple<sizeof...(Args)>{}(a, b);
             }
 
             template <typename... Args, size_t... Is>
@@ -2515,6 +2564,49 @@ namespace RAH_NAMESPACE
             using IterTuple = decltype(details::transform_each(bases_, range_begin()));
             using SentinelTuple = decltype(details::transform_each(bases_, range_end()));
 
+            template <typename Cat>
+            struct range_has_cat
+            {
+                template <typename Range>
+                static constexpr bool value = rah::derived_from<rah::range_iter_categ_t<Range>, Cat>;
+            };
+            using base_cat = std::conditional_t<
+                details::all_type<RangeTuple, range_has_cat<rah::contiguous_iterator_tag>>(),
+                rah::contiguous_iterator_tag,
+                std::conditional_t<
+                    details::all_type<RangeTuple, range_has_cat<rah::random_access_iterator_tag>>(),
+                    rah::random_access_iterator_tag,
+                    std::conditional_t<
+                        details::all_type<RangeTuple, range_has_cat<rah::bidirectional_iterator_tag>>(),
+                        rah::bidirectional_iterator_tag,
+                        std::conditional_t<
+                            details::all_type<RangeTuple, range_has_cat<rah::forward_iterator_tag>>(),
+                            rah::forward_iterator_tag,
+                            std::conditional_t<
+                                details::all_type<RangeTuple, range_has_cat<rah::input_iterator_tag>>(),
+                                rah::input_iterator_tag,
+                                bool>>>>>;
+            struct is_sized_range
+            {
+                template <typename Range>
+                static constexpr bool value = rah::sized_range<Range>;
+            };
+            static constexpr bool common_one_range =
+                std::tuple_size_v<RangeTuple> == 1
+                && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
+            static constexpr bool common_all_sized_random_access =
+                (details::all_type<RangeTuple, range_has_cat<rah::random_access_iterator_tag>>()
+                 && details::all_type<RangeTuple, is_sized_range>());
+
+            struct compute_min_size
+            {
+                template <typename... Args>
+                auto operator()(Args... args) const
+                {
+                    return std::min(std::initializer_list<size_t>{static_cast<size_t>(args)...});
+                }
+            };
+
         public:
             struct sentinel
             {
@@ -2526,7 +2618,7 @@ namespace RAH_NAMESPACE
                       iterator,
                       sentinel,
                       decltype(details::deref(RAH_NAMESPACE::details::declval<IterTuple>())),
-                      RAH_STD::bidirectional_iterator_tag>
+                      base_cat>
             {
                 IterTuple iters_;
 
@@ -2539,31 +2631,50 @@ namespace RAH_NAMESPACE
                 iterator& operator++()
                 {
                     details::for_each(iters_, [](auto& iter) { ++iter; });
-                    // details::for_each(iters_, [](auto& iter) { iter.deleteCheck.check(); });
                     return *this;
                 }
                 RAH_POST_INCR
                 iterator& operator+=(intptr_t val)
                 {
-                    for_each(iters_, [val](auto& iter) { iter += val; });
+                    details::for_each(iters_, [val](auto& iter) { iter += val; });
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     details::for_each(iters_, [](auto& iter) { --iter; });
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
                 auto operator*()
                 {
                     return details::deref(iters_);
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& other) const
                 {
                     return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(other.iters_);
                 }
-                friend bool operator==(iterator const& iter, iterator const& iter2)
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                auto operator<(iterator const& other) const
                 {
-                    return details::equal(iter.iters_, iter2.iters_);
+                    return details::lesser(iters_, other.iters_);
+                }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                bool operator==(iterator const& iter) const
+                {
+                    return details::equal(iters_, iter.iters_);
                 }
                 friend bool operator==(iterator const& iter, sentinel const& sent)
                 {
@@ -2586,6 +2697,29 @@ namespace RAH_NAMESPACE
                 return iterator(details::transform_each(bases_, range_begin()));
             }
 
+            template <bool C = common_one_range, std::enable_if_t<C>* = nullptr>
+            iterator end()
+            {
+                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
+                return iterator(details::transform_each(bases_, range_end()));
+            }
+
+            template <
+                bool A = common_one_range,
+                bool B = common_all_sized_random_access,
+                std::enable_if_t<!A && B>* = nullptr>
+            iterator end()
+            {
+                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                auto const min_size = details::apply(compute_min_size(), sizes);
+                return iterator(details::transform_each(
+                    bases_, [min_size](auto&& r) { return rah::begin(r) + min_size; }));
+            }
+
+            template <
+                bool A = common_one_range,
+                bool B = common_all_sized_random_access,
+                std::enable_if_t<!A && !B>* = nullptr>
             sentinel end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
