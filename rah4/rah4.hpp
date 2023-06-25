@@ -2538,13 +2538,6 @@ namespace RAH_NAMESPACE
                     std::tuple_size<std::remove_reference_t<Tuple>>::value;
                 return apply(f, t, std::make_index_sequence<tup_size>{});
             }
-
-        } // namespace details
-        /// \endcond
-
-        template <typename RangeTuple>
-        class zip_view : public view_interface<zip_view<RangeTuple>>
-        {
             struct range_begin
             {
                 template <typename R>
@@ -2561,32 +2554,41 @@ namespace RAH_NAMESPACE
                     return RAH_NAMESPACE::end(r);
                 }
             };
-            RangeTuple bases_;
-            using IterTuple = decltype(details::transform_each(bases_, range_begin()));
-            using SentinelTuple = decltype(details::transform_each(bases_, range_end()));
-
             template <typename Cat>
             struct range_has_cat
             {
                 template <typename Range>
                 static constexpr bool value = rah::derived_from<rah::range_iter_categ_t<Range>, Cat>;
             };
-            using base_cat = std::conditional_t<
-                details::all_type<RangeTuple, range_has_cat<rah::contiguous_iterator_tag>>(),
+            template <typename RangeTuple>
+            using tuple_base_cat = std::conditional_t<
+                details::all_type<RangeTuple, details::range_has_cat<rah::contiguous_iterator_tag>>(),
                 rah::contiguous_iterator_tag,
                 std::conditional_t<
-                    details::all_type<RangeTuple, range_has_cat<rah::random_access_iterator_tag>>(),
+                    details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>(),
                     rah::random_access_iterator_tag,
                     std::conditional_t<
-                        details::all_type<RangeTuple, range_has_cat<rah::bidirectional_iterator_tag>>(),
+                        details::all_type<RangeTuple, details::range_has_cat<rah::bidirectional_iterator_tag>>(),
                         rah::bidirectional_iterator_tag,
                         std::conditional_t<
-                            details::all_type<RangeTuple, range_has_cat<rah::forward_iterator_tag>>(),
+                            details::all_type<RangeTuple, details::range_has_cat<rah::forward_iterator_tag>>(),
                             rah::forward_iterator_tag,
                             std::conditional_t<
-                                details::all_type<RangeTuple, range_has_cat<rah::input_iterator_tag>>(),
+                                details::all_type<RangeTuple, details::range_has_cat<rah::input_iterator_tag>>(),
                                 rah::input_iterator_tag,
                                 bool>>>>>;
+
+        } // namespace details
+        /// \endcond
+
+        template <typename RangeTuple>
+        class zip_view : public view_interface<zip_view<RangeTuple>>
+        {
+            RangeTuple bases_;
+            using IterTuple = decltype(details::transform_each(bases_, details::range_begin()));
+            using SentinelTuple = decltype(details::transform_each(bases_, details::range_end()));
+
+            using base_cat = details::tuple_base_cat<RangeTuple>;
             struct is_sized_range
             {
                 template <typename Range>
@@ -2596,7 +2598,7 @@ namespace RAH_NAMESPACE
                 std::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
             static constexpr bool common_all_sized_random_access =
-                (details::all_type<RangeTuple, range_has_cat<rah::random_access_iterator_tag>>()
+                (details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
                  && details::all_type<RangeTuple, is_sized_range>());
 
             struct compute_min_size
@@ -2695,14 +2697,14 @@ namespace RAH_NAMESPACE
             iterator begin()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
-                return iterator(details::transform_each(bases_, range_begin()));
+                return iterator(details::transform_each(bases_, details::range_begin()));
             }
 
             template <bool C = common_one_range, std::enable_if_t<C>* = nullptr>
             iterator end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
-                return iterator(details::transform_each(bases_, range_end()));
+                return iterator(details::transform_each(bases_, details::range_end()));
             }
 
             template <
@@ -2724,7 +2726,7 @@ namespace RAH_NAMESPACE
             sentinel end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
-                return sentinel{details::transform_each(bases_, range_end())};
+                return sentinel{details::transform_each(bases_, details::range_end())};
             }
         };
 
@@ -2739,50 +2741,55 @@ namespace RAH_NAMESPACE
         // ************************************ zip_transform *************************************
 
         template <typename Func, typename RangeTuple>
-        class zip_transform_view : public view_interface<zip_transform_view<Func, RangeTuple>>
+        class zip_transform_view : public view_interface<zip_view<RangeTuple>>
         {
-            // Can't use a lambda in decltype, but can use a functor
-            struct range_begin
-            {
-                template <typename R>
-                auto operator()(R&& r) const
-                {
-                    return RAH_NAMESPACE::begin(r);
-                }
-            };
-            struct range_end
-            {
-                template <typename R>
-                auto operator()(R&& r) const
-                {
-                    return RAH_NAMESPACE::end(r);
-                }
-            };
             Func func_;
             RangeTuple bases_;
-            using iter_tuple = decltype(details::transform_each(bases_, range_begin()));
-            using sentinel_tuple = decltype(details::transform_each(bases_, range_end()));
-            static constexpr size_t tuple_size = std::tuple_size_v<RangeTuple>;
+            using IterTuple = decltype(details::transform_each(bases_, details::range_begin()));
+            using SentinelTuple = decltype(details::transform_each(bases_, details::range_end()));
+
+            using base_cat = details::tuple_base_cat<RangeTuple>;
+            struct is_sized_range
+            {
+                template <typename Range>
+                static constexpr bool value = rah::sized_range<Range>;
+            };
+            static constexpr bool common_one_range =
+                std::tuple_size_v<RangeTuple> == 1
+                && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
+            static constexpr bool common_all_sized_random_access =
+                (details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
+                 && details::all_type<RangeTuple, is_sized_range>());
+
+            struct compute_min_size
+            {
+                template <typename... Args>
+                auto operator()(Args... args) const
+                {
+                    return std::min(std::initializer_list<size_t>{static_cast<size_t>(args)...});
+                }
+            };
 
         public:
             struct sentinel
             {
-                sentinel_tuple sentinels;
+                SentinelTuple sentinels;
             };
 
             class iterator
                 : public iterator_facade<
                       iterator,
                       sentinel,
-                      decltype(details::deref(RAH_NAMESPACE::details::declval<iter_tuple>())),
-                      RAH_STD::bidirectional_iterator_tag>
+                      decltype(details::deref(RAH_NAMESPACE::details::declval<IterTuple>())),
+                      base_cat>
             {
-                zip_transform_view* parent_;
-                iter_tuple iters_;
+                IterTuple iters_;
+                zip_transform_view* parent_ = nullptr;
+                static constexpr size_t tuple_size = std::tuple_size_v<RangeTuple>;
 
             public:
                 iterator() = default;
-                iterator(zip_transform_view* parent, iter_tuple iterators)
+                iterator(zip_transform_view* parent, IterTuple iterators)
                     : parent_(parent)
                     , iters_(iterators)
                 {
@@ -2795,26 +2802,46 @@ namespace RAH_NAMESPACE
                 RAH_POST_INCR
                 iterator& operator+=(intptr_t val)
                 {
-                    for_each(iters_, [val](auto& iter) { iter += val; });
+                    details::for_each(iters_, [val](auto& iter) { iter += val; });
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     details::for_each(iters_, [](auto& iter) { --iter; });
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
                 auto operator*()
                 {
                     return details::deref_call_impl(
                         parent_->func_, iters_, std::make_index_sequence<tuple_size>{});
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& other) const
                 {
-                    return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(parent_->other.iters_);
+                    return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(other.iters_);
                 }
-                friend bool operator==(iterator const& iter, iterator const& iter2)
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                auto operator<(iterator const& other) const
                 {
-                    return details::equal(iter.iters_, iter2.iters_);
+                    return details::lesser(iters_, other.iters_);
+                }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                bool operator==(iterator const& iter) const
+                {
+                    return details::equal(iters_, iter.iters_);
                 }
                 friend bool operator==(iterator const& iter, sentinel const& sent)
                 {
@@ -2826,7 +2853,7 @@ namespace RAH_NAMESPACE
                 }
             };
 
-            zip_transform_view(Func f, RangeTuple rangeTuple)
+            explicit zip_transform_view(Func f, RangeTuple rangeTuple)
                 : func_(std::move(f))
                 , bases_(RAH_STD::move(rangeTuple))
             {
@@ -2834,20 +2861,42 @@ namespace RAH_NAMESPACE
 
             iterator begin()
             {
-                return iterator(this, details::transform_each(bases_, range_begin()));
+                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
+                return iterator(this, details::transform_each(bases_, details::range_begin()));
             }
 
+            template <bool C = common_one_range, std::enable_if_t<C>* = nullptr>
+            iterator end()
+            {
+                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
+                return iterator(this, details::transform_each(bases_, details::range_end()));
+            }
+
+            template <
+                bool A = common_one_range,
+                bool B = common_all_sized_random_access,
+                std::enable_if_t<!A && B>* = nullptr>
+            iterator end()
+            {
+                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                auto const min_size = details::apply(compute_min_size(), sizes);
+                return iterator(
+                    this,
+                    details::transform_each(
+                        bases_, [min_size](auto&& r) { return rah::begin(r) + min_size; }));
+            }
+
+            template <
+                bool A = common_one_range,
+                bool B = common_all_sized_random_access,
+                std::enable_if_t<!A && !B>* = nullptr>
             sentinel end()
             {
-                return sentinel{details::transform_each(bases_, range_end())};
+                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
+                return sentinel{details::transform_each(bases_, details::range_end())};
             }
         };
 
-        /// @brief that takes an invocable object and one or more views, and produces a view
-        /// whose ith element is the result of applying the invocable object
-        /// to the ith elements of all views.
-        ///
-        /// @snippet rah4_unittests.cpp zip_transform
         template <typename F, typename... R>
         auto zip_transform(F&& func, R&&... ranges)
         {
