@@ -140,6 +140,130 @@ public:
     }
 };
 
+template <CommonOrSent Sent, typename Cat, typename Range>
+class test_view_adapter : public rah::view_interface<test_view<Sent, Cat>>
+{
+    Range base_;
+    using base_iterator = rah::iterator_t<Range>;
+    using base_sentinel = rah::sentinel_t<Range>;
+
+public:
+    class iterator : public rah::iterator_facade<iterator, rah::sentinel_iterator, int&, Cat>
+    {
+        base_iterator iter_;
+
+    public:
+        iterator() = default;
+        iterator(base_iterator it)
+            : iter_(it)
+        {
+        }
+
+        iterator& operator++()
+        {
+            ++iter_;
+            return *this;
+        }
+        RAH_POST_INCR
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+        iterator& operator+=(intptr_t value)
+        {
+            iter_ += value;
+            return *this;
+        }
+
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+        iterator& operator--()
+        {
+            --iter_;
+            return *this;
+        }
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+        RAH_POST_DECR;
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+        auto operator-(iterator const& other) const
+        {
+            return iter_ - other.iter_;
+        }
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+        iterator& operator-=(int64_t value)
+        {
+            iter_ -= value;
+            return *this;
+        }
+        rah::iter_reference_t<base_iterator> operator*() const
+        {
+            return *iter_;
+        }
+        rah::iter_reference_t<base_iterator> operator*()
+        {
+            return *iter_;
+        }
+        template <typename C = Cat, std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+        friend constexpr bool operator==(iterator const& it1, iterator const& it2)
+        {
+            return it1.iter_ == it2.iter_;
+        }
+        friend constexpr bool operator==(rah::default_sentinel const&, iterator const&)
+        {
+            return false;
+        }
+        friend constexpr bool operator==(iterator const&, rah::default_sentinel const&)
+        {
+            return false;
+        }
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+        friend bool operator<(iterator const& it1, iterator const& it2)
+        {
+            return it1.iter_ < it2.iter_;
+        }
+    };
+
+    test_view_adapter() = default;
+    test_view_adapter(Range r)
+        : base_(std::move(r))
+    {
+    }
+
+    auto begin()
+    {
+        return iterator(rah::begin(base_));
+    }
+    template <CommonOrSent S = Sent, std::enable_if_t<S == Sentinel>* = nullptr>
+    auto end()
+    {
+        return rah::default_sentinel{};
+    }
+    template <CommonOrSent S = Sent, std::enable_if_t<S == Common>* = nullptr>
+    auto end()
+    {
+        return iterator(rah::end(base_));
+    }
+    template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
+    int* data()
+    {
+        return rah::data(base_);
+    }
+
+    template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
+    int* data() const
+    {
+        return rah::data(base_);
+    }
+};
+
 MAKE_CONCEPT(has_pos_incr, true, (std::declval<T>()++));
 
 template <CommonOrSent Sent, typename Cat>
@@ -152,6 +276,12 @@ template <CommonOrSent Sent, typename Cat>
 auto make_test_view()
 {
     return test_view<Sent, Cat>(0, 10, 1);
+}
+
+template <CommonOrSent Sent, typename Cat, typename Range>
+auto make_test_view_adapter(Range&& r)
+{
+    return test_view_adapter<Sent, Cat, std::remove_reference_t<Range>>(std::forward<Range>(r));
 }
 
 // output

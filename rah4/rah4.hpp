@@ -2054,6 +2054,7 @@ namespace RAH_NAMESPACE
 
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
+            using base_cat = range_iter_categ_t<R>;
 
         public:
             elements_view() = default;
@@ -2070,12 +2071,12 @@ namespace RAH_NAMESPACE
                 inner_sentinel sent;
             };
 
-            class iterator
-                : public iterator_facade<iterator, sentinel, reference, range_iter_categ_t<R>>
+            class iterator : public iterator_facade<iterator, sentinel, reference, base_cat>
             {
                 inner_iterator iter_;
 
             public:
+                iterator() = default;
                 explicit iterator(inner_iterator it)
                     : iter_(std::move(it))
                 {
@@ -2092,20 +2093,58 @@ namespace RAH_NAMESPACE
                     return *this;
                 }
                 RAH_POST_INCR
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --iter_;
                     return *this;
                 }
-
-                friend bool operator==(iterator it, iterator it2)
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                bool operator==(iterator const& it) const
                 {
-                    return it.iter_ == it2.iter_;
+                    return iter_ == it.iter_;
                 }
-                friend bool operator==(iterator it, sentinel sent)
+                friend bool operator==(iterator const& it, sentinel const& sent)
                 {
                     return it.iter_ == sent.sent;
                 }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                bool operator<(iterator const& it2)
+                {
+                    return iter_ < it2.iter_;
+                }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                bool operator-(iterator const& it2) const
+                {
+                    return iter_ - it2.iter_;
+                }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                iterator& operator+=(int64_t value)
+                {
+                    iter_ += value;
+                    return *this;
+                }
+                //template <
+                //    typename C = base_cat,
+                //    std::enable_if_t<sized_sentinel_for<inner_iterator, inner_sentinel>>* = nullptr>
+                //bool operator-(sentinel const& sent)
+                //{
+                //    return iter_ - sent.sent;
+                //}
             };
 
             auto begin()
@@ -2122,7 +2161,7 @@ namespace RAH_NAMESPACE
             template <typename U = R, std::enable_if_t<!RAH_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                return sentinel(RAH_NAMESPACE::end(base_));
+                return sentinel{RAH_NAMESPACE::end(base_)};
             }
         };
 
@@ -2173,7 +2212,8 @@ namespace RAH_NAMESPACE
         {
             R base_;
             using inner_iterator = iterator_t<R>;
-            using inner_sentinel = iterator_t<R>;
+            using inner_sentinel = sentinel_t<R>;
+            using base_cat = common_iterator_tag<random_access_iterator_tag, range_iter_categ_t<R>>;
 
         public:
             explicit enumerate_view(R base)
@@ -2195,6 +2235,7 @@ namespace RAH_NAMESPACE
                 int64_t pos_;
 
             public:
+                iterator() = default;
                 iterator(inner_iterator current, int64_t pos)
                     : current_(std::move(current))
                     , pos_(pos)
@@ -2208,25 +2249,56 @@ namespace RAH_NAMESPACE
                     return *this;
                 }
                 RAH_POST_INCR
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     ++current_;
                     ++pos_;
                     return *this;
                 }
-
-                value_type operator*()
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR value_type operator*()
                 {
                     return {pos_, *current_};
                 }
-
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                bool operator==(iterator const& iter) const
+                {
+                    return iter.pos_ == pos_;
+                }
+                template <typename I = iterator, std::enable_if_t<!std::is_same_v<I, sentinel>>* = nullptr>
                 friend bool operator==(iterator const& iter, sentinel const& sent)
                 {
                     return iter.current_ == sent.sent;
                 }
-                friend bool operator==(iterator const& iter, iterator const& iter2)
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                bool operator<(iterator const& iter)
                 {
-                    return iter.pos_ == iter2.pos_;
+                    return pos_ < iter.pos_;
+                }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                auto operator-(iterator const& it2) const
+                {
+                    return pos_ - it2.pos_;
+                }
+                template <
+                    typename C = base_cat,
+                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                iterator& operator+=(int64_t value)
+                {
+                    current_ += value;
+                    pos_ += value;
+                    return *this;
                 }
             };
 
@@ -2237,8 +2309,7 @@ namespace RAH_NAMESPACE
 
             template <
                 typename U = R,
-                std::enable_if_t<
-                    RAH_NAMESPACE::random_access_range<U> and RAH_NAMESPACE::common_range<U>>* = nullptr>
+                std::enable_if_t<RAH_NAMESPACE::sized_range<U> and RAH_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
                 return iterator(RAH_NAMESPACE::end(base_), RAH_NAMESPACE::size(base_));
@@ -2246,8 +2317,7 @@ namespace RAH_NAMESPACE
 
             template <
                 typename U = R,
-                std::enable_if_t<not(
-                    RAH_NAMESPACE::random_access_range<U> and RAH_NAMESPACE::common_range<U>)>* = nullptr>
+                std::enable_if_t<not(RAH_NAMESPACE::sized_range<U> and RAH_NAMESPACE::common_range<U>)>* = nullptr>
             auto end()
             {
                 return sentinel{RAH_NAMESPACE::end(base_)};

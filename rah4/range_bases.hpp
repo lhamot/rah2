@@ -249,13 +249,15 @@ namespace rah
     struct range_impl
     {
         template <typename R2>
-        static auto check(R2 r)
-            -> concepts::TypeList<decltype(RAH_NAMESPACE::begin(r)), decltype(RAH_NAMESPACE::end(r))>;
+        using has_begin = decltype(RAH_NAMESPACE::begin(std::declval<R2>()));
+        template <typename R2>
+        using has_end = decltype(RAH_NAMESPACE::end(std::declval<R2>()));
 
         template <typename R2>
         using check_wrapper = decltype(check(std::declval<R2>()));
 
-        static constexpr bool value = compiles<Diagnostic, R, check_wrapper>;
+        static constexpr bool value =
+            compiles<Diagnostic, R, has_begin> && compiles<Diagnostic, R, has_end>;
     };
 
     template <typename R>
@@ -525,10 +527,17 @@ namespace rah
     constexpr bool semiregular =
         RAH_NAMESPACE::copyable<T> && RAH_NAMESPACE::default_initializable<T>;
 
+    template <class S, class I, bool Diagnostic = false>
+    struct sentinel_for_impl
+    {
+        static constexpr bool value =
+            is_true_v<Diagnostic, RAH_NAMESPACE::semiregular<S>>
+            && is_true_v<Diagnostic, RAH_NAMESPACE::input_or_output_iterator<I>>
+            && is_true_v<Diagnostic, WeaklyEqualityComparableWith<I, S>>;
+    };
+
     template <class S, class I>
-    constexpr bool sentinel_for =
-        RAH_NAMESPACE::semiregular<S> && RAH_NAMESPACE::input_or_output_iterator<I>
-        && WeaklyEqualityComparableWith<I, S>;
+    constexpr bool sentinel_for = sentinel_for_impl<S, I>::value;
 
     template <class T>
     constexpr bool regular = semiregular<T> && equality_comparable<T>;
@@ -601,7 +610,7 @@ namespace rah
         static constexpr bool value =
             input_iterator<I>
             && derived_from<details::iterator_category<I>, std::forward_iterator_tag>
-            && incrementable<I> && is_true_v<Diagnostic, sentinel_for<I, I>>;
+            && incrementable<I> && sentinel_for_impl<I, I, Diagnostic>::value;
     };
 
     template <typename I>
@@ -1006,12 +1015,9 @@ namespace rah
     template <class T, bool Diagnostic = false>
     struct random_access_range_impl
     {
-        template <typename U>
-        using has_random_access_iterator =
-            std::enable_if_t<random_access_iterator_impl<RAH_NAMESPACE::iterator_t<U>, Diagnostic>::value>;
-
         static constexpr bool value =
-            range_impl<T, Diagnostic>::value && compiles<Diagnostic, T, has_random_access_iterator>;
+            range_impl<T, Diagnostic>::value
+            && random_access_iterator_impl<RAH_NAMESPACE::iterator_t<T>, Diagnostic>::value;
     };
 
     template <class T>

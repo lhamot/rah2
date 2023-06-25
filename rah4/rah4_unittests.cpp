@@ -777,6 +777,152 @@ void test_reverse_iterator()
     }
 }
 
+struct make_elements_view
+{
+    std::vector<std::tuple<bool, char, int>> vec{
+        {true, 'a', 1000},
+        {false, 'b', 1001},
+        {true, 'c', 1002},
+        {false, 'd', 1003},
+    };
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::elements<2>(make_test_view_adapter<CS, Tag>(vec));
+    }
+};
+void test_elements_view()
+{
+    {
+        /// [elements_view]
+        std::vector<std::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
+        std::vector<int> result;
+        for (auto i : vec | rah::views::elements<2>())
+            result.push_back(i);
+        assert(result == std::vector<int>({1000, 1001, 1002, 1003}));
+        /// [elements_view]
+    }
+    {
+
+        /// [values_view]
+        std::vector<std::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
+        std::vector<char> result;
+        for (auto i : vec | rah::views::values())
+            result.push_back(i);
+        assert(result == std::vector<char>({'a', 'b', 'c', 'd'}));
+        /// [values_view]
+    }
+    {
+        /// [keys_view]
+        std::vector<std::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
+        std::vector<bool> result;
+        for (auto i : vec | rah::views::keys())
+            result.push_back(i);
+        assert(result == std::vector<bool>({true, false, true, false}));
+        /// [keys_view]
+    }
+
+    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_elements_view());
+}
+
+struct make_enumerate_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::enumerate(make_test_view<CS, Tag>());
+    }
+};
+void test_enumerate_view()
+{
+    {
+        /// [enumerate]
+        std::vector<int> input{4, 5, 6, 7};
+        std::vector<std::tuple<size_t, int>> result;
+        auto toto = rah::views::enumerate(input);
+        auto prout = toto.end();
+        for (auto i_value : rah::views::enumerate(input))
+            result.emplace_back(i_value);
+        assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
+        /// [enumerate]
+    }
+    {
+        /// [enumerate_pipeable]
+        std::vector<int> input{4, 5, 6, 7};
+        std::vector<std::tuple<size_t, int>> result;
+        for (auto i_value : input | rah::views::enumerate() | rah::views::common())
+            result.emplace_back(i_value);
+        assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
+        /// [enumerate_pipeable]
+    }
+
+    {
+        // This can't work since enumerate return an rvalue pairs since map_key want an lvalue
+        bool bools[] = {false, true, true, false, false, true};
+        auto range = bools | rah::views::enumerate()
+                     | rah::views::filter([](auto&& index_bool) { return std::get<1>(index_bool); })
+                     | rah::views::keys();
+
+        std::vector<size_t> ref;
+        rah::copy(range, std::back_inserter(ref));
+        assert(ref == (std::vector<size_t>{1, 2, 5}));
+    }
+
+    // check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_enumerate_view());
+    auto maker = make_enumerate_view();
+    using CapCat = rah::random_access_iterator_tag;
+    constexpr auto SentPolicy = SentinelPolicy::Keep;
+    {
+        auto r1 = maker.make<Sentinel, std::input_iterator_tag>();
+        check_cat_impl<std::input_iterator_tag, decltype(r1)>();
+        check_sent<Sentinel, SentPolicy>(r1);
+        auto r2 = maker.make<Sentinel, std::forward_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
+        check_sent<Sentinel, SentPolicy>(r2);
+        auto r3 = maker.make<Sentinel, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Sentinel, SentPolicy>(r3);
+        auto r4 = maker.make<Sentinel, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Sentinel, SentPolicy>(r4);
+        auto r5 = maker.make<Sentinel, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
+        check_sent<Sentinel, SentPolicy>(r5);
+    }
+    {
+        auto r1 = maker.make<Common, std::input_iterator_tag>();
+        check_cat_impl<std::input_iterator_tag, decltype(r1)>();
+        check_sent<Common, SentinelPolicy::AllSentinel>(r1);
+        auto r2 = maker.make<Common, std::forward_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
+        check_sent<Common, SentinelPolicy::AllSentinel>(r2);
+        auto r3 = maker.make<Common, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Common, SentinelPolicy::AllSentinel>(r3);
+        auto r4 = maker.make<Common, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Common, SentPolicy>(r4);
+        auto r5 = maker.make<Common, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
+        check_sent<Common, SentPolicy>(r5);
+    }
+}
+
 int main()
 {
     test_counted_iterator();
@@ -796,6 +942,8 @@ int main()
     test_split_view();
     test_counted_view();
     test_reverse_iterator();
+    test_elements_view();
+    test_enumerate_view();
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};
@@ -1353,49 +1501,6 @@ int main()
     }
 
     {
-        /// [elements_view]
-        std::vector<std::tuple<bool, char, int>> vec{
-            {true, 'a', 1000},
-            {false, 'b', 1001},
-            {true, 'c', 1002},
-            {false, 'd', 1003},
-        };
-        std::vector<int> result;
-        for (auto i : vec | rah::views::elements<2>())
-            result.push_back(i);
-        assert(result == std::vector<int>({1000, 1001, 1002, 1003}));
-        /// [elements_view]
-    }
-    {
-        /// [values_view]
-        std::vector<std::tuple<bool, char, int>> vec{
-            {true, 'a', 1000},
-            {false, 'b', 1001},
-            {true, 'c', 1002},
-            {false, 'd', 1003},
-        };
-        std::vector<char> result;
-        for (auto i : vec | rah::views::values())
-            result.push_back(i);
-        assert(result == std::vector<char>({'a', 'b', 'c', 'd'}));
-        /// [values_view]
-    }
-    {
-        /// [keys_view]
-        std::vector<std::tuple<bool, char, int>> vec{
-            {true, 'a', 1000},
-            {false, 'b', 1001},
-            {true, 'c', 1002},
-            {false, 'd', 1003},
-        };
-        std::vector<bool> result;
-        for (auto i : vec | rah::views::keys())
-            result.push_back(i);
-        assert(result == std::vector<bool>({true, false, true, false}));
-        /// [keys_view]
-    }
-
-    {
         // Pass a rvalue container to a views is possible thought a owning_view
         auto getVec = []
         {
@@ -1619,38 +1724,7 @@ int main()
             assert(result == std::vector<int>({}));
         }
     }
-    {
-        /// [enumerate]
-        std::vector<int> input{4, 5, 6, 7};
-        std::vector<std::tuple<size_t, int>> result;
-        auto toto = rah::views::enumerate(input);
-        auto prout = toto.end();
-        for (auto i_value : rah::views::enumerate(input))
-            result.emplace_back(i_value);
-        assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
-        /// [enumerate]
-    }
-    {
-        /// [enumerate_pipeable]
-        std::vector<int> input{4, 5, 6, 7};
-        std::vector<std::tuple<size_t, int>> result;
-        for (auto i_value : input | rah::views::enumerate() | rah::views::common())
-            result.emplace_back(i_value);
-        assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
-        /// [enumerate_pipeable]
-    }
 
-    {
-        // This can't work since enumerate return an rvalue pairs since map_key want an lvalue
-        bool bools[] = {false, true, true, false, false, true};
-        auto range = bools | rah::views::enumerate()
-                     | rah::views::filter([](auto&& index_bool) { return std::get<1>(index_bool); })
-                     | rah::views::keys();
-
-        std::vector<size_t> ref;
-        rah::copy(range, std::back_inserter(ref));
-        assert(ref == (std::vector<size_t>{1, 2, 5}));
-    }
     {
         /// [views::set_difference]
         std::vector<int> in1 = {1, 2, 3, 4, 5, 6};
