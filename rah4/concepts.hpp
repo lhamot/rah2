@@ -17,7 +17,7 @@ namespace rah
     template <>
     struct compiles_impl<false>
     {
-        template <typename T, template <class> typename Lambda, typename Check = void>
+        template <typename T, template <class> class Lambda, typename Check = void>
         struct compiles
         {
             static constexpr bool value = false;
@@ -45,7 +45,7 @@ namespace rah
     static constexpr bool compiles =
         compiles_impl<Diagnostic>::template compiles<T, check_helper>::value;
 
-    template <bool Diagnostic, typename T, typename U, template <class, class> typename Lambda, typename Check = void>
+    template <bool Diagnostic, typename T, typename U, template <class, class> class Lambda, typename Check = void>
     struct compiles2_impl
     {
         static_assert(!Diagnostic, "!Diagnostic");
