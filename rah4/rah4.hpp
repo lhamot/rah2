@@ -2534,7 +2534,8 @@ namespace RAH_NAMESPACE
             template <typename Function, typename Tuple>
             auto apply(Function&& f, Tuple&& t)
             {
-                static constexpr auto tup_size = std::tuple_size<Tuple>::value;
+                static constexpr auto tup_size =
+                    std::tuple_size<std::remove_reference_t<Tuple>>::value;
                 return apply(f, t, std::make_index_sequence<tup_size>{});
             }
 

@@ -931,6 +931,15 @@ struct make_zip_view1
         return rah::views::zip(make_test_view<CS, Tag>());
     }
 };
+struct make_zip_view2
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::zip(
+            make_test_view<CS, Tag>(), make_test_view<Common, rah::contiguous_iterator_tag>());
+    }
+};
 void test_zip_view()
 {
     {
@@ -960,6 +969,44 @@ void test_zip_view()
     }
 
     check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_zip_view1());
+    // check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_zip_view2());
+    auto maker = make_zip_view2();
+    using CapCat = rah::random_access_iterator_tag;
+    constexpr auto SentPolicy = SentinelPolicy::Keep;
+    {
+        auto r1 = maker.make<Sentinel, std::input_iterator_tag>();
+        check_cat_impl<std::input_iterator_tag, decltype(r1)>();
+        check_sent<Sentinel, SentPolicy>(r1);
+        auto r2 = maker.make<Sentinel, std::forward_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
+        check_sent<Sentinel, SentPolicy>(r2);
+        auto r3 = maker.make<Sentinel, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Sentinel, SentPolicy>(r3);
+        auto r4 = maker.make<Sentinel, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Sentinel, SentPolicy>(r4);
+        auto r5 = maker.make<Sentinel, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
+        check_sent<Sentinel, SentPolicy>(r5);
+    }
+    {
+        auto r1 = maker.make<Common, std::input_iterator_tag>();
+        check_cat_impl<std::input_iterator_tag, decltype(r1)>();
+        check_sent<Common, SentinelPolicy::AllSentinel>(r1);
+        auto r2 = maker.make<Common, std::forward_iterator_tag>();
+        check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
+        check_sent<Common, SentinelPolicy::AllSentinel>(r2);
+        auto r3 = maker.make<Common, std::bidirectional_iterator_tag>();
+        check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
+        check_sent<Common, SentinelPolicy::AllSentinel>(r3);
+        auto r4 = maker.make<Common, std::random_access_iterator_tag>();
+        check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
+        check_sent<Common, SentinelPolicy::AllCommon>(r4); // Need both are random_access and sized
+        auto r5 = maker.make<Common, rah::contiguous_iterator_tag>();
+        check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
+        check_sent<Common, SentinelPolicy::AllCommon>(r5);
+    }
 }
 
 int main()
