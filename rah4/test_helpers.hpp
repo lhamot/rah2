@@ -434,10 +434,10 @@ struct check_cat_impl<rah::contiguous_iterator_tag, R>
     STATIC_ASSERT((rah::contiguous_range_impl<R, true>::value));
 };
 
-template <typename BaseCat, typename CapCat, typename R>
+template <typename BaseCat, typename MinCat, typename MaxCat, typename R>
 void check_cat(R&&)
 {
-    using expected_cat = rah::common_iterator_tag<BaseCat, CapCat>;
+    using expected_cat = rah::cap_iterator_tag<BaseCat, MinCat, MaxCat>;
     check_cat_impl<expected_cat, std::remove_reference_t<R>>();
 }
 
@@ -499,24 +499,24 @@ void check_sent(R&&)
     check_sent_impl<BaseIsCommon, SentPolicy, std::remove_reference_t<R>>();
 }
 
-template <SentinelPolicy SentPolicy, typename CapCat, typename MakeR>
+template <SentinelPolicy SentPolicy, typename MaxCat, typename MinCat = std::input_iterator_tag, typename MakeR>
 void check_all_cat(MakeR&& maker)
 {
     {
         auto r1 = maker.template make<Sentinel, std::input_iterator_tag>();
-        check_cat<std::input_iterator_tag, CapCat>(r1);
+        check_cat<std::input_iterator_tag, MinCat, MaxCat>(r1);
         check_sent<Sentinel, SentPolicy>(r1);
         auto r2 = maker.template make<Sentinel, std::forward_iterator_tag>();
-        check_cat<std::forward_iterator_tag, CapCat>(r2);
+        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
         check_sent<Sentinel, SentPolicy>(r2);
         auto r3 = maker.template make<Sentinel, std::bidirectional_iterator_tag>();
-        check_cat<std::bidirectional_iterator_tag, CapCat>(r3);
+        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
         check_sent<Sentinel, SentPolicy>(r3);
         auto r4 = maker.template make<Sentinel, std::random_access_iterator_tag>();
-        check_cat<std::random_access_iterator_tag, CapCat>(r4);
+        check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
         check_sent<Sentinel, SentPolicy>(r4);
         auto r5 = maker.template make<Sentinel, rah::contiguous_iterator_tag>();
-        check_cat<rah::contiguous_iterator_tag, CapCat>(r5);
+        check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
         check_sent<Sentinel, SentPolicy>(r5);
     }
     {
@@ -525,16 +525,16 @@ void check_all_cat(MakeR&& maker)
         //check_cat<std::input_iterator_tag, CapCat>(r1);
         //check_sent<Common, SentPolicy>(r1);
         auto r2 = maker.template make<Common, std::forward_iterator_tag>();
-        check_cat<std::forward_iterator_tag, CapCat>(r2);
+        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
         check_sent<Common, SentPolicy>(r2);
         auto r3 = maker.template make<Common, std::bidirectional_iterator_tag>();
-        check_cat<std::bidirectional_iterator_tag, CapCat>(r3);
+        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
         check_sent<Common, SentPolicy>(r3);
         auto r4 = maker.template make<Common, std::random_access_iterator_tag>();
-        check_cat<std::random_access_iterator_tag, CapCat>(r4);
+        check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
         check_sent<Common, SentPolicy>(r4);
         auto r5 = maker.template make<Common, rah::contiguous_iterator_tag>();
-        check_cat<rah::contiguous_iterator_tag, CapCat>(r5);
+        check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
         check_sent<Common, SentPolicy>(r5);
     }
 }

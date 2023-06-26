@@ -1009,6 +1009,62 @@ void test_zip_view()
     }
 }
 
+struct make_adjacent_view
+{
+    template <CommonOrSent CS, typename Tag>
+    auto make()
+    {
+        return rah::views::adjacent<3>(make_test_view<CS, Tag>());
+    }
+};
+void test_adjacent_view()
+{
+    {
+        /// [adjacent]
+        std::vector<int> in{0, 1, 2, 3, 4, 5};
+        std::vector<std::vector<int>> out;
+        for (auto&& abc : rah::views::adjacent<3>(in))
+        {
+            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
+        }
+        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+        /// [adjacent]
+    }
+    {
+        // adjacent With non common_range
+        std::vector<std::vector<int>> out;
+        for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<3>())
+        {
+            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
+        }
+        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+    }
+    {
+        // adjacent With N > view.size()
+        std::vector<std::vector<int>> out;
+        for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<45>())
+        {
+            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
+        }
+        assert(out == (std::vector<std::vector<int>>{}));
+    }
+    {
+        // adjacent With N == 0
+        std::vector<std::vector<int>> out;
+        for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<0>())
+        {
+            static_assert(
+                std::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
+                "tuple should be empty");
+            out.push_back({});
+        }
+        assert(out == (std::vector<std::vector<int>>{}));
+    }
+
+    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag, std::forward_iterator_tag>(
+        make_adjacent_view());
+}
+
 int main()
 {
     test_counted_iterator();
@@ -1031,6 +1087,7 @@ int main()
     test_elements_view();
     test_enumerate_view();
     test_zip_view();
+    test_adjacent_view();
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};
@@ -1338,47 +1395,7 @@ int main()
         }
         assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
     }
-    {
-        /// [adjacent]
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
-        std::vector<std::vector<int>> out;
-        for (auto&& abc : rah::views::adjacent<3>(in))
-        {
-            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
-        }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
-        /// [adjacent]
-    }
-    {
-        // adjacent With non common_range
-        std::vector<std::vector<int>> out;
-        for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<3>())
-        {
-            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
-        }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
-    }
-    {
-        // adjacent With N > view.size()
-        std::vector<std::vector<int>> out;
-        for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<45>())
-        {
-            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
-        }
-        assert(out == (std::vector<std::vector<int>>{}));
-    }
-    {
-        // adjacent With N == 0
-        std::vector<std::vector<int>> out;
-        for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<0>())
-        {
-            static_assert(
-                std::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
-                "tuple should be empty");
-            out.push_back({});
-        }
-        assert(out == (std::vector<std::vector<int>>{}));
-    }
+
     {
         /// [adjacent_transform]
         std::vector<int> in{0, 1, 2, 3, 4, 5};

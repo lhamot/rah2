@@ -2917,6 +2917,8 @@ namespace RAH_NAMESPACE
             using base_sentinel = sentinel_t<R>;
             using base_value = range_value_t<R>;
             using base_reference = range_reference_t<R>;
+            using iterator_category =
+                cap_iterator_tag<range_iter_categ_t<R>, forward_iterator_tag, random_access_iterator_tag>;
 
             template <size_t I>
             struct GetType
@@ -2939,8 +2941,7 @@ namespace RAH_NAMESPACE
                 base_sentinel sent;
             };
 
-            struct iterator
-                : iterator_facade<iterator, sentinel, reference, std::forward_iterator_tag>
+            struct iterator : iterator_facade<iterator, sentinel, reference, iterator_category>
             {
                 base_iterator subRangeBegin_;
                 base_value sliding_result[N];
@@ -2964,6 +2965,19 @@ namespace RAH_NAMESPACE
                     return *this;
                 }
                 RAH_POST_INCR
+                template <
+                    typename C = iterator_category,
+                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                iterator& operator--()
+                {
+                    --subRangeBegin_;
+                    result_output_index = (result_output_index - 1) % N;
+                    return *this;
+                }
+                template <
+                    typename C = iterator_category,
+                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
                 template <std::size_t... Is>
                 auto make_result(std::index_sequence<Is...>)
                 {
@@ -2983,9 +2997,27 @@ namespace RAH_NAMESPACE
                 {
                     return i.subRangeBegin_ == s.sent;
                 }
-                friend bool operator==(sentinel const& s, iterator const& i)
+                template <
+                    typename C = iterator_category,
+                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                bool operator<(iterator iter) const
                 {
-                    return i.subRangeBegin_ == s.sent;
+                    return subRangeBegin_ < iter.subRangeBegin_;
+                }
+                template <
+                    typename C = iterator_category,
+                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                int64_t operator-(iterator iter) const
+                {
+                    return subRangeBegin_ - iter.subRangeBegin_;
+                }
+                template <
+                    typename C = iterator_category,
+                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                iterator& operator+=(int64_t value)
+                {
+                    subRangeBegin_ += value;
+                    return *this;
                 }
             };
 
@@ -2998,9 +3030,18 @@ namespace RAH_NAMESPACE
             {
                 auto const range_end = RAH_NAMESPACE::end(input_view_);
                 auto const sub_range_begin = RAH_NAMESPACE::begin(input_view_);
-                return iterator(sub_range_begin, range_end);
+                return iterator(std::move(sub_range_begin), std::move(range_end));
             }
 
+            template <typename R2 = R, std::enable_if_t<common_range<R2>>* = nullptr>
+            auto end()
+            {
+                auto const range_end = RAH_NAMESPACE::end(input_view_);
+                auto sub_range_begin = RAH_NAMESPACE::begin(input_view_);
+                rah::advance(sub_range_begin, N + 1, range_end);
+                return iterator{std::move(sub_range_begin), std::move(range_end)};
+            }
+            template <typename R2 = R, std::enable_if_t<!common_range<R2>>* = nullptr>
             auto end()
             {
                 return sentinel{RAH_NAMESPACE::end(input_view_)};

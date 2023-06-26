@@ -909,22 +909,14 @@ namespace rah
 
     // **************************** range traits **************************************************
 
-    RAH_STD::input_iterator_tag
-        get_common_iterator_tag(RAH_STD::input_iterator_tag, RAH_STD::input_iterator_tag);
-    RAH_STD::output_iterator_tag
-        get_common_iterator_tag(RAH_STD::output_iterator_tag, RAH_STD::output_iterator_tag);
-    RAH_STD::forward_iterator_tag
-        get_common_iterator_tag(RAH_STD::forward_iterator_tag, RAH_STD::forward_iterator_tag);
-    RAH_STD::bidirectional_iterator_tag get_common_iterator_tag(
-        RAH_STD::bidirectional_iterator_tag, RAH_STD::bidirectional_iterator_tag);
-    RAH_STD::random_access_iterator_tag get_common_iterator_tag(
-        RAH_STD::random_access_iterator_tag, RAH_STD::random_access_iterator_tag);
-    RAH_NAMESPACE::contiguous_iterator_tag get_common_iterator_tag(
-        RAH_NAMESPACE::contiguous_iterator_tag, RAH_NAMESPACE::contiguous_iterator_tag);
+    template <typename A, typename B>
+    using common_iterator_tag = std::conditional_t<rah::derived_from<A, B>, B, A>;
 
     template <typename A, typename B>
-    using common_iterator_tag =
-        decltype(get_common_iterator_tag(std::declval<A>(), std::declval<B>()));
+    using max_iterator_tag = std::conditional_t<rah::derived_from<A, B>, A, B>;
+
+    template <typename Cat, typename MinCat, typename MaxCat>
+    using cap_iterator_tag = max_iterator_tag<common_iterator_tag<Cat, MaxCat>, MinCat>;
 
     //template <typename T>
     //using iterator_t = decltype(RAH_NAMESPACE::begin(details::declval<T>()));
