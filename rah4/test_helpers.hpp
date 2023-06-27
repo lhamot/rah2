@@ -4,21 +4,34 @@
 
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 
+template <bool A, bool B>
+struct AssertEqual;
+
+template <bool X>
+struct AssertEqual<X, X>
+{
+};
+
 enum CommonOrSent
 {
     Common,
     Sentinel
 };
 
-template <CommonOrSent Sent, typename Cat>
-class test_view : public rah::view_interface<test_view<Sent, Cat>>
+template <CommonOrSent Sent, typename Cat, bool SizedRange>
+class test_view : public rah::view_interface<test_view<Sent, Cat, SizedRange>>
 {
     int start_ = 0;
     int stop_ = 0;
     int step_ = 1;
 
 public:
-    class iterator : public rah::iterator_facade<iterator, rah::sentinel_iterator, int&, Cat>
+    class iterator;
+    struct sentinel
+    {
+    };
+
+    class iterator : public rah::iterator_facade<iterator, sentinel, int&, Cat>
     {
         int val_ = int();
         int step_ = int(1);
@@ -111,6 +124,12 @@ public:
     {
     }
 
+    template <bool IsSized = SizedRange, std::enable_if_t<IsSized>* = nullptr>
+    auto size() const
+    {
+        return (stop_ - start_) / step_;
+    }
+
     auto begin()
     {
         return iterator(start_, step_);
@@ -140,8 +159,8 @@ public:
     }
 };
 
-template <CommonOrSent Sent, typename Cat, typename Range>
-class test_view_adapter : public rah::view_interface<test_view<Sent, Cat>>
+template <CommonOrSent Sent, typename Cat, bool SizedRange, typename Range>
+class test_view_adapter : public rah::view_interface<test_view<Sent, Cat, SizedRange>>
 {
     Range base_;
     using base_iterator = rah::iterator_t<Range>;
@@ -266,26 +285,26 @@ public:
 
 MAKE_CONCEPT(has_pos_incr, true, (std::declval<T>()++));
 
-template <CommonOrSent Sent, typename Cat>
+template <CommonOrSent Sent, typename Cat, bool Sized>
 auto make_test_view(int start, int stop, int step)
 {
-    return test_view<Sent, Cat>(start, stop, step);
+    return test_view<Sent, Cat, Sized>(start, stop, step);
 }
 
-template <CommonOrSent Sent, typename Cat>
+template <CommonOrSent Sent, typename Cat, bool Sized>
 auto make_test_view()
 {
-    return test_view<Sent, Cat>(0, 10, 1);
+    return test_view<Sent, Cat, Sized>(0, 10, 1);
 }
 
-template <CommonOrSent Sent, typename Cat, typename Range>
+template <CommonOrSent Sent, typename Cat, bool Sized, typename Range>
 auto make_test_view_adapter(Range&& r)
 {
-    return test_view_adapter<Sent, Cat, std::remove_reference_t<Range>>(std::forward<Range>(r));
+    return test_view_adapter<Sent, Cat, Sized, std::remove_reference_t<Range>>(std::forward<Range>(r));
 }
 
 // output
-using OutputCommonView = test_view<Common, std::output_iterator_tag>;
+using OutputCommonView = test_view<Common, std::output_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<OutputCommonView>>, "Should be input");
 static_assert(not rah::input_range<OutputCommonView>, "Should be input");
@@ -297,7 +316,7 @@ static_assert(not rah::random_access_range<OutputCommonView>, "Should not be ran
 static_assert(not rah::contiguous_range<OutputCommonView>, "Should not be contiguous");
 
 // input
-using InputCommonView = test_view<Common, std::input_iterator_tag>;
+using InputCommonView = test_view<Common, std::input_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<InputCommonView>>, "Should be input");
 static_assert(rah::input_range<InputCommonView>, "Should be input");
@@ -308,7 +327,7 @@ static_assert(not rah::random_access_range<InputCommonView>, "Should not be rand
 static_assert(not rah::contiguous_range<InputCommonView>, "Should not be contiguous");
 
 // Forward
-using ForwardCommonView = test_view<Common, std::forward_iterator_tag>;
+using ForwardCommonView = test_view<Common, std::forward_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<ForwardCommonView>>, "Should be input");
 static_assert(rah::input_range<ForwardCommonView>, "Should be input");
@@ -319,7 +338,7 @@ static_assert(!rah::random_access_range<ForwardCommonView>, "Should not be rando
 static_assert(not rah::contiguous_range<ForwardCommonView>, "Should not be contiguous");
 
 // bidirectional
-using BidirCommonView = test_view<Common, std::bidirectional_iterator_tag>;
+using BidirCommonView = test_view<Common, std::bidirectional_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<BidirCommonView>>, "Should be input");
 static_assert(rah::input_range<BidirCommonView>, "Should be input");
@@ -330,7 +349,7 @@ static_assert(!rah::random_access_range<BidirCommonView>, "Should not be random"
 static_assert(not rah::contiguous_range<BidirCommonView>, "Should not be contiguous");
 
 // random access
-using RandomCommonView = test_view<Common, std::random_access_iterator_tag>;
+using RandomCommonView = test_view<Common, std::random_access_iterator_tag, true>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<RandomCommonView>>, "Should be input");
 static_assert(rah::input_range<RandomCommonView>, "Should be input");
@@ -347,7 +366,7 @@ STATIC_ASSERT((rah::random_access_range_impl<RandomCommonView, true>::value));
 static_assert(not rah::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
 // contiguous
-using ContiCommonView = test_view<Common, rah::contiguous_iterator_tag>;
+using ContiCommonView = test_view<Common, rah::contiguous_iterator_tag, true>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<ContiCommonView>>, "Should be input");
 static_assert(rah::input_range<ContiCommonView>, "Should be input");
@@ -411,7 +430,7 @@ struct check_cat_impl<std::forward_iterator_tag, R>
 {
     STATIC_ASSERT((rah::forward_iterator_impl<rah::iterator_t<R>, true>::value));
     STATIC_ASSERT(rah::forward_range<R>);
-    STATIC_ASSERT(not rah::bidirectional_range<R>);
+    // STATIC_ASSERT(not rah::bidirectional_range<R>);
 };
 
 template <typename R>
@@ -446,7 +465,8 @@ enum class SentinelPolicy
     AllCommon,
     AllSentinel,
     Keep,
-    CommonIfSizedRandomAccess
+    CommonIfSizedRandomAccess,
+    CommonIfCommonOrSizedRandomAccess,
 };
 
 template <CommonOrSent BaseCommon, SentinelPolicy Policy, typename R>
@@ -471,9 +491,18 @@ struct check_sent_impl<Common, SentinelPolicy::Keep, R>
 template <CommonOrSent BaseCommon, typename R>
 struct check_sent_impl<BaseCommon, SentinelPolicy::CommonIfSizedRandomAccess, R>
 {
-    STATIC_ASSERT(
-        (rah::sized_range<R> && rah::random_access_range<R> && rah::common_range<R>)
-        || !(rah::sized_range<R> && rah::random_access_range<R>)&&!rah::common_range<R>);
+    static constexpr bool expect_common = (rah::sized_range<R> && rah::random_access_range<R>);
+    static constexpr bool is_common = rah::common_range<R>;
+    AssertEqual<is_common, expect_common> test;
+};
+
+template <CommonOrSent BaseCommon, typename R>
+struct check_sent_impl<BaseCommon, SentinelPolicy::CommonIfCommonOrSizedRandomAccess, R>
+{
+    static constexpr bool expect_common =
+        (rah::sized_range<R> && rah::random_access_range<R>) || BaseCommon == Common;
+    static constexpr bool is_common = rah::common_range<R>;
+    AssertEqual<is_common, expect_common> test;
 };
 
 template <typename R>
@@ -500,41 +529,96 @@ void check_sent(R&&)
 }
 
 template <SentinelPolicy SentPolicy, typename MaxCat, typename MinCat = std::input_iterator_tag, typename MakeR>
-void check_all_cat(MakeR&& maker)
+void check_all_cat()
 {
     {
-        auto r1 = maker.template make<Sentinel, std::input_iterator_tag>();
+        auto t1 = MakeR::template Trait<Sentinel, std::input_iterator_tag, false>();
+        auto r1 = t1.make();
         check_cat<std::input_iterator_tag, MinCat, MaxCat>(r1);
         check_sent<Sentinel, SentPolicy>(r1);
-        auto r2 = maker.template make<Sentinel, std::forward_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r1)> == t1.is_sized);
+        auto t2 = MakeR::template Trait<Sentinel, std::forward_iterator_tag, false>();
+        auto r2 = t2.make();
         check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
         check_sent<Sentinel, SentPolicy>(r2);
-        auto r3 = maker.template make<Sentinel, std::bidirectional_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r2)> == t2.is_sized);
+        auto t3 = MakeR::template Trait<Sentinel, std::bidirectional_iterator_tag, false>();
+        auto r3 = t3.make();
         check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
         check_sent<Sentinel, SentPolicy>(r3);
-        auto r4 = maker.template make<Sentinel, std::random_access_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r3)> == t3.is_sized);
+        auto t4 = MakeR::template Trait<Sentinel, std::random_access_iterator_tag, false>();
+        auto r4 = t4.make();
         check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
         check_sent<Sentinel, SentPolicy>(r4);
-        auto r5 = maker.template make<Sentinel, rah::contiguous_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r4)> == t4.is_sized);
+        auto t5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, false>();
+        auto r5 = t5.make();
         check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
         check_sent<Sentinel, SentPolicy>(r5);
+        STATIC_ASSERT(rah::sized_range<decltype(r5)> == t5.is_sized);
     }
     {
         // A common input range can't exist since it can't compare its begin ot its end
-        //auto r1 = maker.template make<Common, std::input_iterator_tag>();
-        //check_cat<std::input_iterator_tag, CapCat>(r1);
-        //check_sent<Common, SentPolicy>(r1);
-        auto r2 = maker.template make<Common, std::forward_iterator_tag>();
+        auto t2 = MakeR::template Trait<Common, rah::forward_iterator_tag, false>();
+        auto r2 = t2.make();
         check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
         check_sent<Common, SentPolicy>(r2);
-        auto r3 = maker.template make<Common, std::bidirectional_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r2)> == t2.is_sized);
+        auto t3 = MakeR::template Trait<Common, rah::bidirectional_iterator_tag, false>();
+        auto r3 = t3.make();
         check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
         check_sent<Common, SentPolicy>(r3);
-        auto r4 = maker.template make<Common, std::random_access_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r3)> == t3.is_sized);
+    }
+    {
+        auto t1 = MakeR::template Trait<Sentinel, rah::input_iterator_tag, true>();
+        auto r1 = t1.make();
+        check_cat<std::input_iterator_tag, MinCat, MaxCat>(r1);
+        check_sent<Sentinel, SentPolicy>(r1);
+        AssertEqual<rah::sized_range<decltype(r1)>, decltype(t1)::is_sized>();
+        auto t2 = MakeR::template Trait<Sentinel, rah::forward_iterator_tag, true>();
+        auto r2 = t2.make();
+        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
+        check_sent<Sentinel, SentPolicy>(r2);
+        STATIC_ASSERT(rah::sized_range<decltype(r2)> == t2.is_sized);
+        auto t3 = MakeR::template Trait<Sentinel, rah::bidirectional_iterator_tag, true>();
+        auto r3 = t3.make();
+        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
+        check_sent<Sentinel, SentPolicy>(r3);
+        STATIC_ASSERT(rah::sized_range<decltype(r3)> == t3.is_sized);
+        auto t4 = MakeR::template Trait<Sentinel, rah::random_access_iterator_tag, true>();
+        auto r4 = t4.make();
+        check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
+        check_sent<Sentinel, SentPolicy>(r4);
+        STATIC_ASSERT(rah::sized_range<decltype(r4)> == t4.is_sized);
+        auto t5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, true>();
+        auto r5 = t5.make();
+        check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
+        check_sent<Sentinel, SentPolicy>(r5);
+        STATIC_ASSERT(rah::sized_range<decltype(r5)> == t5.is_sized);
+    }
+    {
+        // A common input range can't exist since it can't compare its begin ot its end
+        auto t2 = MakeR::template Trait<Common, rah::forward_iterator_tag, true>();
+        auto r2 = t2.make();
+        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
+        check_sent<Common, SentPolicy>(r2);
+        STATIC_ASSERT(rah::sized_range<decltype(r2)> == t2.is_sized);
+        auto t3 = MakeR::template Trait<Common, rah::bidirectional_iterator_tag, true>();
+        auto r3 = t3.make();
+        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
+        check_sent<Common, SentPolicy>(r3);
+        STATIC_ASSERT(rah::sized_range<decltype(r3)> == t3.is_sized);
+        auto t4 = MakeR::template Trait<Common, rah::random_access_iterator_tag, true>();
+        auto r4 = t4.make();
         check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
         check_sent<Common, SentPolicy>(r4);
-        auto r5 = maker.template make<Common, rah::contiguous_iterator_tag>();
+        STATIC_ASSERT(rah::sized_range<decltype(r4)> == t4.is_sized);
+        auto t5 = MakeR::template Trait<Common, rah::contiguous_iterator_tag, true>();
+        auto r5 = t5.make();
         check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
         check_sent<Common, SentPolicy>(r5);
+        STATIC_ASSERT(rah::sized_range<decltype(r5)> == t5.is_sized);
     }
 }

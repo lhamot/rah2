@@ -868,6 +868,7 @@ namespace RAH_NAMESPACE
         class ref_view : public view_interface<ref_view<R>>
         {
             R* ref_ = nullptr;
+            static constexpr bool is_sized = rah::sized_range<R>;
 
         public:
             explicit ref_view(R& ref)
@@ -886,6 +887,7 @@ namespace RAH_NAMESPACE
             {
                 return RAH_NAMESPACE::empty(*ref_);
             }
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
             size_t size() const
             {
                 return RAH_NAMESPACE::size(*ref_);
@@ -1177,6 +1179,7 @@ namespace RAH_NAMESPACE
             constexpr static bool is_common_range = RAH_NAMESPACE::common_range<R>;
             using category =
                 rah::common_iterator_tag<std::random_access_iterator_tag, range_iter_categ_t<R>>;
+            constexpr static bool is_sized = sized_range<R>;
 
         public:
             struct sentinel
@@ -1273,6 +1276,12 @@ namespace RAH_NAMESPACE
             {
             }
 
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return RAH_NAMESPACE::size(base_);
+            }
+
             auto begin()
             {
                 return iterator(RAH_NAMESPACE::begin(base_), *func_);
@@ -1316,6 +1325,7 @@ namespace RAH_NAMESPACE
             size_t count_;
             static constexpr bool IsCommon =
                 RAH_NAMESPACE::random_access_range<R> && RAH_NAMESPACE::sized_range<R>;
+            constexpr static bool is_sized = sized_range<R>;
 
         public:
             using base_iterator = RAH_NAMESPACE::iterator_t<R>;
@@ -1326,6 +1336,12 @@ namespace RAH_NAMESPACE
                 : input_view_(std::move(input_view))
                 , count_(count)
             {
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return std::min(count_, static_cast<size_t>(RAH_NAMESPACE::size(input_view_)));
             }
 
             template <typename U = R, std::enable_if_t<RAH_NAMESPACE::contiguous_range<U>>* = nullptr>
@@ -1388,6 +1404,7 @@ namespace RAH_NAMESPACE
             R base_;
             size_t drop_count_ = 0;
             using category = range_iter_categ_t<R>;
+            constexpr static bool is_sized = sized_range<R>;
 
         public:
             using iterator = RAH_NAMESPACE::iterator_t<R>;
@@ -1397,6 +1414,13 @@ namespace RAH_NAMESPACE
                 : base_(std::move(v))
                 , drop_count_(drop_count)
             {
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                auto const subsize = static_cast<size_t>(RAH_NAMESPACE::size(base_));
+                return size_t(std::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
             }
 
             auto begin()
@@ -1775,6 +1799,7 @@ namespace RAH_NAMESPACE
                 std::is_same_v<input_iter_cat, std::input_iterator_tag>,
                 std::forward_iterator_tag,
                 input_iter_cat>;
+            static constexpr bool is_sized = rah::sized_range<R>;
 
             static_assert(not common_range<R>, "expect not common_range<R>");
             static_assert(RAH_NAMESPACE::copyable<iterator_t<R>>, "expect copyable<iterator_t<R>>");
@@ -1906,7 +1931,7 @@ namespace RAH_NAMESPACE
                     return *this;
                 }
                 RAH_POST_INCR
-                template <
+                /*template <
                     typename C = Cat,
                     std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
                 common_iterator& operator--()
@@ -1914,24 +1939,26 @@ namespace RAH_NAMESPACE
                     --mpark::get<base_iterator>(var_);
                     return *this;
                 }
+                
                 template <
                     typename C = Cat,
                     std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
+                RAH_POST_DECR;*/
                 bool operator==(common_iterator const& it) const
                 {
                     return dispatch(equal(), *this, it);
                 }
 
                 template <
-                    typename C = Cat,
-                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    typename I = base_iterator,
+                    typename S = base_sentinel,
+                    std::enable_if_t<sized_sentinel_for<I, S> && sized_sentinel_for<I, I>>* = nullptr>
                 common_iterator operator-(common_iterator const& it)
                 {
                     return dispatch(sub(), *this, it);
                 }
 
-                template <
+                /* template <
                     typename C = Cat,
                     std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
                 bool operator<(common_iterator const& it)
@@ -1951,7 +1978,7 @@ namespace RAH_NAMESPACE
                     {
                         assert("Can't increment a sentinel");
                     }
-                }
+                }*/
             };
 
             auto begin()
@@ -1968,6 +1995,12 @@ namespace RAH_NAMESPACE
             auto data()
             {
                 return &(*begin());
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return rah::size(base_);
             }
         };
 
@@ -2002,6 +2035,8 @@ namespace RAH_NAMESPACE
         class reverse_view : public view_interface<reverse_view<R>>
         {
             R base_;
+            static constexpr bool is_sized = rah::sized_range<R>;
+            static constexpr bool is_const_sized = rah::sized_range<R const>;
 
         public:
             reverse_view() = default;
@@ -2027,6 +2062,17 @@ namespace RAH_NAMESPACE
             auto end()
             {
                 return std::make_reverse_iterator(RAH_NAMESPACE::begin(base_));
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return RAH_NAMESPACE::size(base_);
+            }
+            template <bool IsSized = is_const_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size() const
+            {
+                return RAH_NAMESPACE::size(base_);
             }
         };
 
@@ -2597,9 +2643,10 @@ namespace RAH_NAMESPACE
             static constexpr bool common_one_range =
                 std::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
+            static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool common_all_sized_random_access =
-                (details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
-                 && details::all_type<RangeTuple, is_sized_range>());
+                details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
+                && all_sized;
 
             struct compute_min_size
             {
@@ -2728,6 +2775,12 @@ namespace RAH_NAMESPACE
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return sentinel{details::transform_each(bases_, details::range_end())};
             }
+
+            template <bool AllSized = all_sized, std::enable_if_t<AllSized>* = nullptr>
+            auto size()
+            {
+                return std::get<0>(bases_).size();
+            }
         };
 
         template <typename... R>
@@ -2757,9 +2810,10 @@ namespace RAH_NAMESPACE
             static constexpr bool common_one_range =
                 std::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
+            static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool common_all_sized_random_access =
-                (details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
-                 && details::all_type<RangeTuple, is_sized_range>());
+                details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
+                && all_sized;
 
             struct compute_min_size
             {
@@ -2919,6 +2973,7 @@ namespace RAH_NAMESPACE
             using base_reference = range_reference_t<R>;
             using iterator_category =
                 cap_iterator_tag<range_iter_categ_t<R>, forward_iterator_tag, random_access_iterator_tag>;
+            static constexpr bool is_sized = sized_range<R>;
 
             template <size_t I>
             struct GetType
@@ -3045,6 +3100,12 @@ namespace RAH_NAMESPACE
             auto end()
             {
                 return sentinel{RAH_NAMESPACE::end(input_view_)};
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return rah::size(input_view_) - (N - 1);
             }
         };
 
@@ -4216,12 +4277,16 @@ namespace RAH_NAMESPACE
                 concat(RAH_STD::forward<R1>(range1), RAH_STD::forward<R2>(range2)), ranges...);
         }
 
-        template <typename R, std::enable_if_t<rah::enable_view<std::remove_reference_t<R>>>* = nullptr>
+        template <
+            typename R,
+            std::enable_if_t<rah::enable_view<std::remove_reference_t<R>> && has_begin_member<R>>* = nullptr>
         auto begin(R&& r)
         {
             return r.begin();
         }
-        template <typename R, std::enable_if_t<rah::enable_view<std::remove_reference_t<R>>>* = nullptr>
+        template <
+            typename R,
+            std::enable_if_t<rah::enable_view<std::remove_reference_t<R>> && has_end_member<R>>* = nullptr>
         auto end(R&& r)
         {
             return r.end();

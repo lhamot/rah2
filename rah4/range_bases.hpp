@@ -1213,38 +1213,6 @@ namespace rah
             return RAH_SELF.begin() == RAH_SELF.end();
         }
 
-        //template <typename = std::enable_if_t<RAH_NAMESPACE::forward_range<T>>>
-        //operator bool() const
-        //{
-        //    return RAH_SELF_CONST.begin() != RAH_SELF_CONST.end();
-        //}
-        template <
-            typename D = T,
-            std::enable_if_t<
-                RAH_NAMESPACE::forward_range<D>
-                && RAH_NAMESPACE::
-                    sized_sentinel_for<RAH_NAMESPACE::sentinel_t<D>, RAH_NAMESPACE::iterator_t<D>>>* = nullptr>
-        auto size()
-        {
-            return RAH_SELF.begin() - RAH_SELF.end();
-        }
-
-        /* template <
-            typename D = T,
-            std::enable_if_t<not(
-                RAH_NAMESPACE::forward_range<D>
-                && RAH_NAMESPACE::
-                    sized_sentinel_for<RAH_NAMESPACE::sentinel_t<D>, RAH_NAMESPACE::iterator_t<D>>)>* = nullptr,
-            std::enable_if_t<
-                RAH_NAMESPACE::forward_range<const D>
-                && RAH_NAMESPACE::sized_sentinel_for<
-                    RAH_NAMESPACE::sentinel_t<const D>,
-                    RAH_NAMESPACE::iterator_t<const D>>>* = nullptr>
-        auto size() const
-        {
-            return RAH_SELF_CONST.begin() - RAH_SELF_CONST.end();
-        }*/
-
         auto front() // -> decltype(*(details::template declval<T const>().begin()))
         {
             return *(RAH_SELF.begin());
