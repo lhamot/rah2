@@ -460,97 +460,147 @@ void check_cat(R&&)
     check_cat_impl<expected_cat, std::remove_reference_t<R>>();
 }
 
+template <bool DoTest, CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, typename MakeR>
+struct test_one_range_setup_impl
+{
+    static void test()
+    {
+        auto t1 = MakeR::template Trait<Sentinel, Cat, Sized>();
+        auto r1 = t1.make();
+        check_cat_impl<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
+        AssertEqual<rah::common_range<decltype(r1)>, t1.is_common>();
+        AssertEqual<rah::sized_range<decltype(r1)>, t1.is_sized>();
+    }
+};
+
+template <CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, typename MakeR>
+struct test_one_range_setup_impl<false, Sentinel, Cat, ExpectedCat, Sized, MakeR>
+{
+    static void test()
+    {
+    }
+};
+
+template <CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, typename MakeR>
+void test_one_range_setup()
+{
+    constexpr bool do_test = decltype(MakeR::template Trait<Sentinel, Cat, Sized>())::do_test;
+    test_one_range_setup_impl<do_test, Sentinel, Cat, ExpectedCat, Sized, MakeR>::test();
+}
+
 template <typename MaxCat, typename MinCat = std::input_iterator_tag, typename MakeR>
 void check_all_cat()
 {
-    {
-        auto t1 = MakeR::template Trait<Sentinel, std::input_iterator_tag, false>();
-        auto r1 = t1.make();
-        check_cat<std::input_iterator_tag, MinCat, MaxCat>(r1);
-        AssertEqual<rah::common_range<decltype(r1)>, t1.is_common>();
-        AssertEqual<rah::sized_range<decltype(r1)>, t1.is_sized>();
-        auto t2 = MakeR::template Trait<Sentinel, std::forward_iterator_tag, false>();
-        auto r2 = t2.make();
-        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
-        AssertEqual<rah::common_range<decltype(r2)>, t2.is_common>();
-        AssertEqual<rah::sized_range<decltype(r2)>, t2.is_sized>();
-        auto t3 = MakeR::template Trait<Sentinel, std::bidirectional_iterator_tag, false>();
-        auto r3 = t3.make();
-        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
-        AssertEqual<rah::common_range<decltype(r3)>, t3.is_common>();
-        AssertEqual<rah::sized_range<decltype(r3)>, t3.is_sized>();
-        auto t4 = MakeR::template Trait<Sentinel, std::random_access_iterator_tag, false>();
-        auto r4 = t4.make();
-        check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
-        AssertEqual<rah::common_range<decltype(r4)>, t4.is_common>();
-        AssertEqual<rah::sized_range<decltype(r4)>, t4.is_sized>();
-        auto t5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, false>();
-        auto r5 = t5.make();
-        check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
-        AssertEqual<rah::common_range<decltype(r5)>, t5.is_common>();
-        AssertEqual<rah::sized_range<decltype(r5)>, t5.is_sized>();
-    }
-    {
-        // A common input range can't exist since it can't compare its begin ot its end
-        auto t2 = MakeR::template Trait<Common, rah::forward_iterator_tag, false>();
-        auto r2 = t2.make();
-        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
-        AssertEqual<rah::common_range<decltype(r2)>, t2.is_common>();
-        AssertEqual<rah::sized_range<decltype(r2)>, t2.is_sized>();
-        auto t3 = MakeR::template Trait<Common, rah::bidirectional_iterator_tag, false>();
-        auto r3 = t3.make();
-        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
-        AssertEqual<rah::common_range<decltype(r3)>, t3.is_common>();
-        AssertEqual<rah::sized_range<decltype(r3)>, t3.is_sized>();
-    }
-    {
-        auto t1 = MakeR::template Trait<Sentinel, rah::input_iterator_tag, true>();
-        auto r1 = t1.make();
-        check_cat<std::input_iterator_tag, MinCat, MaxCat>(r1);
-        AssertEqual<rah::common_range<decltype(r1)>, t1.is_common>();
-        AssertEqual<rah::sized_range<decltype(r1)>, t1.is_sized>();
-        auto t2 = MakeR::template Trait<Sentinel, rah::forward_iterator_tag, true>();
-        auto r2 = t2.make();
-        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
-        AssertEqual<rah::common_range<decltype(r2)>, t2.is_common>();
-        AssertEqual<rah::sized_range<decltype(r2)>, t2.is_sized>();
-        auto t3 = MakeR::template Trait<Sentinel, rah::bidirectional_iterator_tag, true>();
-        auto r3 = t3.make();
-        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
-        AssertEqual<rah::common_range<decltype(r3)>, t3.is_common>();
-        AssertEqual<rah::sized_range<decltype(r3)>, t3.is_sized>();
-        auto t4 = MakeR::template Trait<Sentinel, rah::random_access_iterator_tag, true>();
-        auto r4 = t4.make();
-        check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
-        AssertEqual<rah::common_range<decltype(r4)>, t4.is_common>();
-        AssertEqual<rah::sized_range<decltype(r4)>, t4.is_sized>();
-        auto t5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, true>();
-        auto r5 = t5.make();
-        check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
-        AssertEqual<rah::common_range<decltype(r5)>, t5.is_common>();
-        AssertEqual<rah::sized_range<decltype(r5)>, t5.is_sized>();
-    }
-    {
-        // A common input range can't exist since it can't compare its begin ot its end
-        auto t2 = MakeR::template Trait<Common, rah::forward_iterator_tag, true>();
-        auto r2 = t2.make();
-        check_cat<std::forward_iterator_tag, MinCat, MaxCat>(r2);
-        AssertEqual<rah::common_range<decltype(r2)>, t2.is_common>();
-        AssertEqual<rah::sized_range<decltype(r2)>, t2.is_sized>();
-        auto t3 = MakeR::template Trait<Common, rah::bidirectional_iterator_tag, true>();
-        auto r3 = t3.make();
-        check_cat<std::bidirectional_iterator_tag, MinCat, MaxCat>(r3);
-        AssertEqual<rah::common_range<decltype(r3)>, t3.is_common>();
-        AssertEqual<rah::sized_range<decltype(r3)>, t3.is_sized>();
-        auto t4 = MakeR::template Trait<Common, rah::random_access_iterator_tag, true>();
-        auto r4 = t4.make();
-        check_cat<std::random_access_iterator_tag, MinCat, MaxCat>(r4);
-        AssertEqual<rah::common_range<decltype(r4)>, t4.is_common>();
-        AssertEqual<rah::sized_range<decltype(r4)>, t4.is_sized>();
-        auto t5 = MakeR::template Trait<Common, rah::contiguous_iterator_tag, true>();
-        auto r5 = t5.make();
-        check_cat<rah::contiguous_iterator_tag, MinCat, MaxCat>(r5);
-        AssertEqual<rah::common_range<decltype(r5)>, t5.is_common>();
-        AssertEqual<rah::sized_range<decltype(r5)>, t5.is_sized>();
-    }
+    test_one_range_setup<
+        Sentinel,
+        std::input_iterator_tag,
+        rah::cap_iterator_tag<std::input_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        std::forward_iterator_tag,
+        rah::cap_iterator_tag<std::forward_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        std::bidirectional_iterator_tag,
+        rah::cap_iterator_tag<std::bidirectional_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        std::random_access_iterator_tag,
+        rah::cap_iterator_tag<std::random_access_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        rah::contiguous_iterator_tag,
+        rah::cap_iterator_tag<rah::contiguous_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+
+    test_one_range_setup<
+        Common,
+        rah::forward_iterator_tag,
+        rah::cap_iterator_tag<rah::forward_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    test_one_range_setup<
+        Common,
+        rah::bidirectional_iterator_tag,
+        rah::cap_iterator_tag<rah::bidirectional_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    // Common random_access can't be not sized
+    /*test_one_range_setup<
+        Common,
+        rah::random_access_iterator_tag,
+        rah::cap_iterator_tag<rah::random_access_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();
+    test_one_range_setup<
+        Common,
+        rah::contiguous_iterator_tag,
+        rah::cap_iterator_tag<rah::contiguous_iterator_tag, MinCat, MaxCat>,
+        false,
+        MakeR>();*/
+
+    test_one_range_setup<
+        Sentinel,
+        rah::input_iterator_tag,
+        rah::cap_iterator_tag<rah::input_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        rah::forward_iterator_tag,
+        rah::cap_iterator_tag<rah::forward_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        rah::bidirectional_iterator_tag,
+        rah::cap_iterator_tag<rah::bidirectional_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        rah::random_access_iterator_tag,
+        rah::cap_iterator_tag<rah::random_access_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Sentinel,
+        rah::contiguous_iterator_tag,
+        rah::cap_iterator_tag<rah::contiguous_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+
+    test_one_range_setup<
+        Common,
+        rah::forward_iterator_tag,
+        rah::cap_iterator_tag<rah::forward_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Common,
+        rah::bidirectional_iterator_tag,
+        rah::cap_iterator_tag<rah::bidirectional_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Common,
+        rah::random_access_iterator_tag,
+        rah::cap_iterator_tag<rah::random_access_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
+    test_one_range_setup<
+        Common,
+        rah::contiguous_iterator_tag,
+        rah::cap_iterator_tag<rah::contiguous_iterator_tag, MinCat, MaxCat>,
+        true,
+        MakeR>();
 }
