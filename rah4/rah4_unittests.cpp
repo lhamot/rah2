@@ -347,20 +347,17 @@ void test_all_view()
     STATIC_ASSERT((rah::random_access_range_impl<decltype(all), true>::value));
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_filter_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make() const
     {
-        auto make() const
-        {
-            return rah::views::filter(
-                make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
-        }
-        static constexpr bool is_sized = false;
-        static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::filter(
+            make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
+    }
+    static constexpr bool is_sized = false;
+    static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool do_test = true;
 };
 void test_filter_view()
 {
@@ -372,26 +369,24 @@ void test_filter_view()
     assert(result == std::vector<int>({0, 2, 4}));
     /// [filter]
 
-    check_all_cat<rah::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view::Trait>();
+    check_all_cat<rah::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_transform_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            auto v = make_test_view<CS, Tag, Sized>();
-            AssertEqual<rah::sized_range<decltype(v)>, Sized>();
-            return rah::views::transform(
-                make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
-        }
-        static constexpr bool is_sized = Sized;
-        static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
-        static constexpr bool do_test = true;
-    };
+        auto v = make_test_view<CS, Tag, Sized>();
+        AssertEqual<rah::sized_range<decltype(v)>, Sized>();
+        return rah::views::transform(
+            make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
+    }
+    static constexpr bool is_sized = Sized;
+    static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool do_test = true;
 };
+
 void test_transform_view()
 {
     // Test transform
@@ -429,23 +424,20 @@ void test_transform_view()
         /// [rah::views::transform_pipeable]
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_transform_view::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_transform_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_take_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::take(make_test_view<CS, Tag, Sized>(), 8);
-        }
-        static constexpr bool is_sized = Sized;
-        using R = test_view<CS, Tag, Sized>;
-        static constexpr bool is_common = rah::sized_range<R> && rah::random_access_range<R>;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::take(make_test_view<CS, Tag, Sized>(), 8);
+    }
+    static constexpr bool is_sized = Sized;
+    using R = test_view<CS, Tag, Sized>;
+    static constexpr bool is_common = rah::sized_range<R> && rah::random_access_range<R>;
+    static constexpr bool do_test = true;
 };
 void test_take_view()
 {
@@ -477,22 +469,19 @@ void test_take_view()
         /// [take_pipeable]
     }
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_take_view::Trait>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_take_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_drop_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::drop(make_test_view<CS, Tag, Sized>(), 2);
-        }
-        static constexpr bool is_sized = Sized;
-        static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::drop(make_test_view<CS, Tag, Sized>(), 2);
+    }
+    static constexpr bool is_sized = Sized;
+    static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool do_test = true;
 };
 void test_drop_view()
 {
@@ -516,25 +505,21 @@ void test_drop_view()
         /// [drop_pipeable]
     }
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view::Trait>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_drop_while_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::drop_while(
-                make_test_view<CS, Tag, Sized>(), [](auto i) { return i < 4; });
-        }
-        using V = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized =
-            rah::forward_range<V> && rah::sized_sentinel_for<rah::sentinel_t<V>, rah::iterator_t<V>>;
-        static constexpr bool is_common = rah::common_range<V>;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::drop_while(make_test_view<CS, Tag, Sized>(), [](auto i) { return i < 4; });
+    }
+    using V = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized =
+        rah::forward_range<V> && rah::sized_sentinel_for<rah::sentinel_t<V>, rah::iterator_t<V>>;
+    static constexpr bool is_common = rah::common_range<V>;
+    static constexpr bool do_test = true;
 };
 void test_drop_while_view()
 {
@@ -558,23 +543,20 @@ void test_drop_while_view()
         /// [drop_while_pipeable]
     }
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view::Trait>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_join_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::join(rah::views::transform(
-                make_test_view<CS, Tag, Sized>(), [](auto i) { return rah::views::iota(0, i); }));
-        }
-        static constexpr bool is_sized = false;
-        static constexpr bool is_common = false;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::join(rah::views::transform(
+            make_test_view<CS, Tag, Sized>(), [](auto i) { return rah::views::iota(0, i); }));
+    }
+    static constexpr bool is_sized = false;
+    static constexpr bool is_common = false;
+    static constexpr bool do_test = true;
 };
 void test_join_view()
 {
@@ -647,23 +629,20 @@ void test_join_view()
         /// [join_pipeable]
     }
 
-    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_join_view::Trait>();
+    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_join_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_split_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    std::array<int, 2> delim = {3, 4};
+    auto make()
     {
-        std::array<int, 2> delim = {3, 4};
-        auto make()
-        {
-            return rah::views::split(make_test_view<CS, Tag, Sized>(), delim);
-        }
-        static constexpr bool is_sized = false;
-        static constexpr bool is_common = false;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::split(make_test_view<CS, Tag, Sized>(), delim);
+    }
+    static constexpr bool is_sized = false;
+    static constexpr bool is_common = false;
+    static constexpr bool do_test = true;
 };
 void test_split_view()
 {
@@ -682,25 +661,22 @@ void test_split_view()
     // TODO : Allow forward_iterator
     // TODO : Allow common_range
     // TODO : Check inner_range (reference_t)
-    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_split_view::Trait>();
+    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_split_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_counted_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    std::array<int, 2> delim = {3, 4};
+    auto make()
     {
-        std::array<int, 2> delim = {3, 4};
-        auto make()
-        {
-            auto r = make_test_view<CS, Tag, Sized>();
-            return rah::views::counted(r.begin(), 8);
-        }
-        using BaseRange = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized = rah::random_access_range<BaseRange>;
-        static constexpr bool is_common = rah::random_access_iterator<rah::iterator_t<BaseRange>>;
-        static constexpr bool do_test = true;
-    };
+        auto r = make_test_view<CS, Tag, Sized>();
+        return rah::views::counted(r.begin(), 8);
+    }
+    using BaseRange = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized = rah::random_access_range<BaseRange>;
+    static constexpr bool is_common = rah::random_access_iterator<rah::iterator_t<BaseRange>>;
+    static constexpr bool do_test = true;
 };
 void test_counted_view()
 {
@@ -712,23 +688,20 @@ void test_counted_view()
     assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     /// [counted]
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_counted_view::Trait>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_counted_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_common_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::common(make_test_view<CS, Tag, Sized>());
-        }
-        using BaseRange = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange>;
-        static constexpr bool is_common = true;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::common(make_test_view<CS, Tag, Sized>());
+    }
+    using BaseRange = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized = rah::sized_range<BaseRange>;
+    static constexpr bool is_common = true;
+    static constexpr bool do_test = true;
 };
 void test_common_view()
 {
@@ -740,24 +713,21 @@ void test_common_view()
     assert(result == std::vector<int>({0, 2, 4}));
     /// [rah::views::common]
 
-    check_all_cat<rah::forward_iterator_tag, rah::forward_iterator_tag, make_common_view::Trait>();
+    check_all_cat<rah::forward_iterator_tag, rah::forward_iterator_tag, make_common_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_reverse_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::reverse(make_test_view<CS, Tag, Sized>());
-        }
-        using BaseRange = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized =
-            rah::sized_range<BaseRange> || rah::random_access_iterator<rah::iterator_t<BaseRange>>;
-        static constexpr bool is_common = true;
-        static constexpr bool do_test = rah::bidirectional_range<BaseRange>;
-    };
+        return rah::views::reverse(make_test_view<CS, Tag, Sized>());
+    }
+    using BaseRange = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized =
+        rah::sized_range<BaseRange> || rah::random_access_iterator<rah::iterator_t<BaseRange>>;
+    static constexpr bool is_common = true;
+    static constexpr bool do_test = rah::bidirectional_range<BaseRange>;
 };
 void test_reverse_iterator()
 {
@@ -780,30 +750,27 @@ void test_reverse_iterator()
         /// [reverse_pipeable]
     }
 
-    check_all_cat<rah::random_access_iterator_tag, rah::input_iterator_tag, make_reverse_view::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, rah::input_iterator_tag, make_reverse_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_elements_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
-    {
-        std::vector<std::tuple<bool, char, int>> vec{
-            {true, 'a', 1000},
-            {false, 'b', 1001},
-            {true, 'c', 1002},
-            {false, 'd', 1003},
-        };
-
-        auto make()
-        {
-            return rah::views::elements<2>(make_test_view_adapter<CS, Tag, Sized>(vec));
-        }
-        using BaseRange = test_view_adapter<CS, Tag, Sized, std::vector<std::tuple<bool, char, int>>>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange>;
-        static constexpr bool is_common = rah::common_range<BaseRange>;
-        static constexpr bool do_test = true;
+    std::vector<std::tuple<bool, char, int>> vec{
+        {true, 'a', 1000},
+        {false, 'b', 1001},
+        {true, 'c', 1002},
+        {false, 'd', 1003},
     };
+
+    auto make()
+    {
+        return rah::views::elements<2>(make_test_view_adapter<CS, Tag, Sized>(vec));
+    }
+    using BaseRange = test_view_adapter<CS, Tag, Sized, std::vector<std::tuple<bool, char, int>>>;
+    static constexpr bool is_sized = rah::sized_range<BaseRange>;
+    static constexpr bool is_common = rah::common_range<BaseRange>;
+    static constexpr bool do_test = true;
 };
 void test_elements_view()
 {
@@ -851,23 +818,20 @@ void test_elements_view()
         /// [keys_view]
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_elements_view::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_elements_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_enumerate_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::enumerate(make_test_view<CS, Tag, Sized>());
-        }
-        using BaseRange = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange>;
-        static constexpr bool is_common = rah::common_range<BaseRange> && rah::sized_range<BaseRange>;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::enumerate(make_test_view<CS, Tag, Sized>());
+    }
+    using BaseRange = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized = rah::sized_range<BaseRange>;
+    static constexpr bool is_common = rah::common_range<BaseRange> && rah::sized_range<BaseRange>;
+    static constexpr bool do_test = true;
 };
 void test_enumerate_view()
 {
@@ -904,45 +868,39 @@ void test_enumerate_view()
         assert(ref == (std::vector<size_t>{1, 2, 5}));
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_enumerate_view::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_enumerate_view>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view1
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::zip(make_test_view<CS, Tag, Sized>());
-        }
-        using BaseRange = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange>;
-        static constexpr bool is_common =
-            rah::common_range<BaseRange>
-            || (rah::sized_range<BaseRange> && rah::random_access_range<BaseRange>);
-        static constexpr bool do_test = true;
-    };
+        return rah::views::zip(make_test_view<CS, Tag, Sized>());
+    }
+    using BaseRange = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized = rah::sized_range<BaseRange>;
+    static constexpr bool is_common =
+        rah::common_range<BaseRange>
+        || (rah::sized_range<BaseRange> && rah::random_access_range<BaseRange>);
+    static constexpr bool do_test = true;
 };
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view2
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::zip(
-                make_test_view<CS, Tag, Sized>(),
-                make_test_view<Common, rah::contiguous_iterator_tag, true>());
-        }
-        using BaseRange1 = test_view<CS, Tag, Sized>;
-        using BaseRange2 = test_view<Common, rah::contiguous_iterator_tag, true>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange1> && rah::sized_range<BaseRange2>;
-        static constexpr bool is_common =
-            (rah::sized_range<BaseRange1> && rah::random_access_range<BaseRange1>)&&(
-                rah::sized_range<BaseRange2> && rah::random_access_range<BaseRange2>);
-        static constexpr bool do_test = true;
-    };
+        return rah::views::zip(
+            make_test_view<CS, Tag, Sized>(),
+            make_test_view<Common, rah::contiguous_iterator_tag, true>());
+    }
+    using BaseRange1 = test_view<CS, Tag, Sized>;
+    using BaseRange2 = test_view<Common, rah::contiguous_iterator_tag, true>;
+    static constexpr bool is_sized = rah::sized_range<BaseRange1> && rah::sized_range<BaseRange2>;
+    static constexpr bool is_common =
+        (rah::sized_range<BaseRange1> && rah::random_access_range<BaseRange1>)&&(
+            rah::sized_range<BaseRange2> && rah::random_access_range<BaseRange2>);
+    static constexpr bool do_test = true;
 };
 void test_zip_view()
 {
@@ -972,24 +930,21 @@ void test_zip_view()
         assert(rah::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view1::Trait>();
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view2::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view1>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view2>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_adjacent_view
 {
-    template <CommonOrSent CS, typename Tag, bool Sized>
-    struct Trait
+    auto make()
     {
-        auto make()
-        {
-            return rah::views::adjacent<3>(make_test_view<CS, Tag, Sized>());
-        }
-        using BaseRange = test_view<CS, Tag, Sized>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange>;
-        static constexpr bool is_common = rah::common_range<BaseRange>;
-        static constexpr bool do_test = true;
-    };
+        return rah::views::adjacent<3>(make_test_view<CS, Tag, Sized>());
+    }
+    using BaseRange = test_view<CS, Tag, Sized>;
+    static constexpr bool is_sized = rah::sized_range<BaseRange>;
+    static constexpr bool is_common = rah::common_range<BaseRange>;
+    static constexpr bool do_test = true;
 };
 void test_adjacent_view()
 {
@@ -1035,7 +990,7 @@ void test_adjacent_view()
         assert(out.empty());
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view>();
 }
 
 int main()
