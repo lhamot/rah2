@@ -371,7 +371,7 @@ void test_filter_view()
     assert(result == std::vector<int>({0, 2, 4}));
     /// [filter]
 
-    check_all_cat<SentinelPolicy::Keep, rah::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view>();
+    check_all_cat<rah::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view>();
 }
 
 struct make_transform_view
@@ -427,7 +427,7 @@ void test_transform_view()
         /// [rah::views::transform_pipeable]
     }
 
-    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag, std::input_iterator_tag, make_transform_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_transform_view>();
 }
 
 struct make_take_view
@@ -474,11 +474,7 @@ void test_take_view()
         /// [take_pipeable]
     }
 
-    check_all_cat<
-        SentinelPolicy::CommonIfSizedRandomAccess,
-        rah::contiguous_iterator_tag,
-        std::input_iterator_tag,
-        make_take_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_take_view>();
 }
 
 struct make_drop_view
@@ -516,7 +512,7 @@ void test_drop_view()
         /// [drop_pipeable]
     }
 
-    check_all_cat<SentinelPolicy::Keep, rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view>();
 }
 
 struct make_drop_while_view
@@ -557,7 +553,7 @@ void test_drop_while_view()
         /// [drop_while_pipeable]
     }
 
-    check_all_cat<SentinelPolicy::Keep, rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view>();
 }
 
 struct make_join_view
@@ -651,7 +647,7 @@ void test_join_view()
         /// [join_pipeable]
     }
 
-    check_all_cat<SentinelPolicy::AllSentinel, rah::input_iterator_tag, std::input_iterator_tag, make_join_view>();
+    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_join_view>();
 }
 
 struct make_split_view
@@ -685,7 +681,7 @@ void test_split_view()
     // TODO : Allow forward_iterator
     // TODO : Allow common_range
     // TODO : Check inner_range (reference_t)
-    check_all_cat<SentinelPolicy::AllSentinel, rah::input_iterator_tag, std::input_iterator_tag, make_split_view>();
+    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_split_view>();
 }
 
 struct make_counted_view
@@ -714,11 +710,7 @@ void test_counted_view()
     assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     /// [counted]
 
-    check_all_cat<
-        SentinelPolicy::CommonIfSizedRandomAccess,
-        rah::contiguous_iterator_tag,
-        std::input_iterator_tag,
-        make_counted_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_counted_view>();
 }
 
 struct make_common_view
@@ -745,10 +737,7 @@ void test_common_view()
     assert(result == std::vector<int>({0, 2, 4}));
     /// [rah::views::common]
 
-    //using Cat =
-    //    rah::cap_iterator_tag<rah::bidirectional_iterator_tag, rah::forward_iterator_tag, rah::forward_iterator_tag>;
-
-    check_all_cat<SentinelPolicy::AllCommon, rah::forward_iterator_tag, rah::forward_iterator_tag, make_common_view>();
+    check_all_cat<rah::forward_iterator_tag, rah::forward_iterator_tag, make_common_view>();
 }
 
 struct make_reverse_view
@@ -789,17 +778,14 @@ void test_reverse_iterator()
 
     using MakeR = make_reverse_view;
     using CapCat = rah::random_access_iterator_tag;
-    constexpr auto SentPolicy = SentinelPolicy::AllCommon;
     {
         auto t3 = MakeR::template Trait<Sentinel, std::bidirectional_iterator_tag, false>();
         auto r3 = t3.make();
         check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
-        check_sent<Sentinel, SentPolicy>(r3);
         STATIC_ASSERT(rah::sized_range<decltype(r3)> == t3.is_sized);
         auto t4 = MakeR::template Trait<Sentinel, std::random_access_iterator_tag, false>();
         auto r4 = t4.make();
         check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
-        check_sent<Sentinel, SentPolicy>(r4);
         //STATIC_ASSERT(rah::sized_range<decltype(r4)>);
         //STATIC_ASSERT(rah::common_range<decltype(r4)>);
         //STATIC_ASSERT(t4.is_sized);
@@ -807,24 +793,20 @@ void test_reverse_iterator()
         auto t5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, false>();
         auto r5 = t5.make();
         check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
-        check_sent<Sentinel, SentPolicy>(r5);
         STATIC_ASSERT(rah::sized_range<decltype(r5)> == t5.is_sized);
     }
     {
         auto t3 = MakeR::template Trait<Common, rah::bidirectional_iterator_tag, false>();
         auto r3 = t3.make();
         check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
-        check_sent<Common, SentPolicy>(r3);
         STATIC_ASSERT(rah::sized_range<decltype(r3)> == t3.is_sized);
         auto t4 = MakeR::template Trait<Common, rah::random_access_iterator_tag, true>();
         auto r4 = t4.make();
         check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
-        check_sent<Common, SentPolicy>(r4);
         STATIC_ASSERT(rah::sized_range<decltype(r4)> == t4.is_sized);
         auto t5 = MakeR::template Trait<Common, rah::contiguous_iterator_tag, true>();
         auto r5 = t5.make();
         check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
-        check_sent<Common, SentPolicy>(r5);
         STATIC_ASSERT(rah::sized_range<decltype(r5)> == t5.is_sized);
     }
 }
@@ -896,7 +878,7 @@ void test_elements_view()
         /// [keys_view]
     }
 
-    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag, std::input_iterator_tag, make_elements_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_elements_view>();
 }
 
 struct make_enumerate_view
@@ -948,47 +930,36 @@ void test_enumerate_view()
         assert(ref == (std::vector<size_t>{1, 2, 5}));
     }
 
-    // check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_enumerate_view());
+    // check_all_cat<rah::random_access_iterator_tag>(make_enumerate_view());
     using MakeR = make_enumerate_view;
     using CapCat = rah::random_access_iterator_tag;
-    constexpr auto SentPolicy = SentinelPolicy::Keep;
     {
         auto t1 = MakeR::template Trait<Sentinel, std::input_iterator_tag, false>();
         auto r1 = t1.make();
         check_cat_impl<std::input_iterator_tag, decltype(r1)>();
-        check_sent<Sentinel, SentPolicy>(r1);
         STATIC_ASSERT(rah::sized_range<decltype(r1)> == t1.is_sized);
         auto t2 = MakeR::template Trait<Sentinel, std::forward_iterator_tag, false>();
         auto r2 = t2.make();
         check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
-        check_sent<Sentinel, SentPolicy>(r2);
         STATIC_ASSERT(rah::sized_range<decltype(r2)> == t2.is_sized);
         auto r3 = MakeR::template Trait<Sentinel, std::bidirectional_iterator_tag, false>().make();
         check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
-        check_sent<Sentinel, SentPolicy>(r3);
         auto r4 = MakeR::template Trait<Sentinel, std::random_access_iterator_tag, true>().make();
         check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
-        check_sent<Sentinel, SentPolicy>(r4);
         auto r5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, true>().make();
         check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
-        check_sent<Sentinel, SentPolicy>(r5);
     }
     {
         auto r1 = MakeR::template Trait<Common, std::input_iterator_tag, false>().make();
         check_cat_impl<std::input_iterator_tag, decltype(r1)>();
-        check_sent<Common, SentinelPolicy::AllSentinel>(r1);
         auto r2 = MakeR::template Trait<Common, std::forward_iterator_tag, false>().make();
         check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
-        check_sent<Common, SentinelPolicy::AllSentinel>(r2);
         auto r3 = MakeR::template Trait<Common, std::bidirectional_iterator_tag, false>().make();
         check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
-        check_sent<Common, SentinelPolicy::AllSentinel>(r3);
         auto r4 = MakeR::template Trait<Common, std::random_access_iterator_tag, true>().make();
         check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
-        check_sent<Common, SentPolicy>(r4);
         auto r5 = MakeR::template Trait<Common, rah::contiguous_iterator_tag, true>().make();
         check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
-        check_sent<Common, SentPolicy>(r5);
     }
 }
 
@@ -1054,48 +1025,33 @@ void test_zip_view()
         assert(rah::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
     }
 
-    check_all_cat<
-        SentinelPolicy::CommonIfCommonOrSizedRandomAccess,
-        rah::random_access_iterator_tag,
-        std::input_iterator_tag,
-        make_zip_view1>();
-    // check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag>(make_zip_view2());
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view1>();
+    // check_all_cat<rah::random_access_iterator_tag>(make_zip_view2());
     using MakeR = make_zip_view2;
     using CapCat = rah::random_access_iterator_tag;
-    constexpr auto SentPolicy = SentinelPolicy::Keep;
     {
         auto r1 = MakeR::template Trait<Sentinel, std::input_iterator_tag, false>().make();
         check_cat_impl<std::input_iterator_tag, decltype(r1)>();
-        check_sent<Sentinel, SentPolicy>(r1);
         auto r2 = MakeR::template Trait<Sentinel, std::forward_iterator_tag, false>().make();
         check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
-        check_sent<Sentinel, SentPolicy>(r2);
         auto r3 = MakeR::template Trait<Sentinel, std::bidirectional_iterator_tag, false>().make();
         check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
-        check_sent<Sentinel, SentPolicy>(r3);
         auto r4 = MakeR::template Trait<Sentinel, std::random_access_iterator_tag, true>().make();
         check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
-        check_sent<Sentinel, SentinelPolicy::AllCommon>(r4);
         auto r5 = MakeR::template Trait<Sentinel, rah::contiguous_iterator_tag, true>().make();
         check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
-        check_sent<Sentinel, SentinelPolicy::AllCommon>(r5);
     }
     {
         auto r1 = MakeR::template Trait<Common, std::input_iterator_tag, false>().make();
         check_cat_impl<std::input_iterator_tag, decltype(r1)>();
-        check_sent<Common, SentinelPolicy::AllSentinel>(r1);
         auto r2 = MakeR::template Trait<Common, std::forward_iterator_tag, false>().make();
         check_cat_impl<std::forward_iterator_tag, decltype(r2)>();
-        check_sent<Common, SentinelPolicy::AllSentinel>(r2);
         auto r3 = MakeR::template Trait<Common, std::bidirectional_iterator_tag, false>().make();
         check_cat_impl<std::bidirectional_iterator_tag, decltype(r3)>();
-        check_sent<Common, SentinelPolicy::AllSentinel>(r3);
         auto r4 = MakeR::template Trait<Common, std::random_access_iterator_tag, true>().make();
         check_cat_impl<std::random_access_iterator_tag, decltype(r4)>();
-        check_sent<Common, SentinelPolicy::AllCommon>(r4); // Need both are random_access and sized
         auto r5 = MakeR::template Trait<Common, rah::contiguous_iterator_tag, true>().make();
         check_cat_impl<rah::random_access_iterator_tag, decltype(r5)>();
-        check_sent<Common, SentinelPolicy::AllCommon>(r5);
     }
 }
 
@@ -1157,7 +1113,7 @@ void test_adjacent_view()
         assert(out.empty());
     }
 
-    check_all_cat<SentinelPolicy::Keep, rah::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view>();
 }
 
 int main()

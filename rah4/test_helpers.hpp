@@ -460,75 +460,7 @@ void check_cat(R&&)
     check_cat_impl<expected_cat, std::remove_reference_t<R>>();
 }
 
-enum class SentinelPolicy
-{
-    AllCommon,
-    AllSentinel,
-    Keep,
-    CommonIfSizedRandomAccess,
-    CommonIfCommonOrSizedRandomAccess,
-};
-
-template <CommonOrSent BaseCommon, SentinelPolicy Policy, typename R>
-struct check_sent_impl;
-
-template <typename R>
-struct check_sent_impl<Common, SentinelPolicy::AllCommon, R>
-{
-    STATIC_ASSERT(rah::common_range<R>);
-};
-
-template <typename R>
-struct check_sent_impl<Common, SentinelPolicy::AllSentinel, R>
-{
-    STATIC_ASSERT(not rah::common_range<R>);
-};
-template <typename R>
-struct check_sent_impl<Common, SentinelPolicy::Keep, R>
-{
-    STATIC_ASSERT(rah::common_range<R>);
-};
-template <CommonOrSent BaseCommon, typename R>
-struct check_sent_impl<BaseCommon, SentinelPolicy::CommonIfSizedRandomAccess, R>
-{
-    static constexpr bool expect_common = (rah::sized_range<R> && rah::random_access_range<R>);
-    static constexpr bool is_common = rah::common_range<R>;
-    AssertEqual<is_common, expect_common> test;
-};
-
-template <CommonOrSent BaseCommon, typename R>
-struct check_sent_impl<BaseCommon, SentinelPolicy::CommonIfCommonOrSizedRandomAccess, R>
-{
-    static constexpr bool expect_common =
-        (rah::sized_range<R> && rah::random_access_range<R>) || BaseCommon == Common;
-    static constexpr bool is_common = rah::common_range<R>;
-    AssertEqual<is_common, expect_common> test;
-};
-
-template <typename R>
-struct check_sent_impl<Sentinel, SentinelPolicy::AllCommon, R>
-{
-    STATIC_ASSERT(rah::common_range<R>);
-};
-
-template <typename R>
-struct check_sent_impl<Sentinel, SentinelPolicy::AllSentinel, R>
-{
-    STATIC_ASSERT(not rah::common_range<R>);
-};
-template <typename R>
-struct check_sent_impl<Sentinel, SentinelPolicy::Keep, R>
-{
-    STATIC_ASSERT(not rah::common_range<R>);
-};
-
-template <CommonOrSent BaseIsCommon, SentinelPolicy SentPolicy, typename R>
-void check_sent(R&&)
-{
-    check_sent_impl<BaseIsCommon, SentPolicy, std::remove_reference_t<R>>();
-}
-
-template <SentinelPolicy SentPolicy, typename MaxCat, typename MinCat = std::input_iterator_tag, typename MakeR>
+template <typename MaxCat, typename MinCat = std::input_iterator_tag, typename MakeR>
 void check_all_cat()
 {
     {
