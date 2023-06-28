@@ -1277,7 +1277,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 return RAH_NAMESPACE::size(base_);
             }
@@ -1339,7 +1339,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 return std::min(count_, static_cast<size_t>(RAH_NAMESPACE::size(input_view_)));
             }
@@ -1417,7 +1417,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 auto const subsize = static_cast<size_t>(RAH_NAMESPACE::size(base_));
                 return size_t(std::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
@@ -1998,7 +1998,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 return rah::size(base_);
             }
@@ -2065,11 +2065,6 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
-            {
-                return RAH_NAMESPACE::size(base_);
-            }
-            template <bool IsSized = is_const_sized, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
                 return RAH_NAMESPACE::size(base_);
@@ -2371,7 +2366,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 return rah::size(base_);
             }
@@ -2784,7 +2779,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool AllSized = all_sized, std::enable_if_t<AllSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 return std::get<0>(bases_).size();
             }
@@ -3110,7 +3105,7 @@ namespace RAH_NAMESPACE
             }
 
             template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            auto size() const
             {
                 return rah::size(input_view_) - (N - 1);
             }
@@ -4099,6 +4094,9 @@ namespace RAH_NAMESPACE
             intptr_t begin_idx_ = 0;
             intptr_t end_idx_ = 0;
             using iterator = RAH_NAMESPACE::iterator_t<R>;
+            static constexpr bool base_is_sized_random_access =
+                RAH_NAMESPACE::random_access_range<R> && RAH_NAMESPACE::sized_range<R>;
+            static constexpr bool is_sized = RAH_NAMESPACE::sized_range<R>;
 
         public:
             slice_view() = default;
@@ -4109,34 +4107,42 @@ namespace RAH_NAMESPACE
             {
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<IsSized>* = nullptr>
             auto begin()
             {
                 auto iter = RAH_NAMESPACE::begin(base_);
-                RAH_NAMESPACE::advance(iter, begin_idx_, RAH_NAMESPACE::end(base_));
+                iter += std::min(begin_idx_, int64_t(RAH_NAMESPACE::size(base_)));
                 return iter;
             }
 
-            template <typename U = R, std::enable_if_t<not RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<!IsSized>* = nullptr>
             auto begin()
             {
                 auto iter = RAH_NAMESPACE::begin(base_);
                 RAH_NAMESPACE::advance(iter, begin_idx_, RAH_NAMESPACE::end(base_));
-                return counted_iterator<iterator_t<U>>(iter, end_idx_ - begin_idx_);
+                return counted_iterator<iterator_t<R>>(iter, end_idx_ - begin_idx_);
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<IsSized>* = nullptr>
             auto end()
             {
                 auto iter = RAH_NAMESPACE::begin(base_);
-                RAH_NAMESPACE::advance(iter, end_idx_, RAH_NAMESPACE::end(base_));
+                iter += std::min(end_idx_, int64_t(RAH_NAMESPACE::size(base_)));
                 return iter;
             }
 
-            template <typename U = R, std::enable_if_t<not RAH_NAMESPACE::random_access_range<U>>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<!IsSized>* = nullptr>
             default_sentinel end()
             {
                 return default_sentinel{};
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size() const
+            {
+                auto const base_size = RAH_NAMESPACE::size(base_);
+                return size_t(
+                    std::min<int64_t>(end_idx_, base_size) - std::min<int64_t>(begin_idx_, base_size));
             }
         };
 
