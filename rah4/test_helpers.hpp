@@ -460,12 +460,19 @@ void check_cat(R&&)
     check_cat_impl<expected_cat, std::remove_reference_t<R>>();
 }
 
-template <bool DoTest, CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, typename MakeR>
+template <
+    bool DoTest,
+    CommonOrSent Sentinel,
+    typename Cat,
+    typename ExpectedCat,
+    bool Sized,
+    template <CommonOrSent, typename, bool>
+    typename MakeR>
 struct test_one_range_setup_impl
 {
     static void test()
     {
-        auto t1 = MakeR::template Trait<Sentinel, Cat, Sized>();
+        auto t1 = MakeR<Sentinel, Cat, Sized>();
         auto r1 = t1.make();
         check_cat_impl<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
         AssertEqual<rah::common_range<decltype(r1)>, t1.is_common>();
@@ -473,7 +480,13 @@ struct test_one_range_setup_impl
     }
 };
 
-template <CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, typename MakeR>
+template <
+    CommonOrSent Sentinel,
+    typename Cat,
+    typename ExpectedCat,
+    bool Sized,
+    template <CommonOrSent, typename, bool>
+    typename MakeR>
 struct test_one_range_setup_impl<false, Sentinel, Cat, ExpectedCat, Sized, MakeR>
 {
     static void test()
@@ -481,14 +494,20 @@ struct test_one_range_setup_impl<false, Sentinel, Cat, ExpectedCat, Sized, MakeR
     }
 };
 
-template <CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, typename MakeR>
+template <
+    CommonOrSent Sentinel,
+    typename Cat2,
+    typename ExpectedCat,
+    bool Sized,
+    template <CommonOrSent, typename, bool>
+    typename Trait>
 void test_one_range_setup()
 {
-    constexpr bool do_test = decltype(MakeR::template Trait<Sentinel, Cat, Sized>())::do_test;
-    test_one_range_setup_impl<do_test, Sentinel, Cat, ExpectedCat, Sized, MakeR>::test();
+    constexpr bool do_test = Trait<Sentinel, Cat2, Sized>::do_test;
+    test_one_range_setup_impl<do_test, Sentinel, Cat2, ExpectedCat, Sized, Trait>::test();
 }
 
-template <typename MaxCat, typename MinCat = std::input_iterator_tag, typename MakeR>
+template <typename MaxCat, typename MinCat = std::input_iterator_tag, template <CommonOrSent, typename, bool> typename MakeR>
 void check_all_cat()
 {
     test_one_range_setup<

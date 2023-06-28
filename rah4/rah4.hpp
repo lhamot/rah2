@@ -887,11 +887,17 @@ namespace RAH_NAMESPACE
             {
                 return RAH_NAMESPACE::empty(*ref_);
             }
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             size_t size() const
             {
                 return RAH_NAMESPACE::size(*ref_);
             }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return RAH_NAMESPACE::size(*ref_);
+            }
+
             bool data() const
             {
                 return RAH_NAMESPACE::data(*ref_);
@@ -957,7 +963,13 @@ namespace RAH_NAMESPACE
             {
                 return RAH_NAMESPACE::empty(range_);
             }
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             size_t size() const
+            {
+                return RAH_NAMESPACE::size(range_);
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return RAH_NAMESPACE::size(range_);
             }
@@ -1276,8 +1288,13 @@ namespace RAH_NAMESPACE
             {
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                return RAH_NAMESPACE::size(base_);
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return RAH_NAMESPACE::size(base_);
             }
@@ -1338,8 +1355,13 @@ namespace RAH_NAMESPACE
             {
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                return std::min(count_, static_cast<size_t>(RAH_NAMESPACE::size(input_view_)));
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return std::min(count_, static_cast<size_t>(RAH_NAMESPACE::size(input_view_)));
             }
@@ -1416,8 +1438,14 @@ namespace RAH_NAMESPACE
             {
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                auto const subsize = static_cast<size_t>(RAH_NAMESPACE::size(base_));
+                return size_t(std::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 auto const subsize = static_cast<size_t>(RAH_NAMESPACE::size(base_));
                 return size_t(std::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
@@ -1997,8 +2025,13 @@ namespace RAH_NAMESPACE
                 return &(*begin());
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                return rah::size(base_);
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return rah::size(base_);
             }
@@ -2064,8 +2097,13 @@ namespace RAH_NAMESPACE
                 return std::make_reverse_iterator(RAH_NAMESPACE::begin(base_));
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                return RAH_NAMESPACE::size(base_);
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return RAH_NAMESPACE::size(base_);
             }
@@ -2365,8 +2403,13 @@ namespace RAH_NAMESPACE
                 return sentinel{RAH_NAMESPACE::end(base_)};
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                return rah::size(base_);
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return rah::size(base_);
             }
@@ -2642,10 +2685,17 @@ namespace RAH_NAMESPACE
                 template <typename Range>
                 static constexpr bool value = rah::sized_range<Range>;
             };
+            struct is_const_sized_range
+            {
+                template <typename Range>
+                static constexpr bool value = rah::sized_range<Range const>;
+            };
             static constexpr bool common_one_range =
                 std::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
+            static constexpr bool all_const_sized =
+                details::all_type<RangeTuple, is_const_sized_range>();
             static constexpr bool common_all_sized_random_access =
                 details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
                 && all_sized;
@@ -2778,10 +2828,17 @@ namespace RAH_NAMESPACE
                 return sentinel{details::transform_each(bases_, details::range_end())};
             }
 
-            template <bool AllSized = all_sized, std::enable_if_t<AllSized>* = nullptr>
+            template <bool AllSized = all_const_sized, std::enable_if_t<AllSized>* = nullptr>
             auto size() const
             {
-                return std::get<0>(bases_).size();
+                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                return details::apply(compute_min_size(), sizes);
+            }
+            template <bool IsSized = all_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                return details::apply(compute_min_size(), sizes);
             }
         };
 
@@ -2846,8 +2903,8 @@ namespace RAH_NAMESPACE
             public:
                 iterator() = default;
                 iterator(zip_transform_view* parent, IterTuple iterators)
-                    : parent_(parent)
-                    , iters_(iterators)
+                    : iters_(iterators)
+                    , parent_(parent)
                 {
                 }
                 iterator& operator++()
@@ -3104,8 +3161,13 @@ namespace RAH_NAMESPACE
                 return sentinel{RAH_NAMESPACE::end(input_view_)};
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                return rah::size(input_view_) - (N - 1);
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 return rah::size(input_view_) - (N - 1);
             }
@@ -4137,8 +4199,15 @@ namespace RAH_NAMESPACE
                 return default_sentinel{};
             }
 
-            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
             auto size() const
+            {
+                auto const base_size = RAH_NAMESPACE::size(base_);
+                return size_t(
+                    std::min<int64_t>(end_idx_, base_size) - std::min<int64_t>(begin_idx_, base_size));
+            }
+            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
             {
                 auto const base_size = RAH_NAMESPACE::size(base_);
                 return size_t(

@@ -372,7 +372,7 @@ void test_filter_view()
     assert(result == std::vector<int>({0, 2, 4}));
     /// [filter]
 
-    check_all_cat<rah::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view>();
+    check_all_cat<rah::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view::Trait>();
 }
 
 struct make_transform_view
@@ -429,7 +429,7 @@ void test_transform_view()
         /// [rah::views::transform_pipeable]
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_transform_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_transform_view::Trait>();
 }
 
 struct make_take_view
@@ -477,7 +477,7 @@ void test_take_view()
         /// [take_pipeable]
     }
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_take_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_take_view::Trait>();
 }
 
 struct make_drop_view
@@ -516,7 +516,7 @@ void test_drop_view()
         /// [drop_pipeable]
     }
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view::Trait>();
 }
 
 struct make_drop_while_view
@@ -558,7 +558,7 @@ void test_drop_while_view()
         /// [drop_while_pipeable]
     }
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view::Trait>();
 }
 
 struct make_join_view
@@ -598,9 +598,6 @@ void test_join_view()
         // OUTER and INNER are bidir => bidir
         auto bidir = rah::views::join(
             rah::views::repeat(test_view<Common, std::bidirectional_iterator_tag, false>(0, 10, 1)));
-        using bidirIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(bidir)>>;
-        // static_assert(std::is_same_v<bidirIterCateg, std::bidirectional_iterator_tag>, "");
-        // static_assert(rah::bidirectional_range<decltype(bidir)>, "");
         // else if OUTER and INNER are forward => forward
         {
             auto forw = rah::views::join(
@@ -621,10 +618,7 @@ void test_join_view()
         // else if OUTER and INNER are input => input
         auto inputRange = rah::views::join(
             rah::views::repeat(test_view<Sentinel, std::input_iterator_tag, false>(0, 10, 1)));
-        using inputIterCateg = rah::details::iterator_category<rah::iterator_t<decltype(inputRange)>>;
-        // static_assert(std::is_same_v<inputIterCateg, std::input_iterator_tag>, "");
         static_assert(rah::input_range<decltype(inputRange)>, "");
-        // static_assert(not rah::forward_range<decltype(forw)>, "");
     }
     {
         // Test join on a range of rvalue
@@ -653,7 +647,7 @@ void test_join_view()
         /// [join_pipeable]
     }
 
-    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_join_view>();
+    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_join_view::Trait>();
 }
 
 struct make_split_view
@@ -688,7 +682,7 @@ void test_split_view()
     // TODO : Allow forward_iterator
     // TODO : Allow common_range
     // TODO : Check inner_range (reference_t)
-    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_split_view>();
+    check_all_cat<rah::input_iterator_tag, std::input_iterator_tag, make_split_view::Trait>();
 }
 
 struct make_counted_view
@@ -718,7 +712,7 @@ void test_counted_view()
     assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     /// [counted]
 
-    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_counted_view>();
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_counted_view::Trait>();
 }
 
 struct make_common_view
@@ -746,7 +740,7 @@ void test_common_view()
     assert(result == std::vector<int>({0, 2, 4}));
     /// [rah::views::common]
 
-    check_all_cat<rah::forward_iterator_tag, rah::forward_iterator_tag, make_common_view>();
+    check_all_cat<rah::forward_iterator_tag, rah::forward_iterator_tag, make_common_view::Trait>();
 }
 
 struct make_reverse_view
@@ -786,7 +780,7 @@ void test_reverse_iterator()
         /// [reverse_pipeable]
     }
 
-    check_all_cat<rah::random_access_iterator_tag, rah::input_iterator_tag, make_reverse_view>();
+    check_all_cat<rah::random_access_iterator_tag, rah::input_iterator_tag, make_reverse_view::Trait>();
 }
 
 struct make_elements_view
@@ -857,7 +851,7 @@ void test_elements_view()
         /// [keys_view]
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_elements_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_elements_view::Trait>();
 }
 
 struct make_enumerate_view
@@ -910,7 +904,7 @@ void test_enumerate_view()
         assert(ref == (std::vector<size_t>{1, 2, 5}));
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_enumerate_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_enumerate_view::Trait>();
 }
 
 struct make_zip_view1
@@ -978,8 +972,8 @@ void test_zip_view()
         assert(rah::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view1>();
-    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view2>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view1::Trait>();
+    check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_zip_view2::Trait>();
 }
 
 struct make_adjacent_view
@@ -1041,7 +1035,7 @@ void test_adjacent_view()
         assert(out.empty());
     }
 
-    check_all_cat<rah::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view>();
+    check_all_cat<rah::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view::Trait>();
 }
 
 int main()
