@@ -358,6 +358,7 @@ struct make_filter_view
                 make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
         }
         static constexpr bool is_sized = false;
+        static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
     };
 };
 void test_filter_view()
@@ -386,6 +387,7 @@ struct make_transform_view
                 make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
         }
         static constexpr bool is_sized = Sized;
+        static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
     };
 };
 void test_transform_view()
@@ -438,6 +440,8 @@ struct make_take_view
             return rah::views::take(make_test_view<CS, Tag, Sized>(), 8);
         }
         static constexpr bool is_sized = Sized;
+        using R = test_view<CS, Tag, Sized>;
+        static constexpr bool is_common = rah::sized_range<R> && rah::random_access_range<R>;
     };
 };
 void test_take_view()
@@ -487,6 +491,7 @@ struct make_drop_view
             return rah::views::drop(make_test_view<CS, Tag, Sized>(), 2);
         }
         static constexpr bool is_sized = Sized;
+        static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
     };
 };
 void test_drop_view()
@@ -527,6 +532,7 @@ struct make_drop_while_view
         using V = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized =
             rah::forward_range<V> && rah::sized_sentinel_for<rah::sentinel_t<V>, rah::iterator_t<V>>;
+        static constexpr bool is_common = rah::common_range<V>;
     };
 };
 void test_drop_while_view()
@@ -565,6 +571,7 @@ struct make_join_view
                 make_test_view<CS, Tag, Sized>(), [](auto i) { return rah::views::iota(0, i); }));
         }
         static constexpr bool is_sized = false;
+        static constexpr bool is_common = false;
     };
 };
 void test_join_view()
@@ -658,6 +665,7 @@ struct make_split_view
             return rah::views::split(make_test_view<CS, Tag, Sized>(), delim);
         }
         static constexpr bool is_sized = false;
+        static constexpr bool is_common = false;
     };
 };
 void test_split_view()
@@ -693,6 +701,7 @@ struct make_counted_view
         }
         using BaseRange = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized = rah::random_access_range<BaseRange>;
+        static constexpr bool is_common = rah::random_access_iterator<rah::iterator_t<BaseRange>>;
     };
 };
 void test_counted_view()
@@ -723,6 +732,7 @@ struct make_common_view
         }
         using BaseRange = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized = rah::sized_range<BaseRange>;
+        static constexpr bool is_common = true;
     };
 };
 void test_common_view()
@@ -753,6 +763,7 @@ struct make_reverse_view
         using BaseRange = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized =
             rah::sized_range<BaseRange> || rah::random_access_iterator<rah::iterator_t<BaseRange>>;
+        static constexpr bool is_common = true;
     };
 };
 void test_reverse_iterator()
@@ -836,6 +847,7 @@ struct make_elements_view
         }
         using BaseRange = test_view_adapter<CS, Tag, Sized, std::vector<std::tuple<bool, char, int>>>;
         static constexpr bool is_sized = rah::sized_range<BaseRange>;
+        static constexpr bool is_common = rah::common_range<BaseRange>;
     };
 };
 void test_elements_view()
@@ -898,6 +910,7 @@ struct make_enumerate_view
         }
         using BaseRange = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized = rah::sized_range<BaseRange>;
+        static constexpr bool is_common = rah::common_range<BaseRange>;
     };
 };
 void test_enumerate_view()
@@ -990,6 +1003,9 @@ struct make_zip_view1
         }
         using BaseRange = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized = rah::sized_range<BaseRange>;
+        static constexpr bool is_common =
+            rah::common_range<BaseRange>
+            || (rah::sized_range<BaseRange> && rah::random_access_range<BaseRange>);
     };
 };
 struct make_zip_view2
@@ -1005,7 +1021,9 @@ struct make_zip_view2
         }
         using BaseRange1 = test_view<CS, Tag, Sized>;
         using BaseRange2 = test_view<Common, rah::contiguous_iterator_tag, true>;
-        static constexpr bool is_sized = rah::sized_range<BaseRange1> && rah::sized_range<BaseRange2>;
+        static constexpr bool is_common =
+            (rah::sized_range<BaseRange1> && rah::random_access_range<BaseRange1>)&&(
+                rah::sized_range<BaseRange2> && rah::random_access_range<BaseRange2>);
     };
 };
 void test_zip_view()
@@ -1092,6 +1110,7 @@ struct make_adjacent_view
         }
         using BaseRange = test_view<CS, Tag, Sized>;
         static constexpr bool is_sized = rah::sized_range<BaseRange>;
+        static constexpr bool is_common = rah::common_range<BaseRange>;
     };
 };
 void test_adjacent_view()
