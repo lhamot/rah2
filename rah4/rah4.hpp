@@ -2260,6 +2260,7 @@ namespace RAH_NAMESPACE
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
             using base_cat = common_iterator_tag<random_access_iterator_tag, range_iter_categ_t<R>>;
+            static constexpr bool is_sized = rah::sized_range<R>;
 
         public:
             explicit enumerate_view(R base)
@@ -2367,6 +2368,12 @@ namespace RAH_NAMESPACE
             auto end()
             {
                 return sentinel{RAH_NAMESPACE::end(base_)};
+            }
+
+            template <bool IsSized = is_sized, std::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return rah::size(base_);
             }
         };
 
