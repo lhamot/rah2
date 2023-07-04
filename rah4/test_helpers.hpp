@@ -4,6 +4,65 @@
 
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 
+struct TestSuite
+{
+    std::map<std::string, std::function<void()>> testMap;
+    std::map<std::string, bool> testResult;
+
+    bool current_test_status = true;
+
+    void addTest(std::string name, std::function<void()> test)
+    {
+        testMap.emplace(std::move(name), std::move(test));
+    }
+
+    void report() const
+    {
+        for (auto name_test : testMap)
+        {
+            auto& name = name_test.first;
+            std::cout << name_test.first << " : ";
+            if (testResult.count(name) == 1)
+                std::cout << (testResult.at(name) ? "OK" : "FAILED") << std::endl;
+            else
+                std::cout << "MISSING" << std::endl;
+        }
+    }
+
+    void run()
+    {
+        for (auto name_test : testMap)
+        {
+            auto& name = name_test.first;
+            auto& test = name_test.second;
+            current_test_status = true;
+            try
+            {
+                test();
+            }
+            catch (...)
+            {
+                testResult[name] = false;
+                return;
+            }
+            testResult[name] = current_test_status;
+        }
+    }
+};
+
+struct TestCase
+{
+    char const* suite;
+    char const* testcase;
+    char const* extra;
+};
+std::vector<TestCase> testcases;
+
+void test_case(char const* suite, char const* testcase, char const* extra)
+{
+    testcases.push_back({suite, testcase, extra});
+}
+
 template <bool A, bool B>
 struct AssertEqual;
 
@@ -31,7 +90,10 @@ public:
     {
     };
 
-    class iterator : public rah::iterator_facade<iterator, sentinel, int&, Cat>
+    using ref_type =
+        std::conditional_t<std::is_same_v<Cat, std::output_iterator_tag>, int&, int const&>;
+
+    class iterator : public rah::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
         int val_ = int();
         int step_ = int(1);
@@ -90,7 +152,7 @@ public:
         {
             return val_;
         }
-        auto& operator*()
+        ref_type operator*()
         {
             return val_;
         }
@@ -147,13 +209,13 @@ public:
         return iterator(start_ + rounded_last, step_);
     }
     template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
-    int* data()
+    RAH_STD::remove_reference_t<ref_type>* data()
     {
         return nullptr;
     }
 
     template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
-    int* data() const
+    RAH_STD::remove_reference_t<ref_type>* data() const
     {
         return nullptr;
     }
@@ -308,7 +370,7 @@ using OutputCommonView = test_view<Common, std::output_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<OutputCommonView>>, "Should be input");
 static_assert(not rah::input_range<OutputCommonView>, "Should be input");
-static_assert(rah::output_range<OutputCommonView>, "Should be input");
+static_assert(rah::output_range<OutputCommonView, int>, "Should be output");
 static_assert(not rah::input_or_output_iterator<OutputCommonView>, "Should be input");
 static_assert(not rah::forward_range<OutputCommonView>, "Should be Forward");
 static_assert(not rah::bidirectional_range<OutputCommonView>, "Should not be bidirectional");
@@ -320,7 +382,7 @@ using InputCommonView = test_view<Common, std::input_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<InputCommonView>>, "Should be input");
 static_assert(rah::input_range<InputCommonView>, "Should be input");
-static_assert(not rah::output_range<InputCommonView>, "Should be input");
+static_assert(not rah::output_range<InputCommonView, int>, "Should not be output");
 static_assert(not rah::forward_range<InputCommonView>, "Should be Forward");
 static_assert(not rah::bidirectional_range<InputCommonView>, "Should not be bidirectional");
 static_assert(not rah::random_access_range<InputCommonView>, "Should not be random");
@@ -331,7 +393,7 @@ using ForwardCommonView = test_view<Common, std::forward_iterator_tag, false>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<ForwardCommonView>>, "Should be input");
 static_assert(rah::input_range<ForwardCommonView>, "Should be input");
-static_assert(not rah::output_range<ForwardCommonView>, "Should be input");
+static_assert(not rah::output_range<ForwardCommonView, int>, "Should not be output");
 static_assert(rah::forward_range<ForwardCommonView>, "Should be Forward");
 static_assert(!rah::bidirectional_range<ForwardCommonView>, "Should not be bidirectional");
 static_assert(!rah::random_access_range<ForwardCommonView>, "Should not be random");
@@ -342,7 +404,7 @@ using BidirCommonView = test_view<Common, std::bidirectional_iterator_tag, false
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<BidirCommonView>>, "Should be input");
 static_assert(rah::input_range<BidirCommonView>, "Should be input");
-static_assert(not rah::output_range<BidirCommonView>, "Should be input");
+static_assert(not rah::output_range<BidirCommonView, int>, "Should not be outnput");
 static_assert(rah::forward_range<BidirCommonView>, "Should be Forward");
 STATIC_ASSERT((rah::bidirectional_range_impl<BidirCommonView, true>::value));
 static_assert(!rah::random_access_range<BidirCommonView>, "Should not be random");
@@ -353,7 +415,7 @@ using RandomCommonView = test_view<Common, std::random_access_iterator_tag, true
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<RandomCommonView>>, "Should be input");
 static_assert(rah::input_range<RandomCommonView>, "Should be input");
-static_assert(not rah::output_range<RandomCommonView>, "Should be input");
+static_assert(not rah::output_range<RandomCommonView, int>, "Should not be output");
 static_assert(rah::forward_range<RandomCommonView>, "Should be Forward");
 using It = rah::iterator_t<RandomCommonView>;
 using cat = rah::range_iter_categ_t<RandomCommonView>;
@@ -362,6 +424,12 @@ static_assert(std::is_same_v<decltype(--std::declval<It>()), It&>, "");
 STATIC_ASSERT((rah::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(rah::bidirectional_range<RandomCommonView>, "Should be bidirectional");
 using RandomCommonViewIter = RAH_NAMESPACE::iterator_t<RandomCommonView>;
+void prout()
+{
+    RandomCommonView r;
+    auto const i = rah::begin(r);
+    i[2];
+}
 STATIC_ASSERT((rah::random_access_range_impl<RandomCommonView, true>::value));
 static_assert(not rah::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
@@ -370,7 +438,7 @@ using ContiCommonView = test_view<Common, rah::contiguous_iterator_tag, true>;
 static_assert(
     rah::input_or_output_iterator<RAH_NAMESPACE::iterator_t<ContiCommonView>>, "Should be input");
 static_assert(rah::input_range<ContiCommonView>, "Should be input");
-static_assert(not rah::output_range<ContiCommonView>, "Should be input");
+static_assert(not rah::output_range<ContiCommonView, int>, "Should not be output");
 static_assert(rah::forward_range<ContiCommonView>, "Should be Forward");
 static_assert(rah::bidirectional_range<ContiCommonView>, "Should be bidirectional");
 static_assert(rah::random_access_range<ContiCommonView>, "Should be random");
@@ -623,3 +691,132 @@ void check_all_cat()
         true,
         MakeR>();
 }
+
+template <typename A, typename B, typename C, typename D>
+bool operator==(std::tuple<A, B> a, std::pair<D, C> b)
+{
+    return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b);
+}
+
+template <typename A, typename B, typename C, typename D>
+bool operator==(std::pair<A, B> a, std::tuple<D, C> b)
+{
+    return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b);
+}
+
+auto PairEqual = [](auto&& ab)
+{
+    static_assert(
+        RAH_NAMESPACE::WeaklyEqualityComparableWith<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
+        "second not assignable to first");
+    return std::get<0>(ab) == std::get<1>(ab);
+};
+
+// #define TEST_DISPLAY_ALL
+#define TEST_DISPLAY_FAILED
+// #define TEST_DISPLAY_NONE
+
+bool test_failed_count = 0;
+
+void assert_impl(int line, char const* condition, bool value)
+{
+#if defined(TEST_DISPLAY_ALL)
+    std::cout << line << " assert : " << condition << std::endl;
+#endif
+    if (value)
+    {
+#if defined(TEST_DISPLAY_ALL)
+        std::cout << "OK" << std::endl;
+#endif
+    }
+    else
+    {
+#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
+        std::cout << line << " assert : " << condition << std::endl;
+#endif
+#if defined(TEST_DISPLAY_FAILED)
+        std::cout << "NOT OK" << std::endl;
+#endif
+        // abort();
+        ++test_failed_count;
+    }
+}
+
+#undef assert
+#define assert(CONDITION) assert_impl(__LINE__, #CONDITION, (CONDITION))
+
+template <typename R, typename I>
+void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
+{
+    static_assert(
+        RAH_NAMESPACE::WeaklyEqualityComparableWith<
+            rah::range_reference_t<decltype(RANGE)>,
+            rah::range_reference_t<decltype(IL)>>,
+        "Can't compare");
+#if defined(TEST_DISPLAY_ALL)
+    std::cout << "assert : " << rangeName << " == " << ILName << std::endl;
+#endif
+    if (rah::all_of(rah::views::zip(std::forward<R>(RANGE), std::forward<I>(IL)), PairEqual))
+    {
+#if defined(TEST_DISPLAY_ALL)
+        std::cout << "OK" << std::endl;
+#endif
+    }
+    else
+    {
+#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
+        std::cout << "assert : " << rangeName << " == " << ILName << std::endl;
+#endif
+#if defined(TEST_DISPLAY_FAILED)
+        std::cout << "NOT OK" << std::endl;
+#endif
+        ++test_failed_count;
+        // abort();
+    }
+}
+
+#define EQUAL_RANGE(RANGE, IL) equalRange(RANGE, IL, #RANGE, #IL)
+
+template <typename T>
+using il = std::initializer_list<T>;
+
+template <typename... Args>
+std::ostream& operator<<(std::ostream& os, std::tuple<Args...> tup)
+{
+    auto print_elt = [](auto&& elt)
+    {
+        (std::cout << std::forward<decltype(elt)>(elt)) << " ";
+    };
+
+    ::rah::views::details::for_each(tup, print_elt);
+    return os;
+}
+
+namespace test
+{
+    template <class T>
+    constexpr bool is_reference_v = std::is_reference<T>::value;
+    template <class T>
+    constexpr bool is_rvalue_reference_v = std::is_rvalue_reference<T>::value;
+} // namespace test
+
+template <typename R, typename = std::enable_if_t<rah::range<R>>>
+void toto(R&&)
+{
+}
+
+template <typename V>
+auto toto(std::initializer_list<V> il)
+{
+    return toto(rah::make_subrange(begin(il), end(il)));
+}
+
+bool is_odd(int val)
+{
+    return val % 2 == 0;
+}
+
+template <typename T>
+struct WhatIs;
+
+#define CHECK_EQUAL(A, B) assert(A == B)

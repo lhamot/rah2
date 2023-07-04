@@ -27,6 +27,18 @@
     <ClInclude Include="test_helpers.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="concepts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="eastl_algorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="eastl_heap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="eastl_sort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rah4_unittests.cpp">

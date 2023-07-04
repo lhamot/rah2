@@ -11,27 +11,21 @@ namespace rah
 
     // ****************************************** equal_range ***********************************************
 
+    /* template <typename I, typename S, typename V, typename Comp = rah::less, typename Proj = rah::identity>
+    auto equal_range(I&& iter, S&& sent, V&& value, Comp comp = {}, Proj proj = {})
+    {
+        return RAH_NAMESPACE::subrange(
+            RAH_NAMESPACE::lower_bound(iter, sent, value, std::ref(comp), std::ref(proj)),
+            RAH_NAMESPACE::upper_bound(iter, sent, value, std::ref(comp), std::ref(proj)));
+    }
+
     /// @brief Returns a range containing all elements equivalent to value in the range
     ///
     /// @snippet test.cpp rah::equal_range
     template <typename R, typename V>
-    auto equal_range(R&& range, V&& value, RAH_STD::enable_if_t<RAH_NAMESPACE::range<R>, int> = 0)
+    auto equal_range(R&& range, V&& value)
     {
-        auto pair = RAH_STD::equal_range(
-            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::forward<V>(value));
-        return make_subrange(RAH_STD::get<0>(pair), RAH_STD::get<1>(pair));
-    }
-
-    /// @brief Returns a range containing all elements equivalent to value in the range
-    /// @remark pipeable syntax
-    ///
-    /// @snippet test.cpp rah::equal_range_pipeable
-    template <typename V>
-    auto equal_range(V&& value)
-    {
-        return make_pipeable(
-            [=](auto&& range)
-            { return equal_range(RAH_STD::forward<decltype(range)>(range), value); });
+        return equal_range(rah::begin(range), rah::end(range), std::forward<V>(value));
     }
 
     /// @brief Returns a range containing all elements equivalent to value in the range
@@ -60,7 +54,9 @@ namespace rah
         return make_pipeable(
             [=](auto&& range)
             { return equal_range(RAH_STD::forward<decltype(range)>(range), value, pred); });
-    }
+    }*/
+
+#ifdef RAH_DISABLE
 
     // ****************************************** binary_search ***********************************************
 
@@ -738,5 +734,31 @@ namespace rah
             RAH_NAMESPACE::begin(range2),
             RAH_NAMESPACE::end(range2));
     }
+
+#endif
+
+    struct fold_left_fn
+    {
+        template <typename I, typename S, class T, typename F>
+        constexpr auto operator()(I first, S last, T init, F f) const
+        {
+            using U = RAH_NAMESPACE::remove_cvref_t<decltype(f(init, *first))>;
+            if (first == last)
+                return U(std::move(init));
+            U accum = std::invoke(f, std::move(init), *first);
+            for (++first; first != last; ++first)
+                accum = std::invoke(f, std::move(accum), *first);
+            return std::move(accum);
+        }
+
+        template <typename R, class T, typename F>
+        constexpr auto operator()(R&& r, T init, F f) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(init), std::ref(f));
+        }
+    };
+
+    constexpr fold_left_fn fold_left;
 
 } // namespace rah

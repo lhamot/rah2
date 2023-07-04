@@ -10,7 +10,7 @@
 #include <tuple>
 
 #include "range_bases.hpp"
-#include "range_algorithms.hpp"
+#include "eastl_algorithm.h"
 #include "mpark/variant.hpp"
 
 namespace RAH_NAMESPACE
@@ -301,7 +301,7 @@ namespace RAH_NAMESPACE
         DeleteCheck<iterator_facade<I, S, R, RAH_STD::input_iterator_tag>> deleteCheck;
 
         using iterator_category = RAH_STD::input_iterator_tag;
-        using value_type = RAH_STD::remove_reference_t<R>;
+        using value_type = RAH_NAMESPACE::remove_cvref_t<R>;
         using difference_type = intptr_t;
         using pointer = typename details::pointer_type<R>::type;
         using reference = R;
@@ -1678,7 +1678,7 @@ namespace RAH_NAMESPACE
 
         // ************************************ split_view ****************************************
 
-        template <typename R, typename P>
+        template <typename R, typename P, std::enable_if_t<forward_range<R>>* = nullptr>
         class split_view : public view_interface<split_view<R, P>>
         {
             R base_;
@@ -1782,7 +1782,7 @@ namespace RAH_NAMESPACE
             }
         };
 
-        template <typename R, typename P>
+        template <typename R, typename P, std::enable_if_t<forward_range<R>>* = nullptr>
         auto split(R&& range, P&& pattern)
         {
             auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
@@ -2259,10 +2259,13 @@ namespace RAH_NAMESPACE
         }
 
         template <typename T>
+        using keys_view = elements_view<T, 0>;
+
+        template <typename T>
         auto keys(T&& range)
         {
             auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
-            return elements_view<decltype(ref), 0>(std::move(ref));
+            return keys_view<decltype(ref)>(std::move(ref));
         }
 
         inline auto keys()
@@ -2272,10 +2275,13 @@ namespace RAH_NAMESPACE
         }
 
         template <typename T>
+        using values_view = elements_view<T, 1>;
+
+        template <typename T>
         auto values(T&& range)
         {
             auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
-            return elements_view<decltype(ref), 1>(std::move(ref));
+            return values_view<decltype(ref)>(std::move(ref));
         }
 
         inline auto values()
