@@ -273,13 +273,28 @@ namespace RAH_NAMESPACE
 #define RAH_SELF (*static_cast<I*>(this))
 #define RAH_SELF_CONST (*static_cast<I const*>(this))
 
-#define RAH_POST_INCR                                                                              \
+#define RAH_POST_INCR(CAT)                                                                         \
+    template <                                                                                     \
+        typename C = CAT,                                                                          \
+        RAH_STD::enable_if_t<                                                                      \
+            RAH_NAMESPACE::derived_from<C, RAH_STD::forward_iterator_tag>                          \
+            or RAH_NAMESPACE::derived_from<C, RAH_STD::output_iterator_tag>>* = nullptr>           \
     auto operator++(int)                                                                           \
     {                                                                                              \
         auto it = *this;                                                                           \
         ++(*this);                                                                                 \
         return it;                                                                                 \
+    }                                                                                              \
+    template <                                                                                     \
+        typename C = CAT,                                                                          \
+        RAH_STD::enable_if_t<                                                                      \
+            !RAH_NAMESPACE::derived_from<C, RAH_STD::forward_iterator_tag>                         \
+            and !RAH_NAMESPACE::derived_from<C, RAH_STD::output_iterator_tag>>* = nullptr>         \
+    void operator++(int)                                                                           \
+    {                                                                                              \
+        ++(*this);                                                                                 \
     }
+
 #define RAH_POST_DECR                                                                              \
     auto operator--(int)                                                                           \
     {                                                                                              \
@@ -360,11 +375,16 @@ namespace RAH_NAMESPACE
 
         static_assert(not RAH_STD::is_reference_v<value_type>, "value_type can't be a reference");
 
-        auto& operator++()
+        I& operator++()
         {
-            return *this;
+            return RAH_SELF;
         }
-        RAH_POST_INCR
+        I operator++(int)
+        {
+            auto it = *this;
+            ++(*this);
+            return it;
+        }
         auto& operator*() const
         {
             return *this;
@@ -466,6 +486,7 @@ namespace RAH_NAMESPACE
     {
         I iter_;
         size_t count_ = size_t();
+        using base_cat = typename RAH_STD::iterator_traits<I>::iterator_category;
 
     public:
         counted_iterator() = default;
@@ -481,7 +502,7 @@ namespace RAH_NAMESPACE
             --count_;
             return *this;
         }
-        RAH_POST_INCR
+        RAH_POST_INCR(base_cat)
         counted_iterator& operator+=(intptr_t off)
         {
             iter_ += off;
@@ -634,7 +655,7 @@ namespace RAH_NAMESPACE
                 ++val_;
                 return *this;
             }
-            RAH_POST_INCR
+            RAH_POST_INCR(RAH_STD::random_access_iterator_tag)
             iota_iterator& operator+=(intptr_t value)
             {
                 val_ += W(value);
@@ -734,7 +755,10 @@ namespace RAH_NAMESPACE
                     *(istream_->stream()) >> istream_->value_;
                     return *this;
                 }
-                RAH_POST_INCR
+                void operator++(int)
+                {
+                    ++(*this);
+                }
                 friend bool operator==(iterator const& it, sentinel const&)
                 {
                     return !(*it.istream_->stream());
@@ -797,7 +821,7 @@ namespace RAH_NAMESPACE
                     ++current_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(RAH_STD::random_access_iterator_tag)
                 iterator& operator+=(intptr_t value)
                 {
                     current_ += value;
@@ -947,15 +971,7 @@ namespace RAH_NAMESPACE
             {
                 return range_.begin();
             }
-            auto begin() const
-            {
-                return range_.begin();
-            }
             auto end()
-            {
-                return range_.end();
-            }
-            auto end() const
             {
                 return range_.end();
             }
@@ -1041,6 +1057,8 @@ namespace RAH_NAMESPACE
             using inner_iterator = RAH_NAMESPACE::iterator_t<R>;
             using inner_sentinel = RAH_NAMESPACE::sentinel_t<R>;
             constexpr static bool is_common_range = RAH_NAMESPACE::common_range<R>;
+            using base_cat =
+                rah::common_iterator_tag<range_iter_categ_t<R>, bidirectional_iterator_tag>;
 
         public:
             struct sentinel
@@ -1052,7 +1070,7 @@ namespace RAH_NAMESPACE
                       iterator,
                       sentinel,
                       typename RAH_STD::iterator_traits<inner_iterator>::reference,
-                      RAH_NAMESPACE::common_iterator_tag<RAH_STD::bidirectional_iterator_tag, range_iter_categ_t<R>>>
+                      RAH_NAMESPACE::common_iterator_tag<RAH_STD::bidirectional_iterator_tag, base_cat>>
             {
                 filter_view* view_ = nullptr;
                 inner_iterator iter_;
@@ -1105,7 +1123,7 @@ namespace RAH_NAMESPACE
                     next_value();
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 template <typename U = R, std::enable_if_t<bidirectional_range<U>>* = nullptr>
                 iterator& operator--()
                 {
@@ -1226,7 +1244,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(category)
                 iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
@@ -1570,6 +1588,7 @@ namespace RAH_NAMESPACE
             sub_iter_begin sub_range_iter_;
             sub_iter_end sub_range_end_;
             bool init_ = false;
+            using base_cat = RAH_STD::input_iterator_tag;
 
             void next_valid()
             {
@@ -1589,11 +1608,8 @@ namespace RAH_NAMESPACE
             }
 
         public:
-            class iterator : public iterator_facade<
-                                 iterator,
-                                 default_sentinel,
-                                 range_reference_t<range_reference_t<R>>,
-                                 RAH_STD::input_iterator_tag>
+            class iterator
+                : public iterator_facade<iterator, default_sentinel, range_reference_t<range_reference_t<R>>, base_cat>
             {
                 join_view* view_ = nullptr;
 
@@ -1614,7 +1630,7 @@ namespace RAH_NAMESPACE
                     view_->next_valid();
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 auto operator*() const -> decltype(*view_->sub_range_iter_)
                 {
                     return *view_->sub_range_iter_;
@@ -1686,6 +1702,7 @@ namespace RAH_NAMESPACE
             using inner_iterator = RAH_NAMESPACE::iterator_t<R>;
             using inner_sentinel = RAH_NAMESPACE::sentinel_t<R>;
             details::optional<subrange<inner_iterator, inner_iterator>> cached_begin_;
+            using base_cat = std::input_iterator_tag;
 
             auto find_next(inner_iterator const& it)
             {
@@ -1709,7 +1726,7 @@ namespace RAH_NAMESPACE
                 inner_sentinel inner;
             };
             class iterator
-                : public iterator_facade<iterator, sentinel, subrange<inner_iterator, inner_iterator>, std::input_iterator_tag>
+                : public iterator_facade<iterator, sentinel, subrange<inner_iterator, inner_iterator>, base_cat>
             {
                 split_view* parent_;
                 inner_iterator cur_;
@@ -1747,7 +1764,7 @@ namespace RAH_NAMESPACE
 
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 auto operator*()
                 {
                     return subrange<inner_iterator>{cur_, next_.begin()};
@@ -1958,20 +1975,7 @@ namespace RAH_NAMESPACE
                     ++mpark::get<base_iterator>(var_);
                     return *this;
                 }
-                RAH_POST_INCR
-                /*template <
-                    typename C = Cat,
-                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                common_iterator& operator--()
-                {
-                    --mpark::get<base_iterator>(var_);
-                    return *this;
-                }
-                
-                template <
-                    typename C = Cat,
-                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;*/
+                RAH_POST_INCR(Cat)
                 bool operator==(common_iterator const& it) const
                 {
                     return dispatch(equal(), *this, it);
@@ -2171,7 +2175,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 template <
                     typename C = base_cat,
                     std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
@@ -2314,8 +2318,7 @@ namespace RAH_NAMESPACE
                 inner_sentinel sent;
             };
 
-            class iterator
-                : public iterator_facade<iterator, sentinel, value_type, range_iter_categ_t<R>>
+            class iterator : public iterator_facade<iterator, sentinel, value_type, base_cat>
             {
                 inner_iterator current_;
                 int64_t pos_;
@@ -2334,7 +2337,7 @@ namespace RAH_NAMESPACE
                     ++pos_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 template <
                     typename C = base_cat,
                     std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
@@ -2741,7 +2744,7 @@ namespace RAH_NAMESPACE
                     details::for_each(iters_, [](auto& iter) { ++iter; });
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t val)
                 {
                     details::for_each(iters_, [val](auto& iter) { iter += val; });
@@ -2918,7 +2921,7 @@ namespace RAH_NAMESPACE
                     details::for_each(iters_, [](auto& iter) { ++iter; });
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t val)
                 {
                     details::for_each(iters_, [val](auto& iter) { iter += val; });
@@ -3084,7 +3087,7 @@ namespace RAH_NAMESPACE
                     result_output_index = (result_output_index + 1) % N;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(iterator_category)
                 template <
                     typename C = iterator_category,
                     std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
@@ -3228,6 +3231,7 @@ namespace RAH_NAMESPACE
             using adjacent_iterator = iterator_t<inner_adjacent_view>;
             using adjacent_reference = range_reference_t<inner_adjacent_view>;
             using adjacent_sentinel = sentinel_t<inner_adjacent_view>;
+            using base_cat = std::forward_iterator_tag;
 
         public:
             using reference = decltype(details::apply(func_, std::declval<adjacent_reference>()));
@@ -3238,8 +3242,7 @@ namespace RAH_NAMESPACE
                 adjacent_sentinel sent;
             };
 
-            class iterator
-                : public iterator_facade<iterator, sentinel, reference, std::forward_iterator_tag>
+            class iterator : public iterator_facade<iterator, sentinel, reference, base_cat>
             {
                 adjacent_transform_view* view_ = nullptr;
                 adjacent_iterator iter_;
@@ -3257,7 +3260,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 auto operator*()
                 {
                     return details::apply(view_->func_, *iter_, std::make_index_sequence<N>{});
@@ -3325,6 +3328,7 @@ namespace RAH_NAMESPACE
 
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
+            using base_cat = RAH_NAMESPACE::range_iter_categ_t<R>;
 
         public:
             struct sentinel
@@ -3332,11 +3336,8 @@ namespace RAH_NAMESPACE
                 base_sentinel sent;
             };
 
-            struct iterator : iterator_facade<
-                                  iterator,
-                                  sentinel,
-                                  subrange<base_iterator, base_iterator>,
-                                  RAH_NAMESPACE::range_iter_categ_t<R>>
+            struct iterator
+                : iterator_facade<iterator, sentinel, subrange<base_iterator, base_iterator>, base_cat>
             {
                 // Actually store a closed range [begin, last]
                 //   to avoid to exceed the end iterator of the underlying range
@@ -3358,7 +3359,7 @@ namespace RAH_NAMESPACE
                     ++subRangeLast_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t off)
                 {
                     subRangeBegin_ += off;
@@ -3467,6 +3468,7 @@ namespace RAH_NAMESPACE
             size_t step_;
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
+            using base_cat = RAH_STD::forward_iterator_tag;
 
         public:
             struct sentinel
@@ -3475,7 +3477,7 @@ namespace RAH_NAMESPACE
             };
 
             class iterator
-                : public iterator_facade<iterator, sentinel, subrange<iterator_t<R>, iterator_t<R>>, RAH_STD::forward_iterator_tag>
+                : public iterator_facade<iterator, sentinel, subrange<iterator_t<R>, iterator_t<R>>, base_cat>
             {
                 iterator_t<R> iter_;
                 iterator_t<R> iter2_;
@@ -3501,7 +3503,7 @@ namespace RAH_NAMESPACE
                     RAH_NAMESPACE::advance(iter2_, step_, end_);
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 auto operator*() const
                 {
                     return make_subrange(iter_, iter2_);
@@ -3580,64 +3582,133 @@ namespace RAH_NAMESPACE
         }
 
         // ***************************************** stride ***********************************************
-
         template <typename R>
-        class stride_iterator
-            : public iterator_facade<stride_iterator<R>, void, range_reference_t<R>, range_iter_categ_t<R>>
+        class stride_view : view_interface<stride_view<R>>
         {
-            iterator_t<R> iter_;
-            sentinel_t<R> end_;
-            size_t step_;
+            R base_;
+            size_t stride_;
+            using base_iterator = iterator_t<R>;
+            using base_sentinel = sentinel_t<R>;
+            using iter_cat = range_iter_categ_t<R>;
 
         public:
-            stride_iterator(iterator_t<R> const& iter, sentinel_t<R> const& end, size_t step)
-                : iter_(iter)
-                , end_(end)
-                , step_(step)
+            // TODO : Make a version non-bidirectional without "missing_" for perf
+            class iterator
+                : public iterator_facade<iterator, default_sentinel, range_reference_t<R>, iter_cat>
+            {
+                base_iterator current_;
+                base_sentinel end_;
+                size_t stride_ = 0;
+                size_t missing_ = 0;
+
+            public:
+                iterator() = default;
+                iterator(base_iterator iter, base_sentinel end, size_t stride, size_t missing)
+                    : current_(RAH_STD::move(iter))
+                    , end_(RAH_STD::move(end))
+                    , stride_(stride)
+                    , missing_(missing)
+                {
+                }
+
+                iterator& operator++()
+                {
+                    assert(missing_ == 0);
+                    missing_ = RAH_NAMESPACE::advance(current_, stride_, end_);
+                    return *this;
+                }
+                RAH_POST_INCR(iter_cat)
+                template <
+                    typename C = iter_cat,
+                    std::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                iterator& operator--()
+                {
+                    RAH_NAMESPACE::advance(current_, missing_ - stride_);
+                    missing_ = 0;
+                    return *this;
+                }
+                template <
+                    typename C = iter_cat,
+                    std::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                RAH_POST_DECR;
+                template <
+                    typename C = iter_cat,
+                    std::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                iterator& operator+=(intptr_t value)
+                {
+                    current_ += stride_ * value;
+                    return *this;
+                }
+                auto operator*() const -> decltype(*current_)
+                {
+                    return *current_;
+                }
+                bool operator==(iterator const& other) const
+                {
+                    return current_ == other.current_;
+                }
+                template <
+                    typename C = iter_cat,
+                    std::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator-(iterator const& other) const
+                {
+                    return (current_ - other.current_) / stride_;
+                }
+                template <
+                    typename C = iter_cat,
+                    std::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator<(iterator const& other) const
+                {
+                    return current_ < other.current_;
+                }
+            };
+
+            stride_view(R base, size_t step)
+                : base_(RAH_STD::move(base))
+                , stride_(step)
             {
             }
 
-            stride_iterator& operator++()
+            auto begin()
             {
-                for (size_t i = 0; i < step_ && iter_ != end_; ++i)
-                    ++iter_;
-                return *this;
-            }
-            RAH_POST_INCR
-            stride_iterator& operator--()
-            {
-                for (size_t i = 0; i < step_; ++i)
-                    --iter_;
-                return *this;
+                return iterator(RAH_NAMESPACE::begin(base_), RAH_NAMESPACE::end(base_), stride_, 0);
             }
 
-            stride_iterator& operator+=(intptr_t value)
+            template <
+                typename Base = R,
+                std::enable_if_t<sized_range<Base> && common_range<Base> && forward_range<Base>>* = nullptr>
+            auto end()
             {
-                iter_ += step_ * value;
-                return *this;
+                auto missing = (stride_ - RAH_NAMESPACE::distance(base_) % stride_) % stride_;
+                return iterator(
+                    RAH_NAMESPACE::end(base_), RAH_NAMESPACE::end(base_), stride_, missing);
             }
-            auto operator*() const -> decltype(*iter_)
+            template <
+                typename Base = R,
+                std::enable_if_t<!sized_range<Base> && common_range<Base> && !bidirectional_range<Base>>* = nullptr>
+            auto end()
             {
-                return *iter_;
+                return iterator(RAH_NAMESPACE::end(base_), RAH_NAMESPACE::end(base_), stride_, 0);
             }
-            bool operator==(stride_iterator const& other) const
+            template <
+                typename Base = R,
+                std::enable_if_t<!common_range<Base> || (!sized_range<Base> && bidirectional_range<Base>)>* = nullptr>
+            auto end()
             {
-                return iter_ == other.iter_;
+                return default_sentinel();
             }
-            auto operator-(stride_iterator const& other) const
+            template <typename Base = R, std::enable_if_t<sized_range<Base>>* = nullptr>
+            auto size()
             {
-                return (iter_ - other.iter_) / step_;
+                return RAH_NAMESPACE::size(base_) / stride_;
             }
         };
 
         template <typename R>
         auto stride(R&& range, size_t step)
         {
-            auto&& views = all(RAH_STD::forward<R>(range));
-            auto iter = RAH_NAMESPACE::begin(views);
-            auto end_iter = RAH_NAMESPACE::end(views);
-            return subrange<stride_iterator<RAH_STD::remove_reference_t<R>>>{
-                {iter, end_iter, step}, {end_iter, end_iter, step}};
+            auto views = all(RAH_STD::forward<R>(range));
+            return stride_view<decltype(views)>(RAH_STD::move(views), step);
         }
 
         inline auto stride(size_t step)
@@ -3654,17 +3725,15 @@ namespace RAH_NAMESPACE
         class unbounded_view : public view_interface<unbounded_view<I>>
         {
             I iter_;
+            using base_cat = typename RAH_STD::iterator_traits<I>::iterator_category;
 
         public:
             explicit unbounded_view(I iter)
                 : iter_(std::move(iter))
             {
             }
-            class iterator : public iterator_facade<
-                                 iterator,
-                                 default_sentinel,
-                                 iter_reference_t<I>,
-                                 typename RAH_STD::iterator_traits<I>::iterator_category>
+            class iterator
+                : public iterator_facade<iterator, default_sentinel, iter_reference_t<I>, base_cat>
             {
                 I iter_;
 
@@ -3680,7 +3749,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
@@ -3742,10 +3811,10 @@ namespace RAH_NAMESPACE
             T start_;
             T stop_;
             T step_;
+            using base_cat = RAH_STD::random_access_iterator_tag;
 
         public:
-            class iterator
-                : public iterator_facade<iterator, sentinel_iterator, T, RAH_STD::random_access_iterator_tag>
+            class iterator : public iterator_facade<iterator, sentinel_iterator, T, base_cat>
             {
                 T val_ = T();
                 T step_ = T(1);
@@ -3763,7 +3832,7 @@ namespace RAH_NAMESPACE
                     val_ += step_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t value)
                 {
                     val_ += T(step_ * value);
@@ -3846,14 +3915,14 @@ namespace RAH_NAMESPACE
             R base_;
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
+            using base_cat = range_iter_categ_t<R>;
 
         public:
-            class iterator
-                : public iterator_facade<
-                      iterator,
-                      default_sentinel,
-                      RAH_NAMESPACE::range_reference_t<R>,
-                      common_iterator_tag<RAH_STD::bidirectional_iterator_tag, range_iter_categ_t<R>>>
+            class iterator : public iterator_facade<
+                                 iterator,
+                                 default_sentinel,
+                                 RAH_NAMESPACE::range_reference_t<R>,
+                                 common_iterator_tag<RAH_STD::bidirectional_iterator_tag, base_cat>>
             {
                 cycle_view* view_;
                 base_iterator begin_iter_;
@@ -3880,7 +3949,7 @@ namespace RAH_NAMESPACE
                     }
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 template <
                     typename U = R,
                     std::enable_if_t<
@@ -3968,10 +4037,10 @@ namespace RAH_NAMESPACE
             using value =
                 RAH_NAMESPACE::remove_cvref_t<decltype(RAH_NAMESPACE::details::declval<F>()())>;
             F func_;
+            using base_cat = RAH_STD::input_iterator_tag;
 
         public:
-            class iterator
-                : public iterator_facade<iterator, default_sentinel, value, RAH_STD::input_iterator_tag>
+            class iterator : public iterator_facade<iterator, default_sentinel, value, base_cat>
             {
                 generate_view* parent_ = nullptr;
                 RAH_NAMESPACE::details::optional<value> value_;
@@ -3988,7 +4057,7 @@ namespace RAH_NAMESPACE
                     value_ = parent_->func_();
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 value operator*()
                 {
                     return *value_;
@@ -4043,10 +4112,10 @@ namespace RAH_NAMESPACE
             using inner_sentinel2 = sentinel_t<InputRng2>;
             InputRng1 base1_;
             InputRng2 base2_;
+            using base_cat = RAH_STD::forward_iterator_tag;
 
         public:
-            class iterator
-                : public iterator_facade<iterator, default_sentinel, reference, RAH_STD::forward_iterator_tag>
+            class iterator : public iterator_facade<iterator, default_sentinel, reference, base_cat>
             {
                 inner_iterator1 first1_;
                 inner_sentinel1 last1_;
@@ -4089,7 +4158,7 @@ namespace RAH_NAMESPACE
                     next_value();
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 auto operator*() const -> decltype(*first1_)
                 {
                     return *first1_;
@@ -4246,6 +4315,7 @@ namespace RAH_NAMESPACE
             using r2_iterator = iterator_t<R2>;
             using r1_sentinel = sentinel_t<R1>;
             using r2_sentinel = sentinel_t<R2>;
+            using base_cat = RAH_STD::forward_iterator_tag;
 
         public:
             static_assert(
@@ -4253,8 +4323,7 @@ namespace RAH_NAMESPACE
                 "R1 and R2 doesn't have the same reference type");
             using reference = range_reference_t<R1>;
 
-            class iterator
-                : public iterator_facade<iterator, default_sentinel, reference, RAH_STD::forward_iterator_tag>
+            class iterator : public iterator_facade<iterator, default_sentinel, reference, base_cat>
             {
                 r1_iterator iter1_;
                 r1_sentinel sent1_;
@@ -4287,7 +4356,7 @@ namespace RAH_NAMESPACE
                         ++iter2_;
                     return *this;
                 }
-                RAH_POST_INCR
+                RAH_POST_INCR(base_cat)
                 auto operator*() const -> decltype(*iter1_)
                 {
                     if (range_index_ == 0)

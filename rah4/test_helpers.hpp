@@ -2,18 +2,28 @@
 
 #include "rah4.hpp"
 
+#include <map>
+#include <iostream>
+
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 
 struct TestSuite
 {
     std::map<std::string, std::function<void()>> testMap;
     std::map<std::string, bool> testResult;
+    std::map<std::string, std::vector<std::pair<std::string, std::string>>> testCases;
 
     bool current_test_status = true;
 
-    void addTest(std::string name, std::function<void()> test)
+    void addTest(std::string group, std::string name, std::function<void()> test)
     {
-        testMap.emplace(std::move(name), std::move(test));
+        testMap.emplace(group + "|" + name, std::move(test));
+    }
+
+    char const* currentTest = nullptr;
+    void test_case(char const* testcase, char const* extra = "")
+    {
+        testCases[currentTest].emplace_back(testcase, extra);
     }
 
     void report() const
@@ -25,7 +35,16 @@ struct TestSuite
             if (testResult.count(name) == 1)
                 std::cout << (testResult.at(name) ? "OK" : "FAILED") << std::endl;
             else
-                std::cout << "MISSING" << std::endl;
+                std::cout << "MISSING";
+
+            if (testCases.count(name))
+            {
+                for (auto& caseName_extra : testCases.at(name))
+                {
+                    std::cout << " / " << caseName_extra.first;
+                }
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -34,6 +53,7 @@ struct TestSuite
         for (auto name_test : testMap)
         {
             auto& name = name_test.first;
+            currentTest = name.c_str();
             auto& test = name_test.second;
             current_test_status = true;
             try
@@ -49,19 +69,6 @@ struct TestSuite
         }
     }
 };
-
-struct TestCase
-{
-    char const* suite;
-    char const* testcase;
-    char const* extra;
-};
-std::vector<TestCase> testcases;
-
-void test_case(char const* suite, char const* testcase, char const* extra)
-{
-    testcases.push_back({suite, testcase, extra});
-}
 
 template <bool A, bool B>
 struct AssertEqual;
@@ -111,7 +118,7 @@ public:
             val_ += step_;
             return *this;
         }
-        RAH_POST_INCR
+        RAH_POST_INCR(Cat)
         template <
             typename C = Cat,
             std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
@@ -245,7 +252,7 @@ public:
             ++iter_;
             return *this;
         }
-        RAH_POST_INCR
+        RAH_POST_INCR(Cat)
         template <
             typename C = Cat,
             std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
@@ -424,12 +431,6 @@ static_assert(std::is_same_v<decltype(--std::declval<It>()), It&>, "");
 STATIC_ASSERT((rah::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(rah::bidirectional_range<RandomCommonView>, "Should be bidirectional");
 using RandomCommonViewIter = RAH_NAMESPACE::iterator_t<RandomCommonView>;
-void prout()
-{
-    RandomCommonView r;
-    auto const i = rah::begin(r);
-    i[2];
-}
 STATIC_ASSERT((rah::random_access_range_impl<RandomCommonView, true>::value));
 static_assert(not rah::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
@@ -716,9 +717,8 @@ auto PairEqual = [](auto&& ab)
 #define TEST_DISPLAY_FAILED
 // #define TEST_DISPLAY_NONE
 
-bool test_failed_count = 0;
-
-void assert_impl(int line, char const* condition, bool value)
+extern TestSuite testSuite;
+inline void assert_impl(int line, char const* condition, bool value)
 {
 #if defined(TEST_DISPLAY_ALL)
     std::cout << line << " assert : " << condition << std::endl;
@@ -735,10 +735,10 @@ void assert_impl(int line, char const* condition, bool value)
         std::cout << line << " assert : " << condition << std::endl;
 #endif
 #if defined(TEST_DISPLAY_FAILED)
-        std::cout << "NOT OK" << std::endl;
+        std::cout << "NOT OK (line:" << line << ")" << std::endl;
 #endif
         // abort();
-        ++test_failed_count;
+        testSuite.current_test_status = false;
     }
 }
 
@@ -770,7 +770,7 @@ void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
 #if defined(TEST_DISPLAY_FAILED)
         std::cout << "NOT OK" << std::endl;
 #endif
-        ++test_failed_count;
+        testSuite.current_test_status = false;
         // abort();
     }
 }
@@ -809,11 +809,6 @@ template <typename V>
 auto toto(std::initializer_list<V> il)
 {
     return toto(rah::make_subrange(begin(il), end(il)));
-}
-
-bool is_odd(int val)
-{
-    return val % 2 == 0;
 }
 
 template <typename T>

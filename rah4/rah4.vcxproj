@@ -30,6 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rah4_unittests.cpp" />
+    <ClCompile Include="test_views.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
