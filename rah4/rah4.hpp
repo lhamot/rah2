@@ -922,7 +922,8 @@ namespace RAH_NAMESPACE
                 return RAH_NAMESPACE::size(*ref_);
             }
 
-            bool data() const
+            template <typename U = R, std::enable_if_t<rah::contiguous_range<U>>* = nullptr>
+            auto data()
             {
                 return RAH_NAMESPACE::data(*ref_);
             }
@@ -935,13 +936,13 @@ namespace RAH_NAMESPACE
             return RAH_NAMESPACE::views::ref_view<std::remove_reference_t<R>>(range);
         }
 
-        inline auto ref()
-        {
-            return make_pipeable(
-                [](auto&& range)
-                { return RAH_NAMESPACE::views::ref(RAH_STD::forward<decltype(range)>(range)); });
-        }
+    } // namespace views
 
+    template <class T>
+    constexpr bool enable_borrowed_range<views::ref_view<T>> = true;
+
+    namespace views
+    {
         // ********************************* owning_view ******************************************
 
         template <typename R>

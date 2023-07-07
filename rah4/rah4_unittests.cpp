@@ -87,6 +87,7 @@ void test_adjacent_transform();
 void test_slide_view();
 void test_chunk_view();
 void test_stride_view();
+void test_ref_view();
 
 TestSuite testSuite;
 
@@ -144,18 +145,8 @@ int main()
     testSuite.addTest(range_adaptors, "ranges::slide_view", test_slide_view);
     testSuite.addTest(range_adaptors, "ranges::chunk_view", test_chunk_view);
     testSuite.addTest(range_adaptors, "ranges::stride_view", test_stride_view);
+    testSuite.addTest(range_adaptors, "ranges::ref_view", test_ref_view);
     testSuite.run();
-
-    {
-        std::vector<int> vec{0, 1, 2, 2, 3};
-        std::vector<int> out;
-        auto ref = vec | rah::views::ref();
-        for (auto&& val : ref)
-        {
-            out.push_back(val);
-        }
-        assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
-    }
 
     {
         std::vector<int> vec{0, 1, 2, 2, 3};

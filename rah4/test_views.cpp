@@ -1162,3 +1162,37 @@ void test_stride_view()
     testSuite.test_case("concepts");
     check_all_cat<rah::random_access_iterator_tag, std::input_iterator_tag, make_stride_view>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_ref_view
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    BaseRange base;
+    auto make()
+    {
+        return rah::views::ref(base);
+    }
+    static constexpr bool is_sized = rah::sized_range<BaseRange>;
+    static constexpr bool is_common = rah::common_range<BaseRange>;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = true;
+};
+void test_ref_view()
+{
+    {
+        testSuite.test_case("sample");
+        /// [ref]
+        std::vector<int> vec{0, 1, 2, 2, 3};
+        std::vector<int> out;
+        auto ref = rah::views::ref(vec);
+        for (auto&& val : ref)
+        {
+            out.push_back(val);
+        }
+        assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+        /// [ref]
+    }
+
+    testSuite.test_case("concepts");
+    check_all_cat<rah::contiguous_iterator_tag, std::input_iterator_tag, make_ref_view>();
+}
