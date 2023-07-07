@@ -546,6 +546,7 @@ struct test_one_range_setup_impl
         check_cat_impl<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
         AssertEqual<rah::common_range<decltype(r1)>, t1.is_common>();
         AssertEqual<rah::sized_range<decltype(r1)>, t1.is_sized>();
+        AssertEqual<rah::borrowed_range<decltype(r1)>, t1.is_borrowed>();
     }
 };
 

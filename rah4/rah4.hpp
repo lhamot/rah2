@@ -1435,6 +1435,14 @@ namespace RAH_NAMESPACE
             return make_pipeable([=](auto&& range)
                                  { return take(RAH_STD::forward<decltype(range)>(range), count); });
         }
+    } // namespace views
+
+    template <class T>
+    constexpr bool enable_borrowed_range<views::take_view<T>> =
+        RAH_NAMESPACE::enable_borrowed_range<T>;
+
+    namespace views
+    {
 
         // ******************************************* drop ***********************************************
 
@@ -1502,7 +1510,14 @@ namespace RAH_NAMESPACE
             return make_pipeable([=](auto&& range)
                                  { return drop(RAH_STD::forward<decltype(range)>(range), count); });
         }
+    } // namespace views
 
+    template <class T>
+    constexpr bool enable_borrowed_range<views::drop_view<T>> =
+        RAH_NAMESPACE::enable_borrowed_range<T>;
+
+    namespace views
+    {
         // ******************************************* drop_while *********************************
 
         template <typename R, typename F>
@@ -1568,7 +1583,14 @@ namespace RAH_NAMESPACE
                 [pred = std::forward<P>(predicate)](auto&& range)
                 { return drop_while(RAH_STD::forward<decltype(range)>(range), std::move(pred)); });
         }
+    } // namespace views
 
+    template <class T, class Pred>
+    constexpr bool enable_borrowed_range<views::drop_while_view<T, Pred>> =
+        RAH_NAMESPACE::enable_borrowed_range<T>;
+
+    namespace views
+    {
         // ********************************** join ********************************************************
 
         template <typename R>
@@ -2065,7 +2087,14 @@ namespace RAH_NAMESPACE
                 [](auto&& range)
                 { return RAH_NAMESPACE::views::common(RAH_STD::forward<decltype(range)>(range)); });
         }
+    } // namespace views
 
+    template <class T>
+    constexpr bool enable_borrowed_range<views::common_view<T>> =
+        RAH_NAMESPACE::enable_borrowed_range<T>;
+
+    namespace views
+    {
         // ***************************************** reverse **********************************************
 
         template <typename R>
@@ -2127,7 +2156,14 @@ namespace RAH_NAMESPACE
             return make_pipeable([=](auto&& range)
                                  { return reverse(RAH_STD::forward<decltype(range)>(range)); });
         }
+    } // namespace views
 
+    template <class T>
+    constexpr bool enable_borrowed_range<views::reverse_view<T>> =
+        RAH_NAMESPACE::enable_borrowed_range<T>;
+
+    namespace views
+    {
         // **************************** element_view **********************************************
 
         template <typename R, size_t N>
@@ -2436,7 +2472,14 @@ namespace RAH_NAMESPACE
             return make_pipeable([](auto&& range)
                                  { return enumerate(RAH_STD::forward<decltype(range)>(range)); });
         }
+    } // namespace views
 
+    template <class T>
+    constexpr bool enable_borrowed_range<views::enumerate_view<T>> =
+        RAH_NAMESPACE::enable_borrowed_range<T>;
+
+    namespace views
+    {
         // *************************** zip ****************************************************************
         /// \cond PRIVATE
         namespace details
@@ -2699,6 +2742,11 @@ namespace RAH_NAMESPACE
                 template <typename Range>
                 static constexpr bool value = rah::sized_range<Range const>;
             };
+            struct is_borrowed_range_impl
+            {
+                template <typename Range>
+                static constexpr bool value = rah::borrowed_range<Range const>;
+            };
             static constexpr bool common_one_range =
                 std::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
@@ -2719,6 +2767,8 @@ namespace RAH_NAMESPACE
             };
 
         public:
+            static constexpr bool is_borrowed_range =
+                details::all_type<RangeTuple, is_borrowed_range_impl>();
             struct sentinel
             {
                 SentinelTuple sentinels;
@@ -2858,7 +2908,14 @@ namespace RAH_NAMESPACE
                 RAH_STD::make_tuple(RAH_NAMESPACE::views::all(RAH_STD::forward<R>(ranges))...);
             return zip_view<decltype(refTuple)>(RAH_STD::move(refTuple));
         }
+    } // namespace views
 
+    template <class... Views>
+    constexpr bool enable_borrowed_range<views::zip_view<Views...>> =
+        views::zip_view<Views...>::is_borrowed_range;
+
+    namespace views
+    {
         // ************************************ zip_transform *************************************
 
         template <typename Func, typename RangeTuple>
@@ -3215,7 +3272,13 @@ namespace RAH_NAMESPACE
             return make_pipeable([=](auto&& range)
                                  { return adjacent<2>(RAH_STD::forward<decltype(range)>(range)); });
         }
+    } // namespace views
 
+    template <class V, size_t N>
+    constexpr bool enable_borrowed_range<views::adjacent_view<V, N>> = enable_borrowed_range<V>;
+
+    namespace views
+    {
         // ********************************* adjacent_transform ***********************************
 
         template <typename R, typename F, size_t N>
@@ -3717,6 +3780,13 @@ namespace RAH_NAMESPACE
                                  { return stride(RAH_STD::forward<decltype(range)>(range), step); });
         }
 
+    } // namespace views
+
+    template <class V>
+    constexpr bool enable_borrowed_range<views::stride_view<V>> = enable_borrowed_range<V>;
+
+    namespace views
+    {
         // ******************************************* views extra ********************************
 
         // ******************************************* unbounded **********************************

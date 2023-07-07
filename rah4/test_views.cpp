@@ -211,6 +211,7 @@ struct make_filter_view
     static constexpr bool is_sized = false;
     static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = false;
 };
 void test_filter_view()
 {
@@ -240,6 +241,7 @@ struct make_transform_view
     static constexpr bool is_sized = Sized;
     static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = false;
 };
 
 void test_transform_view()
@@ -296,6 +298,7 @@ struct make_take_view
     using R = test_view<CS, Tag, Sized>;
     static constexpr bool is_common = rah::sized_range<R> && rah::random_access_range<R>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<R>;
 };
 void test_take_view()
 {
@@ -339,9 +342,11 @@ struct make_drop_view
     {
         return rah::views::drop(make_test_view<CS, Tag, Sized>(), 2);
     }
+    using base_type = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = Sized;
-    static constexpr bool is_common = rah::common_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool is_common = rah::common_range<base_type>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<base_type>;
 };
 void test_drop_view()
 {
@@ -383,6 +388,7 @@ struct make_drop_while_view
         rah::forward_range<V> && rah::sized_sentinel_for<rah::sentinel_t<V>, rah::iterator_t<V>>;
     static constexpr bool is_common = rah::common_range<V>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<V>;
 };
 void test_drop_while_view()
 {
@@ -420,9 +426,11 @@ struct make_join_view
         return rah::views::join(rah::views::transform(
             make_test_view<CS, Tag, Sized>(), [](auto i) { return rah::views::iota(0, i); }));
     }
+    using BaseView = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = false;
     static constexpr bool is_common = false;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = false;
 };
 void test_join_view()
 {
@@ -486,6 +494,7 @@ struct make_split_view
     static constexpr bool is_sized = false;
     static constexpr bool is_common = false;
     static constexpr bool do_test = rah::forward_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool is_borrowed = false;
 };
 void test_split_view()
 {
@@ -520,6 +529,7 @@ struct make_counted_view
     static constexpr bool is_sized = rah::random_access_range<BaseRange>;
     static constexpr bool is_common = rah::random_access_iterator<rah::iterator_t<BaseRange>>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = true; // It is actually a subrange
 };
 void test_counted_view()
 {
@@ -547,6 +557,7 @@ struct make_common_view
     static constexpr bool is_sized = rah::sized_range<BaseRange>;
     static constexpr bool is_common = true;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 void test_common_view()
 {
@@ -575,6 +586,7 @@ struct make_reverse_view
         rah::sized_range<BaseRange> || rah::random_access_iterator<rah::iterator_t<BaseRange>>;
     static constexpr bool is_common = true;
     static constexpr bool do_test = rah::bidirectional_range<BaseRange>;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 void test_reverse_view()
 {
@@ -620,6 +632,7 @@ struct make_elements_view
     static constexpr bool is_sized = rah::sized_range<BaseRange>;
     static constexpr bool is_common = rah::common_range<BaseRange>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 void test_elements_view()
 {
@@ -692,6 +705,7 @@ struct make_enumerate_view
     static constexpr bool is_sized = rah::sized_range<BaseRange>;
     static constexpr bool is_common = rah::common_range<BaseRange> && rah::sized_range<BaseRange>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 void test_enumerate_view()
 {
@@ -748,6 +762,7 @@ struct make_zip_view1
         rah::common_range<BaseRange>
         || (rah::sized_range<BaseRange> && rah::random_access_range<BaseRange>);
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view2
@@ -765,6 +780,8 @@ struct make_zip_view2
         (rah::sized_range<BaseRange1> && rah::random_access_range<BaseRange1>)&&(
             rah::sized_range<BaseRange2> && rah::random_access_range<BaseRange2>);
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed =
+        rah::enable_borrowed_range<BaseRange1> && rah::enable_borrowed_range<BaseRange2>;
 };
 void test_zip_view()
 {
@@ -812,6 +829,7 @@ struct make_adjacent_view
     static constexpr bool is_sized = rah::sized_range<BaseRange>;
     static constexpr bool is_common = rah::common_range<BaseRange>;
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 void test_adjacent_view()
 {
@@ -1116,6 +1134,7 @@ struct make_stride_view
         rah::common_range<BaseRange>
         && (rah::sized_range<BaseRange> || !rah::bidirectional_range<BaseRange>);
     static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = rah::enable_borrowed_range<BaseRange>;
 };
 void test_stride_view()
 {

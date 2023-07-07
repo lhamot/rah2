@@ -1465,6 +1465,9 @@ namespace rah
         return subrange<I, S>{b, e};
     }
 
+    template <class I, class S>
+    constexpr bool enable_borrowed_range<subrange<I, S>> = true;
+
     struct default_sentinel
     {
     };
