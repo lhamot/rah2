@@ -311,9 +311,6 @@ namespace rah
         template <typename R2>
         using has_end = decltype(RAH_NAMESPACE::end(std::declval<R2>()));
 
-        template <typename R2>
-        using check_wrapper = decltype(check(std::declval<R2>()));
-
         static constexpr bool value =
             compiles<Diagnostic, R, has_begin> && compiles<Diagnostic, R, has_end>;
     };
@@ -1061,7 +1058,8 @@ namespace rah
     };
 
     template <class T>
-    constexpr bool sized_range = range<T> && has_ranges_size<T>::value && !(disable_sized_range<T>);
+    constexpr bool sized_range = range<T> && has_ranges_size<RAH_STD::remove_reference_t<T>>::value
+                                 && !(disable_sized_range<T>);
 
     template <typename V>
     struct view_interface;
@@ -1070,10 +1068,20 @@ namespace rah
     constexpr bool enable_view = derived_from<R, view_base> || derived_from<R, view_interface<R>>;
 
     template <typename T>
-    constexpr bool view = range<T> && enable_view<T>;
+    constexpr bool view =
+        RAH_NAMESPACE::range<T> && RAH_NAMESPACE::movable<T> && RAH_NAMESPACE::enable_view<T>;
 
     template <class R, class T>
-    constexpr bool output_range = range<R> && output_iterator<RAH_NAMESPACE::iterator_t<R>, T>;
+    struct output_range_impl
+    {
+        template <typename U>
+        using output_iterator = std::enable_if_t<output_iterator<RAH_NAMESPACE::iterator_t<U>, T>>;
+
+        static constexpr bool value = range<R> && compiles<false, R, output_iterator>;
+    };
+
+    template <class R, class T>
+    constexpr bool output_range = output_range_impl<R, T>::value;
 
     template <class T>
     struct input_range_impl

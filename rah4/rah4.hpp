@@ -1427,7 +1427,7 @@ namespace RAH_NAMESPACE
         auto take(R&& range, size_t count)
         {
             auto range_view = all(std::forward<R>(range));
-            return take_view<decltype(range_view)>(range_view, count);
+            return take_view<decltype(range_view)>(RAH_STD::move(range_view), count);
         }
 
         inline auto take(size_t count)
@@ -1705,7 +1705,7 @@ namespace RAH_NAMESPACE
         template <typename R>
         auto join(R&& range_of_ranges)
         {
-            auto rangeRef = RAH_NAMESPACE::views::all(range_of_ranges);
+            auto rangeRef = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range_of_ranges));
             return join_view<decltype(rangeRef)>(std::move(rangeRef));
         }
 
@@ -2070,14 +2070,14 @@ namespace RAH_NAMESPACE
         template <typename R, std::enable_if_t<not common_range<R>>* = nullptr>
         auto common(R&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(range);
+            auto ref = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
             return common_view<decltype(ref)>(std::move(ref));
         }
 
         template <typename R, std::enable_if_t<common_range<R>>* = nullptr>
         auto common(R&& range)
         {
-            return RAH_NAMESPACE::views::all(range);
+            return RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
         }
 
         /// @snippet test.cpp rah::views::common_pipeable
@@ -3634,7 +3634,7 @@ namespace RAH_NAMESPACE
         template <typename R, RAH_STD::enable_if_t<not RAH_STD::is_rvalue_reference_v<R&&>, int> = 0>
         auto chunk(R&& range, size_t step)
         {
-            auto ref = RAH_NAMESPACE::views::all(range);
+            auto ref = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
             return chunk_view<decltype(ref)>(std::move(ref), step);
         }
 
@@ -4260,8 +4260,8 @@ namespace RAH_NAMESPACE
         template <typename R1, typename R2>
         auto set_difference(R1&& range1, R2&& range2)
         {
-            auto ref1 = RAH_NAMESPACE::views::all(range1);
-            auto ref2 = RAH_NAMESPACE::views::all(range2);
+            auto ref1 = RAH_NAMESPACE::views::all(RAH_STD::forward<R1>(range1));
+            auto ref2 = RAH_NAMESPACE::views::all(RAH_STD::forward<R2>(range2));
             return set_difference_view<decltype(ref1), decltype(ref2)>(
                 std::move(ref1), std::move(ref2));
         }
@@ -4491,8 +4491,8 @@ namespace RAH_NAMESPACE
         template <typename R1, typename R2>
         auto concat(R1&& range1, R2&& range2)
         {
-            auto r1 = views::all(range1);
-            auto r2 = views::all(range2);
+            auto r1 = views::all(RAH_STD::forward<R1>(range1));
+            auto r2 = views::all(RAH_STD::forward<R2>(range2));
             return concat_view<decltype(r1), decltype(r2)>(std::move(r1), std::move(r2));
         }
 
