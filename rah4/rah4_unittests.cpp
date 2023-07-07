@@ -90,8 +90,26 @@ void test_stride_view();
 
 TestSuite testSuite;
 
+void test_range_concepts()
+{
+    STATIC_ASSERT(!rah::range<int>);
+    STATIC_ASSERT(!rah::borrowed_range<int>);
+    STATIC_ASSERT(!rah::sized_range<int>);
+    STATIC_ASSERT(!rah::view<int>);
+    STATIC_ASSERT(!rah::input_range<int>);
+    STATIC_ASSERT((!rah::output_range<int, int>));
+    STATIC_ASSERT(!rah::forward_range<int>);
+    STATIC_ASSERT(!rah::bidirectional_range<int>);
+    STATIC_ASSERT(!rah::random_access_range<int>);
+    STATIC_ASSERT(!rah::contiguous_range<int>);
+    STATIC_ASSERT(!rah::common_range<int>);
+    STATIC_ASSERT(!rah::viewable_range<int>);
+    STATIC_ASSERT(!rah::constant_range<int>);
+}
+
 int main()
 {
+    testSuite.addTest("Range_concepts", "*", test_range_concepts);
 
     // Range_factories
     char const* range_factories = "Range_factories";

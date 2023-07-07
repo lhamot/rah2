@@ -336,7 +336,16 @@ namespace rah
     using sentinel_t = decltype(RAH_NAMESPACE::end(std::declval<T&>()));
 
     template <class T>
-    constexpr bool common_range = range<T> && RAH_STD::is_same_v<iterator_t<T>, sentinel_t<T>>;
+    struct common_range_impl
+    {
+        template <typename U>
+        using iter_is_sent = std::enable_if_t<RAH_STD::is_same_v<iterator_t<U>, sentinel_t<U>>>;
+
+        static constexpr bool value = range<T> && compiles<false, T, iter_is_sent>;
+    };
+
+    template <class T>
+    constexpr bool common_range = common_range_impl<T>::value;
 
     // *************************** iterator concepts **********************************************
     template <class Out, class T, bool Diagnostic = false>
@@ -776,9 +785,6 @@ namespace rah
     };
     template <typename I>
     static constexpr bool contiguous_iterator = contiguous_iterator_impl<I>::value;
-    template <class T>
-    constexpr bool constant_iterator =
-        input_iterator<T> && RAH_STD::is_same_v<iter_const_reference_t<T>, iter_reference_t<T>>;
 
     template <class T>
     constexpr auto iter_move(T&& t) -> decltype(RAH_STD::move(*t))
@@ -1101,7 +1107,7 @@ namespace rah
         template <typename U>
         using forward_iterator = std::enable_if_t<forward_iterator<RAH_NAMESPACE::iterator_t<U>>>;
 
-        static constexpr bool value = range<T> && compiles<false, T, forward_iterator>;
+        static constexpr bool value = input_range<T> && compiles<false, T, forward_iterator>;
     };
 
     template <class T>
@@ -1110,9 +1116,11 @@ namespace rah
     template <class T, bool Diagnostic = false>
     struct bidirectional_range_impl
     {
-        static constexpr bool value =
-            is_true_v<Diagnostic, range_impl<T, Diagnostic>::value>
-            && is_true_v<Diagnostic, bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<T>, Diagnostic>::value>;
+        template <typename U>
+        using bidir_iter =
+            std::enable_if_t<bidirectional_iterator_impl<RAH_NAMESPACE::iterator_t<U>, Diagnostic>::value>;
+
+        static constexpr bool value = forward_range<T> && compiles<Diagnostic, T, bidir_iter>;
     };
 
     template <class T>
@@ -1125,8 +1133,8 @@ namespace rah
         using has_random_access_iterator =
             std::enable_if_t<random_access_iterator_impl<RAH_NAMESPACE::iterator_t<U>, Diagnostic>::value>;
 
-        static constexpr bool value =
-            range_impl<T, Diagnostic>::value && compiles<Diagnostic, T, has_random_access_iterator>;
+        static constexpr bool value = bidirectional_range_impl<T, Diagnostic>::value
+                                      && compiles<Diagnostic, T, has_random_access_iterator>;
     };
 
     template <class T>
@@ -1151,19 +1159,33 @@ namespace rah
         using has_data = std::enable_if_t<std::is_same_v<
             decltype(rah::data(std::declval<T>())),
             std::add_pointer_t<rah::range_reference_t<T>>>>;
+        template <typename T>
+        using contiguous_iterator =
+            std::enable_if_t<rah::contiguous_iterator_impl<rah::iterator_t<T>, Diagnostic>::value>;
 
-        static constexpr bool value =
-            random_access_range_impl<R, Diagnostic>::value
-            && is_true_v<Diagnostic, rah::contiguous_iterator_impl<rah::iterator_t<R>, Diagnostic>::value>
-            && compiles<Diagnostic, R, has_data>;
+        static constexpr bool value = random_access_range_impl<R, Diagnostic>::value
+                                      && compiles<Diagnostic, R, contiguous_iterator>
+                                      && compiles<Diagnostic, R, has_data>;
     };
 
     template <class R>
     constexpr bool contiguous_range = contiguous_range_impl<R>::value;
 
     template <class T>
-    constexpr bool constant_range =
-        input_range<T> && constant_iterator<RAH_NAMESPACE::iterator_t<T>>;
+    struct constant_range_impl
+    {
+        template <class U>
+        static constexpr bool constant_iterator =
+            input_iterator<U> && RAH_STD::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
+
+        template <typename U>
+        using const_iter = std::enable_if_t<constant_iterator<RAH_NAMESPACE::iterator_t<U>>>;
+
+        static constexpr bool value = input_range<T> && compiles<false, T, const_iter>;
+    };
+
+    template <class T>
+    constexpr bool constant_range = constant_range_impl<T>::value;
 
     template <class In, class Out>
     struct indirectly_movable_impl
@@ -1233,6 +1255,29 @@ namespace rah
     constexpr bool permutable =
         RAH_NAMESPACE::forward_iterator<I> && RAH_NAMESPACE::indirectly_movable_storable<I, I>
         && RAH_NAMESPACE::indirectly_swappable<I, I>;
+
+    template <typename T>
+    struct is_initializer_list_impl
+    {
+        static constexpr bool value = false;
+    };
+    template <typename T>
+    struct is_initializer_list_impl<RAH_STD::initializer_list<T>>
+    {
+        static constexpr bool value = true;
+    };
+    template <typename T>
+    constexpr bool is_initializer_list = is_initializer_list_impl<remove_cvref_t<T>>::value;
+
+    template <class T>
+    constexpr bool viewable_range =
+        RAH_NAMESPACE::range<T>
+        && ((RAH_NAMESPACE::view<RAH_NAMESPACE::remove_cvref_t<T>>
+             && RAH_NAMESPACE::constructible_from<RAH_NAMESPACE::remove_cvref_t<T>, T>)
+            || (!RAH_NAMESPACE::view<RAH_NAMESPACE::remove_cvref_t<T>>
+                && (std::is_lvalue_reference_v<T>
+                    || (RAH_NAMESPACE::movable<std::remove_reference_t<T>>
+                        && !is_initializer_list<T>))));
 
     // ****************************** utility functions *******************************************
 
