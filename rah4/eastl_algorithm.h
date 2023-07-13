@@ -300,7 +300,7 @@ namespace RAH_NAMESPACE
         operator()(I first, S last, O result, Pred pred, Proj proj = {}) const
         {
             for (; first != last; ++first)
-                if (std::invoke(pred, std::invoke(proj, *first)))
+                if (pred(proj(*first)))
                 {
                     *result = *first;
                     ++result;
@@ -1073,7 +1073,7 @@ namespace RAH_NAMESPACE
             auto next = RAH_NAMESPACE::next(first);
             for (; next != last; ++next, ++first)
             {
-                if (std::invoke(pred, std::invoke(proj, *first), std::invoke(proj, *next)))
+                if (pred(proj(*first), proj(*next)))
                     return first;
             }
             return next;
@@ -1304,50 +1304,50 @@ namespace RAH_NAMESPACE
     /// Note: The predicate version of count is count_if and not another variation of count.
     /// This is because both versions would have three parameters and there could be ambiguity.
     ///
-    template <typename InputIterator, typename InputSentinel, typename T>
-    inline typename RAH_STD::iterator_traits<InputIterator>::difference_type
-    count(InputIterator first, InputSentinel last, const T& value)
+    struct count_fn
     {
-        typename RAH_STD::iterator_traits<InputIterator>::difference_type result = 0;
-
-        for (; first != last; ++first)
+        template <
+            typename I,
+            typename S,
+            class T,
+            class Proj = RAH_NAMESPACE::identity,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr RAH_NAMESPACE::iter_difference_t<I>
+        operator()(I first, S last, const T& value, Proj proj) const
         {
-            if (*first == value)
-                ++result;
+            RAH_NAMESPACE::iter_difference_t<I> counter = 0;
+            for (; first != last; ++first)
+            {
+                if (proj(*first) == value)
+                    ++counter;
+            }
+            return counter;
         }
-        return result;
-    }
 
-    template <typename InputRange, typename T>
-    inline typename RAH_STD::iterator_traits<iterator_t<InputRange>>::difference_type
-    count(InputRange&& range, const T& value)
-    {
-        return count(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
-    }
-
-    // C++ doesn't define a count with predicate, as it can effectively be synthesized via count_if
-    // with an appropriate predicate. However, it's often simpler to just have count with a predicate.
-    template <typename InputIterator, typename InputSentinel, typename T, typename Predicate>
-    inline typename RAH_STD::iterator_traits<InputIterator>::difference_type
-    count(InputIterator first, InputSentinel last, const T& value, Predicate predicate)
-    {
-        typename RAH_STD::iterator_traits<InputIterator>::difference_type result = 0;
-
-        for (; first != last; ++first)
+        template <typename R, class T, class Proj = RAH_NAMESPACE::identity, std::enable_if_t<input_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::range_difference_t<R> operator()(R&& r, const T& value, Proj proj) const
         {
-            if (predicate(*first, value))
-                ++result;
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), value, std::ref(proj));
         }
-        return result;
-    }
 
-    template <typename InputRange, typename T, typename Predicate>
-    inline typename RAH_STD::iterator_traits<iterator_t<InputRange>>::difference_type
-    count(InputRange&& range, const T& value, Predicate predicate)
-    {
-        return count(
-            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(predicate));
-    }
+        template <typename I, typename S, class T, std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr RAH_NAMESPACE::iter_difference_t<I> operator()(I first, S last, const T& value) const
+        {
+            RAH_NAMESPACE::iter_difference_t<I> counter = 0;
+            for (; first != last; ++first)
+                if (*first == value)
+                    ++counter;
+            return counter;
+        }
+
+        template <typename R, class T, std::enable_if_t<input_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::range_difference_t<R> operator()(R&& r, const T& value) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), value);
+        }
+    };
+
+    constexpr count_fn count;
 
     /// count_if
     ///
@@ -1362,77 +1362,86 @@ namespace RAH_NAMESPACE
     /// Note: The non-predicate version of count_if is count and not another variation of count_if.
     /// This is because both versions would have three parameters and there could be ambiguity.
     ///
-    template <typename InputIterator, typename InputSentinel, typename Predicate>
-    inline typename RAH_STD::iterator_traits<InputIterator>::difference_type
-    count_if(InputIterator first, InputSentinel last, Predicate predicate)
+    struct count_if_fn
     {
-        typename RAH_STD::iterator_traits<InputIterator>::difference_type result = 0;
-
-        for (; first != last; ++first)
+        template <
+            typename I,
+            typename S,
+            class Proj = RAH_NAMESPACE::identity,
+            typename Pred,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        RAH_NODISCARD RAH_CONSTEXPR20 RAH_NAMESPACE::iter_difference_t<I>
+        operator()(I first, S last, Pred pred, Proj proj) const
         {
-            if (predicate(*first))
-                ++result;
+            RAH_NAMESPACE::iter_difference_t<I> counter = 0;
+            for (; first != last; ++first)
+                if (pred(proj(*first)))
+                    ++counter;
+            return counter;
         }
-        return result;
-    }
-    template <typename InputRange, typename Predicate>
-    inline typename RAH_STD::iterator_traits<iterator_t<InputRange>>::difference_type
-    count_if(InputRange&& range, Predicate predicate)
-    {
-        return count_if(
-            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(predicate));
-    }
 
-    /// find
-    ///
-    /// finds the value within the unsorted range of [first, last).
-    ///
-    /// Returns: The first iterator i in the range [first, last) for which
-    /// the following corresponding conditions hold: *i == value.
-    /// Returns last if no such iterator is found.
-    ///
-    /// Complexity: At most 'last - first' applications of the corresponding predicate.
-    /// This is a linear search and not a binary one.
-    ///
-    /// Note: The predicate version of find is find_if and not another variation of find.
-    /// This is because both versions would have three parameters and there could be ambiguity.
-    ///
-    template <
-        typename InputIterator,
-        typename InputSentinel,
-        typename T,
-        std::enable_if_t<input_iterator<InputIterator> && sentinel_for<InputSentinel, InputIterator>>* = nullptr>
-    inline InputIterator find(InputIterator first, InputSentinel last, const T& value)
-    {
-        while ((first != last)
-               && !(*first == value)) // Note that we always express value comparisons in terms of < or ==.
-            ++first;
-        return first;
-    }
+        template <
+            typename R,
+            class Proj = RAH_NAMESPACE::identity,
+            typename Pred,
+            std::enable_if_t<input_range<R>>* = nullptr>
+        RAH_NODISCARD RAH_CONSTEXPR20 RAH_NAMESPACE::range_difference_t<R>
+        operator()(R&& r, Pred pred, Proj proj) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(pred), std::ref(proj));
+        }
 
-    template <typename InputRange, typename T>
-    inline auto find(InputRange&& range, const T& value)
-    {
-        return find(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
-    }
+        template <
+            typename I,
+            typename S,
+            typename Pred,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        RAH_NODISCARD RAH_CONSTEXPR20 RAH_NAMESPACE::iter_difference_t<I>
+        operator()(I first, S last, Pred pred) const
+        {
+            RAH_NAMESPACE::iter_difference_t<I> counter = 0;
+            for (; first != last; ++first)
+                if (pred(*first))
+                    ++counter;
+            return counter;
+        }
 
-    // C++ doesn't define a find with predicate, as it can effectively be synthesized via find_if
-    // with an appropriate predicate. However, it's often simpler to just have find with a predicate.
-    template <typename InputIterator, typename InputSentinel, typename T, typename Predicate>
-    inline InputIterator
-    find(InputIterator first, InputSentinel last, const T& value, Predicate predicate)
-    {
-        while ((first != last) && !predicate(*first, value))
-            ++first;
-        return first;
-    }
+        template <typename R, typename Pred, std::enable_if_t<input_range<R>>* = nullptr>
+        RAH_NODISCARD RAH_CONSTEXPR20 RAH_NAMESPACE::range_difference_t<R>
+        operator()(R&& r, Pred pred) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(pred));
+        }
+    };
 
-    template <typename InputRange, typename T, typename Predicate, std::enable_if_t<input_range<InputRange>>* = nullptr>
-    inline auto find(InputRange&& range, const T& value, Predicate predicate)
+    constexpr count_if_fn count_if;
+
+    struct find_fn
     {
-        return find(
-            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, std::move(predicate));
-    }
+        template <
+            typename I,
+            typename S,
+            class T,
+            class Proj = RAH_NAMESPACE::identity,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr I operator()(I first, S last, const T& value, Proj proj = {}) const
+        {
+            for (; first != last; ++first)
+                if (proj(*first) == value)
+                    return first;
+            return first;
+        }
+
+        template <typename R, class T, class Proj = RAH_NAMESPACE::identity, std::enable_if_t<input_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R>
+        operator()(R&& r, const T& value, Proj proj = {}) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), value, std::ref(proj));
+        }
+    };
+
+    constexpr find_fn find;
 
     /// find_if
     ///
@@ -1448,43 +1457,70 @@ namespace RAH_NAMESPACE
     ///
     /// Note: The non-predicate version of find_if is find and not another variation of find_if.
     /// This is because both versions would have three parameters and there could be ambiguity.
-    ///
-    template <typename InputIterator, typename InputSentinel, typename Predicate>
-    inline InputIterator find_if(InputIterator first, InputSentinel last, Predicate predicate)
+    struct find_if_fn
     {
-        while ((first != last) && !predicate(*first))
-            ++first;
-        return first;
-    }
+        template <
+            typename I,
+            typename S,
+            class Proj = RAH_NAMESPACE::identity,
+            typename Pred,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr I operator()(I first, S last, Pred pred, Proj proj = {}) const
+        {
+            for (; first != last; ++first)
+                if (pred(proj(*first)))
+                    return first;
+            return first;
+        }
 
-    template <typename InputRange, typename Predicate>
-    inline auto find_if(InputRange&& range, Predicate predicate)
-    {
-        return find_if(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), std::move(predicate));
-    }
+        template <
+            typename R,
+            class Proj = RAH_NAMESPACE::identity,
+            typename Pred,
+            std::enable_if_t<input_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, Pred pred, Proj proj = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(pred), std::ref(proj));
+        }
+    };
+
+    constexpr find_if_fn find_if;
 
     /// find_if_not
     ///
     /// find_if_not works the same as find_if except it tests for if the predicate
     /// returns false for the elements instead of true.
     ///
-    template <typename InputIterator, typename InputSentinel, typename Predicate>
-    inline InputIterator find_if_not(InputIterator first, InputSentinel last, Predicate predicate)
+    struct find_if_not_fn
     {
-        for (; first != last; ++first)
+        template <
+            typename I,
+            typename S,
+            class Proj = RAH_NAMESPACE::identity,
+            typename Pred,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr I operator()(I first, S last, Pred pred, Proj proj = {}) const
         {
-            if (!predicate(*first))
-                return first;
+            for (; first != last; ++first)
+                if (!pred(proj(*first)))
+                    return first;
+            return first;
         }
-        return last;
-    }
 
-    template <typename InputRange, typename Predicate>
-    inline auto find_if_not(InputRange&& range, Predicate predicate)
-    {
-        return find_if_not(
-            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), std::move(predicate));
-    }
+        template <
+            typename R,
+            class Proj = RAH_NAMESPACE::identity,
+            typename Pred,
+            std::enable_if_t<input_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, Pred pred, Proj proj = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(pred), std::ref(proj));
+        }
+    };
+
+    constexpr find_if_not_fn find_if_not;
 
     /// find_first_of
     ///
@@ -1506,72 +1542,51 @@ namespace RAH_NAMESPACE
     /// Complexity: At most '(last1 - first1) * (last2 - first2)' applications of the
     /// corresponding predicate.
     ///
-    template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2, typename ForwardSentinel2>
-    ForwardIterator1 find_first_of(
-        ForwardIterator1 first1, ForwardSentinel1 last1, ForwardIterator2 first2, ForwardSentinel2 last2)
+    struct find_first_of_fn
     {
-        for (; first1 != last1; ++first1)
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            typename S2,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            std::enable_if_t<
+                input_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
+                && sentinel_for<S2, I2>>* = nullptr>
+        constexpr I1 operator()(
+            I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            for (ForwardIterator2 i = first2; i != last2; ++i)
-            {
-                if (*first1 == *i)
-                    return first1;
-            }
+            for (; first1 != last1; ++first1)
+                for (auto i = first2; i != last2; ++i)
+                    if (std::invoke(pred, std::invoke(proj1, *first1), std::invoke(proj2, *i)))
+                        return first1;
+            return first1;
         }
-        return last1;
-    }
 
-    template <typename ForwardRange1, typename ForwardRange2>
-    inline auto find_first_of(ForwardRange1&& range1, ForwardRange2&& range2)
-    {
-        return find_first_of(
-            RAH_NAMESPACE::begin(range1),
-            RAH_NAMESPACE::end(range1),
-            RAH_NAMESPACE::begin(range2),
-            RAH_NAMESPACE::end(range2));
-    }
-
-    /// find_first_of
-    ///
-    /// find_first_of is similar to find in that it performs linear search through
-    /// a range of ForwardIterators. The difference is that while find searches
-    /// for one particular value, find_first_of searches for any of several values.
-    /// Specifically, find_first_of searches for the first occurrance in the
-    /// range [first1, last1) of any of the elements in [first2, last2).
-    /// This function is thus similar to the strpbrk standard C string function.
-    ///
-    /// Effects: Finds an element that matches one of a set of values.
-    ///
-    /// Returns: The first iterator i in the range [first1, last1) such that for some
-    /// integer j in the range [first2, last2) the following conditions hold: pred(*i, *j) != false.
-    /// Returns last1 if no such iterator is found.
-    ///
-    /// Complexity: At most '(last1 - first1) * (last2 - first2)' applications of the
-    /// corresponding predicate.
-    ///
-    template <
-        typename ForwardIterator1,
-        typename ForwardSentinel1,
-        typename ForwardIterator2,
-        typename ForwardSentinel2,
-        typename BinaryPredicate>
-    ForwardIterator1 find_first_of(
-        ForwardIterator1 first1,
-        ForwardSentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        BinaryPredicate predicate)
-    {
-        for (; first1 != last1; ++first1)
+        template <
+            typename R1,
+            typename R2,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            std::enable_if_t<input_range<R1> && forward_range<R2>>* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R1>
+        operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            for (ForwardIterator2 i = first2; i != last2; ++i)
-            {
-                if (predicate(*first1, *i))
-                    return first1;
-            }
+            return (*this)(
+                RAH_NAMESPACE::begin(r1),
+                RAH_NAMESPACE::end(r1),
+                RAH_NAMESPACE::begin(r2),
+                RAH_NAMESPACE::end(r2),
+                std::move(pred),
+                std::move(proj1),
+                std::move(proj2));
         }
-        return last1;
-    }
+    };
+
+    constexpr find_first_of_fn find_first_of{};
 
     /// find_first_not_of
     ///
@@ -1773,6 +1788,16 @@ namespace RAH_NAMESPACE
         return for_each(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), std::move(function));
     }
 
+    template <class I, class F>
+    struct in_fun_result
+    {
+        I in;
+        F fun;
+    };
+
+    template <class I, class F>
+    using for_each_n_result = RAH_NAMESPACE::in_fun_result<I, F>;
+
     /// for_each_n
     ///
     /// Calls the Function function for each value in the range [first, first + n).
@@ -1789,13 +1814,19 @@ namespace RAH_NAMESPACE
     ////  * If function returns a result, the result is ignored.
     ////  * If n < 0, behaviour is undefined.
     ///
-    template <typename InputIterator, typename Size, typename Function>
-    RAH_CPP14_CONSTEXPR inline InputIterator for_each_n(InputIterator first, Size n, Function function)
+    struct for_each_n_fn
     {
-        for (Size i = 0; i < n; ++first, i++)
-            function(*first);
-        return first;
-    }
+        template <typename I, class Proj = RAH_NAMESPACE::identity, typename Fun>
+        constexpr for_each_n_result<I, Fun>
+        operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n, Fun fun, Proj proj = Proj{}) const
+        {
+            for (; n-- > 0; ++first)
+                fun(proj(*first));
+            return {RAH_STD::move(first), RAH_STD::move(fun)};
+        }
+    };
+
+    constexpr for_each_n_fn for_each_n{};
 
     /// generate
     ///
@@ -2120,207 +2151,118 @@ namespace RAH_NAMESPACE
     /// of the sequences yields the same result as the comparison of the first
     /// corresponding pair of elements that are not equivalent.
     ///
-    template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2>
-    inline bool lexicographical_compare(
-        InputIterator1 first1, Sentinel1 last1, InputIterator2 first2, Sentinel2 last2)
+
+    struct lexicographical_compare_fn
     {
-        for (; (first1 != last1) && (first2 != last2); ++first1, ++first2)
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            typename S2,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            typename Comp = RAH_NAMESPACE::less>
+        constexpr bool operator()(
+            I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            if (*first1 < *first2)
-                return true;
-            if (*first2 < *first1)
-                return false;
-        }
-        return (first1 == last1) && (first2 != last2);
-    }
+            for (; (first1 != last1) && (first2 != last2); ++first1, (void)++first2)
+            {
+                if (comp(proj1(*first1), proj2(*first2)))
+                    return true;
 
-    inline bool // Specialization for const char*.
-    lexicographical_compare(const char* first1, const char* last1, const char* first2, const char* last2)
-    {
-        const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-        const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-        return result ? (result < 0) : (n1 < n2);
-    }
-
-    inline bool // Specialization for char*.
-    lexicographical_compare(char* first1, char* last1, char* first2, char* last2)
-    {
-        const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-        const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-        return result ? (result < 0) : (n1 < n2);
-    }
-
-    inline bool // Specialization for const unsigned char*.
-    lexicographical_compare(
-        const unsigned char* first1,
-        const unsigned char* last1,
-        const unsigned char* first2,
-        const unsigned char* last2)
-    {
-        const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-        const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-        return result ? (result < 0) : (n1 < n2);
-    }
-
-    inline bool // Specialization for unsigned char*.
-    lexicographical_compare(
-        unsigned char* first1, unsigned char* last1, unsigned char* first2, unsigned char* last2)
-    {
-        const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-        const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-        return result ? (result < 0) : (n1 < n2);
-    }
-
-    inline bool // Specialization for const signed char*.
-    lexicographical_compare(
-        const signed char* first1,
-        const signed char* last1,
-        const signed char* first2,
-        const signed char* last2)
-    {
-        const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-        const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-        return result ? (result < 0) : (n1 < n2);
-    }
-
-    inline bool // Specialization for signed char*.
-    lexicographical_compare(
-        signed char* first1, signed char* last1, signed char* first2, signed char* last2)
-    {
-        const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-        const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-        return result ? (result < 0) : (n1 < n2);
-    }
-
-#if defined(_MSC_VER) // If using the VC++ compiler (and thus bool is known to be a single byte)...
-    //Not sure if this is a good idea.
-    //inline bool     // Specialization for const bool*.
-    //lexicographical_compare(const bool* first1, const bool* last1, const bool* first2, const bool* last2)
-    //{
-    //    const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-    //    const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-    //    return result ? (result < 0) : (n1 < n2);
-    //}
-    //
-    //inline bool     // Specialization for bool*.
-    //lexicographical_compare(bool* first1, bool* last1, bool* first2, bool* last2)
-    //{
-    //    const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-    //    const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
-    //    return result ? (result < 0) : (n1 < n2);
-    //}
-#endif
-
-    /// lexicographical_compare
-    ///
-    /// Returns: true if the sequence of elements defined by the range
-    /// [first1, last1) is lexicographically less than the sequence of
-    /// elements defined by the range [first2, last2). Returns false otherwise.
-    ///
-    /// Complexity: At most 'min((last1 -first1), (last2 - first2))' applications
-    /// of the corresponding comparison.
-    ///
-    /// Note: If two sequences have the same number of elements and their
-    /// corresponding elements are equivalent, then neither sequence is
-    /// lexicographically less than the other. If one sequence is a prefix
-    /// of the other, then the shorter sequence is lexicographically less
-    /// than the longer sequence. Otherwise, the lexicographical comparison
-    /// of the sequences yields the same result as the comparison of the first
-    /// corresponding pair of elements that are not equivalent.
-    ///
-    /// Note: False is always returned if range 1 is exhausted before range 2.
-    /// The result of this is that you can't do a successful reverse compare
-    /// (e.g. use greater<> as the comparison instead of less<>) unless the
-    /// two sequences are of identical length. What you want to do is reverse
-    /// the order of the arguments in order to get the desired effect.
-    ///
-    template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename Compare>
-    inline bool lexicographical_compare(
-        InputIterator1 first1, Sentinel1 last1, InputIterator2 first2, Sentinel2 last2, Compare compare)
-    {
-        for (; (first1 != last1) && (first2 != last2); ++first1, ++first2)
-        {
-            if (compare(*first1, *first2))
-                return true;
-            if (compare(*first2, *first1))
-                return false;
-        }
-        return (first1 == last1) && (first2 != last2);
-    }
-
-#if defined(EA_COMPILER_HAS_THREE_WAY_COMPARISON)
-
-    /// lexicographical_compare_three_way
-    ///
-    /// Returns: The comparison category ordering between both ranges. For the first non-equivalent pair in the ranges,
-    /// the comparison will be returned. Else if the first range is a subset (superset) of the second range, then the
-    /// less (greater) ordering will be returned.
-    ///
-    /// Complexity: At most N iterations, where N = min(last1-first1, last2-first2) of the applications
-    /// of the corresponding comparison.
-    ///
-    /// Note: If two sequences have the same number of elements and their
-    /// corresponding elements are equivalent, then neither sequence is
-    /// lexicographically less than the other. If one sequence is a prefix
-    /// of the other, then the shorter sequence is lexicographically less
-    /// than the longer sequence. Otherwise, the lexicographical comparison
-    /// of the sequences yields the same result as the comparison of the first
-    /// corresponding pair of elements that are not equivalent.
-    ///
-    template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename Compare>
-    constexpr auto lexicographical_compare_three_way(
-        InputIterator1 first1, Sentinel1 last1, InputIterator2 first2, Sentinel2 last2, Compare compare)
-        -> decltype(compare(*first1, *first2))
-    {
-        for (; (first1 != last1) && (first2 != last2); ++first1, ++first2)
-        {
-            if (auto c = compare(*first1, *first2); c != 0)
-                return c;
+                if (comp(proj2(*first2), proj1(*first1)))
+                    return false;
+            }
+            return (first1 == last1) && (first2 != last2);
         }
 
-        return (first1 != last1) ? std::strong_ordering::greater :
-               (first2 != last2) ? std::strong_ordering::less :
-                                   std::strong_ordering::equal;
-    }
-#endif
-
-    /// mismatch
-    ///
-    /// Finds the first position where the two ranges [first1, last1) and
-    /// [first2, first2 + (last1 - first1)) differ. The two versions of
-    /// mismatch use different tests for whether elements differ.
-    ///
-    /// Returns: A pair of iterators i and j such that j == first2 + (i - first1)
-    /// and i is the first iterator in the range [first1, last1) for which the
-    /// following corresponding condition holds: !(*i == *(first2 + (i - first1))).
-    /// Returns the pair last1 and first2 + (last1 - first1) if such an iterator
-    /// i is not found.
-    ///
-    /// Complexity: At most last1 first1 applications of the corresponding predicate.
-    ///
-    template <class InputIterator1, class InputSentinel1, class InputIterator2, class InputSentinel2>
-    inline RAH_STD::pair<InputIterator1, InputIterator2>
-    mismatch(InputIterator1 first1, InputSentinel1 last1, InputIterator2 first2, InputSentinel2 last2)
-    {
-        while ((first1 != last1) && (*first1 == *first2) && (first2 != last2))
+        inline bool // Specialization for const char*.
+        operator()(const char* first1, const char* last1, const char* first2, const char* last2)
         {
-            ++first1;
-            ++first2;
+            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
+            const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
+            return result ? (result < 0) : (n1 < n2);
         }
 
-        return RAH_STD::pair<InputIterator1, InputIterator2>(first1, first2);
-    }
+        inline bool // Specialization for char*.
+        operator()(char* first1, char* last1, char* first2, char* last2)
+        {
+            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
+            const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
+            return result ? (result < 0) : (n1 < n2);
+        }
 
-    template <class InputRange1, class InputRange2>
-    inline RAH_STD::pair<iterator_t<InputRange1>, iterator_t<InputRange2>>
-    mismatch(InputRange1&& range1, InputRange2&& range2)
+        inline bool // Specialization for const unsigned char*.
+        operator()(
+            const unsigned char* first1,
+            const unsigned char* last1,
+            const unsigned char* first2,
+            const unsigned char* last2)
+        {
+            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
+            const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
+            return result ? (result < 0) : (n1 < n2);
+        }
+
+        inline bool // Specialization for unsigned char*.
+        operator()(unsigned char* first1, unsigned char* last1, unsigned char* first2, unsigned char* last2)
+        {
+            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
+            const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
+            return result ? (result < 0) : (n1 < n2);
+        }
+
+        inline bool // Specialization for const signed char*.
+        operator()(
+            const signed char* first1,
+            const signed char* last1,
+            const signed char* first2,
+            const signed char* last2)
+        {
+            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
+            const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
+            return result ? (result < 0) : (n1 < n2);
+        }
+
+        inline bool // Specialization for signed char*.
+        operator()(signed char* first1, signed char* last1, signed char* first2, signed char* last2)
+        {
+            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
+            const int result = memcmp(first1, first2, (size_t)RAH_STD::min(n1, n2));
+            return result ? (result < 0) : (n1 < n2);
+        }
+
+        template <
+            typename R1,
+            typename R2,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            typename Comp = RAH_NAMESPACE::less>
+        constexpr bool
+        operator()(R1&& r1, R2&& r2, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r1),
+                RAH_NAMESPACE::end(r1),
+                RAH_NAMESPACE::begin(r2),
+                RAH_NAMESPACE::end(r2),
+                std::ref(comp),
+                std::ref(proj1),
+                std::ref(proj2));
+        }
+    };
+
+    constexpr lexicographical_compare_fn lexicographical_compare;
+
+    template <class I1, class I2>
+    struct in_in_result
     {
-        return mismatch(
-            RAH_NAMESPACE::begin(range1),
-            RAH_NAMESPACE::end(range1),
-            RAH_NAMESPACE::begin(range2),
-            RAH_NAMESPACE::end(range2));
-    }
+        I1 in1;
+        I2 in2;
+    };
+
+    template <class I1, class I2>
+    using mismatch_result = RAH_NAMESPACE::in_in_result<I1, I2>;
 
     /// mismatch
     ///
@@ -2336,22 +2278,47 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: At most last1 first1 applications of the corresponding predicate.
     ///
-    template <class InputIterator1, class Sentinel1, class InputIterator2, class Sentinel2, class BinaryPredicate>
-    inline RAH_STD::pair<InputIterator1, InputIterator2> mismatch(
-        InputIterator1 first1,
-        Sentinel1 last1,
-        InputIterator2 first2,
-        Sentinel2 last2,
-        BinaryPredicate predicate)
+    struct mismatch_fn
     {
-        while ((first1 != last1) && predicate(*first1, *first2) && (first2 != last2))
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            typename S2,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity>
+        constexpr RAH_NAMESPACE::mismatch_result<I1, I2> operator()(
+            I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            ++first1;
-            ++first2;
+            for (; first1 != last1 && first2 != last2; ++first1, (void)++first2)
+                if (not pred(proj1(*first1), proj2(*first2)))
+                    break;
+
+            return {first1, first2};
         }
 
-        return RAH_STD::pair<InputIterator1, InputIterator2>(first1, first2);
-    }
+        template <
+            typename R1,
+            typename R2,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity>
+        constexpr RAH_NAMESPACE::mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
+        operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r1),
+                RAH_NAMESPACE::end(r1),
+                RAH_NAMESPACE::begin(r2),
+                RAH_NAMESPACE::end(r2),
+                std::ref(pred),
+                std::ref(proj1),
+                std::ref(proj2));
+        }
+    };
+
+    constexpr mismatch_fn mismatch;
 
     /// lower_bound
     ///
@@ -3219,12 +3186,70 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: At most '(last1 - first1) * count' applications of the corresponding predicate.
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename Size, typename T>
-    ForwardIterator search_n(ForwardIterator first, ForwardSentinel last, Size count, const T& value)
+    struct search_n_fn
     {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator>::iterator_category IC;
-        return search_n_impl(first, last, count, value, IC());
-    }
+        // TODO : Make a faster random_access version like in EASTL
+        template <
+            typename I,
+            typename S,
+            class T,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj = RAH_NAMESPACE::identity,
+            std::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr RAH_NAMESPACE::subrange<I> operator()(
+            I first,
+            S last,
+            RAH_NAMESPACE::iter_difference_t<I> count,
+            const T& value,
+            Pred pred = {},
+            Proj proj = {}) const
+        {
+            if (count <= 0)
+                return {first, first};
+            for (; first != last; ++first)
+            {
+                if (std::invoke(pred, std::invoke(proj, *first), value))
+                {
+                    I start = first;
+                    RAH_NAMESPACE::iter_difference_t<I> n{1};
+                    for (;;)
+                    {
+                        if (n++ == count)
+                            return {start, std::next(first)}; // found
+                        if (++first == last)
+                            return {first, first}; // not found
+                        if (!std::invoke(pred, std::invoke(proj, *first), value))
+                            break; // not equ to value
+                    }
+                }
+            }
+            return {first, first};
+        }
+
+        template <
+            typename R,
+            class T,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj = RAH_NAMESPACE::identity,
+            std::enable_if_t<forward_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_subrange_t<R> operator()(
+            R&& r,
+            RAH_NAMESPACE::range_difference_t<R> count,
+            const T& value,
+            Pred pred = {},
+            Proj proj = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r),
+                RAH_NAMESPACE::end(r),
+                RAH_STD::move(count),
+                value,
+                RAH_STD::move(pred),
+                RAH_STD::move(proj));
+        }
+    };
+
+    constexpr search_n_fn search_n{};
 
     /// binary_search
     ///
@@ -3376,7 +3401,7 @@ namespace RAH_NAMESPACE
             ++first;
             while (++first != last)
             {
-                if (!std::invoke(comp, std::invoke(proj, *i), std::invoke(proj, *first)))
+                if (!comp(proj(*i), proj(*first)))
                     *++i = RAH_NAMESPACE::iter_move(first);
             }
             return {++i, first};
@@ -3403,188 +3428,67 @@ namespace RAH_NAMESPACE
     // more efficient if we can use backwards iteration to implement our search,
     // though this requires an iterator that can be reversed.
     //
-    template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2, typename ForwardSentinel2>
-    ForwardIterator1 find_end_impl(
-        ForwardIterator1 first1,
-        ForwardSentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        RAH_ITC_NS::forward_iterator_tag,
-        RAH_ITC_NS::forward_iterator_tag)
+    struct find_end_fn
     {
-        if (first2
-            != last2) // We have to do this check because the search algorithm below will return first1 (and not last1) if the first2/last2 range is empty.
+        //TODO search from end when reversible
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            typename S2,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            std::enable_if_t<
+                forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
+                && sentinel_for<S2, I2>>* = nullptr>
+        constexpr RAH_NAMESPACE::subrange<I1> operator()(
+            I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            for (ForwardIterator1 result(last1);;)
+            if (first2 == last2)
             {
-                const ForwardIterator1 resultNext(RAH_NAMESPACE::search(first1, last1, first2, last2));
+                auto last_it = RAH_NAMESPACE::next(first1, last1);
+                return {last_it, last_it};
+            }
+            auto result =
+                RAH_NAMESPACE::search(std::move(first1), last1, first2, last2, pred, proj1, proj2);
 
-                if (resultNext != last1) // If another sequence was found...
-                {
-                    first1 = result = resultNext;
-                    ++first1;
-                }
-                else
+            if (result.empty())
+                return result;
+
+            for (;;)
+            {
+                auto new_result = RAH_NAMESPACE::search(
+                    std::next(result.begin()), last1, first2, last2, pred, proj1, proj2);
+                if (new_result.empty())
                     return result;
+                else
+                    result = std::move(new_result);
             }
         }
-        return last1;
-    }
 
-    template <typename BidirectionalIterator1, typename Sentinel1, typename BidirectionalIterator2, typename Sentinel2>
-    BidirectionalIterator1 find_end_impl(
-        BidirectionalIterator1 first1,
-        Sentinel1 last1,
-        BidirectionalIterator2 first2,
-        Sentinel2 last2,
-        RAH_ITC_NS::bidirectional_iterator_tag,
-        RAH_ITC_NS::bidirectional_iterator_tag)
-    {
-        typedef RAH_STD::reverse_iterator<BidirectionalIterator1> reverse_iterator1;
-        typedef RAH_STD::reverse_iterator<BidirectionalIterator2> reverse_iterator2;
-
-        reverse_iterator1 rresult(RAH_NAMESPACE::search(
-            reverse_iterator1(last1),
-            reverse_iterator1(first1),
-            reverse_iterator2(last2),
-            reverse_iterator2(first2)));
-        if (rresult.base() != first1) // If we found something...
+        template <
+            typename R1,
+            typename R2,
+            class Pred = RAH_NAMESPACE::equal_to,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            std::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_subrange_t<R1>
+        operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            BidirectionalIterator1 result(rresult.base());
-
-            RAH_NAMESPACE::advance(
-                result,
-                -RAH_NAMESPACE::distance(
-                    first2, last2)); // We have an opportunity to optimize this, as the
-            return result; // search function already calculates this distance.
+            return (*this)(
+                RAH_NAMESPACE::begin(r1),
+                RAH_NAMESPACE::end(r1),
+                RAH_NAMESPACE::begin(r2),
+                RAH_NAMESPACE::end(r2),
+                RAH_STD::move(pred),
+                RAH_STD::move(proj1),
+                RAH_STD::move(proj2));
         }
-        return last1;
-    }
+    };
 
-    /// find_end
-    ///
-    /// Finds the last occurrence of the second sequence in the first sequence.
-    /// As such, this function is much like the C string function strrstr and it
-    /// is also the same as a reversed version of 'search'. It is called find_end
-    /// instead of the possibly more consistent search_end simply because the C++
-    /// standard algorithms have such naming.
-    ///
-    /// Returns an iterator between first1 and last1 if the sequence is found.
-    /// returns last1 (the end of the first seqence) if the sequence is not found.
-    ///
-    template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2, typename ForwardSentinel2>
-    inline ForwardIterator1 find_end(
-        ForwardIterator1 first1, ForwardSentinel1 last1, ForwardIterator2 first2, ForwardSentinel2 last2)
-    {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator1>::iterator_category IC1;
-        typedef typename RAH_STD::iterator_traits<ForwardIterator2>::iterator_category IC2;
-
-        return RAH_NAMESPACE::find_end_impl(first1, last1, first2, last2, IC1(), IC2());
-    }
-
-    // To consider: Fold the predicate and non-predicate versions of
-    //              this algorithm into a single function.
-    template <
-        typename ForwardIterator1,
-        typename ForwardSentinel1,
-        typename ForwardIterator2,
-        typename ForwardSentinel2,
-        typename BinaryPredicate>
-    ForwardIterator1 find_end_impl(
-        ForwardIterator1 first1,
-        ForwardSentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        BinaryPredicate predicate,
-        RAH_ITC_NS::forward_iterator_tag,
-        RAH_ITC_NS::forward_iterator_tag)
-    {
-        if (first2
-            != last2) // We have to do this check because the search algorithm below will return first1 (and not last1) if the first2/last2 range is empty.
-        {
-            for (ForwardIterator1 result = last1;;)
-            {
-                const ForwardIterator1 resultNext(
-                    RAH_NAMESPACE::search<ForwardIterator1, ForwardIterator2, BinaryPredicate>(
-                        first1, last1, first2, last2, predicate));
-
-                if (resultNext != last1) // If another sequence was found...
-                {
-                    first1 = result = resultNext;
-                    ++first1;
-                }
-                else
-                    return result;
-            }
-        }
-        return last1;
-    }
-
-    template <
-        typename BidirectionalIterator1,
-        typename Sentinel1,
-        typename BidirectionalIterator2,
-        typename Sentinel2,
-        typename BinaryPredicate>
-    BidirectionalIterator1 find_end_impl(
-        BidirectionalIterator1 first1,
-        Sentinel1 last1,
-        BidirectionalIterator2 first2,
-        Sentinel2 last2,
-        BinaryPredicate predicate,
-        RAH_ITC_NS::bidirectional_iterator_tag,
-        RAH_ITC_NS::bidirectional_iterator_tag)
-    {
-        typedef RAH_STD::reverse_iterator<BidirectionalIterator1> reverse_iterator1;
-        typedef RAH_STD::reverse_iterator<BidirectionalIterator2> reverse_iterator2;
-
-        reverse_iterator1 rresult(
-            RAH_NAMESPACE::search<reverse_iterator1, reverse_iterator2, BinaryPredicate>(
-                reverse_iterator1(last1),
-                reverse_iterator1(first1),
-                reverse_iterator2(last2),
-                reverse_iterator2(first2),
-                predicate));
-        if (rresult.base() != first1) // If we found something...
-        {
-            BidirectionalIterator1 result(rresult.base());
-            RAH_NAMESPACE::advance(result, -RAH_NAMESPACE::distance(first2, last2));
-            return result;
-        }
-        return last1;
-    }
-
-    /// find_end
-    ///
-    /// Effects: Finds a subsequence of equal values in a sequence.
-    ///
-    /// Returns: The last iterator i in the range [first1, last1 - (last2 - first2))
-    /// such that for any nonnegative integer n < (last2 - first2), the following
-    /// corresponding conditions hold: pred(*(i+n),*(first2+n)) != false. Returns
-    /// last1 if no such iterator is found.
-    ///
-    /// Complexity: At most (last2 - first2) * (last1 - first1 - (last2 - first2) + 1)
-    /// applications of the corresponding predicate.
-    ///
-    template <
-        typename ForwardIterator1,
-        typename ForwardSentinel1,
-        typename ForwardIterator2,
-        typename ForwardSentinel2,
-        typename BinaryPredicate>
-    inline ForwardIterator1 find_end(
-        ForwardIterator1 first1,
-        ForwardSentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        BinaryPredicate predicate)
-    {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator1>::iterator_category IC1;
-        typedef typename RAH_STD::iterator_traits<ForwardIterator2>::iterator_category IC2;
-
-        return RAH_NAMESPACE::find_end_impl<ForwardIterator1, ForwardIterator2, BinaryPredicate>(
-            first1, last1, first2, last2, predicate, IC1(), IC2());
-    }
+    constexpr find_end_fn find_end{};
 
     template <class I, class O>
     using set_difference_result = in_out_result<I, O>;
@@ -4147,77 +4051,69 @@ namespace RAH_NAMESPACE
 
     /// is_permutation
     ///
-    template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2>
-    bool is_permutation(ForwardIterator1 first1, ForwardSentinel1 last1, ForwardIterator2 first2)
+    struct is_permutation_fn
     {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator1>::difference_type difference_type;
-
-        // Skip past any equivalent initial elements.
-        while ((first1 != last1) && (*first1 == *first2))
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            typename S2,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            typename Pred = RAH_NAMESPACE::equal_to,
+            std::enable_if_t<
+                forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
+                && sentinel_for<S2, I2>>* = nullptr>
+        constexpr bool operator()(
+            I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            ++first1;
-            ++first2;
-        }
+            // skip common prefix
+            auto ret = RAH_NAMESPACE::mismatch(
+                first1, last1, first2, last2, std::ref(pred), std::ref(proj1), std::ref(proj2));
+            first1 = ret.in1, first2 = ret.in2;
 
-        if (first1 != last1)
-        {
-            const difference_type first1Size = RAH_NAMESPACE::distance(first1, last1);
-            ForwardIterator2 last2 = first2;
-            RAH_NAMESPACE::advance(last2, first1Size);
-
-            for (ForwardIterator1 i = first1; i != last1; ++i)
+            // iterate over the rest, counting how many times each element
+            // from [first1, last1) appears in [first2, last2)
+            for (auto i{first1}; i != last1; ++i)
             {
-                if (i == RAH_NAMESPACE::find(first1, i, *i))
+                const auto i_proj{proj1(*i)};
+                auto i_cmp = [&](auto&& t)
                 {
-                    const difference_type c = RAH_NAMESPACE::count(first2, last2, *i);
+                    return pred(i_proj, std::forward<decltype(t)>(t));
+                };
 
-                    if ((c == 0) || (c != RAH_NAMESPACE::count(i, last1, *i)))
-                        return false;
-                }
+                if (i != RAH_NAMESPACE::find_if(first1, i, i_cmp, proj1))
+                    continue; // this *i has been checked
+
+                const auto m{RAH_NAMESPACE::count_if(first2, last2, i_cmp, proj2)};
+                if (m == 0 or m != RAH_NAMESPACE::count_if(i, last1, i_cmp, proj1))
+                    return false;
             }
+            return true;
         }
 
-        return true;
-    }
-
-    /// is_permutation
-    ///
-    template <typename ForwardIterator1, typename ForwardSentinel1, typename ForwardIterator2, class BinaryPredicate>
-    bool is_permutation(
-        ForwardIterator1 first1,
-        ForwardSentinel1 last1,
-        ForwardIterator2 first2,
-        BinaryPredicate predicate)
-    {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator1>::difference_type difference_type;
-
-        // Skip past any equivalent initial elements.
-        while ((first1 != last1) && predicate(*first1, *first2))
+        template <
+            typename R1,
+            typename R2,
+            class Proj1 = RAH_NAMESPACE::identity,
+            class Proj2 = RAH_NAMESPACE::identity,
+            typename Pred = RAH_NAMESPACE::equal_to,
+            std::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
+        constexpr bool
+        operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
-            ++first1;
-            ++first2;
+            return (*this)(
+                RAH_NAMESPACE::begin(r1),
+                RAH_NAMESPACE::end(r1),
+                RAH_NAMESPACE::begin(r2),
+                RAH_NAMESPACE::end(r2),
+                std::move(pred),
+                std::move(proj1),
+                std::move(proj2));
         }
+    };
 
-        if (first1 != last1)
-        {
-            const difference_type first1Size = RAH_NAMESPACE::distance(first1, last1);
-            ForwardIterator2 last2 = first2;
-            RAH_NAMESPACE::advance(last2, first1Size);
-
-            for (ForwardIterator1 i = first1; i != last1; ++i)
-            {
-                if (i == RAH_NAMESPACE::find(first1, i, *i, predicate))
-                {
-                    const difference_type c = RAH_NAMESPACE::count(first2, last2, *i, predicate);
-
-                    if ((c == 0) || (c != RAH_NAMESPACE::count(i, last1, *i, predicate)))
-                        return false;
-                }
-            }
-        }
-
-        return true;
-    }
+    constexpr is_permutation_fn is_permutation{};
 
     /// next_permutation
     ///
@@ -4613,18 +4509,22 @@ namespace RAH_NAMESPACE
     ///
     /// http://en.cppreference.com/w/cpp/algorithm/clamp
     ///
-    template <class T, class Compare>
-    RAH_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi, Compare comp)
+    struct clamp_fn
     {
-        EASTL_ASSERT(!comp(hi, lo));
-        return comp(v, lo) ? lo : comp(hi, v) ? hi : v;
-    }
+        template <class T, class Proj = RAH_NAMESPACE::identity, typename Comp = RAH_STD::less<>>
+        constexpr const T&
+        operator()(const T& v, const T& lo, const T& hi, Comp comp = {}, Proj proj = {}) const
+        {
+            RAH_ASSERT(!comp(hi, lo));
+            auto&& pv = proj(v);
 
-    template <class T>
-    RAH_CONSTEXPR const T& clamp(const T& v, const T& lo, const T& hi)
-    {
-        return RAH_NAMESPACE::clamp(v, lo, hi, RAH_STD::less<>());
-    }
+            return comp(std::forward<decltype(pv)>(pv), proj(lo)) ? lo :
+                   comp(proj(hi), std::forward<decltype(pv)>(pv)) ? hi :
+                                                                    v;
+        }
+    };
+
+    constexpr clamp_fn clamp;
 
     struct fill_fn
     {

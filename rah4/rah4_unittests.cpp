@@ -19,7 +19,6 @@
 
 #include <iomanip>
 
-#include "range_algorithms.hpp"
 #include "test_helpers.hpp"
 
 bool is_odd(int val)
@@ -89,10 +88,127 @@ void test_chunk_view();
 void test_stride_view();
 void test_ref_view();
 
+void test_all_of();
+void test_any_of();
+void test_none_of();
+void test_for_each();
+void test_for_each_n();
+void test_algo_count();
+void test_count_if();
+void test_mismatch();
+void test_equal();
+void test_lexicographical_compare();
+void test_find();
+void test_find_if();
+void test_find_if_not();
+void test_find_last();
+void test_find_last_if();
+void test_find_last_if_not();
+void test_find_end();
+void test_find_first_of();
+void test_adjacent_find();
+void test_search();
+void test_search_n();
+void test_contains();
+void test_contains_subrange();
+void test_starts_with();
+void test_ends_with();
+void test_copy();
+void test_copy_if();
+void test_copy_n();
+void test_copy_backward();
+void test_move();
+void test_move_backward();
+void test_fill();
+void test_fill_n();
+void test_transform();
+void test_generate();
+void test_generate_n();
+void test_remove();
+void test_remove_if();
+void test_remove_copy();
+void test_remove_copy_if();
+void test_replace();
+void test_replace_if();
+void test_replace_copy();
+void test_replace_copy_if();
+void test_swap_ranges();
+void test_reverse();
+void test_reverse_copy();
+void test_rotate();
+void test_rotate_copy();
+void test_shuffle();
+void test_shift_left();
+void test_shift_right();
+void test_sample();
+void test_unique();
+void test_unique_copy();
+void test_is_partitioned();
+void test_partition();
+void test_partition_copy();
+void test_stable_partition();
+void test_partition_point();
+void test_is_sorted();
+void test_is_sorted_until();
+void test_sort();
+void test_partial_sort();
+void test_partial_sort_copy();
+void test_stable_sort();
+void test_nth_element();
+void test_lower_bound();
+void test_upper_bound();
+void test_binary_search();
+void test_equal_range();
+void test_merge();
+void test_inplace_merge();
+void test_includes();
+void test_set_difference();
+void test_set_intersection();
+void test_set_symmetric_difference();
+void test_set_union();
+void test_is_heap();
+void test_is_heap_until();
+void test_make_heap();
+void test_push_heap();
+void test_pop_heap();
+void test_sort_heap();
+void test_max();
+void test_max_element();
+void test_min();
+void test_min_element();
+void test_minmax();
+void test_minmax_element();
+void test_clamp();
+void test_is_permutation();
+void test_next_permutation();
+void test_prev_permutation();
+void test_iota();
+void test_fold_left();
+void test_fold_left_first();
+void test_fold_right();
+void test_fold_right_last();
+void test_fold_left_with_iter();
+void test_fold_left_first_with_iter();
+void test_uninitialized_copy();
+void test_uninitialized_copy_n();
+void test_uninitialized_fill();
+void test_uninitialized_fill_n();
+void test_uninitialized_move();
+void test_uninitialized_move_n();
+void test_uninitialized_default_construct();
+void test_uninitialized_default_construct_n();
+void test_uninitialized_value_construct();
+void test_uninitialized_value_construct_n();
+void test_destroy();
+void test_destroy_n();
+void test_destroy_at();
+void test_construct_at();
+
 TestSuite testSuite;
 
 void test_range_concepts()
 {
+    testSuite.test_case("on non-range");
     STATIC_ASSERT(!rah::range<int>);
     STATIC_ASSERT(!rah::borrowed_range<int>);
     STATIC_ASSERT(!rah::sized_range<int>);
@@ -110,6 +226,8 @@ void test_range_concepts()
 
 int main()
 {
+    std::cout.imbue(std::locale("en_EN"));
+
     testSuite.addTest("Range_concepts", "*", test_range_concepts);
 
     // Range_factories
@@ -146,6 +264,131 @@ int main()
     testSuite.addTest(range_adaptors, "ranges::chunk_view", test_chunk_view);
     testSuite.addTest(range_adaptors, "ranges::stride_view", test_stride_view);
     testSuite.addTest(range_adaptors, "ranges::ref_view", test_ref_view);
+
+    char const* algorithms = "Algorithms";
+    testSuite.addTest(algorithms, "ranges::all_of", test_all_of);
+    testSuite.addTest(algorithms, "ranges::any_of", test_any_of);
+    testSuite.addTest(algorithms, "ranges::none_of", test_none_of);
+    testSuite.addTest(algorithms, "ranges::for_each", test_for_each);
+    testSuite.addTest(algorithms, "ranges::for_each_n", test_for_each_n);
+    testSuite.addTest(algorithms, "ranges::count", test_algo_count);
+    testSuite.addTest(algorithms, "ranges::count_if", test_count_if);
+    testSuite.addTest(algorithms, "ranges::mismatch", test_mismatch);
+    testSuite.addTest(algorithms, "ranges::equal", test_equal);
+    testSuite.addTest(algorithms, "ranges::lexicographical_compare", test_lexicographical_compare);
+    testSuite.addTest(algorithms, "ranges::find", test_find);
+    testSuite.addTest(algorithms, "ranges::find_if", test_find_if);
+    testSuite.addTest(algorithms, "ranges::find_if_not", test_find_if_not);
+    testSuite.addTest(algorithms, "ranges::find_last", test_find_last);
+    testSuite.addTest(algorithms, "ranges::find_last_if", test_find_last_if);
+    testSuite.addTest(algorithms, "ranges::find_last_if_not", test_find_last_if_not);
+    testSuite.addTest(algorithms, "ranges::find_end", test_find_end);
+    testSuite.addTest(algorithms, "ranges::find_first_of", test_find_first_of);
+    testSuite.addTest(algorithms, "ranges::adjacent_find", test_adjacent_find);
+    testSuite.addTest(algorithms, "ranges::search", test_search);
+    testSuite.addTest(algorithms, "ranges::search_n", test_search_n);
+    testSuite.addTest(algorithms, "ranges::contains", test_contains);
+    testSuite.addTest(algorithms, "ranges::contains_subrange", test_contains_subrange);
+    testSuite.addTest(algorithms, "ranges::starts_with", test_starts_with);
+    testSuite.addTest(algorithms, "ranges::ends_with", test_ends_with);
+    testSuite.addTest(algorithms, "ranges::copy", test_copy);
+    testSuite.addTest(algorithms, "ranges::copy_if", test_copy_if);
+    testSuite.addTest(algorithms, "ranges::copy_n", test_copy_n);
+    testSuite.addTest(algorithms, "ranges::copy_backward", test_copy_backward);
+    testSuite.addTest(algorithms, "ranges::move", test_move);
+    testSuite.addTest(algorithms, "ranges::move_backward", test_move_backward);
+    testSuite.addTest(algorithms, "ranges::fill", test_fill);
+    testSuite.addTest(algorithms, "ranges::fill_n", test_fill_n);
+    testSuite.addTest(algorithms, "ranges::transform", test_transform);
+    testSuite.addTest(algorithms, "ranges::generate", test_generate);
+    testSuite.addTest(algorithms, "ranges::generate_n", test_generate_n);
+    testSuite.addTest(algorithms, "ranges::remove", test_remove);
+    testSuite.addTest(algorithms, "ranges::remove_if", test_remove_if);
+    testSuite.addTest(algorithms, "ranges::remove_copy", test_remove_copy);
+    testSuite.addTest(algorithms, "ranges::remove_copy_if", test_remove_copy_if);
+    testSuite.addTest(algorithms, "ranges::replace", test_replace);
+    testSuite.addTest(algorithms, "ranges::replace_if", test_replace_if);
+    testSuite.addTest(algorithms, "ranges::replace_copy", test_replace_copy);
+    testSuite.addTest(algorithms, "ranges::replace_copy_if", test_replace_copy_if);
+    testSuite.addTest(algorithms, "ranges::swap_ranges", test_swap_ranges);
+    testSuite.addTest(algorithms, "ranges::reverse", test_reverse);
+    testSuite.addTest(algorithms, "ranges::reverse_copy", test_reverse_copy);
+    testSuite.addTest(algorithms, "ranges::rotate", test_rotate);
+    testSuite.addTest(algorithms, "ranges::rotate_copy", test_rotate_copy);
+    testSuite.addTest(algorithms, "ranges::shuffle", test_shuffle);
+    testSuite.addTest(algorithms, "ranges::shift_left", test_shift_left);
+    testSuite.addTest(algorithms, "ranges::shift_right", test_shift_right);
+    testSuite.addTest(algorithms, "ranges::sample", test_sample);
+    testSuite.addTest(algorithms, "ranges::unique", test_unique);
+    testSuite.addTest(algorithms, "ranges::unique_copy", test_unique_copy);
+    testSuite.addTest(algorithms, "ranges::is_partitioned", test_is_partitioned);
+    testSuite.addTest(algorithms, "ranges::partition", test_partition);
+    testSuite.addTest(algorithms, "ranges::partition_copy", test_partition_copy);
+    testSuite.addTest(algorithms, "ranges::stable_partition", test_stable_partition);
+    testSuite.addTest(algorithms, "ranges::partition_point", test_partition_point);
+    testSuite.addTest(algorithms, "ranges::is_sorted", test_is_sorted);
+    testSuite.addTest(algorithms, "ranges::is_sorted_until", test_is_sorted_until);
+    testSuite.addTest(algorithms, "ranges::sort", test_sort);
+    testSuite.addTest(algorithms, "ranges::partial_sort", test_partial_sort);
+    testSuite.addTest(algorithms, "ranges::partial_sort_copy", test_partial_sort_copy);
+    testSuite.addTest(algorithms, "ranges::stable_sort", test_stable_sort);
+    testSuite.addTest(algorithms, "ranges::nth_element", test_nth_element);
+    testSuite.addTest(algorithms, "ranges::lower_bound", test_lower_bound);
+    testSuite.addTest(algorithms, "ranges::upper_bound", test_upper_bound);
+    testSuite.addTest(algorithms, "ranges::binary_search", test_binary_search);
+    testSuite.addTest(algorithms, "ranges::equal_range", test_equal_range);
+    testSuite.addTest(algorithms, "ranges::merge", test_merge);
+    testSuite.addTest(algorithms, "ranges::inplace_merge", test_inplace_merge);
+    testSuite.addTest(algorithms, "ranges::includes", test_includes);
+    testSuite.addTest(algorithms, "ranges::set_difference", test_set_difference);
+    testSuite.addTest(algorithms, "ranges::set_intersection", test_set_intersection);
+    testSuite.addTest(algorithms, "ranges::set_symmetric_difference", test_set_symmetric_difference);
+    testSuite.addTest(algorithms, "ranges::set_union", test_set_union);
+    testSuite.addTest(algorithms, "ranges::is_heap", test_is_heap);
+    testSuite.addTest(algorithms, "ranges::is_heap_until", test_is_heap_until);
+    testSuite.addTest(algorithms, "ranges::make_heap", test_make_heap);
+    testSuite.addTest(algorithms, "ranges::push_heap", test_push_heap);
+    testSuite.addTest(algorithms, "ranges::pop_heap", test_pop_heap);
+    testSuite.addTest(algorithms, "ranges::sort_heap", test_sort_heap);
+    testSuite.addTest(algorithms, "ranges::max", test_max);
+    testSuite.addTest(algorithms, "ranges::max_element", test_max_element);
+    testSuite.addTest(algorithms, "ranges::min", test_min);
+    testSuite.addTest(algorithms, "ranges::min_element", test_min_element);
+    testSuite.addTest(algorithms, "ranges::minmax", test_minmax);
+    testSuite.addTest(algorithms, "ranges::minmax_element", test_minmax_element);
+    testSuite.addTest(algorithms, "ranges::clamp", test_clamp);
+    testSuite.addTest(algorithms, "ranges::is_permutation", test_is_permutation);
+    testSuite.addTest(algorithms, "ranges::next_permutation", test_next_permutation);
+    testSuite.addTest(algorithms, "ranges::prev_permutation", test_prev_permutation);
+    testSuite.addTest(algorithms, "ranges::iota", test_iota);
+    testSuite.addTest(algorithms, "ranges::fold_left", test_fold_left);
+    testSuite.addTest(algorithms, "ranges::fold_left_first", test_fold_left_first);
+    testSuite.addTest(algorithms, "ranges::fold_right", test_fold_right);
+    testSuite.addTest(algorithms, "ranges::fold_right_last", test_fold_right_last);
+    testSuite.addTest(algorithms, "ranges::fold_left_with_iter", test_fold_left_with_iter);
+    testSuite.addTest(
+        algorithms, "ranges::fold_left_first_with_iter", test_fold_left_first_with_iter);
+    testSuite.addTest(algorithms, "ranges::uninitialized_copy", test_uninitialized_copy);
+    testSuite.addTest(algorithms, "ranges::uninitialized_copy_n", test_uninitialized_copy_n);
+    testSuite.addTest(algorithms, "ranges::uninitialized_fill", test_uninitialized_fill);
+    testSuite.addTest(algorithms, "ranges::uninitialized_fill_n", test_uninitialized_fill_n);
+    testSuite.addTest(algorithms, "ranges::uninitialized_move", test_uninitialized_move);
+    testSuite.addTest(algorithms, "ranges::uninitialized_move_n", test_uninitialized_move_n);
+    testSuite.addTest(
+        algorithms, "ranges::uninitialized_default_construct", test_uninitialized_default_construct);
+    testSuite.addTest(
+        algorithms,
+        "ranges::uninitialized_default_construct_n",
+        test_uninitialized_default_construct_n);
+    testSuite.addTest(
+        algorithms, "ranges::uninitialized_value_construct", test_uninitialized_value_construct);
+    testSuite.addTest(
+        algorithms, "ranges::uninitialized_value_construct_n", test_uninitialized_value_construct_n);
+    testSuite.addTest(algorithms, "ranges::destroy", test_destroy);
+    testSuite.addTest(algorithms, "ranges::destroy_n", test_destroy_n);
+    testSuite.addTest(algorithms, "ranges::destroy_at", test_destroy_at);
+    testSuite.addTest(algorithms, "ranges::construct_at", test_construct_at);
+
     testSuite.run();
 
     {
@@ -693,147 +936,6 @@ int main()
     // *********************************** algos **************************************************
 
     {
-        /// [rah::equal_range]
-        std::vector<int> vecIn1{1, 2, 2, 3, 4};
-        {
-            std::vector<int> out;
-            for (int i : rah::equal_range(vecIn1, 0))
-                out.push_back(i);
-            assert(out == std::vector<int>({}));
-        }
-        {
-            std::vector<int> out;
-            for (int i : rah::equal_range(vecIn1, 1))
-                out.push_back(i);
-            assert(out == std::vector<int>({1}));
-        }
-        {
-            std::vector<int> out;
-            for (int i : rah::equal_range(vecIn1, 2))
-                out.push_back(i);
-            assert(out == std::vector<int>({2, 2}));
-        }
-        /// [rah::equal_range]
-    }
-    {
-        /// [rah::equal_range_pred_0]
-        struct S
-        {
-            int value;
-            char test;
-            bool operator==(S rhs) const
-            {
-                return value == rhs.value && test == rhs.test;
-            }
-        };
-        struct FindS
-        {
-            bool operator()(S s, int val) const
-            {
-                return s.value < val;
-            }
-            bool operator()(int val, S s) const
-            {
-                return val < s.value;
-            }
-        };
-        /// [rah::equal_range_pred_0]
-        {
-            /// [rah::equal_range_pred]
-            std::vector<S> vecIn1{{1, 'a'}, {2, 'b'}, {2, 'c'}, {3, 'd'}, {4, 'e'}};
-            {
-                std::vector<S> out;
-                for (S i : rah::equal_range(vecIn1, 0, FindS{}))
-                    out.push_back(i);
-                assert(out == std::vector<S>({}));
-            }
-            {
-                std::vector<S> out;
-                for (S i : rah::equal_range(vecIn1, 1, FindS{}))
-                    out.push_back(i);
-                assert(out == std::vector<S>({{1, 'a'}}));
-            }
-            {
-                std::vector<S> out;
-                for (S i : rah::equal_range(vecIn1, 2, FindS{}))
-                    out.push_back(i);
-                assert(out == std::vector<S>({{2, 'b'}, {2, 'c'}}));
-            }
-            /// [rah::equal_range_pred]
-        }
-    }
-
-    {
-        /// [rah::binary_search]
-        std::vector<int> vecIn1{1, 2, 2, 3, 4};
-        assert(not rah::binary_search(vecIn1, 0));
-        assert(rah::binary_search(vecIn1, 1));
-        assert(rah::binary_search(vecIn1, 2));
-        /// [rah::binary_search]
-    }
-    {
-        std::vector<int> vecIn1{0, 1, 2, 3};
-        std::vector<int> vecOut{0, 0, 0, 0};
-        rah::transform(vecIn1, begin(vecOut), [](int a) { return a + 1; });
-        assert(vecOut == std::vector<int>({1, 2, 3, 4}));
-    }
-    {
-        /// [rah::transform3]
-        std::vector<int> vecIn1{0, 1, 2, 3};
-        std::vector<int> vecOut;
-        rah::transform(vecIn1, std::back_inserter(vecOut), [](int a) { return a + 1; });
-        assert(vecOut == std::vector<int>({1, 2, 3, 4}));
-        /// [rah::transform3]
-    }
-    {
-        /// [rah::transform4]
-        std::vector<int> vecIn1{0, 1, 2, 3};
-        std::vector<int> vecIn2{4, 3, 2, 1};
-        std::vector<int> vecOut;
-        rah::transform(
-            vecIn1, vecIn2, std::back_inserter(vecOut), [](int a, int b) { return a + b; });
-        assert(vecOut == std::vector<int>({4, 4, 4, 4}));
-        /// [rah::transform4]
-    }
-
-    {
-        /// [rah::reduce]
-        std::vector<int> vecIn1{1, 2, 3, 4};
-        assert(rah::fold_left(vecIn1, 0, [](auto a, auto b) { return a + b; }) == 10);
-        /// [rah::reduce]
-    }
-
-    /// [rah::any_of]
-    assert(rah::any_of(std::initializer_list<int>{3, 0, 1, 3, 4, 6}, [](auto a) { return a == 3; }));
-    /// [rah::any_of]
-
-    /// [rah::all_of]
-    assert(rah::all_of(std::initializer_list<int>{4, 4, 4, 4}, [](auto a) { return a == 4; }));
-    /// [rah::all_of]
-    assert(
-        rah::all_of(std::initializer_list<int>{4, 4, 3, 4}, [](auto a) { return a == 4; }) == false);
-
-    /// [rah::none_of]
-    assert((rah::none_of(std::initializer_list<int>{7, 8, 9, 10}, [](auto a) { return a == 11; })));
-    /// [rah::none_of]
-
-    /// [rah::count]
-    assert(rah::count(std::initializer_list<int>{4, 4, 4, 3}, 3) == 1);
-    /// [rah::count]
-
-    /// [rah::count_if]
-    assert(rah::count_if(std::initializer_list<int>{4, 4, 4, 3}, [](auto a) { return a == 4; }) == 3);
-    /// [rah::count_if]
-
-    {
-        /// [rah::for_each]
-        std::vector<int> testFE{4, 4, 4, 4};
-        rah::for_each(testFE, [](auto& value) { return ++value; });
-        EQUAL_RANGE(testFE, std::initializer_list<int>({5, 5, 5, 5}));
-        /// [rah::for_each]
-    }
-
-    {
         /// [rah::to_container_pipeable]
         std::vector<std::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
         std::map<int, char> map_4a_5b_6c_7d = in1 | rah::to<std::map<int, char>>();
@@ -857,252 +959,16 @@ int main()
     }
 
     {
-        /// [rah::mismatch]
-        std::vector<int> in1 = {1, 2, 3, 4};
-        std::vector<int> in2 = {1, 2, 42, 42};
-        auto r1_r2 = rah::mismatch(in1, in2);
-        std::vector<int> out1;
-        std::vector<int> out2;
-        std::copy(std::get<0>(r1_r2), end(in1), std::back_inserter(out1));
-        std::copy(std::get<1>(r1_r2), end(in2), std::back_inserter(out2));
-        assert(out1 == std::vector<int>({3, 4}));
-        assert(out2 == std::vector<int>({42, 42}));
-        /// [rah::mismatch]
-    }
-
-    {
-        /// [rah::find]
-        std::vector<int> in{1, 2, 3, 4};
-        auto iter = rah::find(in, 3);
-        assert(rah::equal(rah::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
-        /// [rah::find]
-    }
-
-    {
-        /// [rah::find_if]
-        std::vector<int> in{1, 2, 3, 4};
-        auto iter = rah::find_if(in, [](int i) { return i == 3; });
-        assert(rah::equal(rah::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
-        /// [rah::find_if]
-    }
-    {
-        /// [rah::find_if_not]
-        std::vector<int> in{1, 2, 3, 4};
-        auto iter = rah::find_if_not(in, [](int i) { return i < 3; });
-        assert(rah::equal(rah::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
-        /// [rah::find_if_not]
-    }
-
-    {
-        /// [rah::max_element]
-        std::vector<int> in{1, 5, 3, 4};
-        auto iter = rah::max_element(in);
-        assert(*iter == 5);
-        /// [rah::max_element]
-    }
-    {
-        /// [rah::max_element_pred]
-        std::vector<std::pair<int, int>> in{{100, 3}, {0, 5}, {0, 1}, {0, 4}};
-        auto iter = rah::max_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
-        assert(*iter == (std::pair<int, int>{0, 5}));
-        /// [rah::max_element_pred]
-    }
-
-    {
-        /// [rah::min_element]
-        std::vector<int> in{1, -5, 3, 4};
-        auto iter = rah::min_element(in);
-        assert(*iter == -5);
-        /// [rah::min_element]
-    }
-
-    {
-        /// [rah::min_element_pred]
-        std::vector<std::pair<int, int>> in{{-100, 3}, {0, -5}, {0, 1}, {0, 4}};
-        auto iter = rah::min_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
-        assert(*iter == (std::pair<int, int>{0, -5}));
-        /// [rah::min_element_pred]
-    }
-
-    {
         /// [rah::size]
         std::vector<int> vec3{1, 2, 3};
         assert(rah::size(vec3) == 3);
         /// [rah::size]
     }
 
-    {
-        /// [rah::equal]
-        std::vector<int> in1{1, 2, 3};
-        std::vector<int> in2{1, 2, 3};
-        std::vector<int> in3{11, 12, 13};
-        assert(rah::equal(in1, in2));
-        assert(rah::equal(in1, in3) == false);
-        /// [rah::equal]
-    }
-
     /// [rah::empty]
     assert(not(rah::empty(std::vector<int>{1, 2, 3})));
     assert(rah::empty(std::vector<int>()));
     /// [rah::empty]
-
-    {
-        /// [rah::copy]
-        std::vector<int> in{1, 2, 3};
-        std::vector<int> out{0, 0, 0, 4, 5};
-        // std::vector<int> out{ 0, 0 }; // Trigger an assert
-        assert(rah::equal(
-            rah::make_subrange(rah::copy(in, out.begin()).out, end(out)),
-            std::initializer_list<int>({4, 5})));
-        assert(out == (std::vector<int>{1, 2, 3, 4, 5}));
-        /// [rah::copy]
-    }
-
-    {
-        /// [rah::copy_if]
-        std::vector<int> in{1, 2, 3, 4};
-        std::vector<int> out{0, 0, 5, 6};
-        assert(rah::equal(
-            rah::make_subrange(
-                rah::copy_if(in, out.begin(), [](int i) { return i % 2 == 0; }).out, end(out)),
-            std::initializer_list<int>({5, 6})));
-        assert(out == (std::vector<int>{2, 4, 5, 6}));
-        /// [rah::copy_if]
-    }
-
-    {
-        /// [rah::fill]
-        std::vector<int> out{0, 0, 0, 4, 5};
-        rah::fill(out, 42);
-        assert(out == (std::vector<int>{42, 42, 42, 42, 42}));
-        /// [rah::fill]
-    }
-
-    {
-        std::vector<int> out{0, 0, 0, 4, 5};
-        rah::fill(out | rah::views::take(3), 42);
-        assert(out == (std::vector<int>{42, 42, 42, 4, 5}));
-    }
-
-    {
-        /// [rah::remove_if]
-        std::vector<int> in{1, 2, 3, 4, 5};
-        auto range_to_erase_begin = rah::remove_if(in, [](auto a) { return a < 4; });
-        in.erase(range_to_erase_begin.begin(), range_to_erase_begin.end());
-        std::sort(in.begin(), in.end());
-        assert(in == std::vector<int>({4, 5}));
-        /// [rah::remove_if]
-    }
-    {
-        /// [rah::remove]
-        std::vector<int> in{1, 2, 1, 3, 1};
-        auto range_to_erase_begin = rah::remove(in, 1);
-        in.erase(range_to_erase_begin.begin(), range_to_erase_begin.end());
-        std::sort(in.begin(), in.end());
-        assert(in == std::vector<int>({2, 3}));
-        /// [rah::remove]
-    }
-    {
-        /// [rah::partition]
-        std::vector<int> in{1, 2, 3, 4, 5};
-        auto boundary = rah::partition(in, [](auto a) { return a >= 4; });
-        assert(boundary.begin() == in.begin() + 2);
-        std::sort(in.begin(), boundary.begin());
-        std::sort(boundary.begin(), in.end());
-        assert(in == std::vector<int>({4, 5, 1, 2, 3}));
-        /// [rah::partition]
-    }
-    {
-        /// [rah::stable_partition]
-        std::vector<int> in{1, 2, 3, 4, 5};
-        auto boundary = rah::stable_partition(in, [](auto a) { return a >= 4; });
-        assert(boundary == in.begin() + 2);
-        assert(in == std::vector<int>({4, 5, 1, 2, 3}));
-        /// [rah::stable_partition]
-    }
-    {
-        /// [rah::sort]
-        std::vector<int> in{2, 1, 5, 3, 4};
-        rah::sort(in);
-        assert(in == std::vector<int>({1, 2, 3, 4, 5}));
-        /// [rah::sort]
-    }
-    {
-        /// [rah::sort_pred]
-        std::vector<int> in{2, 1, 5, 3, 4};
-        rah::sort(in, [](auto a, auto b) { return a < b; });
-        assert(in == std::vector<int>({1, 2, 3, 4, 5}));
-        /// [rah::sort_pred]
-    }
-
-    /// [rah::stable_sort]
-    struct CmpA
-    {
-        int a;
-        int b;
-        bool operator<(CmpA rhs) const
-        {
-            return a < rhs.a;
-        }
-        bool operator==(CmpA rhs) const
-        {
-            return a == rhs.a && b == rhs.b;
-        }
-    };
-
-    {
-        std::vector<CmpA> in{{4, 1}, {2, 1}, {4, 2}, {1, 1}, {4, 3}, {2, 2}, {4, 4}};
-        rah::stable_sort(in);
-        assert(in == std::vector<CmpA>({{1, 1}, {2, 1}, {2, 2}, {4, 1}, {4, 2}, {4, 3}, {4, 4}}));
-    }
-    /// [rah::stable_sort]
-    {
-        /// [rah::stable_sort_pred]
-        std::vector<CmpA> in{{4, 1}, {2, 1}, {4, 2}, {1, 1}, {4, 3}, {2, 2}, {4, 4}};
-        rah::stable_sort(in, [](CmpA l, CmpA r) { return l.b < r.b; });
-        assert(in == std::vector<CmpA>({{4, 1}, {2, 1}, {1, 1}, {4, 2}, {2, 2}, {4, 3}, {4, 4}}));
-        /// [rah::stable_sort_pred]
-    }
-    {
-        /// [rah::shuffle]
-        std::random_device rd;
-        std::mt19937 g(rd());
-        std::vector<int> in{1, 2, 3, 4, 5, 6};
-        rah::shuffle(in, g);
-        /// [rah::shuffle]
-    }
-    {
-        /// [rah::unique]
-        std::vector<int> in{2, 1, 1, 1, 5, 3, 3, 4};
-        in.erase(rah::unique(in).begin(), end(in));
-        assert(in == std::vector<int>({2, 1, 5, 3, 4}));
-        /// [rah::unique]
-    }
-    {
-        /// [rah::unique_pred]
-        std::vector<int> in{2, 1, 1, 1, 5, 3, 3, 4};
-        in.erase(rah::unique(in, [](auto a, auto b) { return a == b; }).begin(), end(in));
-        assert(in == std::vector<int>({2, 1, 5, 3, 4}));
-        /// [rah::unique_pred]
-    }
-    {
-        /// [rah::set_difference]
-        std::vector<int> in1{1, 3, 4};
-        std::vector<int> in2{1, 2, 3};
-        std::vector<int> out{0, 0, 0, 0};
-        rah::set_difference(in1, in2, out.begin());
-        assert(out == std::vector<int>({4, 0, 0, 0}));
-        /// [rah::set_difference]
-    }
-    {
-        /// [rah::set_intersection]
-        std::vector<int> in1{1, 3, 4};
-        std::vector<int> in2{1, 2, 3};
-        std::vector<int> out{0, 0, 0, 0};
-        rah::set_intersection(in1, in2, out.begin());
-        assert(out == std::vector<int>({1, 3, 0, 0}));
-        /// [rah::set_intersection]
-    }
 
     // ********************************* test return ref and non-ref ******************************
 

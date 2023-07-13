@@ -11,6 +11,7 @@
 
 #include "range_bases.hpp"
 #include "eastl_algorithm.h"
+#include "range_algorithms.hpp"
 #include "mpark/variant.hpp"
 
 namespace RAH_NAMESPACE
@@ -1047,6 +1048,9 @@ namespace RAH_NAMESPACE
             return make_pipeable([=](auto&& range)
                                  { return all(RAH_STD::forward<decltype(range)>(range)); });
         }
+
+        template <typename R, std::enable_if_t<viewable_range<R>>* = nullptr>
+        using all_t = decltype(views::all(std::declval<R>()));
 
         // ***************************************** filter ***************************************
 

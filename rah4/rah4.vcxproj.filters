@@ -47,5 +47,8 @@
     <ClCompile Include="test_views.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test_algo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

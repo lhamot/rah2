@@ -57,6 +57,19 @@
 #endif
 #endif
 
+// Functions that became constexpr in C++20
+#if RAH_CPP20
+#define RAH_CONSTEXPR20 constexpr
+#else // ^^^ constexpr in C++20 and later / inline (not constexpr) in C++17 and earlier vvv
+#define RAH_CONSTEXPR20 inline
+#endif // ^^^ inline (not constexpr) in C++17 and earlier ^^^
+
+#if RAH_CPP17
+#define RAH_NODISCARD [[nodiscard]]
+#else
+#define RAH_NODISCARD
+#endif
+
 namespace rah
 {
     template <typename T>
@@ -71,22 +84,26 @@ namespace rah
         DeleteCheck() = default;
         DeleteCheck(DeleteCheck const& rhs)
         {
+            (void)rhs;
             assert(state_ == State::VALID);
             assert(rhs.state_ == State::VALID);
         }
         DeleteCheck& operator=(DeleteCheck const& rhs)
         {
+            (void)rhs;
             assert(state_ == State::VALID);
             assert(rhs.state_ == State::VALID);
             return *this;
         }
         DeleteCheck(DeleteCheck&& rhs)
         {
+            (void)rhs;
             assert(state_ == State::VALID);
             assert(rhs.state_ == State::VALID);
         }
         DeleteCheck& operator=(DeleteCheck&& rhs)
         {
+            (void)rhs;
             assert(state_ == State::VALID);
             assert(rhs.state_ == State::VALID);
             return *this;
@@ -681,6 +698,14 @@ namespace rah
 
     template <class T>
     constexpr bool totally_ordered = totally_ordered_impl<T>::value;
+
+    // template <class T, class U>
+    // constexpr bool totally_ordered_with =
+    //     RAH_NAMESPACE::totally_ordered<T> && RAH_NAMESPACE::totally_ordered<U>
+    //     && RAH_NAMESPACE::equality_comparable_with<T, U>
+    //     && RAH_NAMESPACE::totally_ordered<
+    //         RAH_STD::common_reference_t<const std::remove_reference_t<T>&, const std::remove_reference_t<U>&>>
+    //     && details::partially_ordered_with<T, U>;
 
     template <typename I, bool Diagnostic = false>
     struct forward_iterator_impl
@@ -1281,6 +1306,24 @@ namespace rah
 
     // ****************************** utility functions *******************************************
 
+    struct less
+    {
+        template <class T, class U>
+        constexpr bool operator()(T&& t, U&& u) const
+        {
+            return t < u;
+        }
+    };
+
+    struct greater
+    {
+        template <class T, class U>
+        constexpr bool operator()(T&& t, U&& u) const
+        {
+            return t > u;
+        }
+    };
+
     struct equal_to
     {
         template <class T, class U>
@@ -1398,8 +1441,7 @@ namespace rah
         typename I,
         typename S,
         std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-        std::enable_if_t<RAH_NAMESPACE::assignable_from<I&, S>>* = nullptr,
-        std::enable_if_t<not RAH_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+        std::enable_if_t<RAH_NAMESPACE::assignable_from<I&, S>>* = nullptr>
     constexpr void advance(I& i, S bound)
     {
         i = std::move(bound);
@@ -1443,7 +1485,8 @@ namespace rah
         template <class T>
         constexpr T&& operator()(T&& t) const noexcept
         {
-            return std::forward<T>(t);
+            // Faster than forward in debug mode
+            return static_cast<T&&>(t);
         }
     };
 
@@ -1509,6 +1552,18 @@ namespace rah
         auto data()
         {
             return &(*iterator_);
+        }
+
+        template <typename U = I, std::enable_if_t<sized_sentinel_for<S, U>>* = nullptr>
+        auto size()
+        {
+            return sentinel_ - iterator_;
+        }
+
+        template <typename U = I, std::enable_if_t<sized_sentinel_for<S const, U const>>* = nullptr>
+        auto size() const
+        {
+            return sentinel_ - iterator_;
         }
     };
 

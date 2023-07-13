@@ -335,8 +335,8 @@ namespace RAH_NAMESPACE
     void heap_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
     {
         // We simply call our heap algorithms to do the work for us.
-        RAH_STD::make_heap<RandomAccessIterator, StrictWeakOrdering>(first, last, compare);
-        RAH_STD::sort_heap<RandomAccessIterator, StrictWeakOrdering>(first, last, compare);
+        RAH_NAMESPACE::make_heap<RandomAccessIterator, StrictWeakOrdering>(first, last, compare);
+        RAH_NAMESPACE::sort_heap<RandomAccessIterator, StrictWeakOrdering>(first, last, compare);
     }
 
     template <typename RandomAccessIterator, typename Sentinel>

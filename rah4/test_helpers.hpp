@@ -9,15 +9,22 @@
 
 struct TestSuite
 {
+    struct TestResult
+    {
+        bool success = true;
+        size_t testCount = 0;
+    };
+
     std::map<std::string, std::function<void()>> testMap;
-    std::map<std::string, bool> testResult;
+    std::map<std::string, TestResult> testResult;
     std::map<std::string, std::vector<std::pair<std::string, std::string>>> testCases;
 
     bool current_test_status = true;
+    size_t test_count = 0;
 
     void addTest(std::string group, std::string name, std::function<void()> test)
     {
-        testMap.emplace(group + "|" + name, std::move(test));
+        testMap.emplace(group + " - " + name, std::move(test));
     }
 
     char const* currentTest = nullptr;
@@ -32,8 +39,17 @@ struct TestSuite
         {
             auto& name = name_test.first;
             std::cout << name_test.first << " : ";
-            if (testResult.count(name) == 1)
-                std::cout << (testResult.at(name) ? "OK" : "FAILED") << std::endl;
+            auto iter = testResult.find(name);
+            if (iter != testResult.end())
+            {
+                auto& result = iter->second;
+                if (!result.success)
+                    std::cout << "FAILED" << std::endl;
+                else if (result.testCount == 0)
+                    std::cout << "NO TESTS" << std::endl;
+                else
+                    std::cout << "OK" << std::endl;
+            }
             else
                 std::cout << "MISSING";
 
@@ -56,16 +72,18 @@ struct TestSuite
             currentTest = name.c_str();
             auto& test = name_test.second;
             current_test_status = true;
+            test_count = 0;
             try
             {
                 test();
             }
             catch (...)
             {
-                testResult[name] = false;
+                testResult[name].success = false;
                 return;
             }
-            testResult[name] = current_test_status;
+            testResult[name].success = current_test_status;
+            testResult[name].testCount = test_count;
         }
     }
 };
@@ -706,13 +724,19 @@ bool operator==(std::pair<A, B> a, std::tuple<D, C> b)
     return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b);
 }
 
-auto PairEqual = [](auto&& ab)
+struct PairEqualImpl
 {
-    static_assert(
-        RAH_NAMESPACE::WeaklyEqualityComparableWith<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
-        "second not assignable to first");
-    return std::get<0>(ab) == std::get<1>(ab);
+    template <typename P>
+    auto operator()(P&& ab)
+    {
+        static_assert(
+            RAH_NAMESPACE::WeaklyEqualityComparableWith<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
+            "second not assignable to first");
+        return std::get<0>(ab) == std::get<1>(ab);
+    }
 };
+
+static constexpr PairEqualImpl PairEqual;
 
 // #define TEST_DISPLAY_ALL
 #define TEST_DISPLAY_FAILED
@@ -721,6 +745,7 @@ auto PairEqual = [](auto&& ab)
 extern TestSuite testSuite;
 inline void assert_impl(int line, char const* condition, bool value)
 {
+    ++testSuite.test_count;
 #if defined(TEST_DISPLAY_ALL)
     std::cout << line << " assert : " << condition << std::endl;
 #endif
@@ -749,6 +774,8 @@ inline void assert_impl(int line, char const* condition, bool value)
 template <typename R, typename I>
 void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
 {
+    ++testSuite.test_count;
+
     static_assert(
         RAH_NAMESPACE::WeaklyEqualityComparableWith<
             rah::range_reference_t<decltype(RANGE)>,
