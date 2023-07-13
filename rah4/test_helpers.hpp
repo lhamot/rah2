@@ -4,6 +4,7 @@
 
 #include <map>
 #include <iostream>
+#include <chrono>
 
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 
@@ -841,5 +842,35 @@ auto toto(std::initializer_list<V> il)
 
 template <typename T>
 struct WhatIs;
+
+template <typename F>
+auto compute_duration(F&& func, char const* file, int line)
+{
+    size_t count = 0;
+    const auto start = std::chrono::high_resolution_clock::now();
+    auto end = start;
+
+    func();
+    ++count;
+    end = std::chrono::high_resolution_clock::now();
+    if ((end - start) < std::chrono::milliseconds(1))
+    {
+        std::cerr << "Too short function at " << file << "(" << line << ")" << std::endl;
+    }
+    if ((end - start) > std::chrono::seconds(1))
+    {
+        std::cerr << "Too long function at " << file << "(" << line << ")" << std::endl;
+    }
+
+    while ((end - start) < std::chrono::seconds(1))
+    {
+        func();
+        ++count;
+        end = std::chrono::high_resolution_clock::now();
+    }
+    return (end - start) / count;
+}
+
+#define COMPUTE_DURATION(F) compute_duration(F, __FILE__, __LINE__)
 
 #define CHECK_EQUAL(A, B) assert(A == B)

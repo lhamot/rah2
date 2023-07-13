@@ -1,11 +1,10 @@
 #include <array>
-#include <chrono>
 
 #include "test_helpers.hpp"
 #include "rah4.hpp"
 #include "eastl_sort.h"
 
-#ifdef RAH_CPP20
+#if RAH_CPP20
 #include <ranges>
 #endif
 
@@ -56,23 +55,6 @@ void test_for_each_n()
     /// [rah::for_each_n]
 }
 
-template <typename F>
-auto compute_duration(size_t times, F&& func)
-{
-    const auto start = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < times; ++i)
-    {
-        func();
-    }
-    const auto end = std::chrono::high_resolution_clock::now();
-    //while ((end - start) < std::chrono::seconds(1))
-    //{
-    //    func();
-    //    end = std::chrono::high_resolution_clock::now();
-    //}
-    return end - start;
-}
-
 void test_algo_count()
 {
     testSuite.test_case("sample");
@@ -119,16 +101,14 @@ void test_algo_count()
         constexpr size_t repeat_times = 80;
 #endif
 
-        const auto count_rah_noproj = compute_duration(
-            repeat_times,
+        const auto count_rah_noproj = COMPUTE_DURATION(
             [&]
             {
                 const size_t count = rah::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
         std::cout << "count_rah_noproj : " << count_rah_noproj.count() << std::endl;
-        const auto count_raw_noproj = compute_duration(
-            repeat_times,
+        const auto count_raw_noproj = COMPUTE_DURATION(
             [&]
             {
                 size_t count = 0;
@@ -143,8 +123,7 @@ void test_algo_count()
             });
         std::cout << "count_raw_noproj : " << count_raw_noproj.count() << std::endl;
         assert(count_rah_noproj < count_raw_noproj * 1.2);
-        const auto count_std_noproj = compute_duration(
-            repeat_times,
+        const auto count_std_noproj = COMPUTE_DURATION(
             [&]
             {
                 const size_t count = std::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
@@ -153,8 +132,7 @@ void test_algo_count()
         std::cout << "count_std_noproj : " << count_std_noproj.count() << std::endl;
         assert(count_rah_noproj < count_std_noproj * 1.2);
 #if RAH_CPP20
-        const auto count_rng_noproj = compute_duration(
-            repeat_times,
+        const auto count_rng_noproj = COMPUTE_DURATION(
             [&]
             {
                 const size_t count =
@@ -164,8 +142,7 @@ void test_algo_count()
         std::cout << "count_rng_noproj : " << count_rng_noproj.count() << std::endl;
         assert(count_rah_noproj < count_rng_noproj * 1.2);
 #endif
-        const auto count_rah_proj = compute_duration(
-            repeat_times,
+        const auto count_rah_proj = COMPUTE_DURATION(
             [&]
             {
                 const size_t count =
@@ -173,8 +150,7 @@ void test_algo_count()
                 assert(count == 79);
             });
         std::cout << "count_rah_proj : " << count_rah_proj.count() << std::endl;
-        const auto count_raw_proj = compute_duration(
-            repeat_times,
+        const auto count_raw_proj = COMPUTE_DURATION(
             [&]
             {
                 size_t count = 0;
@@ -192,8 +168,7 @@ void test_algo_count()
         assert(count_rah_proj < count_raw_proj * 1.2);
 
 #if RAH_CPP20
-        const auto count_rgn_proj = compute_duration(
-            repeat_times,
+        const auto count_rgn_proj = COMPUTE_DURATION(
             [&]
             {
                 const size_t count = std::ranges::count(
@@ -233,8 +208,7 @@ void test_count_if()
             return c.x == 2;
         };
 
-        const auto count_if_rah_pred = compute_duration(
-            repeat_times,
+        const auto count_if_rah_pred = COMPUTE_DURATION(
             [&]
             {
                 const size_t count =
@@ -243,8 +217,7 @@ void test_count_if()
             });
         std::cout << "count_if_rah_pred : " << count_if_rah_pred.count() << std::endl;
 
-        const auto count_if_raw_pred = compute_duration(
-            repeat_times,
+        const auto count_if_raw_pred = COMPUTE_DURATION(
             [&]
             {
                 size_t count = 0;
@@ -260,8 +233,7 @@ void test_count_if()
         std::cout << "count_if_raw_pred : " << count_if_raw_pred.count() << std::endl;
         assert(count_if_rah_pred < count_if_raw_pred * 1.2);
 
-        auto count_if_std_pred = compute_duration(
-            repeat_times,
+        auto count_if_std_pred = COMPUTE_DURATION(
             [&]
             {
                 const size_t count =
