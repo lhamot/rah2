@@ -1,4 +1,5 @@
 #include <array>
+#include <list>
 
 #include "test_helpers.hpp"
 #include "rah4.hpp"
@@ -95,12 +96,6 @@ void test_algo_count()
             return c.x;
         };
 
-#ifdef _DEBUG
-        constexpr size_t repeat_times = 20;
-#else
-        constexpr size_t repeat_times = 80;
-#endif
-
         const auto count_rah_noproj = COMPUTE_DURATION(
             [&]
             {
@@ -189,11 +184,6 @@ void test_count_if()
 
     {
         testSuite.test_case("perf");
-#ifdef _DEBUG
-        constexpr size_t repeat_times = 20;
-#else
-        constexpr size_t repeat_times = 80;
-#endif
         struct Coord
         {
             int x;
@@ -672,12 +662,60 @@ void test_copy_if()
 }
 void test_copy_n()
 {
+    testSuite.test_case("sample");
+    /// [rah::copy_n]
+    const std::string in{"ABCDEFGH"};
+    std::string out;
+
+    rah::copy_n(in.begin(), 4, std::back_inserter(out));
+    assert(out == "ABCD");
+
+    out = "abcdefgh";
+    const auto res = rah::copy_n(in.begin(), 5, out.begin());
+    assert(*(res.in) == 'F');
+    assert(*(res.out) == 'f');
+    assert(std::distance(std::begin(in), res.in) == 5);
+    assert(std::distance(std::begin(out), res.out) == 5);
+    /// [rah::copy_n]
 }
 void test_copy_backward()
 {
+    testSuite.test_case("sample");
+    /// [rah::copy_backward]
+    const auto src = {1, 2, 3, 4};
+
+    std::vector<int> dst(src.size() + 2);
+    rah::copy_backward(src, dst.end());
+    assert(dst == (std::vector<int>{0, 0, 1, 2, 3, 4}));
+
+    rah::fill(dst, 0);
+    const auto in_out = rah::copy_backward(src.begin(), src.end() - 2, dst.end());
+    assert(dst == (std::vector<int>{0, 0, 0, 0, 1, 2}));
+
+    assert(rah::distance(src.begin(), in_out.in) == 2);
+    assert(rah::distance(dst.begin(), in_out.out) == 4);
+    /// [rah::copy_backward]
 }
 void test_move()
 {
+    testSuite.test_case("sample");
+    /// [rah::move]
+    struct NonCopyable
+    {
+        NonCopyable() = default;
+        NonCopyable(NonCopyable const&) = delete;
+        NonCopyable& operator=(NonCopyable const&) = delete;
+        NonCopyable(NonCopyable&&) = default;
+        NonCopyable& operator=(NonCopyable&&) = default;
+    };
+    std::vector<NonCopyable> v;
+    v.emplace_back();
+    v.emplace_back();
+    v.emplace_back();
+
+    std::list<NonCopyable> l;
+    rah::move(v, std::back_inserter(l));
+    /// [rah::move]
 }
 void test_move_backward()
 {

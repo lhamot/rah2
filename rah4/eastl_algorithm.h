@@ -252,15 +252,36 @@ namespace RAH_NAMESPACE
         O out;
     };
 
-    template <typename InputIterator, typename InputSentinel, typename OutputIterator>
-    OutputIterator move(InputIterator first, InputSentinel last, OutputIterator result)
+    template <class I, class O>
+    using move_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct move_fn
     {
-        for (; first != last; ++first, ++result)
+        template <
+            typename I,
+            typename S,
+            typename O,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>
+                && RAH_NAMESPACE::weakly_incrementable<O>>* = nullptr>
+        constexpr RAH_NAMESPACE::move_result<I, O> operator()(I first, S last, O result) const
         {
-            *result = RAH_STD::move(*first);
+            for (; first != last; ++first, ++result)
+                *result = RAH_NAMESPACE::iter_move(first);
+            return {std::move(first), std::move(result)};
         }
-        return result;
-    }
+        template <
+            typename R,
+            typename O,
+            std::enable_if_t<RAH_NAMESPACE::input_range<R> && RAH_NAMESPACE::weakly_incrementable<O>>* = nullptr>
+        constexpr RAH_NAMESPACE::move_result<RAH_NAMESPACE::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(result));
+        }
+    };
+
+    constexpr move_fn move{};
 
     template <class I, class O>
     using copy_result = RAH_NAMESPACE::in_out_result<I, O>;
@@ -1207,6 +1228,9 @@ namespace RAH_NAMESPACE
         return result;
     }
 
+    template <class I, class O>
+    using copy_n_result = in_out_result<I, O>;
+
     /// copy_n
     ///
     /// Same as copy(InputIterator, InputIterator, OutputIterator) except based on count instead of iterator range.
@@ -1214,29 +1238,36 @@ namespace RAH_NAMESPACE
     /// Returns: Iterator in the destination range, pointing past the last element copied if count>0 or first otherwise.
     /// Complexity: Exactly count assignments, if count > 0.
     ///
-    template <typename InputIterator, typename Size, typename OutputIterator>
-    inline OutputIterator
-    copy_n_impl(InputIterator first, Size n, OutputIterator result, RAH_ITC_NS::input_iterator_tag)
+    struct copy_n_fn
     {
-        for (; n > 0; --n)
-            *result++ = *first++;
-        return result;
-    }
+        template <
+            typename I,
+            typename O,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_iterator<I> && !RAH_NAMESPACE::random_access_iterator<I>
+                && RAH_NAMESPACE::weakly_incrementable<O>>* = nullptr>
+        constexpr RAH_NAMESPACE::copy_n_result<I, O>
+        operator()(I first, iter_difference_t<I> n, O result) const
+        {
+            for (RAH_NAMESPACE::iter_difference_t<I> i{}; i != n; ++i, ++first, ++result)
+                *result = *first;
+            return {std::move(first), std::move(result)};
+        }
 
-    template <typename RandomAccessIterator, typename Size, typename OutputIterator>
-    inline OutputIterator copy_n_impl(
-        RandomAccessIterator first, Size n, OutputIterator result, RAH_ITC_NS::random_access_iterator_tag)
-    {
-        return RAH_NAMESPACE::copy(
-            first, first + n, result); // Take advantage of the optimizations present in the copy algorithm.
-    }
+        template <
+            typename I,
+            typename O,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_iterator<I> && RAH_NAMESPACE::random_access_iterator<I>
+                && RAH_NAMESPACE::weakly_incrementable<O>>* = nullptr>
+        constexpr RAH_NAMESPACE::copy_n_result<I, O>
+        operator()(I first, iter_difference_t<I> n, O result) const
+        {
+            return RAH_NAMESPACE::copy(first, first + n, result);
+        }
+    };
 
-    template <typename InputIterator, typename Size, typename OutputIterator>
-    inline OutputIterator copy_n(InputIterator first, Size n, OutputIterator result)
-    {
-        typedef typename RAH_STD::iterator_traits<InputIterator>::iterator_category IC;
-        return RAH_NAMESPACE::copy_n_impl(first, n, result, IC());
-    }
+    constexpr copy_n_fn copy_n{};
 
     /// move_backward
     ///
@@ -1268,6 +1299,9 @@ namespace RAH_NAMESPACE
         return resultEnd;
     }
 
+    template <class I1, class I2>
+    using copy_backward_result = RAH_NAMESPACE::in_out_result<I1, I2>;
+
     /// copy_backward
     ///
     /// copies memory in the range of [first, last) to the range *ending* with result.
@@ -1282,15 +1316,36 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: Exactly 'last - first' assignments.
     ///
-    template <typename BidirectionalIterator1, typename Sentinel1, typename BidirectionalIterator2>
-    inline BidirectionalIterator2
-    copy_backward(BidirectionalIterator1 first, Sentinel1 last, BidirectionalIterator2 resultEnd)
+    struct copy_backward_fn
     {
-        while (first != last)
-            *(--resultEnd) = *(--last);
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            std::enable_if_t<
+                RAH_NAMESPACE::bidirectional_iterator<I1> && RAH_NAMESPACE::sentinel_for<S1, I1>
+                && RAH_NAMESPACE::bidirectional_iterator<I2>>* = nullptr>
+        constexpr RAH_NAMESPACE::copy_backward_result<I1, I2> operator()(I1 first, S1 last, I2 result) const
+        {
+            I1 last1{RAH_NAMESPACE::next(first, std::move(last))};
+            for (I1 i{last1}; i != first;)
+                *--result = *--i;
+            return {std::move(last1), std::move(result)};
+        }
 
-        return resultEnd;
-    }
+        template <
+            typename R,
+            typename I,
+            std::enable_if_t<
+                RAH_NAMESPACE::bidirectional_range<R> && RAH_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+        constexpr RAH_NAMESPACE::copy_backward_result<RAH_NAMESPACE::borrowed_iterator_t<R>, I>
+        operator()(R&& r, I result) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(result));
+        }
+    };
+
+    constexpr copy_backward_fn copy_backward{};
 
     /// count
     ///
