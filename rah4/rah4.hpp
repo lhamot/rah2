@@ -242,7 +242,7 @@ namespace RAH_NAMESPACE
             {
                 get().~T();
             }
-            RAH_STD::aligned_storage_t<sizeof(T), RAH_STD::alignment_of_v<T>> value_;
+            RAH_STD::aligned_storage_t<sizeof(T), RAH_NAMESPACE::alignment_of_v<T>> value_;
             bool is_allocated_ = false;
         };
 
@@ -327,14 +327,14 @@ namespace RAH_NAMESPACE
 #if !RAH_CPP20
         template <
             typename Sent = S,
-            std::enable_if_t<!std::is_same_v<Sent, void> and !std::is_same_v<Sent, I>>* = nullptr>
+            std::enable_if_t<!RAH_NAMESPACE::is_same_v<Sent, void> and !RAH_NAMESPACE::is_same_v<Sent, I>>* = nullptr>
         friend bool operator!=(Sent const& sent, I const& it)
         {
             return !(it == sent);
         }
         template <
             typename Sent = S,
-            std::enable_if_t<!std::is_same_v<Sent, void> and !std::is_same_v<Sent, I>>* = nullptr>
+            std::enable_if_t<!RAH_NAMESPACE::is_same_v<Sent, void> and !RAH_NAMESPACE::is_same_v<Sent, I>>* = nullptr>
         friend bool operator!=(I const& it, Sent const& sent)
         {
             return !(it == sent);
@@ -374,7 +374,7 @@ namespace RAH_NAMESPACE
         using pointer = value_type*;
         using reference = R;
 
-        static_assert(not RAH_STD::is_reference_v<value_type>, "value_type can't be a reference");
+        static_assert(not RAH_NAMESPACE::is_reference_v<value_type>, "value_type can't be a reference");
 
         I& operator++()
         {
@@ -933,7 +933,8 @@ namespace RAH_NAMESPACE
         template <typename R>
         auto ref(R& range)
         {
-            static_assert(not std::is_rvalue_reference_v<R>, "range can't be a rvalue reference");
+            static_assert(
+                not RAH_NAMESPACE::is_rvalue_reference_v<R>, "range can't be a rvalue reference");
             return RAH_NAMESPACE::views::ref_view<std::remove_reference_t<R>>(range);
         }
 
@@ -1000,7 +1001,8 @@ namespace RAH_NAMESPACE
         template <typename R>
         auto owning(R&& range)
         {
-            static_assert(not std::is_lvalue_reference_v<R>, "range can't be a lvalue reference");
+            static_assert(
+                not RAH_NAMESPACE::is_lvalue_reference_v<R>, "range can't be a lvalue reference");
             return RAH_NAMESPACE::views::owning_view<std::remove_reference_t<R>>(
                 std::forward<R>(range));
         }
@@ -1022,7 +1024,7 @@ namespace RAH_NAMESPACE
         template <
             typename R,
             RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>>* = nullptr,
-            RAH_STD::enable_if_t<RAH_STD::is_lvalue_reference_v<R>>* = nullptr>
+            RAH_STD::enable_if_t<RAH_NAMESPACE::is_lvalue_reference_v<R>>* = nullptr>
         auto all(R&& range)
         {
             return RAH_NAMESPACE::views::ref(RAH_STD::forward<R>(range));
@@ -1031,7 +1033,7 @@ namespace RAH_NAMESPACE
         template <
             typename R,
             RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>>* = nullptr,
-            RAH_STD::enable_if_t<not RAH_STD::is_lvalue_reference_v<R>>* = nullptr>
+            RAH_STD::enable_if_t<not RAH_NAMESPACE::is_lvalue_reference_v<R>>* = nullptr>
         auto all(R&& range)
         {
             return owning_view<std::decay_t<R>>(RAH_STD::forward<R>(range));
@@ -1868,7 +1870,7 @@ namespace RAH_NAMESPACE
             using base_sentinel = sentinel_t<R>;
             using input_iter_cat = range_iter_categ_t<R>;
             using Cat = std::conditional_t<
-                std::is_same_v<input_iter_cat, std::input_iterator_tag>,
+                RAH_NAMESPACE::is_same_v<input_iter_cat, std::input_iterator_tag>,
                 std::forward_iterator_tag,
                 input_iter_cat>;
             static constexpr bool is_sized = rah::sized_range<R>;
@@ -2403,7 +2405,7 @@ namespace RAH_NAMESPACE
                 {
                     return iter.pos_ == pos_;
                 }
-                template <typename I = iterator, std::enable_if_t<!std::is_same_v<I, sentinel>>* = nullptr>
+                template <typename I = iterator, std::enable_if_t<!RAH_NAMESPACE::is_same_v<I, sentinel>>* = nullptr>
                 friend bool operator==(iterator const& iter, sentinel const& sent)
                 {
                     return iter.current_ == sent.sent;
@@ -2525,7 +2527,7 @@ namespace RAH_NAMESPACE
             template <typename Tuple, typename Check>
             constexpr bool all_type()
             {
-                return all_type_impl<Tuple, std::tuple_size_v<Tuple> - 1, Check>::value;
+                return all_type_impl<Tuple, RAH_NAMESPACE::tuple_size_v<Tuple> - 1, Check>::value;
             }
 
             template <class F, typename... Args, size_t... Is>
@@ -2754,7 +2756,7 @@ namespace RAH_NAMESPACE
                 static constexpr bool value = rah::borrowed_range<Range const>;
             };
             static constexpr bool common_one_range =
-                std::tuple_size_v<RangeTuple> == 1
+                RAH_NAMESPACE::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool all_const_sized =
@@ -2939,7 +2941,7 @@ namespace RAH_NAMESPACE
                 static constexpr bool value = rah::sized_range<Range>;
             };
             static constexpr bool common_one_range =
-                std::tuple_size_v<RangeTuple> == 1
+                RAH_NAMESPACE::tuple_size_v<RangeTuple> == 1
                 && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool common_all_sized_random_access =
@@ -2970,7 +2972,7 @@ namespace RAH_NAMESPACE
             {
                 IterTuple iters_;
                 zip_transform_view* parent_ = nullptr;
-                static constexpr size_t tuple_size = std::tuple_size_v<RangeTuple>;
+                static constexpr size_t tuple_size = RAH_NAMESPACE::tuple_size_v<RangeTuple>;
 
             public:
                 iterator() = default;
@@ -3637,7 +3639,7 @@ namespace RAH_NAMESPACE
             }
         };
 
-        template <typename R, RAH_STD::enable_if_t<not RAH_STD::is_rvalue_reference_v<R&&>, int> = 0>
+        template <typename R, RAH_STD::enable_if_t<not RAH_NAMESPACE::is_rvalue_reference_v<R&&>, int> = 0>
         auto chunk(R&& range, size_t step)
         {
             auto ref = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
@@ -4395,7 +4397,7 @@ namespace RAH_NAMESPACE
 
         public:
             static_assert(
-                std::is_same_v<range_reference_t<R1>, range_reference_t<R2>>,
+                RAH_NAMESPACE::is_same_v<range_reference_t<R1>, range_reference_t<R2>>,
                 "R1 and R2 doesn't have the same reference type");
             using reference = range_reference_t<R1>;
 

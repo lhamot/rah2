@@ -1640,7 +1640,7 @@ namespace RAH_NAMESPACE
         {
             for (; first1 != last1; ++first1)
                 for (auto i = first2; i != last2; ++i)
-                    if (std::invoke(pred, std::invoke(proj1, *first1), std::invoke(proj2, *i)))
+                    if (RAH_INVOKE_2(pred, (RAH_INVOKE_1(proj1, *first1)), (RAH_INVOKE_1(proj2, *i))))
                         return first1;
             return first1;
         }
@@ -1713,14 +1713,12 @@ namespace RAH_NAMESPACE
         ForwardSentinel2 last2,
         BinaryPredicate predicate)
     {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator1>::value_type value_type;
-
         for (; first1 != last1; ++first1)
         {
             if (RAH_NAMESPACE::find_if(
                     first2,
                     last2,
-                    [f1 = *first1](auto&& v)
+                    [f1 = *first1, &predicate](auto&& v)
                     { return predicate(f1, RAH_STD::forward<decltype(v)>(v)); })
                 == last2)
                 break;
@@ -1758,8 +1756,6 @@ namespace RAH_NAMESPACE
         ForwardSentinel2 last2,
         BinaryPredicate predicate)
     {
-        typedef typename RAH_STD::iterator_traits<BidirectionalIterator1>::value_type value_type;
-
         if ((first1 != last1) && (first2 != last2))
         {
             BidirectionalIterator1 it1(last1);
@@ -1812,8 +1808,6 @@ namespace RAH_NAMESPACE
         ForwardSentinel2 last2,
         BinaryPredicate predicate)
     {
-        typedef typename RAH_STD::iterator_traits<BidirectionalIterator1>::value_type value_type;
-
         if ((first1 != last1) && (first2 != last2))
         {
             BidirectionalIterator1 it1(last1);
@@ -1927,7 +1921,7 @@ namespace RAH_NAMESPACE
                 && RAH_NAMESPACE::copy_constructible<F>>* = nullptr>
         constexpr O operator()(O first, S last, F gen) const
         {
-            for (; first != last; *first = std::invoke(gen), ++first)
+            for (; first != last; *first = RAH_INVOKE_0(gen), ++first)
             {
             }
             return first;
@@ -3462,7 +3456,7 @@ namespace RAH_NAMESPACE
                 return {first, first};
             for (; first != last; ++first)
             {
-                if (std::invoke(pred, std::invoke(proj, *first), value))
+                if (RAH_INVOKE_2(pred, RAH_INVOKE_1(proj, *first), value))
                 {
                     I start = first;
                     RAH_NAMESPACE::iter_difference_t<I> n{1};
@@ -3472,7 +3466,7 @@ namespace RAH_NAMESPACE
                             return {start, std::next(first)}; // found
                         if (++first == last)
                             return {first, first}; // not found
-                        if (!std::invoke(pred, std::invoke(proj, *first), value))
+                        if (!RAH_INVOKE_2(pred, RAH_INVOKE_1(proj, *first), value))
                             break; // not equ to value
                     }
                 }

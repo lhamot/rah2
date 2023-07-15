@@ -117,7 +117,7 @@ public:
     };
 
     using ref_type =
-        std::conditional_t<std::is_same_v<Cat, std::output_iterator_tag>, int&, int const&>;
+        std::conditional_t<RAH_NAMESPACE::is_same_v<Cat, std::output_iterator_tag>, int&, int const&>;
 
     class iterator : public rah::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
@@ -234,13 +234,17 @@ public:
         auto const rounded_last = ((last_index + (step_ - 1)) / step_) * step_;
         return iterator(start_ + rounded_last, step_);
     }
-    template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        std::enable_if_t<RAH_NAMESPACE::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
     RAH_STD::remove_reference_t<ref_type>* data()
     {
         return nullptr;
     }
 
-    template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        std::enable_if_t<RAH_NAMESPACE::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
     RAH_STD::remove_reference_t<ref_type>* data() const
     {
         return nullptr;
@@ -358,13 +362,17 @@ public:
     {
         return iterator(rah::end(base_));
     }
-    template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        std::enable_if_t<RAH_NAMESPACE::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
     int* data()
     {
         return rah::data(base_);
     }
 
-    template <typename C = Cat, std::enable_if_t<std::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        std::enable_if_t<RAH_NAMESPACE::is_same_v<C, rah::contiguous_iterator_tag>>* = nullptr>
     int* data() const
     {
         return rah::data(base_);
@@ -446,7 +454,7 @@ static_assert(rah::forward_range<RandomCommonView>, "Should be Forward");
 using It = rah::iterator_t<RandomCommonView>;
 using cat = rah::range_iter_categ_t<RandomCommonView>;
 static_assert(rah::forward_iterator<It>, "");
-static_assert(std::is_same_v<decltype(--std::declval<It>()), It&>, "");
+static_assert(RAH_NAMESPACE::is_same_v<decltype(--std::declval<It>()), It&>, "");
 STATIC_ASSERT((rah::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(rah::bidirectional_range<RandomCommonView>, "Should be bidirectional");
 using RandomCommonViewIter = RAH_NAMESPACE::iterator_t<RandomCommonView>;
@@ -820,14 +828,6 @@ std::ostream& operator<<(std::ostream& os, std::tuple<Args...> tup)
     ::rah::views::details::for_each(tup, print_elt);
     return os;
 }
-
-namespace test
-{
-    template <class T>
-    constexpr bool is_reference_v = std::is_reference<T>::value;
-    template <class T>
-    constexpr bool is_rvalue_reference_v = std::is_rvalue_reference<T>::value;
-} // namespace test
 
 template <typename R, typename = std::enable_if_t<rah::range<R>>>
 void toto(R&&)

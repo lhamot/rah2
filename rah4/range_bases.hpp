@@ -17,6 +17,10 @@
 
 #define RAH_DEV_ASSERT assert
 
+#define RAH_INVOKE_0(FUNC) FUNC()
+#define RAH_INVOKE_1(FUNC, ARG) FUNC(ARG)
+#define RAH_INVOKE_2(FUNC, ARG1, ARG2) FUNC(ARG1, ARG2)
+
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202000L) || __cplusplus >= 2020000L)
 #define RAH_CPP20 1
 #else
@@ -72,6 +76,7 @@
 
 namespace rah
 {
+    // TODO : Remove this class
     template <typename T>
     struct DeleteCheck
     {
@@ -151,6 +156,54 @@ namespace rah
 
     // **************************** standard traits ***********************************************
 
+    template <class Base, class Derived>
+    constexpr bool is_base_of_v = RAH_STD::is_base_of<Base, Derived>::value;
+
+    template <class T, class U>
+    constexpr bool is_same_v = RAH_STD::is_same<T, U>::value;
+
+    template <class From, class To>
+    constexpr bool is_convertible_v = RAH_STD::is_convertible<From, To>::value;
+
+    template <class T>
+    constexpr bool is_pointer_v = RAH_STD::is_pointer<T>::value;
+
+    template <class T>
+    constexpr bool is_lvalue_reference_v = RAH_STD::is_lvalue_reference<T>::value;
+
+    template <class T>
+    constexpr bool is_integral_v = RAH_STD::is_integral<T>::value;
+
+    template <class T>
+    constexpr bool is_signed_v = RAH_STD::is_signed<T>::value;
+
+    template <class T, class... Args>
+    constexpr bool is_constructible_v = RAH_STD::is_constructible<T, Args...>::value;
+    template <class T, class... Args>
+    constexpr bool is_trivially_constructible_v =
+        RAH_STD::is_trivially_constructible<T, Args...>::value;
+    template <class T, class... Args>
+    constexpr bool is_nothrow_constructible_v = RAH_STD::is_nothrow_constructible<T, Args...>::value;
+
+    template <class T>
+    constexpr bool is_destructible_v = RAH_STD::is_destructible<T>::value;
+    template <class T>
+    constexpr bool is_trivially_destructible_v = RAH_STD::is_trivially_destructible<T>::value;
+    template <class T>
+    constexpr bool is_nothrow_destructible_v = RAH_STD::is_nothrow_destructible<T>::value;
+
+    template <class T>
+    constexpr std::size_t alignment_of_v = RAH_STD::alignment_of<T>::value;
+
+    template <class T>
+    constexpr bool is_reference_v = RAH_STD::is_reference<T>::value;
+
+    template <class T>
+    constexpr bool is_rvalue_reference_v = RAH_STD::is_rvalue_reference<T>::value;
+
+    template <class T>
+    constexpr std::size_t tuple_size_v = RAH_STD::tuple_size<T>::value;
+
     template <class T>
     struct is_scalar
         : std::integral_constant<
@@ -182,8 +235,8 @@ namespace rah
 
     template <class Derived, class Base>
     constexpr bool derived_from =
-        RAH_STD::is_base_of_v<Base, Derived>
-        && RAH_STD::is_convertible_v<const volatile Derived*, const volatile Base*>;
+        RAH_NAMESPACE::is_base_of_v<Base, Derived>
+        && RAH_NAMESPACE::is_convertible_v<const volatile Derived*, const volatile Base*>;
 
     namespace details
     {
@@ -192,12 +245,12 @@ namespace rah
         template <typename T>
         T& declval();
 
-        template <typename I, std::enable_if_t<std::is_pointer_v<I>>* = nullptr>
+        template <typename I, std::enable_if_t<RAH_NAMESPACE::is_pointer_v<I>>* = nullptr>
         auto get_iterator_category_impl() -> rah::contiguous_iterator_tag;
 
         template <
             typename I,
-            std::enable_if_t<!std::is_pointer_v<I>>* = nullptr,
+            std::enable_if_t<!RAH_NAMESPACE::is_pointer_v<I>>* = nullptr,
             typename Cat = typename std::iterator_traits<I>::iterator_category>
         auto get_iterator_category_impl() -> Cat;
 
@@ -356,7 +409,8 @@ namespace rah
     struct common_range_impl
     {
         template <typename U>
-        using iter_is_sent = std::enable_if_t<RAH_STD::is_same_v<iterator_t<U>, sentinel_t<U>>>;
+        using iter_is_sent =
+            std::enable_if_t<RAH_NAMESPACE::is_same_v<iterator_t<U>, sentinel_t<U>>>;
 
         static constexpr bool value = range<T> && compiles<false, T, iter_is_sent>;
     };
@@ -403,17 +457,9 @@ namespace rah
     template <typename I>
     using iter_difference_t = ptrdiff_t;
 
-    template <class T>
-    constexpr bool is_destructible_v = std::is_destructible<T>::value;
-
     template <class T, class... Args>
-    constexpr bool is_constructible_v = std::is_constructible<T, Args...>::value;
-
-    template <class T, class... Args>
-    constexpr bool constructible_from = is_destructible_v<T> && is_constructible_v<T, Args...>;
-
-    template <class From, class To>
-    constexpr bool is_convertible_v = std::is_convertible<From, To>::value;
+    constexpr bool constructible_from =
+        RAH_NAMESPACE::is_destructible_v<T> && RAH_NAMESPACE::is_constructible_v<T, Args...>;
 
     template <class From, class To>
     struct convertible_to_impl
@@ -433,17 +479,18 @@ namespace rah
         RAH_NAMESPACE::constructible_from<T, T> && RAH_NAMESPACE::convertible_to<T, T>;
 
     template <class U, typename V>
-    constexpr bool same_as = std::is_same_v<U, V>;
+    constexpr bool same_as = RAH_NAMESPACE::is_same_v<U, V>;
 
     template <class LHS, class RHS>
     struct assignable_from_impl
     {
         template <class LHS_>
-        using check_assign = std::enable_if_t<
-            std::is_same_v<decltype(std::declval<LHS_>() = std::forward<RHS>(std::declval<RHS&&>())), LHS_>>;
+        using check_assign = std::enable_if_t<RAH_NAMESPACE::is_same_v<
+            decltype(std::declval<LHS_>() = std::forward<RHS>(std::declval<RHS&&>())),
+            LHS_>>;
 
         static constexpr bool value =
-            std::is_lvalue_reference_v<LHS> && compiles<false, LHS, check_assign>;
+            RAH_NAMESPACE::is_lvalue_reference_v<LHS> && compiles<false, LHS, check_assign>;
     };
 
     template <class LHS, class RHS>
@@ -463,9 +510,11 @@ namespace rah
     {
         template <class T>
         using diff_is_signed_integer = std::enable_if_t<
-            std::is_integral_v<iter_difference_t<T>> && std::is_signed_v<iter_difference_t<T>>>;
+            RAH_NAMESPACE::is_integral_v<iter_difference_t<T>>
+            && RAH_NAMESPACE::is_signed_v<iter_difference_t<T>>>;
         template <class T>
-        using incr_type = std::enable_if_t<std::is_same_v<decltype(++std::declval<T>()), T&>>;
+        using incr_type =
+            std::enable_if_t<RAH_NAMESPACE::is_same_v<decltype(++std::declval<T>()), T&>>;
 
         template <class T>
         using can_post_incr = decltype(std::declval<T&>()++);
@@ -489,7 +538,8 @@ namespace rah
     struct input_or_output_iterator_impl
     {
         template <class T>
-        using can_ref = std::enable_if_t<not std::is_same_v<decltype(*std::declval<T>()), void>>;
+        using can_ref =
+            std::enable_if_t<not RAH_NAMESPACE::is_same_v<decltype(*std::declval<T>()), void>>;
 
         static constexpr bool value = weakly_incrementable<R> && compiles<false, R, can_ref>;
 
@@ -527,10 +577,10 @@ namespace rah
         using has_rval_ref = iter_rvalue_reference_t<T>;
         template <class T>
         using deref =
-            std::enable_if_t<std::is_same_v<decltype(*std::declval<T>()), iter_reference_t<T>>>;
+            std::enable_if_t<RAH_NAMESPACE::is_same_v<decltype(*std::declval<T>()), iter_reference_t<T>>>;
         template <class T>
         using iter_move = std::enable_if_t<
-            std::is_same_v<decltype(iter_move(std::declval<T>())), iter_rvalue_reference_t<T>>>;
+            RAH_NAMESPACE::is_same_v<decltype(iter_move(std::declval<T>())), iter_rvalue_reference_t<T>>>;
 
         // TODO re-add checks
         static constexpr bool value =
@@ -549,7 +599,7 @@ namespace rah
     struct output_iterator_impl
     {
         template <typename U>
-        using can_assign_incr = decltype(*std::declval<U>()++ = std::declval<T&&>());
+        using can_assign_incr = decltype(*std::declval<U&>()++ = std::declval<T&&>());
 
         static constexpr bool value = RAH_NAMESPACE::input_or_output_iterator<I>
                                       && RAH_NAMESPACE::indirectly_writable<I, T>
@@ -601,7 +651,7 @@ namespace rah
     constexpr bool equality_comparable = WeaklyEqualityComparableWith<T, T>;
 
     template <class T>
-    constexpr bool destructible = std::is_nothrow_destructible_v<T>;
+    constexpr bool destructible = RAH_NAMESPACE::is_nothrow_destructible_v<T>;
 
     template <class T>
     constexpr bool copy_constructible =
@@ -641,7 +691,8 @@ namespace rah
     struct incrementable_impl
     {
         template <typename U>
-        using check_incr = std::enable_if_t<std::is_same_v<decltype(std::declval<U&>()++), U>>;
+        using check_incr =
+            std::enable_if_t<RAH_NAMESPACE::is_same_v<decltype(std::declval<U&>()++), U>>;
 
         static constexpr bool value =
             regular<I> && weakly_incrementable<I> && compiles<false, I, check_incr>;
@@ -731,16 +782,18 @@ namespace rah
             decltype(is_true<
                      Diagnostic,
                      derived_from<details::iterator_category<U>, std::bidirectional_iterator_tag>>()),
-            decltype(is_true<Diagnostic, std::is_same_v<decltype(--i), U&>>()),
-            decltype(is_true<Diagnostic, std::is_same_v<decltype(i--), U>>())>;
+            decltype(is_true<Diagnostic, RAH_NAMESPACE::is_same_v<decltype(--i), U&>>()),
+            decltype(is_true<Diagnostic, RAH_NAMESPACE::is_same_v<decltype(i--), U>>())>;
 
         template <typename U = I>
         using check_wrapper = decltype(check(std::declval<U>()));
 
         template <typename U>
-        using can_pre_decr = is_true<Diagnostic, std::is_same_v<decltype(--std::declval<U&>()), U&>>;
+        using can_pre_decr =
+            is_true<Diagnostic, RAH_NAMESPACE::is_same_v<decltype(--std::declval<U&>()), U&>>;
         template <typename U>
-        using can_post_decr = is_true<Diagnostic, std::is_same_v<decltype(std::declval<U&>()--), U>>;
+        using can_post_decr =
+            is_true<Diagnostic, RAH_NAMESPACE::is_same_v<decltype(std::declval<U&>()--), U>>;
         template <typename U>
         using has_bidir_cat =
             std::enable_if_t<derived_from<details::iterator_category<U>, std::bidirectional_iterator_tag>>;
@@ -759,27 +812,28 @@ namespace rah
     {
         template <typename U>
         using addEqual = std::enable_if_t<
-            std::is_same_v<decltype(std::declval<U&>() += rah::iter_difference_t<U>()), U&>>;
+            RAH_NAMESPACE::is_same_v<decltype(std::declval<U&>() += rah::iter_difference_t<U>()), U&>>;
 
         template <typename U>
-        using add =
-            std::enable_if_t<std::is_same_v<decltype(std::declval<U>() + rah::iter_difference_t<U>()), U>>;
+        using add = std::enable_if_t<
+            RAH_NAMESPACE::is_same_v<decltype(std::declval<U>() + rah::iter_difference_t<U>()), U>>;
 
         template <typename U>
-        using add2 =
-            std::enable_if_t<std::is_same_v<decltype(rah::iter_difference_t<U>() + std::declval<U>()), U>>;
+        using add2 = std::enable_if_t<
+            RAH_NAMESPACE::is_same_v<decltype(rah::iter_difference_t<U>() + std::declval<U>()), U>>;
 
         template <typename U>
         using subEqual = std::enable_if_t<
-            std::is_same_v<decltype(std::declval<U&>() -= rah::iter_difference_t<U>()), U&>>;
+            RAH_NAMESPACE::is_same_v<decltype(std::declval<U&>() -= rah::iter_difference_t<U>()), U&>>;
 
         template <typename U>
-        using sub =
-            std::enable_if_t<std::is_same_v<decltype(std::declval<U>() - rah::iter_difference_t<U>()), U>>;
+        using sub = std::enable_if_t<
+            RAH_NAMESPACE::is_same_v<decltype(std::declval<U>() - rah::iter_difference_t<U>()), U>>;
 
         template <typename U>
-        using arr = std::enable_if_t<
-            std::is_same_v<decltype(std::declval<U>()[rah::iter_difference_t<U>()]), rah::iter_reference_t<U>>>;
+        using arr = std::enable_if_t<RAH_NAMESPACE::is_same_v<
+            decltype(std::declval<U>()[rah::iter_difference_t<U>()]),
+            rah::iter_reference_t<U>>>;
 
         template <typename U>
         using has_random_access_cat = std::enable_if_t<
@@ -803,7 +857,7 @@ namespace rah
         static constexpr bool value =
             rah::random_access_iterator_impl<I, Diagnostic>::value
             && is_true_v<Diagnostic, rah::derived_from<details::iterator_category<I>, rah::contiguous_iterator_tag>>
-            && is_true_v<Diagnostic, std::is_lvalue_reference_v<rah::iter_reference_t<I>>>
+            && is_true_v<Diagnostic, RAH_NAMESPACE::is_lvalue_reference_v<rah::iter_reference_t<I>>>
             && is_true_v<
                 Diagnostic,
                 rah::same_as<rah::iter_value_t<I>, rah::remove_cvref_t<rah::iter_reference_t<I>>>>;
@@ -819,7 +873,7 @@ namespace rah
     // **************************************** iterator operations *******************************
 
     template <class T>
-    constexpr auto iter_move(T&& t) -> decltype(RAH_STD::move(*t))
+    constexpr auto iter_move(T&& t) -> RAH_STD::remove_reference_t<decltype(*t)>
     {
         return RAH_STD::move(*t);
     }
@@ -1079,7 +1133,8 @@ namespace rah
 
     template <class R>
     constexpr bool borrowed_range =
-        range<R> && (RAH_STD::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
+        range<R>
+        && (RAH_NAMESPACE::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
 
     template <typename R, typename = int>
     struct has_ranges_size
@@ -1186,7 +1241,7 @@ namespace rah
     struct contiguous_range_impl
     {
         template <typename T>
-        using has_data = std::enable_if_t<std::is_same_v<
+        using has_data = std::enable_if_t<RAH_NAMESPACE::is_same_v<
             decltype(rah::data(std::declval<T>())),
             std::add_pointer_t<rah::range_reference_t<T>>>>;
         template <typename T>
@@ -1206,7 +1261,8 @@ namespace rah
     {
         template <class U>
         static constexpr bool constant_iterator =
-            input_iterator<U> && RAH_STD::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
+            input_iterator<U>
+            && RAH_NAMESPACE::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
 
         template <typename U>
         using const_iter = std::enable_if_t<constant_iterator<RAH_NAMESPACE::iterator_t<U>>>;
@@ -1305,7 +1361,7 @@ namespace rah
         && ((RAH_NAMESPACE::view<RAH_NAMESPACE::remove_cvref_t<T>>
              && RAH_NAMESPACE::constructible_from<RAH_NAMESPACE::remove_cvref_t<T>, T>)
             || (!RAH_NAMESPACE::view<RAH_NAMESPACE::remove_cvref_t<T>>
-                && (std::is_lvalue_reference_v<T>
+                && (RAH_NAMESPACE::is_lvalue_reference_v<T>
                     || (RAH_NAMESPACE::movable<std::remove_reference_t<T>>
                         && !is_initializer_list<T>))));
 

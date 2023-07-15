@@ -68,9 +68,9 @@ namespace rah
         using has_begin = decltype(begin(std::declval<T>()));
 
         template <class T>
-        using has_iter_incr = std::enable_if_t<std::is_same_v<
+        using has_iter_incr = std::enable_if_t<std::is_same<
             std::remove_reference_t<decltype(++begin(std::declval<T>()))>,
-            std::remove_reference_t<decltype(begin(std::declval<T>()))>>>;
+            std::remove_reference_t<decltype(begin(std::declval<T>()))>>::value>;
 
         template <class T>
         using has_end = decltype(begin(std::declval<T>()));

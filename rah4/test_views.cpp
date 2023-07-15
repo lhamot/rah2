@@ -872,7 +872,7 @@ void test_adjacent_view()
         for (auto&& abc : rah::views::iota(0) | rah::views::take(6) | rah::views::adjacent<0>())
         {
             static_assert(
-                std::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
+                RAH_NAMESPACE::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
                 "tuple should be empty");
             out.emplace_back();
         }
@@ -961,7 +961,7 @@ void test_adjacent_transform()
                               | rah::views::adjacent_transform<0>([](auto i) { return i + 1; }))
         {
             static_assert(
-                std::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
+                RAH_NAMESPACE::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
                 "tuple should be empty");
             out.push_back({});
         }

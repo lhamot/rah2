@@ -226,7 +226,7 @@ void test_range_concepts()
 
 int main()
 {
-    std::cout.imbue(std::locale("en_EN"));
+    // std::cout.imbue(std::locale("en_EN"));
 
     testSuite.addTest("Range_concepts", "*", test_range_concepts);
 
@@ -550,7 +550,8 @@ int main()
         /// [generate]
         static_assert(rah::input_range<decltype(gen)>, "");
         static_assert(
-            std::is_same_v<rah::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>, "");
+            RAH_NAMESPACE::is_same_v<rah::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>,
+            "");
         static_assert(not rah::forward_range<decltype(gen)>, "");
         static_assert(not rah::common_range<decltype(gen)>, "");
     }
@@ -574,7 +575,8 @@ int main()
         /// [generate_n]
         static_assert(rah::input_range<decltype(gen)>, "");
         static_assert(
-            std::is_same_v<rah::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>, "");
+            RAH_NAMESPACE::is_same_v<rah::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>,
+            "");
         static_assert(not rah::forward_range<decltype(gen)>, "");
         static_assert(not rah::common_range<decltype(gen)>, "");
     }
@@ -1001,7 +1003,8 @@ int main()
         EQUAL_RANGE(r, (il<Elt>({{42}, {42}, {42}, {42}, {42}})));
         for (auto&& elt : r)
         {
-            static_assert(test::is_reference_v<decltype(elt)>, "elt is expected to be a reference");
+            static_assert(
+                RAH_NAMESPACE::is_reference_v<decltype(elt)>, "elt is expected to be a reference");
             elt.member = 78; // Check for mutability
         }
         EQUAL_RANGE(r, (il<Elt>({{78}, {78}, {78}, {78}, {78}})));
@@ -1025,16 +1028,16 @@ int main()
             assert(iter->member == 2); // Check for mutability
             assert((*iter).member == 2); // Check for mutability
             static_assert(
-                test::is_rvalue_reference_v<decltype(*iter)>
-                    || (not test::is_reference_v<decltype(*iter)>),
+                RAH_NAMESPACE::is_rvalue_reference_v<decltype(*iter)>
+                    || (not RAH_NAMESPACE::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_copy)
         {
             assert(elt.member == 2); // Check for mutability
             static_assert(
-                test::is_rvalue_reference_v<decltype(elt)>
-                    || (not test::is_reference_v<decltype(elt)>),
+                RAH_NAMESPACE::is_rvalue_reference_v<decltype(elt)>
+                    || (not RAH_NAMESPACE::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
         auto r_ref = vec | transform([](auto a) { return a.member; });
@@ -1042,16 +1045,16 @@ int main()
         {
             assert(*iter == 1); // Check for mutability
             static_assert(
-                test::is_rvalue_reference_v<decltype(*iter)>
-                    || (not test::is_reference_v<decltype(*iter)>),
+                RAH_NAMESPACE::is_rvalue_reference_v<decltype(*iter)>
+                    || (not RAH_NAMESPACE::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_ref)
         {
             assert(elt == 1); // Check for mutability
             static_assert(
-                test::is_rvalue_reference_v<decltype(elt)>
-                    || (not test::is_reference_v<decltype(elt)>),
+                RAH_NAMESPACE::is_rvalue_reference_v<decltype(elt)>
+                    || (not RAH_NAMESPACE::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
     }

@@ -561,7 +561,7 @@ namespace RAH_NAMESPACE
     {
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        MergeSorter<RandomAccessIterator, T, StrictWeakOrdering, difference_type, 16>::sort(
+        MergeSorter<RandomAccessIterator, Sentinel, T, StrictWeakOrdering, difference_type, 16>::sort(
             first, last, pBuffer, compare);
     }
 
@@ -692,7 +692,7 @@ namespace RAH_NAMESPACE
         //auto allocator = *get_default_allocator(0);
         //value_type* const buffer = (value_type*)allocate_memory(
         //    allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
-        auto allocator = RAH_STD::allocator<value_type>;
+        auto allocator = RAH_STD::allocator<value_type>();
         value_type* const buffer = allocator.allocate(requested_size);
         RAH_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
 
@@ -2218,7 +2218,8 @@ namespace RAH_NAMESPACE
         RAH_NAMESPACE::merge_sort<RandomAccessIterator, RAHAllocatorType, StrictWeakOrdering>(
             first, last, *get_default_allocator(0), compare);
 #else
-        using Allocator = std::allocator<RAH_STD::iterator_traits<RandomAccessIterator>::value_type>;
+        using Allocator =
+            std::allocator<typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type>;
         RAH_NAMESPACE::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
             first, last, Allocator(), compare);
 #endif
@@ -2250,7 +2251,8 @@ namespace RAH_NAMESPACE
         RAH_NAMESPACE::merge_sort<RandomAccessIterator, EASTLAllocatorType>(
             first, last, *get_default_allocator(0));
 #else
-        using Allocator = std::allocator<RAH_STD::iterator_traits<RandomAccessIterator>::value_type>;
+        using Allocator =
+            std::allocator<typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type>;
         RAH_NAMESPACE::merge_sort<RandomAccessIterator, Allocator>(first, last, Allocator());
 #endif
 #endif

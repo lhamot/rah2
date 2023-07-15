@@ -437,7 +437,7 @@ void test_find_first_of()
     static auto p2 = {P{5, -5}, P{6, -3}, P{7, -5}, P{8, -3}};
 
     // Compare only P::y data members by projecting them:
-    const auto found4 = rah::find_first_of(p1, p2, {}, &P::y, &P::y);
+    const auto found4 = rah::find_first_of(p1, p2, [](auto a, auto b) { return a.y == b.y; });
     assert(std::distance(p1.begin(), found4) == 2); // {3, -3}
     /// [rah::find_first_of]
 }

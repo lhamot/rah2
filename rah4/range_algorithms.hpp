@@ -16,9 +16,9 @@ namespace rah
             using U = RAH_NAMESPACE::remove_cvref_t<decltype(f(init, *first))>;
             if (first == last)
                 return U(std::move(init));
-            U accum = std::invoke(f, std::move(init), *first);
+            U accum = RAH_INVOKE_2(f, std::move(init), *first);
             for (++first; first != last; ++first)
-                accum = std::invoke(f, std::move(accum), *first);
+                accum = RAH_INVOKE_2(f, std::move(accum), *first);
             return std::move(accum);
         }
 
@@ -46,7 +46,7 @@ namespace rah
             // Note: if I is mere forward_iterator, we may only go from begin to end.
             I found{};
             for (; first != last; ++first)
-                if (std::invoke(proj, *first) == value)
+                if (RAH_INVOKE_1(proj, *first) == value)
                     found = first;
 
             if (found == I{})
@@ -79,7 +79,7 @@ namespace rah
             // Note: if I is mere forward_iterator, we may only go from begin to end.
             I found{};
             for (; first != last; ++first)
-                if (std::invoke(pred, std::invoke(proj, *first)))
+                if (RAH_INVOKE_1(pred, RAH_INVOKE_1(proj, *first)))
                     found = first;
 
             if (found == I{})
@@ -115,7 +115,7 @@ namespace rah
             // Note: if I is mere forward_iterator, we may only go from begin to end.
             I found{};
             for (; first != last; ++first)
-                if (!std::invoke(pred, std::invoke(proj, *first)))
+                if (!RAH_INVOKE_1(pred, RAH_INVOKE_1(proj, *first)))
                     found = first;
 
             if (found == I{})
