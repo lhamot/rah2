@@ -2158,8 +2158,9 @@ namespace RAH_NAMESPACE
 
         inline auto reverse()
         {
-            return make_pipeable([=](auto&& range)
-                                 { return reverse(RAH_STD::forward<decltype(range)>(range)); });
+            return make_pipeable(
+                [=](auto&& range)
+                { return RAH_NAMESPACE::views::reverse(RAH_STD::forward<decltype(range)>(range)); });
         }
     } // namespace views
 

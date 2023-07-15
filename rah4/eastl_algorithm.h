@@ -1269,6 +1269,9 @@ namespace RAH_NAMESPACE
 
     constexpr copy_n_fn copy_n{};
 
+    template <class I, class O>
+    using move_backward_result = RAH_NAMESPACE::in_out_result<I, O>;
+
     /// move_backward
     ///
     /// The elements are moved in reverse order (the last element is moved first), but their relative order is preserved.
@@ -1289,15 +1292,37 @@ namespace RAH_NAMESPACE
     ///             *--resultEnd = RAH_STD::move(*--last);
     ///         return resultEnd;
     ///     }
-    ///
-    template <typename BidirectionalIterator1, typename Sentinel1, typename BidirectionalIterator2>
-    inline BidirectionalIterator2
-    move_backward(BidirectionalIterator1 first, Sentinel1 last, BidirectionalIterator2 resultEnd)
+    struct move_backward_fn
     {
-        while (last != first)
-            *--resultEnd = RAH_STD::move(*--last);
-        return resultEnd;
-    }
+        template <
+            typename I1,
+            typename S1,
+            typename I2,
+            std::enable_if_t<
+                RAH_NAMESPACE::bidirectional_iterator<I1> && RAH_NAMESPACE::sentinel_for<S1, I1>
+                && RAH_NAMESPACE::bidirectional_iterator<I2>>* = nullptr>
+        constexpr RAH_NAMESPACE::move_backward_result<I1, I2> operator()(I1 first, S1 last, I2 result) const
+        {
+            auto i{last};
+            for (; i != first; *--result = RAH_NAMESPACE::iter_move(--i))
+            {
+            }
+            return {std::move(last), std::move(result)};
+        }
+
+        template <
+            typename R,
+            typename I,
+            std::enable_if_t<
+                RAH_NAMESPACE::bidirectional_range<R> && RAH_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+        constexpr RAH_NAMESPACE::move_backward_result<RAH_NAMESPACE::borrowed_iterator_t<R>, I>
+        operator()(R&& r, I result) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(result));
+        }
+    };
+
+    constexpr move_backward_fn move_backward{};
 
     template <class I1, class I2>
     using copy_backward_result = RAH_NAMESPACE::in_out_result<I1, I2>;
@@ -1891,12 +1916,37 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: Exactly 'last - first' invocations of generator and assignments.
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename Generator>
-    inline void generate(ForwardIterator first, ForwardSentinel last, Generator generator)
+    struct generate_fn
     {
-        for (; first != last; ++first) // We cannot call generate_n(first, last-first, generator)
-            *first = generator(); // because the 'last-first' might not be supported by the
-    } // given iterator.
+        template <
+            typename O,
+            typename S,
+            typename F,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_or_output_iterator<O> && RAH_NAMESPACE::sentinel_for<S, O>
+                && RAH_NAMESPACE::copy_constructible<F>>* = nullptr>
+        constexpr O operator()(O first, S last, F gen) const
+        {
+            for (; first != last; *first = std::invoke(gen), ++first)
+            {
+            }
+            return first;
+        }
+
+        template <
+            typename R,
+            typename F,
+            std::enable_if_t<true
+                             // RAH_NAMESPACE::copy_constructible<F>
+                             //&& RAH_NAMESPACE::output_range<R, decltype(std::declval<F&>())>
+                             >* = nullptr>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, F gen) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(gen));
+        }
+    };
+
+    constexpr generate_fn generate{};
 
     /// generate_n
     ///
@@ -1906,13 +1956,23 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: Exactly n invocations of generator and assignments.
     ///
-    template <typename OutputIterator, typename Size, typename Generator>
-    inline OutputIterator generate_n(OutputIterator first, Size n, Generator generator)
+    struct generate_n_fn
     {
-        for (; n > 0; --n, ++first)
-            *first = generator();
-        return first;
-    }
+        template <
+            typename O,
+            typename F,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_or_output_iterator<O> && RAH_NAMESPACE::copy_constructible<F>>* = nullptr>
+        constexpr O operator()(O first, RAH_NAMESPACE::iter_difference_t<O> n, F gen) const
+        {
+            for (; n-- > 0; *first = gen(), ++first)
+            {
+            }
+            return first;
+        }
+    };
+
+    constexpr generate_n_fn generate_n{};
 
     template <class I, class O>
     using unary_transform_result = RAH_NAMESPACE::in_out_result<I, O>;
@@ -2681,6 +2741,33 @@ namespace RAH_NAMESPACE
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(compare));
     }
 
+    struct replace_fn
+    {
+        template <
+            typename I,
+            typename S,
+            class T1,
+            class T2,
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, const T2&>>* = nullptr>
+        constexpr I operator()(I first, S last, const T1& old_value, const T2& new_value) const
+        {
+            for (; first != last; ++first)
+                if (old_value == *first)
+                    *first = new_value;
+            return first;
+        }
+
+        template <
+            typename R, // input_range
+            class T1,
+            class T2,
+            std::enable_if_t<input_range<R> && indirectly_writable<iterator_t<R>, const T2&>>* = nullptr>
+        constexpr borrowed_iterator_t<R> operator()(R&& r, const T1& old_value, const T2& new_value) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), old_value, new_value);
+        }
+    };
+
     /// replace
     ///
     /// Effects: Substitutes elements referred by the iterator i in the range [first, last)
@@ -2691,17 +2778,35 @@ namespace RAH_NAMESPACE
     /// Note: The predicate version of replace is replace_if and not another variation of replace.
     /// This is because both versions would have the same parameter count and there could be ambiguity.
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename T>
-    inline void
-    replace(ForwardIterator first, ForwardSentinel last, const T& old_value, const T& new_value)
-    {
-        for (; first != last; ++first)
-        {
-            if (*first == old_value)
-                *first = new_value;
-        }
-    }
+    constexpr replace_fn replace{};
 
+    struct replace_if_fn
+    {
+        template <
+            typename I, // input_iterator
+            typename S, // std::sentinel_for<I>
+            class T,
+            typename Pred, // indirect_unary_predicate<I>
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, const T&>>* = nullptr>
+        constexpr I operator()(I first, S last, Pred pred, const T& new_value) const
+        {
+            for (; first != last; ++first)
+                if (pred(*first))
+                    *first = new_value;
+            return std::move(first);
+        }
+
+        template <
+            typename R, // input_range
+            class T,
+            typename Pred, // indirect_unary_predicate<iterator_t<R>>>
+            std::enable_if_t<input_range<R> && output_range<R, T>>* = nullptr>
+        constexpr borrowed_iterator_t<R> operator()(R&& r, Pred pred, const T& new_value) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(pred), new_value);
+        }
+    };
     /// replace_if
     ///
     /// Effects: Substitutes elements referred by the iterator i in the range [first, last)
@@ -2712,17 +2817,48 @@ namespace RAH_NAMESPACE
     /// Note: The predicate version of replace_if is replace and not another variation of replace_if.
     /// This is because both versions would have the same parameter count and there could be ambiguity.
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename Predicate, typename T>
-    inline void
-    replace_if(ForwardIterator first, ForwardSentinel last, Predicate predicate, const T& new_value)
-    {
-        for (; first != last; ++first)
-        {
-            if (predicate(*first))
-                *first = new_value;
-        }
-    }
+    constexpr replace_if_fn replace_if{};
 
+    template <class I, class O>
+    using remove_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct remove_copy_fn
+    {
+        template <
+            typename I,
+            typename S,
+            typename O,
+            class T,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>
+                && RAH_NAMESPACE::weakly_incrementable<O> && RAH_NAMESPACE::indirectly_copyable<I, O>>* = nullptr>
+        constexpr RAH_NAMESPACE::remove_copy_result<I, O>
+        operator()(I first, S last, O result, const T& value) const
+        {
+            for (; !(first == last); ++first)
+            {
+                if (value != *first)
+                {
+                    *result = *first;
+                    ++result;
+                }
+            }
+            return {std::move(first), std::move(result)};
+        }
+
+        template <
+            typename R,
+            typename O,
+            class T,
+            std::enable_if_t<
+                RAH_NAMESPACE::input_range<R> && RAH_NAMESPACE::weakly_incrementable<O>
+                && RAH_NAMESPACE::indirectly_copyable<RAH_NAMESPACE::iterator_t<R>, O>>* = nullptr>
+        constexpr RAH_NAMESPACE::remove_copy_result<RAH_NAMESPACE::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, const T& value) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(result), value);
+        }
+    };
     /// remove_copy
     ///
     /// Effects: Copies all the elements referred to by the iterator i in the range
@@ -2735,20 +2871,47 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
     ///
-    template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename T>
-    inline OutputIterator
-    remove_copy(InputIterator first, InputSentinel last, OutputIterator result, const T& value)
+    constexpr remove_copy_fn remove_copy{};
+
+    template <class I, class O>
+    using remove_copy_if_result = RAH_NAMESPACE::in_out_result<I, O>;
+    struct remove_copy_if_fn
     {
-        for (; first != last; ++first)
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I>
+            typename O, // std::weakly_incrementable
+            typename Pred, // std::indirect_unary_predicate<std::projected<I, Proj>>
+            std::enable_if_t<
+                input_iterator<I> && sentinel_for<S, I> && weakly_incrementable<O>
+                && indirectly_copyable<I, O>>* = nullptr>
+        constexpr RAH_NAMESPACE::remove_copy_if_result<I, O>
+        operator()(I first, S last, O result, Pred pred) const
         {
-            if (!(*first == value)) // Note that we always express value comparisons in terms of < or ==.
+            for (; first != last; ++first)
             {
-                *result = RAH_STD::move(*first);
-                ++result;
+                if (false == pred(*first))
+                {
+                    *result = *first;
+                    ++result;
+                }
             }
+            return {std::move(first), std::move(result)};
         }
-        return result;
-    }
+
+        template <
+            typename R, // RAH_NAMESPACE::input_range
+            typename O, // RAH_NAMESPACE::weakly_incrementable
+            typename Pred,
+            std::enable_if_t<
+                input_range<R> && weakly_incrementable<O> && indirectly_copyable<iterator_t<R>, O>>* = nullptr>
+        constexpr RAH_NAMESPACE::remove_copy_if_result<RAH_NAMESPACE::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, Pred pred) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(result), std::move(pred));
+        }
+    };
 
     /// remove_copy_if
     ///
@@ -2762,20 +2925,7 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
     ///
-    template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename Predicate>
-    inline OutputIterator remove_copy_if(
-        InputIterator first, InputSentinel last, OutputIterator result, Predicate predicate)
-    {
-        for (; first != last; ++first)
-        {
-            if (!predicate(*first))
-            {
-                *result = RAH_STD::move(*first);
-                ++result;
-            }
-        }
-        return result;
-    }
+    constexpr remove_copy_if_fn remove_copy_if{};
 
     /// remove
     ///
@@ -2807,7 +2957,7 @@ namespace RAH_NAMESPACE
         if (first != last)
         {
             ForwardIterator i(first);
-            return {RAH_NAMESPACE::remove_copy(++i, last, first, value), last};
+            return {RAH_NAMESPACE::remove_copy(++i, last, first, value).out, last};
         }
         return {first, last};
     }
@@ -2848,10 +2998,7 @@ namespace RAH_NAMESPACE
         if (first != last)
         {
             ForwardIterator i(first);
-            return {
-                RAH_NAMESPACE::remove_copy_if<ForwardIterator, ForwardSentinel, ForwardIterator, Predicate>(
-                    ++i, last, first, predicate),
-                last};
+            return {RAH_NAMESPACE::remove_copy_if(++i, last, first, predicate).out, last};
         }
         return {first, last};
     }
@@ -2945,6 +3092,9 @@ namespace RAH_NAMESPACE
         return first;
     }
 
+    template <class I, class O>
+    using replace_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
+
     /// replace_copy
     ///
     /// Effects: Assigns to every iterator i in the range [result, result + (last - first))
@@ -2961,7 +3111,7 @@ namespace RAH_NAMESPACE
     /// This is because both versions would have the same parameter count and there could be ambiguity.
     ///
     template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename T>
-    inline OutputIterator replace_copy(
+    inline replace_copy_result<InputIterator, OutputIterator> replace_copy(
         InputIterator first,
         InputSentinel last,
         OutputIterator result,
@@ -2970,8 +3120,23 @@ namespace RAH_NAMESPACE
     {
         for (; first != last; ++first, ++result)
             *result = (*first == old_value) ? new_value : *first;
-        return result;
+        return {first, result};
     }
+
+    template <typename InputRange, typename OutputIterator, typename T>
+    inline replace_copy_result<RAH_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
+    replace_copy(InputRange&& range, OutputIterator result, const T& old_value, const T& new_value)
+    {
+        return RAH_NAMESPACE::replace_copy(
+            RAH_NAMESPACE::begin(range),
+            RAH_NAMESPACE::end(range),
+            std::move(result),
+            old_value,
+            new_value);
+    }
+
+    template <class I, class O>
+    using replace_copy_if_result = RAH_NAMESPACE::in_out_result<I, O>;
 
     /// replace_copy_if
     ///
@@ -2989,7 +3154,7 @@ namespace RAH_NAMESPACE
     /// This is because both versions would have the same parameter count and there could be ambiguity.
     ///
     template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename Predicate, typename T>
-    inline OutputIterator replace_copy_if(
+    inline replace_copy_if_result<InputIterator, OutputIterator> replace_copy_if(
         InputIterator first,
         InputSentinel last,
         OutputIterator result,
@@ -2998,7 +3163,19 @@ namespace RAH_NAMESPACE
     {
         for (; first != last; ++first, ++result)
             *result = predicate(*first) ? new_value : *first;
-        return result;
+        return {first, result};
+    }
+
+    template <typename InputRange, typename OutputIterator, typename Predicate, typename T>
+    inline replace_copy_if_result<RAH_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
+    replace_copy_if(InputRange&& range, OutputIterator result, Predicate predicate, const T& new_value)
+    {
+        return RAH_NAMESPACE::replace_copy_if(
+            RAH_NAMESPACE::begin(range),
+            RAH_NAMESPACE::end(range),
+            RAH_STD::move(result),
+            RAH_STD::move(predicate),
+            new_value);
     }
 
     // reverse
@@ -3007,16 +3184,17 @@ namespace RAH_NAMESPACE
     // efficiently for some types of iterators and types.
     //
     template <typename BidirectionalIterator, typename Sentinel>
-    inline void
+    inline BidirectionalIterator
     reverse_impl(BidirectionalIterator first, Sentinel last, RAH_ITC_NS::bidirectional_iterator_tag)
     {
         for (; (first != last) && (first != --last);
              ++first) // We are not allowed to use operator <, <=, >, >= with a
             RAH_STD::iter_swap(first, last); // generic (bidirectional or otherwise) iterator.
+        return first;
     }
 
     template <typename RandomAccessIterator, typename Sentinel>
-    inline void
+    inline RandomAccessIterator
     reverse_impl(RandomAccessIterator first, Sentinel last, RAH_ITC_NS::random_access_iterator_tag)
     {
         if (first != last)
@@ -3027,6 +3205,7 @@ namespace RAH_NAMESPACE
                     first,
                     last); // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
         }
+        return first;
     }
 
     /// reverse
@@ -3039,11 +3218,21 @@ namespace RAH_NAMESPACE
     /// Complexity: Exactly '(last - first) / 2' swaps.
     ///
     template <typename BidirectionalIterator, typename Sentinel>
-    inline void reverse(BidirectionalIterator first, Sentinel last)
+    inline BidirectionalIterator reverse(BidirectionalIterator first, Sentinel last)
     {
         typedef typename RAH_STD::iterator_traits<BidirectionalIterator>::iterator_category IC;
-        reverse_impl(first, last, IC());
+        return reverse_impl(first, last, IC());
     }
+
+    template <typename BidirectionalRange>
+    inline borrowed_iterator_t<BidirectionalRange> reverse(BidirectionalRange&& range)
+    {
+        using IC = range_iter_categ_t<BidirectionalRange>;
+        return reverse_impl(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), IC());
+    }
+
+    template <class I, class O>
+    using reverse_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
 
     /// reverse_copy
     ///
@@ -3062,11 +3251,21 @@ namespace RAH_NAMESPACE
     /// Complexity: Exactly 'last - first' assignments.
     ///
     template <typename BidirectionalIterator, typename Sentinel, typename OutputIterator>
-    inline OutputIterator reverse_copy(BidirectionalIterator first, Sentinel last, OutputIterator result)
+    inline reverse_copy_result<BidirectionalIterator, OutputIterator>
+    reverse_copy(BidirectionalIterator first, Sentinel last, OutputIterator result)
     {
-        for (; first != last; ++result)
+        auto ret = RAH_NAMESPACE::next(first, last);
+        for (; last != first; ++result)
             *result = *--last;
-        return result;
+        return {std::move(ret), std::move(result)};
+    }
+
+    template <typename BidirectionalRange, typename OutputIterator>
+    inline reverse_copy_result<RAH_NAMESPACE::borrowed_iterator_t<BidirectionalRange>, OutputIterator>
+    reverse_copy(BidirectionalRange&& range, OutputIterator result)
+    {
+        return RAH_NAMESPACE::reverse_copy(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(result));
     }
 
     /// search
@@ -4602,4 +4801,18 @@ namespace RAH_NAMESPACE
     };
 
     constexpr fill_fn fill;
+
+    struct fill_n_fn
+    {
+        template <typename T, typename O, std::enable_if_t<output_iterator<O, const T&>>* = nullptr>
+        constexpr O operator()(O first, RAH_NAMESPACE::iter_difference_t<O> n, const T& value) const
+        {
+            for (RAH_NAMESPACE::iter_difference_t<O> i{}; i != n; ++first, ++i)
+                *first = value;
+            return first;
+        }
+    };
+
+    constexpr fill_n_fn fill_n{};
+
 } // namespace RAH_NAMESPACE

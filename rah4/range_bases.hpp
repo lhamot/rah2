@@ -811,6 +811,13 @@ namespace rah
     template <typename I>
     static constexpr bool contiguous_iterator = contiguous_iterator_impl<I>::value;
 
+    template <class In, class Out>
+    constexpr bool indirectly_copyable =
+        RAH_NAMESPACE::indirectly_readable<In>
+        && RAH_NAMESPACE::indirectly_writable<Out, RAH_NAMESPACE::iter_reference_t<In>>;
+
+    // **************************************** iterator operations *******************************
+
     template <class T>
     constexpr auto iter_move(T&& t) -> decltype(RAH_STD::move(*t))
     {
@@ -822,8 +829,6 @@ namespace rah
     {
         RAH_STD::swap(*left, *right);
     }
-
-    // **************************************** iterator operations *******************************
 
     template <
         typename I,
@@ -1601,9 +1606,7 @@ namespace rah
     template <
         typename I,
         typename S,
-        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I>
-                         //&& RAH_NAMESPACE::sentinel_for<S, I>
-                         >* = nullptr>
+        std::enable_if_t<RAH_NAMESPACE::input_or_output_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr>
     constexpr I next(I i, S bound)
     {
         static_assert(RAH_NAMESPACE::semiregular<S>, "RAH_NAMESPACE::semiregular<S>");

@@ -1,4 +1,5 @@
 #include <array>
+#include <complex>
 #include <list>
 
 #include "test_helpers.hpp"
@@ -719,6 +720,23 @@ void test_move()
 }
 void test_move_backward()
 {
+    testSuite.test_case("sample");
+    /// [rah::move_backward]
+    using Vec = std::vector<std::string>;
+    Vec a{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
+    Vec b(a.size());
+
+    rah::move_backward(a, b.end());
+    assert(a == (Vec{"", "", "", "", "", "", "", ""}));
+    assert(b == (Vec{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}));
+
+    rah::move_backward(b.begin(), b.end(), a.end());
+    assert(b == (Vec{"", "", "", "", "", "", "", ""}));
+    assert(a == (Vec{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}));
+
+    rah::move_backward(a.begin(), a.begin() + 3, a.end());
+    assert(a == (Vec{"", "", "", "▄", "▅", "▁", "▂", "▃"}));
+    /// [rah::move_backward]
 }
 void test_fill()
 {
@@ -727,10 +745,18 @@ void test_fill()
     std::vector<int> out{0, 0, 0, 4, 5};
     rah::fill(out, 42);
     assert(out == (std::vector<int>{42, 42, 42, 42, 42}));
+    rah::fill(out.begin(), out.end(), 78);
+    assert(out == (std::vector<int>{78, 78, 78, 78, 78}));
     /// [rah::fill]
 }
 void test_fill_n()
 {
+    testSuite.test_case("sample");
+    /// [rah::fill_n]
+    std::vector<int> out(5);
+    rah::fill_n(out.begin(), 4, 42);
+    assert(out == (std::vector<int>{42, 42, 42, 42, 0}));
+    /// [rah::fill_n]
 }
 void test_transform()
 {
@@ -756,13 +782,26 @@ void test_transform()
 }
 void test_generate()
 {
+    testSuite.test_case("sample");
+    /// [rah::generate]
+    std::array<int, 8> v = {};
+    rah::generate(v, [n = 1]() mutable { return n++; });
+    assert(v == (std::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+    /// [rah::generate]
 }
 void test_generate_n()
 {
+    testSuite.test_case("sample");
+    /// [rah::generate_n]
+    std::array<int, 8> v = {};
+    rah::generate_n(v.begin(), v.size(), [n{0}]() mutable { return n++; });
+    assert(v == (std::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
+    /// [rah::generate_n]
 }
 void test_remove()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("return");
     /// [rah::remove]
     std::vector<int> in{1, 2, 1, 3, 1};
     auto to_erase = rah::remove(in, 1);
@@ -784,30 +823,115 @@ void test_remove_if()
 }
 void test_remove_copy()
 {
+    testSuite.test_case("sample");
+    /// [rah::remove_copy]
+    // Filter out the hash symbol from the given string.
+    const std::string str{"#Small #Buffer #Optimization"};
+
+    std::string out;
+    rah::remove_copy(str.begin(), str.end(), std::back_inserter(out), '#');
+    assert(out == "Small Buffer Optimization");
+    /// [rah::remove_copy]
 }
 void test_remove_copy_if()
 {
+    testSuite.test_case("sample");
+    /// [rah::remove_copy_if]
+    // Copy only the complex numbers with positive imaginary part.
+    using Ci = std::complex<int>;
+    constexpr std::array<Ci, 5> source{Ci{1, 0}, Ci{0, 1}, Ci{2, -1}, Ci{3, 2}, Ci{4, -3}};
+    std::vector<std::complex<int>> target;
+
+    rah::remove_copy_if(source, std::back_inserter(target), [](Ci z) { return z.imag() <= 0; });
+    assert(target == (std::vector<std::complex<int>>{{0, 1}, {3, 2}}));
+    /// [rah::remove_copy_if]
 }
 void test_replace()
 {
+    testSuite.test_case("sample");
+    /// [rah::replace]
+    std::array<int, 6> p{1, 6, 1, 6, 1, 6};
+    rah::replace(p, 6, 9);
+    assert(p == (std::array<int, 6>{1, 9, 1, 9, 1, 9}));
+    /// [rah::replace]
 }
 void test_replace_if()
 {
+    testSuite.test_case("sample");
+    /// [rah::replace_if]
+    std::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
+    rah::replace_if(
+        q, [](int x) { return 5 < x; }, 5);
+    assert(q == (std::array<int, 8>{1, 2, 3, 5, 5, 5, 4, 5}));
+    /// [rah::replace_if]
 }
 void test_replace_copy()
 {
+    testSuite.test_case("sample");
+    /// [rah::replace_copy]
+    std::vector<int> o;
+    std::array<int, 6> p{1, 6, 1, 6, 1, 6};
+    o.resize(p.size());
+    rah::replace_copy(p, o.begin(), 6, 9);
+    assert(o == (std::vector<int>{1, 9, 1, 9, 1, 9}));
+    /// [rah::replace_copy]
 }
 void test_replace_copy_if()
 {
+    testSuite.test_case("sample");
+    /// [rah::replace_copy_if]
+    std::vector<int> o;
+    std::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
+    o.resize(q.size());
+    rah::replace_copy_if(
+        q, o.begin(), [](int x) { return 5 < x; }, 5);
+    assert(o == (std::vector<int>{1, 2, 3, 5, 5, 5, 4, 5}));
+    /// [rah::replace_copy_if]
 }
 void test_swap_ranges()
 {
+    testSuite.test_case("sample");
+    /// [rah::swap_ranges]
+    std::vector<char> p{'A', 'B', 'C', 'D', 'E'};
+    std::list<char> q{'1', '2', '3', '4', '5', '6'};
+
+    // swap p[0, 2) and q[1, 3):
+    rah::swap_ranges(p.begin(), p.begin() + 4, rah::next(q.begin(), 1), rah::next(q.begin(), 3));
+    assert(p == (std::vector<char>{'2', '3', 'C', 'D', 'E'}));
+    assert(q == (std::list<char>{'1', 'A', 'B', '4', '5', '6'}));
+
+    // swap p[0, 5) and q[0, 5):
+    rah::swap_ranges(p, q);
+    assert(q == (std::list<char>{'2', '3', 'C', 'D', 'E', '6'}));
+    assert(p == (std::vector<char>{'1', 'A', 'B', '4', '5'}));
+    /// [rah::swap_ranges]
 }
 void test_reverse()
 {
+    testSuite.test_case("sample");
+    /// [rah::reverse]
+    std::string s{"ABCDEF"};
+    rah::reverse(s.begin(), s.end());
+    assert(s == std::string{"FEDCBA"});
+    rah::reverse(s);
+    assert(s == std::string{"ABCDEF"});
+
+    std::array<int, 5> a{1, 2, 3, 4, 5};
+    rah::reverse(a);
+    assert(a == (std::array<int, 5>{5, 4, 3, 2, 1}));
+    /// [rah::reverse]
 }
 void test_reverse_copy()
 {
+    testSuite.test_case("sample");
+    /// [rah::reverse_copy]
+    std::string x{"12345"}, y(x.size(), ' ');
+    rah::reverse_copy(x.begin(), x.end(), y.begin());
+    assert(x == (std::string{"12345"}));
+    assert(y == (std::string{"54321"}));
+    rah::reverse_copy(y, x.begin());
+    assert(x == (std::string{"12345"}));
+    /// [rah::reverse_copy]
 }
 void test_rotate()
 {
