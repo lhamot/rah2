@@ -255,6 +255,14 @@ namespace RAH_NAMESPACE
     template <class I, class O>
     using move_result = RAH_NAMESPACE::in_out_result<I, O>;
 
+    template <class I, class O1, class O2>
+    struct in_out_out_result
+    {
+        I in;
+        O1 out1;
+        O2 out2;
+    };
+
     struct move_fn
     {
         template <

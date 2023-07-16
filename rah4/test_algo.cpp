@@ -1044,6 +1044,10 @@ void test_sample()
         auto o = RAH_NAMESPACE::sample(in, out.begin(), n, gen);
         assert((o - out.begin()) == std::min<intptr_t>(n, in.size()));
     }
+
+    auto o = RAH_NAMESPACE::sample(in, out.begin(), in.size(), gen);
+    assert(rah::equal(in.begin(), in.end(), out.begin(), o));
+
     /// [rah::sample]
 }
 void test_unique()
@@ -1066,9 +1070,47 @@ void test_unique()
 }
 void test_unique_copy()
 {
+    testSuite.test_case("sample");
+    /// [rah::unique_copy]
+    std::string s1{"The      string    with many       spaces!"};
+
+    std::string s2;
+    RAH_NAMESPACE::unique_copy(
+        s1.begin(),
+        s1.end(),
+        std::back_inserter(s2),
+        [](char c1, char c2) { return c1 == ' ' && c2 == ' '; });
+    assert(s2 == (std::string{"The string with many spaces!"}));
+    /// [rah::unique_copy]
 }
 void test_is_partitioned()
 {
+    testSuite.test_case("sample");
+    /// [rah::is_partitioned]
+    std::array<int, 9> v;
+
+    auto print = [&v](bool o)
+    {
+        for (int x : v)
+            std::cout << x << ' ';
+        std::cout << (o ? "=> " : "=> not ") << "partitioned\n";
+    };
+
+    auto is_even = [](int i)
+    {
+        return i % 2 == 0;
+    };
+
+    std::iota(v.begin(), v.end(), 1); // or std::ranges::iota(v, 1);
+    assert(RAH_NAMESPACE::is_partitioned(v, is_even) == false);
+
+    RAH_NAMESPACE::partition(v, is_even);
+    assert(RAH_NAMESPACE::is_partitioned(std::as_const(v), is_even));
+
+    RAH_NAMESPACE::reverse(v);
+    assert(RAH_NAMESPACE::is_partitioned(v.cbegin(), v.cend(), is_even) == false);
+    assert(RAH_NAMESPACE::is_partitioned(v.crbegin(), v.crend(), is_even));
+    /// [rah::is_partitioned]
 }
 void test_partition()
 {
@@ -1084,6 +1126,26 @@ void test_partition()
 }
 void test_partition_copy()
 {
+    testSuite.test_case("sample");
+    /// [rah::partition_copy]
+    const std::vector<char> in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
+
+    std::vector<int> o1(size(in)), o2(size(in));
+
+    auto pred = [](char c)
+    {
+        return std::isalpha(c);
+    };
+
+    auto ret = RAH_NAMESPACE::partition_copy(in, o1.begin(), o2.begin(), pred);
+
+    std::ostream_iterator<char> cout{std::cout, " "};
+    assert(in == (std::vector<char>{'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'}));
+    std::vector<int> o1_expected{'N', 'U', 'M', 'B', 'E', 'R'};
+    std::vector<int> o2_expected{'3', '1', '4', '1', '5', '9'};
+    assert(rah::equal(o1.begin(), ret.out1, o1_expected.begin(), o1_expected.end()));
+    assert(rah::equal(o2.begin(), ret.out2, o2_expected.begin(), o2_expected.end()));
+    /// [rah::partition_copy]
 }
 void test_stable_partition()
 {

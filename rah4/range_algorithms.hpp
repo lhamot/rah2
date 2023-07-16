@@ -6,6 +6,8 @@
 #include <numeric> // TODO : Remove this dependency
 #include <iterator>
 
+#include "eastl_algorithm.h"
+
 namespace rah
 {
     struct fold_left_fn
@@ -551,4 +553,145 @@ namespace rah
     };
 
     constexpr sample_fn sample{};
+
+    template <class I, class O>
+    using unique_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct unique_copy_fn
+    {
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I>
+            typename O, // std::weakly_incrementable
+            typename C = RAH_NAMESPACE::equal_to, // std::indirect_equivalence_relation<std::projected<I, Proj>>
+            std::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        //requires std::indirectly_copyable<I, O> &&(
+        //    std::forward_iterator<
+        //        I> or (std::input_iterator<O> && std::same_as<std::iter_value_t<I>, std::iter_value_t<O>>)
+        //    or std::indirectly_copyable_storable<I, O>)
+        constexpr RAH_NAMESPACE::unique_copy_result<I, O>
+        operator()(I first, S last, O result, C comp = {}) const
+        {
+            if (!(first == last))
+            {
+                RAH_NAMESPACE::iter_value_t<I> value = *first;
+                *result = value;
+                ++result;
+                while (!(++first == last))
+                {
+                    auto&& value2 = *first;
+                    if (!RAH_INVOKE_2(comp, value2, value))
+                    {
+                        value = std::forward<decltype(value2)>(value2);
+                        *result = value;
+                        ++result;
+                    }
+                }
+            }
+
+            return {std::move(first), std::move(result)};
+        }
+
+        template <
+            typename R, // ranges::input_range
+            typename O, // std::weakly_incrementable
+            typename C = RAH_NAMESPACE::equal_to, // std::indirect_equivalence_relation<std::projected<ranges::iterator_t<R>, Proj>>
+            std::enable_if_t<input_range<R>>* = nullptr>
+        //requires std::indirectly_copyable<ranges::iterator_t<R>, O>
+        //         && (std::forward_iterator<ranges::iterator_t<R>>
+        //             or (std::input_iterator<O>
+        //                 && std::same_as<ranges::range_value_t<R>, std::iter_value_t<O>>)
+        //             || std::indirectly_copyable_storable<ranges::iterator_t<R>, O>)
+        constexpr RAH_NAMESPACE::unique_copy_result<RAH_NAMESPACE::borrowed_iterator_t<R>, O>
+        operator()(R&& r, O result, C comp = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r),
+                RAH_NAMESPACE::end(r),
+                RAH_STD::move(result),
+                RAH_STD::move(comp));
+        }
+    };
+
+    constexpr unique_copy_fn unique_copy{};
+
+    struct is_partitioned_fn
+    {
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I
+            typename Pred // std::indirect_unary_predicate<std::projected<I, Proj>>
+            >
+        constexpr bool operator()(I first, S last, Pred pred) const
+        {
+            for (; first != last; ++first)
+                if (!RAH_INVOKE_1(pred, *first))
+                    break;
+
+            for (; first != last; ++first)
+                if (RAH_INVOKE_1(pred, *first))
+                    return false;
+
+            return true;
+        }
+
+        template <
+            typename R, // ranges::input_range
+            typename Pred // std::indirect_unary_predicate<std::projected<ranges::iterator_t<R>, Proj>>
+            >
+        constexpr bool operator()(R&& r, Pred pred) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), RAH_STD::ref(pred));
+        }
+    };
+
+    constexpr auto is_partitioned = is_partitioned_fn();
+
+    template <class I, class O1, class O2>
+    using partition_copy_result = in_out_out_result<I, O1, O2>;
+
+    struct partition_copy_fn
+    {
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I>
+            typename O1, // std::weakly_incrementable
+            typename O2, // std::weakly_incrementable
+            // class Proj = std::identity,
+            typename Pred // std::indirect_unary_predicate<std::projected<I, Proj>>
+            >
+        // requires std::indirectly_copyable<I, O1> && std::indirectly_copyable<I, O2>
+        constexpr RAH_NAMESPACE::partition_copy_result<I, O1, O2>
+        operator()(I first, S last, O1 out_true, O2 out_false, Pred pred) const
+        {
+            for (; first != last; ++first)
+                if (!!RAH_INVOKE_1(pred, *first))
+                    *out_true = *first, ++out_true;
+                else
+                    *out_false = *first, ++out_false;
+            return {std::move(first), std::move(out_true), std::move(out_false)};
+        }
+
+        template <
+            typename R, // ranges::input_range
+            typename O1, /// std::weakly_incrementable
+            typename O2, // std::weakly_incrementable
+            // class Proj = std::identity,
+            typename Pred // std::indirect_unary_predicate<std::projected<iterator_t<R>, Proj>>
+            >
+        //requires std::indirectly_copyable<ranges::iterator_t<R>, O1>
+        //         && std::indirectly_copyable<ranges::iterator_t<R>, O2>
+        constexpr RAH_NAMESPACE::partition_copy_result<RAH_NAMESPACE::borrowed_iterator_t<R>, O1, O2>
+        operator()(R&& r, O1 out_true, O2 out_false, Pred pred) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r),
+                RAH_NAMESPACE::end(r),
+                RAH_STD::move(out_true),
+                RAH_STD::move(out_false),
+                RAH_STD::move(pred));
+        }
+    };
+
+    constexpr partition_copy_fn partition_copy{};
 } // namespace rah
