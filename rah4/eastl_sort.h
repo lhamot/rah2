@@ -93,12 +93,24 @@ namespace RAH_NAMESPACE
         return true;
     }
 
+    template <typename ForwardRange, typename StrictWeakOrdering>
+    bool is_sorted(ForwardRange&& range, StrictWeakOrdering compare)
+    {
+        return is_sorted(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), compare);
+    }
+
     template <typename ForwardIterator, typename Sentinel>
     inline bool is_sorted(ForwardIterator first, Sentinel last)
     {
         typedef RAH_STD::less<typename RAH_STD::iterator_traits<ForwardIterator>::value_type> Less;
 
         return RAH_NAMESPACE::is_sorted<ForwardIterator, Less>(first, last, Less());
+    }
+
+    template <typename ForwardRange>
+    bool is_sorted(ForwardRange&& range)
+    {
+        return is_sorted(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// is_sorted_until

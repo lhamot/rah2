@@ -1,5 +1,10 @@
 PATH = %PATH%;C:\C_libs\llvm-mingw-20230614-msvcrt-x86_64\bin
 
+rem del gcc_rah4_11.exe
+rem g++ -O0 -ftemplate-backtrace-limit=0 -ogcc_rah4_11.exe rah4_unittests.cpp test_algo.cpp test_views.cpp -std=c++11 -Wall -m64 -Wno-c++17-extensions
+rem pause
+rem gcc_rah4_11.exe
+rem pause
 del gcc_rah4_14.exe
 g++ -O0 -ftemplate-backtrace-limit=0 -ogcc_rah4_14.exe rah4_unittests.cpp test_algo.cpp test_views.cpp -std=c++14 -Wall -m64 -Wno-c++17-extensions
 gcc_rah4_14.exe

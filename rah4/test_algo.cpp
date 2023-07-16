@@ -6,6 +6,7 @@
 #include "rah4.hpp"
 #include "eastl_sort.h"
 
+#include <algorithm>
 #if RAH_CPP20
 #include <ranges>
 #endif
@@ -935,9 +936,44 @@ void test_reverse_copy()
 }
 void test_rotate()
 {
+    testSuite.test_case("sample");
+    /// [rah::rotate]
+    std::string s(16, ' ');
+
+    std::iota(s.begin(), s.end(), 'A');
+    RAH_NAMESPACE::rotate(s, s.begin());
+    assert(s == (std::string{"ABCDEFGHIJKLMNOP"}));
+    RAH_NAMESPACE::rotate(s, s.begin() + 1);
+    assert(s == (std::string{"BCDEFGHIJKLMNOPA"}));
+    std::iota(s.begin(), s.end(), 'A');
+    RAH_NAMESPACE::rotate(s, s.begin() + 3);
+    assert(s == (std::string{"DEFGHIJKLMNOPABC"}));
+
+    std::iota(s.begin(), s.end(), 'A');
+    RAH_NAMESPACE::rotate(s, s.end());
+    assert(s == (std::string{"ABCDEFGHIJKLMNOP"}));
+    RAH_NAMESPACE::rotate(s, s.end() - 1);
+    assert(s == (std::string{"PABCDEFGHIJKLMNO"}));
+    std::iota(s.begin(), s.end(), 'A');
+    RAH_NAMESPACE::rotate(s, s.end() - 3);
+    assert(s == (std::string{"NOPABCDEFGHIJKLM"}));
+    /// [rah::rotate]
 }
 void test_rotate_copy()
 {
+    testSuite.test_case("sample");
+    /// [rah::rotate_copy]
+    std::vector<int> src{1, 2, 3, 4, 5};
+    std::vector<int> dest(src.size());
+    auto pivot = RAH_NAMESPACE::find(src, 3);
+
+    RAH_NAMESPACE::rotate_copy(src, pivot, dest.begin());
+    assert(dest == (std::vector<int>{3, 4, 5, 1, 2}));
+
+    pivot = RAH_NAMESPACE::find(src, 3);
+    RAH_NAMESPACE::rotate_copy(src.begin(), pivot, src.end(), dest.begin());
+    assert(dest == (std::vector<int>{3, 4, 5, 1, 2}));
+    /// [rah::rotate_copy]
 }
 void test_shuffle()
 {
@@ -951,12 +987,64 @@ void test_shuffle()
 }
 void test_shift_left()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::shift_left]
+    std::vector<int> b{1, 2, 3, 4, 5, 6, 7};
+
+    auto b8 = RAH_NAMESPACE::shift_left(b, 8); // has no effect: n >= last - first
+    assert(rah::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+
+    auto b0 = RAH_NAMESPACE::shift_left(b, 0); // has no effect: n == 0
+    assert(rah::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+
+    std::vector<int> ref{4, 5, 6, 7};
+    auto b3 = RAH_NAMESPACE::shift_left(b, 3);
+    assert(rah::equal(b3, ref));
+    assert(rah::equal(b.begin(), b.begin() + 4, ref.begin(), ref.end()));
+    /// [rah::shift_left]
 }
 void test_shift_right()
 {
+    // TODO : Test perf with all iterator/range type. Take care of random_access+sized_range
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::shift_right]
+    std::vector<int> b{1, 2, 3, 4, 5, 6, 7};
+
+    auto b8 = RAH_NAMESPACE::shift_right(b, 8); // has no effect: n >= last - first
+    assert(rah::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+
+    auto b0 = RAH_NAMESPACE::shift_right(b, 0); // has no effect: n == 0
+    assert(rah::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+
+    std::vector<int> ref{1, 2, 3, 4};
+    auto b3 = RAH_NAMESPACE::shift_right(b, 3);
+    assert(rah::equal(b3, ref));
+    assert(rah::equal(b.begin() + 3, b.end(), ref.begin(), ref.end()));
+    /// [rah::shift_right]
 }
 void test_sample()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::sample]
+    const auto in = {1, 2, 3, 4, 5, 6};
+
+    std::vector<int> out(in.size() + 2);
+    const size_t max = in.size() + 2;
+    auto gen = std::mt19937{std::random_device{}()};
+
+    for (size_t n{}; n != max; ++n)
+    {
+        auto o = RAH_NAMESPACE::sample(in, out.begin(), n, gen);
+        assert((o - out.begin()) == std::min<intptr_t>(n, in.size()));
+    }
+    /// [rah::sample]
 }
 void test_unique()
 {

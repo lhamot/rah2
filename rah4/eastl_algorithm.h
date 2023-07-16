@@ -1303,11 +1303,12 @@ namespace RAH_NAMESPACE
                 && RAH_NAMESPACE::bidirectional_iterator<I2>>* = nullptr>
         constexpr RAH_NAMESPACE::move_backward_result<I1, I2> operator()(I1 first, S1 last, I2 result) const
         {
-            auto i{last};
+            auto last2 = RAH_NAMESPACE::next(first, last);
+            auto i = last2;
             for (; i != first; *--result = RAH_NAMESPACE::iter_move(--i))
             {
             }
-            return {std::move(last), std::move(result)};
+            return {std::move(last2), std::move(result)};
         }
 
         template <
@@ -4473,7 +4474,7 @@ namespace RAH_NAMESPACE
     namespace Internal
     {
         template <typename ForwardIterator, typename ForwardSentinel>
-        ForwardIterator
+        subrange<ForwardIterator>
         rotate_general_impl(ForwardIterator first, ForwardIterator middle, ForwardSentinel last)
         {
             using RAH_STD::swap;
@@ -4501,11 +4502,11 @@ namespace RAH_NAMESPACE
                     current = middle;
             }
 
-            return result; // result points to first + (last - middle).
+            return {result, current}; // result points to first + (last - middle).
         }
 
         template <typename ForwardIterator, typename ForwardSentinel>
-        ForwardIterator move_rotate_left_by_one(ForwardIterator first, ForwardSentinel last)
+        subrange<ForwardIterator> move_rotate_left_by_one(ForwardIterator first, ForwardSentinel last)
         {
             typedef typename RAH_STD::iterator_traits<ForwardIterator>::value_type value_type;
 
@@ -4517,31 +4518,34 @@ namespace RAH_NAMESPACE
             *result = RAH_STD::move(
                 temp); // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
 
-            return result; // result points to the final element in the range.
+            auto back = result;
+            ++back;
+            return {result, back}; // result points to the final element in the range.
         }
 
         template <typename BidirectionalIterator, typename Sentinel>
-        BidirectionalIterator move_rotate_right_by_one(BidirectionalIterator first, Sentinel last)
+        subrange<BidirectionalIterator>
+        move_rotate_right_by_one(BidirectionalIterator first, Sentinel last)
         {
             typedef typename RAH_STD::iterator_traits<BidirectionalIterator>::value_type value_type;
 
-            BidirectionalIterator beforeLast = RAH_STD::prev(last);
+            auto last2 = RAH_NAMESPACE::next(first, last);
+            BidirectionalIterator beforeLast = RAH_STD::prev(last2);
             value_type temp(RAH_STD::move(*beforeLast));
-            BidirectionalIterator result = RAH_NAMESPACE::move_backward(
-                first,
-                beforeLast,
-                last); // Note that while our template type is BidirectionalIterator, if the actual
-            *first = RAH_STD::move(
-                temp); // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
+            // Note that while our template type is BidirectionalIterator, if the actual
+            BidirectionalIterator result = RAH_NAMESPACE::move_backward(first, beforeLast, last).out;
+            // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
+            *first = RAH_STD::move(temp);
 
-            return result; // result points to the first element in the range.
+            // result points to the first element in the range.
+            return {RAH_STD::move(result), RAH_STD::move(last2)};
         }
 
         template <typename /*IteratorCategory*/, bool /*is_trivially_move_assignable*/>
         struct rotate_helper
         {
             template <typename ForwardIterator, typename ForwardSentinel>
-            static ForwardIterator
+            static subrange<ForwardIterator>
             rotate_impl(ForwardIterator first, ForwardIterator middle, ForwardSentinel last)
             {
                 return Internal::rotate_general_impl(first, middle, last);
@@ -4552,7 +4556,7 @@ namespace RAH_NAMESPACE
         struct rotate_helper<RAH_ITC_NS::forward_iterator_tag, true>
         {
             template <typename ForwardIterator, typename ForwardSentinel>
-            static ForwardIterator
+            static subrange<ForwardIterator>
             rotate_impl(ForwardIterator first, ForwardIterator middle, ForwardSentinel last)
             {
                 if (RAH_STD::next(first)
@@ -4566,57 +4570,18 @@ namespace RAH_NAMESPACE
         struct rotate_helper<RAH_ITC_NS::bidirectional_iterator_tag, false>
         {
             template <typename BidirectionalIterator, typename Sentinel>
-            static BidirectionalIterator
+            static subrange<BidirectionalIterator>
             rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, Sentinel last)
             {
                 return Internal::rotate_general_impl(first, middle, last);
             } // rotate_general_impl outperforms the flipping hands algorithm.
-
-            /*
-			// Simplest "flipping hands" implementation. Disabled because it's slower on average than rotate_general_impl.
-			template <typename BidirectionalIterator, typename Sentinel>
-			static BidirectionalIterator rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, Sentinel last)
-			{
-				RAH_NAMESPACE::reverse(first, middle);
-				RAH_NAMESPACE::reverse(middle, last);
-				RAH_NAMESPACE::reverse(first, last);
-				return first + (last - middle); // This can be slow for large ranges because operator + and - are O(n).
-			}
-
-			// Smarter "flipping hands" implementation, but still disabled because benchmarks are showing it to be slower than rotate_general_impl.
-			template <typename BidirectionalIterator, typename Sentinel>
-			static BidirectionalIterator rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, Sentinel last)
-			{
-				// This is the "flipping hands" algorithm.
-				eastl::reverse_impl(first,  middle, RAH_ITC_NS::bidirectional_iterator_tag()); // Reverse the left side.
-				eastl::reverse_impl(middle, last,   RAH_ITC_NS::bidirectional_iterator_tag()); // Reverse the right side.
-
-				// Reverse the entire range.
-				while((first != middle) && (middle != last))
-				{
-					RAH_STD::iter_swap(first, --last);
-					++first;
-				}
-
-				if(first == middle) // Finish reversing the entire range.
-				{
-					eastl::reverse_impl(middle, last, bidirectional_iterator_tag());
-					return last;
-				}
-				else
-				{
-					eastl::reverse_impl(first, middle, bidirectional_iterator_tag());
-					return first;
-				}
-			}
-			*/
         };
 
         template <>
         struct rotate_helper<RAH_ITC_NS::bidirectional_iterator_tag, true>
         {
             template <typename BidirectionalIterator, typename Sentinel>
-            static BidirectionalIterator
+            static subrange<BidirectionalIterator>
             rotate_impl(BidirectionalIterator first, BidirectionalIterator middle, Sentinel last)
             {
                 if (RAH_STD::next(first)
@@ -4648,7 +4613,7 @@ namespace RAH_NAMESPACE
             // In practice this implementation is about 25% faster than rotate_general_impl. We may want to
             // consider sticking with just rotate_general_impl and avoid the code generation of this function.
             template <typename RandomAccessIterator, typename Sentinel>
-            static RandomAccessIterator
+            static subrange<RandomAccessIterator>
             rotate_impl(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
             {
                 typedef
@@ -4681,7 +4646,7 @@ namespace RAH_NAMESPACE
                     *p1 = RAH_STD::move(temp);
                 }
 
-                return first + m2;
+                return {first + m2, last};
             }
         };
 
@@ -4695,7 +4660,7 @@ namespace RAH_NAMESPACE
             // of PODs with various element counts.
 
             template <typename RandomAccessIterator, typename Sentinel>
-            static RandomAccessIterator
+            static subrange<RandomAccessIterator>
             rotate_impl(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
             {
                 if (RAH_STD::next(first)
@@ -4713,7 +4678,7 @@ namespace RAH_NAMESPACE
     } // namespace Internal
 
     template <typename ForwardIterator, typename ForwardSentinel>
-    ForwardIterator rotate(ForwardIterator first, ForwardIterator middle, ForwardSentinel last)
+    subrange<ForwardIterator> rotate(ForwardIterator first, ForwardIterator middle, ForwardSentinel last)
     {
         if (middle != first)
         {
@@ -4724,19 +4689,61 @@ namespace RAH_NAMESPACE
 
                 return Internal::rotate_helper < IC,
                        RAH_STD::is_trivially_move_assignable<value_type>::value
+#if not RAH_CPP20
                            || // This is the best way of telling if we can move types via memmove, but without a conforming C++11 compiler it usually returns false.
                            RAH_STD::is_pod<value_type>::value
+#endif
                            || // This is a more conservative way of telling if we can move types via memmove, and most compilers support it, but it doesn't have as full of coverage as is_trivially_move_assignable.
                            RAH_NAMESPACE::is_scalar<value_type>::value
                                > // This is the most conservative means and works with all compilers, but works only for scalars.
                                ::rotate_impl(first, middle, last);
             }
 
-            return first;
+            return {std::move(first), std::move(middle)};
+        }
+        auto last_it = RAH_NAMESPACE::next(first, last);
+        return {last_it, last_it};
+    }
+
+    template <typename ForwardRange>
+    iterator_t<ForwardRange> rotate(ForwardRange&& range, iterator_t<ForwardRange> middle)
+    {
+        return rotate(RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range));
+    }
+
+    template <class I, class O>
+    using rotate_copy_result = in_out_result<I, O>;
+
+    struct rotate_copy_fn
+    {
+        template <
+            typename I,
+            typename S,
+            typename O,
+            std::enable_if_t<
+                RAH_NAMESPACE::forward_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>
+                && RAH_NAMESPACE::weakly_incrementable<O> && RAH_NAMESPACE::indirectly_copyable<I, O>>* = nullptr>
+        constexpr RAH_NAMESPACE::rotate_copy_result<I, O>
+        operator()(I first, I middle, S last, O result) const
+        {
+            auto c1{RAH_NAMESPACE::copy(middle, std::move(last), std::move(result))};
+            auto c2{RAH_NAMESPACE::copy(std::move(first), std::move(middle), std::move(c1.out))};
+            return {std::move(c1.in), std::move(c2.out)};
         }
 
-        return last;
-    }
+        template <
+            typename R,
+            typename O,
+            std::enable_if_t<
+                RAH_NAMESPACE::forward_range<R> && RAH_NAMESPACE::weakly_incrementable<O>
+                && RAH_NAMESPACE::indirectly_copyable<RAH_NAMESPACE::iterator_t<R>, O>>* = nullptr>
+        constexpr RAH_NAMESPACE::rotate_copy_result<RAH_NAMESPACE::borrowed_iterator_t<R>, O>
+        operator()(R&& r, RAH_NAMESPACE::iterator_t<R> middle, O result) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), std::move(middle), RAH_NAMESPACE::end(r), std::move(result));
+        }
+    };
 
     /// rotate_copy
     ///
@@ -4744,12 +4751,7 @@ namespace RAH_NAMESPACE
     /// returns an OutputIterator to the element past the last element copied
     /// (i.e. result + (last - first))
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename OutputIterator>
-    OutputIterator rotate_copy(
-        ForwardIterator first, ForwardIterator middle, ForwardSentinel last, OutputIterator result)
-    {
-        return RAH_NAMESPACE::copy(first, middle, RAH_NAMESPACE::copy(middle, last, result));
-    }
+    constexpr rotate_copy_fn rotate_copy{};
 
     /// clamp
     ///

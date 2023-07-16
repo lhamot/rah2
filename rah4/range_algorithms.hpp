@@ -339,4 +339,216 @@ namespace rah
     };
 
     constexpr swap_ranges_fn swap_ranges{};
+
+    struct shift_left_fn
+    {
+        template <typename I, typename S, std::enable_if_t<permutable<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr RAH_NAMESPACE::subrange<I> operator()(I first, S last, iter_difference_t<I> n) const
+        {
+            if (n <= 0)
+                return {RAH_STD::move(first), RAH_STD::move(last)};
+            auto mid = first;
+            auto diff = RAH_NAMESPACE::advance(first, n, last);
+            if (diff != 0)
+            {
+                return {RAH_STD::move(mid), RAH_STD::move(last)};
+            }
+            auto result = RAH_NAMESPACE::move(first, last, mid);
+            return {RAH_STD::move(mid), RAH_STD::move(result.out)};
+        }
+
+        template <typename R, std::enable_if_t<forward_range<R> && permutable<iterator_t<R>>>* = nullptr>
+        constexpr borrowed_subrange_t<R> operator()(R&& r, range_difference_t<R> n) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), n);
+        }
+    };
+
+    constexpr shift_left_fn shift_left{};
+
+    struct shift_right_fn
+    {
+        template <
+            typename I,
+            typename S,
+            std::enable_if_t<permutable<I> && sentinel_for<S, I> && bidirectional_iterator<S>>* = nullptr>
+        static constexpr RAH_NAMESPACE::subrange<I> impl(I first, S last, iter_difference_t<I> n)
+        {
+            if (n <= 0)
+            {
+                return {RAH_STD::move(first), RAH_STD::move(last)};
+            }
+            auto mid = last;
+            if (RAH_NAMESPACE::advance(mid, -n, first) != 0)
+            {
+                return {RAH_STD::move(first), RAH_STD::move(last)};
+            }
+            auto result =
+                RAH_NAMESPACE::move_backward(std::move(first), std::move(mid), std::move(last));
+            return {std::move(result.out), std::move(last)};
+        }
+
+        template <
+            typename I,
+            typename S,
+            std::enable_if_t<
+                permutable<I> && sentinel_for<S, I> && bidirectional_iterator<I>
+                && RAH_NAMESPACE::assignable_from<I&, S>>* = nullptr>
+        constexpr RAH_NAMESPACE::subrange<I> operator()(I first, S last, iter_difference_t<I> n) const
+        {
+            auto last2 = first;
+            last2 = last;
+            return shift_right_fn::impl(first, last2, n);
+        }
+        template <
+            typename I,
+            typename S,
+            std::enable_if_t<
+                permutable<I> && sized_sentinel_for<S, I>
+                && !(bidirectional_iterator<I> && assignable_from<I&, S>)&&random_access_iterator<I>>* = nullptr>
+        constexpr RAH_NAMESPACE::subrange<I> operator()(I first, S last, iter_difference_t<I> n) const
+        {
+            auto last2 = first + (last - first);
+            return shift_right_fn::impl(first, last2, n);
+        }
+        template <
+            typename I,
+            typename S,
+            std::enable_if_t<
+                permutable<I> && sentinel_for<S, I>
+                && !(bidirectional_iterator<I> && assignable_from<I&, S>)&&!(
+                    sized_sentinel_for<S, I> && random_access_iterator<I>)>* = nullptr>
+        constexpr RAH_NAMESPACE::subrange<I> operator()(I first, S last, iter_difference_t<I> n) const
+        {
+            if (n <= 0)
+            {
+                return first;
+            }
+            auto result = first;
+            if (RAH_NAMESPACE::advance(result, n, last) != 0)
+            {
+                return last;
+            }
+
+            // Invariant: next(first, n) == result
+            // Invariant: next(trail, n) == lead
+
+            auto lead = result;
+            auto trail = first;
+
+            for (; trail != result; ++lead, void(++trail))
+            {
+                if (lead == last)
+                {
+                    // The range looks like:
+                    //
+                    //   |-- (n - k) elements --|-- k elements --|-- (n - k) elements --|
+                    //   ^-first          trail-^                ^-result          last-^
+                    //
+                    // Note that distance(first, trail) == distance(result, last)
+                    auto move_in_out =
+                        RAH_NAMESPACE::move(std::move(first), std::move(trail), std::move(result));
+                    return {move_in_out.out, result};
+                }
+            }
+
+            for (;;)
+            {
+                for (auto mid = first; mid != result; ++lead, void(++trail), ++mid)
+                {
+                    if (lead == last)
+                    {
+                        // The range looks like:
+                        //
+                        //   |-- (n - k) elements --|-- k elements --|-- ... --|-- n elements --|
+                        //   ^-first            mid-^         result-^         ^-trail     last-^
+                        //
+                        trail = std::move(mid, result, std::move(trail));
+                        auto move_in_out =
+                            RAH_NAMESPACE::move(std::move(first), std::move(mid), std::move(trail));
+                        return {move_in_out.out, trail};
+                    }
+                    std::iter_swap(mid, trail);
+                }
+            }
+        }
+
+        template <typename R, std::enable_if_t<forward_range<R> && permutable<iterator_t<R>>>* = nullptr>
+        constexpr borrowed_subrange_t<R> operator()(R&& r, range_difference_t<R> n) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), n);
+        }
+    };
+
+    constexpr shift_right_fn shift_right{};
+
+    struct sample_fn
+    {
+        template <
+            typename I,
+            typename S,
+            typename O,
+            class Gen,
+            std::enable_if_t<!RAH_NAMESPACE::forward_iterator<I>>* = nullptr>
+        O operator()(I first, S last, O out, RAH_NAMESPACE::iter_difference_t<I> n, Gen&& gen) const
+        {
+            using diff_t = RAH_NAMESPACE::iter_difference_t<I>;
+            using distrib_t = std::uniform_int_distribution<diff_t>;
+            using param_t = typename distrib_t::param_type;
+            distrib_t D{};
+
+            // O is a random_access_iterator
+            diff_t sample_size{};
+            // copy [first, first + M) elements to "random access" output
+            for (; first != last && sample_size != n; ++first)
+                out[sample_size++] = *first;
+            // overwrite some of the copied elements with randomly selected ones
+            for (auto pop_size{sample_size}; first != last; ++first, ++pop_size)
+            {
+                const auto i{D(gen, param_t{0, pop_size})};
+                if (i < n)
+                    out[i] = *first;
+            }
+            return out + sample_size;
+        }
+
+        template <
+            typename I,
+            typename S,
+            typename O,
+            class Gen,
+            std::enable_if_t<RAH_NAMESPACE::forward_iterator<I>>* = nullptr>
+        O operator()(I first, S last, O out, RAH_NAMESPACE::iter_difference_t<I> n, Gen&& gen) const
+        {
+            using diff_t = RAH_NAMESPACE::iter_difference_t<I>;
+            using distrib_t = std::uniform_int_distribution<diff_t>;
+            using param_t = typename distrib_t::param_type;
+            distrib_t D{};
+
+            // this branch preserves "stability" of the sample elements
+            auto rest{RAH_NAMESPACE::distance(first, last)};
+            for (n = RAH_STD::min(n, rest); n != 0; ++first)
+            {
+                if (D(gen, param_t(0, --rest)) < n)
+                {
+                    *out++ = *first;
+                    --n;
+                }
+            }
+            return out;
+        }
+
+        template <typename R, typename O, class Gen>
+        O operator()(R&& r, O out, RAH_NAMESPACE::range_difference_t<R> n, Gen&& gen) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r),
+                RAH_NAMESPACE::end(r),
+                std::move(out),
+                n,
+                std::forward<Gen>(gen));
+        }
+    };
+
+    constexpr sample_fn sample{};
 } // namespace rah
