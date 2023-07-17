@@ -1089,13 +1089,6 @@ void test_is_partitioned()
     /// [rah::is_partitioned]
     std::array<int, 9> v;
 
-    auto print = [&v](bool o)
-    {
-        for (int x : v)
-            std::cout << x << ' ';
-        std::cout << (o ? "=> " : "=> not ") << "partitioned\n";
-    };
-
     auto is_even = [](int i)
     {
         return i % 2 == 0;
@@ -1139,7 +1132,6 @@ void test_partition_copy()
 
     auto ret = RAH_NAMESPACE::partition_copy(in, o1.begin(), o2.begin(), pred);
 
-    std::ostream_iterator<char> cout{std::cout, " "};
     assert(in == (std::vector<char>{'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'}));
     std::vector<int> o1_expected{'N', 'U', 'M', 'B', 'E', 'R'};
     std::vector<int> o2_expected{'3', '1', '4', '1', '5', '9'};
@@ -1159,9 +1151,39 @@ void test_stable_partition()
 }
 void test_partition_point()
 {
+    testSuite.test_case("sample");
+    /// [rah::partition_point]
+    std::array<int, 9> v{1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    auto is_even = [](int i)
+    {
+        return i % 2 == 0;
+    };
+
+    RAH_NAMESPACE::partition(v, is_even);
+
+    const auto pp = rah::partition_point(v, is_even);
+    const auto i = rah::distance(v.cbegin(), pp);
+    assert(i == 4); // 4 even number in v
+    /// [rah::partition_point]
 }
 void test_is_sorted()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::is_sorted]
+    namespace ranges = RAH_NAMESPACE;
+
+    std::array<int, 5> digits{3, 1, 4, 1, 5};
+    assert(not ranges::is_sorted(digits));
+
+    ranges::sort(digits);
+    assert(ranges::is_sorted(digits));
+
+    ranges::reverse(digits);
+    assert(not ranges::is_sorted(digits));
+    assert(ranges::is_sorted(digits, ranges::greater{}));
+    /// [rah::is_sorted]
 }
 void test_is_sorted_until()
 {

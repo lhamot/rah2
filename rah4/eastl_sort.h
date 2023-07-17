@@ -60,59 +60,6 @@
 
 namespace RAH_NAMESPACE
 {
-
-    /// is_sorted
-    ///
-    /// Returns true if the range [first, last) is sorted.
-    /// An empty range is considered to be sorted.
-    /// To test if a range is reverse-sorted, use 'greater' as the comparison
-    /// instead of 'less'.
-    ///
-    /// Example usage:
-    ///    vector<int> intArray;
-    ///    bool bIsSorted        = is_sorted(intArray.begin(), intArray.end());
-    ///    bool bIsReverseSorted = is_sorted(intArray.begin(), intArray.end(), greater<int>());
-    ///
-    template <typename ForwardIterator, typename Sentinel, typename StrictWeakOrdering>
-    bool is_sorted(ForwardIterator first, Sentinel last, StrictWeakOrdering compare)
-    {
-        if (first != last)
-        {
-            ForwardIterator current = first;
-
-            for (++current; current != last; first = current, ++current)
-            {
-                if (compare(*current, *first))
-                {
-                    EASTL_VALIDATE_COMPARE(
-                        !compare(*first, *current)); // Validate that the compare function is sane.
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    template <typename ForwardRange, typename StrictWeakOrdering>
-    bool is_sorted(ForwardRange&& range, StrictWeakOrdering compare)
-    {
-        return is_sorted(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), compare);
-    }
-
-    template <typename ForwardIterator, typename Sentinel>
-    inline bool is_sorted(ForwardIterator first, Sentinel last)
-    {
-        typedef RAH_STD::less<typename RAH_STD::iterator_traits<ForwardIterator>::value_type> Less;
-
-        return RAH_NAMESPACE::is_sorted<ForwardIterator, Less>(first, last, Less());
-    }
-
-    template <typename ForwardRange>
-    bool is_sorted(ForwardRange&& range)
-    {
-        return is_sorted(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
-    }
-
     /// is_sorted_until
     ///
     /// Returns an iterator to the first element in the range [first,last) which does not follow an ascending order.
@@ -162,6 +109,44 @@ namespace RAH_NAMESPACE
 
         return last;
     }
+
+    struct is_sorted_fn
+    {
+        template <
+            typename I, // std::forward_iterator
+            typename S, // std::sentinel_for<I>
+            // class Proj = std::identity,
+            typename Comp = RAH_NAMESPACE::less, // std::indirect_strict_weak_order<std::projected<I, Proj>>
+            std::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        constexpr bool operator()(I first, S last, Comp comp = {}) const
+        {
+            return RAH_NAMESPACE::is_sorted_until(first, last, comp) == last;
+        }
+
+        template <
+            typename R, // ranges::forward_range
+            // class Proj = std::identity,
+            typename Comp = RAH_NAMESPACE::less, // std::indirect_strict_weak_order<std::projected<ranges::iterator_t<R>, Proj>>
+            std::enable_if_t<forward_range<R>>* = nullptr>
+        constexpr bool operator()(R&& r, Comp comp = {}) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(comp));
+        }
+    };
+
+    /// is_sorted
+    ///
+    /// Returns true if the range [first, last) is sorted.
+    /// An empty range is considered to be sorted.
+    /// To test if a range is reverse-sorted, use 'greater' as the comparison
+    /// instead of 'less'.
+    ///
+    /// Example usage:
+    ///    vector<int> intArray;
+    ///    bool bIsSorted        = is_sorted(intArray.begin(), intArray.end());
+    ///    bool bIsReverseSorted = is_sorted(intArray.begin(), intArray.end(), greater<int>());
+    ///
+    constexpr is_sorted_fn is_sorted;
 
     /// merge
     ///
@@ -530,7 +515,7 @@ namespace RAH_NAMESPACE
                 {
                     RAH_NAMESPACE::merge<RandomAccessIterator, RandomAccessIterator, T*, StrictWeakOrdering>(
                         first, first + nMid, first + nMid, last, pBuffer, compare);
-                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted<T*, StrictWeakOrdering>(
+                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted.operator()<T*, T*, StrictWeakOrdering>(
                         pBuffer, pBuffer + nCount, compare)));
                     return RL_Buffer;
                 }
@@ -539,8 +524,10 @@ namespace RAH_NAMESPACE
                     RAH_NAMESPACE::copy(first, first + nMid, pBuffer);
                     RAH_NAMESPACE::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(
                         pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted<RandomAccessIterator, StrictWeakOrdering>(
-                        first, last, compare)));
+                    RAH_DEV_ASSERT(
+                        (RAH_NAMESPACE::is_sorted.
+                         operator()<RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering>(
+                             first, last, compare)));
                     return RL_SourceRange;
                 }
             }

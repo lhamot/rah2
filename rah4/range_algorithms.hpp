@@ -694,4 +694,34 @@ namespace rah
     };
 
     constexpr partition_copy_fn partition_copy{};
+
+    struct partition_point_fn
+    {
+        template <class ForwardIt, class UnaryPredicate>
+        constexpr ForwardIt operator()(ForwardIt first, ForwardIt last, UnaryPredicate p) const
+        {
+            for (auto length = std::distance(first, last); 0 < length;)
+            {
+                auto half = length / 2;
+                auto middle = std::next(first, half);
+                if (p(*middle))
+                {
+                    first = std::next(middle);
+                    length -= (half + 1);
+                }
+                else
+                    length = half;
+            }
+
+            return first;
+        }
+
+        template <class ForwardRange, class UnaryPredicate>
+        constexpr borrowed_iterator_t<ForwardRange> operator()(ForwardRange&& range, UnaryPredicate p) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(p));
+        }
+    };
+
+    constexpr partition_point_fn partition_point{};
 } // namespace rah
