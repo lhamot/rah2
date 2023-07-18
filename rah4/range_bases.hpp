@@ -15,6 +15,8 @@
 #define RAHAllocatorType std::allocator
 #define RAH_ASSERT(expression)
 
+#define RAH_VALIDATE_COMPARE
+
 #define RAH_DEV_ASSERT assert
 
 #define RAH_INVOKE_0(FUNC) FUNC()

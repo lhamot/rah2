@@ -110,6 +110,19 @@ namespace RAH_NAMESPACE
         return last;
     }
 
+    template <typename ForwardRange, typename Compare>
+    auto is_sorted_until(ForwardRange&& r, Compare compare)
+    {
+        return is_sorted_until(
+            RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), RAH_STD::move(compare));
+    }
+
+    template <typename ForwardRange>
+    auto is_sorted_until(ForwardRange&& r)
+    {
+        return is_sorted_until(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
+    }
+
     struct is_sorted_fn
     {
         template <
@@ -167,7 +180,7 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 *result = *first2;
                 ++first2;
@@ -239,7 +252,7 @@ namespace RAH_NAMESPACE
                      movePosition != first && compare(insertValue, *(--movePosition));
                      --insertPosition)
                 {
-                    EASTL_VALIDATE_COMPARE(!compare(*movePosition, insertValue));
+                    RAH_VALIDATE_COMPARE(!compare(*movePosition, insertValue));
                     *insertPosition = RAH_STD::move(*movePosition);
                 }
 
@@ -304,7 +317,7 @@ namespace RAH_NAMESPACE
                         for (; (iCurrent != iInsertFirst) && compare(*iCurrent, *(iBack -= nSpace));
                              iCurrent = iBack)
                         {
-                            EASTL_VALIDATE_COMPARE(!compare(
+                            RAH_VALIDATE_COMPARE(!compare(
                                 *iBack, *iCurrent)); // Validate that the compare function is sane.
                             RAH_STD::iter_swap(iCurrent, iBack);
                         }
@@ -371,7 +384,7 @@ namespace RAH_NAMESPACE
 
                     for (--iCurrent; (iNext != first) && compare(temp, *iCurrent); --iNext, --iCurrent)
                     {
-                        EASTL_VALIDATE_COMPARE(!compare(
+                        RAH_VALIDATE_COMPARE(!compare(
                             *iCurrent, temp)); // Validate that the compare function is sane.
                         *iNext = *iCurrent;
                     }
@@ -787,7 +800,7 @@ namespace RAH_NAMESPACE
         {
             while (RAH_STD::less<PureT>()(*first, pivotValue))
             {
-                EASTL_VALIDATE_COMPARE(!RAH_STD::less<PureT>()(
+                RAH_VALIDATE_COMPARE(!RAH_STD::less<PureT>()(
                     pivotValue, *first)); // Validate that the compare function is sane.
                 ++first;
             }
@@ -795,7 +808,7 @@ namespace RAH_NAMESPACE
 
             while (RAH_STD::less<PureT>()(pivotValue, *last))
             {
-                EASTL_VALIDATE_COMPARE(!RAH_STD::less<PureT>()(
+                RAH_VALIDATE_COMPARE(!RAH_STD::less<PureT>()(
                     *last, pivotValue)); // Validate that the compare function is sane.
                 --last;
             }
@@ -818,7 +831,7 @@ namespace RAH_NAMESPACE
     get_partition(RandomAccessIterator first, Sentinel last, const T& pivotValue)
     {
         const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
-        return get_partition_impl<RandomAccessIterator, const T&>(first, last, pivotCopy);
+        return get_partition_impl<RandomAccessIterator, Sentinel, const T&>(first, last, pivotCopy);
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T>
@@ -836,7 +849,7 @@ namespace RAH_NAMESPACE
         {
             while (compare(*first, pivotValue))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(pivotValue, *first)); // Validate that the compare function is sane.
                 ++first;
             }
@@ -844,7 +857,7 @@ namespace RAH_NAMESPACE
 
             while (compare(pivotValue, *last))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*last, pivotValue)); // Validate that the compare function is sane.
                 --last;
             }
@@ -861,7 +874,7 @@ namespace RAH_NAMESPACE
     get_partition(RandomAccessIterator first, Sentinel last, const T& pivotValue, Compare compare)
     {
         const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
-        return get_partition_impl<RandomAccessIterator, const T&, Compare>(
+        return get_partition_impl<RandomAccessIterator, Sentinel, const T&, Compare>(
             first, last, pivotCopy, compare);
     }
 
@@ -895,7 +908,7 @@ namespace RAH_NAMESPACE
                      --end,
                      --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
                 {
-                    EASTL_VALIDATE_COMPARE(!RAH_STD::less<value_type>()(
+                    RAH_VALIDATE_COMPARE(!RAH_STD::less<value_type>()(
                         *prev, value)); // Validate that the compare function is sane.
                     *end = RAH_STD::forward<value_type>(*prev);
                 }
@@ -923,7 +936,7 @@ namespace RAH_NAMESPACE
                      --end,
                      --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
                 {
-                    EASTL_VALIDATE_COMPARE(
+                    RAH_VALIDATE_COMPARE(
                         !compare(*prev, value)); // Validate that the compare function is sane.
                     *end = RAH_STD::forward<value_type>(*prev);
                 }
@@ -946,7 +959,7 @@ namespace RAH_NAMESPACE
         {
             if (RAH_STD::less<value_type>()(*i, *first))
             {
-                EASTL_VALIDATE_COMPARE(!RAH_STD::less<value_type>()(
+                RAH_VALIDATE_COMPARE(!RAH_STD::less<value_type>()(
                     *first, *i)); // Validate that the compare function is sane.
                 value_type temp(RAH_STD::forward<value_type>(*i));
                 *i = RAH_STD::forward<value_type>(*first);
@@ -960,6 +973,12 @@ namespace RAH_NAMESPACE
         }
 
         RAH_STD::sort_heap<RandomAccessIterator>(first, middle);
+    }
+
+    template <typename RandomAccessRange, typename RandomAccessIterator>
+    inline void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle)
+    {
+        return partial_sort(RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range));
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
@@ -976,8 +995,7 @@ namespace RAH_NAMESPACE
         {
             if (compare(*i, *first))
             {
-                EASTL_VALIDATE_COMPARE(
-                    !compare(*first, *i)); // Validate that the compare function is sane.
+                RAH_VALIDATE_COMPARE(!compare(*first, *i)); // Validate that the compare function is sane.
                 value_type temp(RAH_STD::forward<value_type>(*i));
                 *i = RAH_STD::forward<value_type>(*first);
                 RAH_NAMESPACE::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
@@ -993,48 +1011,88 @@ namespace RAH_NAMESPACE
         RAH_STD::sort_heap<RandomAccessIterator, Compare>(first, middle, compare);
     }
 
-    template <typename RandomAccessIterator, typename Sentinel>
-    inline void nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last)
+    template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>
+    inline void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle, Compare compare)
+    {
+        return partial_sort(
+            RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range), RAH_STD::move(compare));
+    }
+
+    template <
+        typename RandomAccessIterator,
+        typename Sentinel,
+        std::enable_if_t<
+            random_access_iterator<RandomAccessIterator>
+            && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+    inline RandomAccessIterator
+    nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last)
     {
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        while ((last - first) > 5)
+        auto result = RAH_NAMESPACE::next(first, last);
+        auto lasti = result;
+        while ((lasti - first) > 5)
         {
             const value_type midValue(RAH_NAMESPACE::median<value_type>(
-                *first, *(first + (last - first) / 2), *(last - 1)));
+                *first, *(first + (lasti - first) / 2), *(lasti - 1)));
             const RandomAccessIterator midPos(
-                RAH_NAMESPACE::get_partition<RandomAccessIterator, value_type>(first, last, midValue));
+                RAH_NAMESPACE::get_partition<RandomAccessIterator, Sentinel, value_type>(
+                    first, lasti, midValue));
 
             if (midPos <= nth)
                 first = midPos;
             else
-                last = midPos;
+                lasti = midPos;
         }
 
-        RAH_NAMESPACE::insertion_sort<RandomAccessIterator>(first, last);
+        RAH_NAMESPACE::insertion_sort<RandomAccessIterator>(first, lasti);
+        return result;
+    }
+
+    template <typename RandomAccessRange>
+    inline iterator_t<RandomAccessRange>
+    nth_element(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth)
+    {
+        return RAH_NAMESPACE::nth_element(
+            RAH_NAMESPACE::begin(range), RAH_STD::move(nth), RAH_NAMESPACE::end(range));
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-    inline void
+    inline RandomAccessIterator
     nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last, Compare compare)
     {
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        while ((last - first) > 5)
+        auto result = RAH_NAMESPACE::next(first, last);
+        auto lasti = result;
+        while ((lasti - first) > 5)
         {
             const value_type midValue(RAH_NAMESPACE::median<value_type, Compare>(
-                *first, *(first + (last - first) / 2), *(last - 1), compare));
+                *first, *(first + (lasti - first) / 2), *(lasti - 1), compare));
             const RandomAccessIterator midPos(
-                RAH_NAMESPACE::get_partition<RandomAccessIterator, value_type, Compare>(
-                    first, last, midValue, compare));
+                RAH_NAMESPACE::get_partition<RandomAccessIterator, Sentinel, value_type, Compare>(
+                    first, lasti, midValue, compare));
 
             if (midPos <= nth)
                 first = midPos;
             else
-                last = midPos;
+                lasti = midPos;
         }
 
-        RAH_NAMESPACE::insertion_sort<RandomAccessIterator, Compare>(first, last, compare);
+        RAH_NAMESPACE::insertion_sort<RandomAccessIterator, Sentinel, Compare>(first, lasti, compare);
+        return result;
+    }
+
+    template <
+        typename RandomAccessRange,
+        typename Compare,
+        std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+    inline iterator_t<RandomAccessRange>
+    nth_element(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth, Compare compare)
+    {
+        return RAH_NAMESPACE::nth_element(
+            RAH_NAMESPACE::begin(range),
+            RAH_STD::move(nth),
+            RAH_NAMESPACE::end(range),
+            RAH_STD::move(compare));
     }
 
     namespace Internal
@@ -2026,7 +2084,7 @@ namespace RAH_NAMESPACE
             {
                 if (compare(*iNext, *iCurrent))
                 {
-                    EASTL_VALIDATE_COMPARE(
+                    RAH_VALIDATE_COMPARE(
                         !compare(*iCurrent, *iNext)); // Validate that the compare function is sane.
                     RAH_STD::iter_swap(iCurrent, iNext);
                     bSwapped = true;
@@ -2069,7 +2127,7 @@ namespace RAH_NAMESPACE
                 {
                     if (compare(*iNext, *iCurrent))
                     {
-                        EASTL_VALIDATE_COMPARE(!compare(
+                        RAH_VALIDATE_COMPARE(!compare(
                             *iCurrent, *iNext)); // Validate that the compare function is sane.
                         RAH_STD::iter_swap(iCurrent, iNext);
                     }
@@ -2099,7 +2157,7 @@ namespace RAH_NAMESPACE
                     {
                         if (compare(*iNext, *iCurrent))
                         {
-                            EASTL_VALIDATE_COMPARE(!compare(
+                            RAH_VALIDATE_COMPARE(!compare(
                                 *iCurrent, *iNext)); // Validate that the compare function is sane.
                             iLastModified = iCurrent;
                             RAH_STD::iter_swap(iCurrent, iNext);

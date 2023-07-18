@@ -7,6 +7,7 @@
 #include "eastl_sort.h"
 
 #include <algorithm>
+#include <forward_list>
 #if RAH_CPP20
 #include <ranges>
 #endif
@@ -1187,6 +1188,26 @@ void test_is_sorted()
 }
 void test_is_sorted_until()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    testSuite.test_case("empty");
+    /// [rah::is_sorted_until]
+    std::array<int, 0> a0 = {};
+    const auto sorted_end0 = RAH_NAMESPACE::is_sorted_until(a0);
+    assert(rah::distance(a0.begin(), sorted_end0) == 0);
+
+    std::array<int, 6> a1{3, 1, 4, 1, 5, 9};
+    const auto sorted_end = RAH_NAMESPACE::is_sorted_until(a1);
+    assert(rah::distance(a1.begin(), sorted_end) == 1);
+
+    std::array<int, 6> a3{3, 6, 18, 1, 5, 9};
+    const auto sorted_end3 = RAH_NAMESPACE::is_sorted_until(a3);
+    assert(rah::distance(a3.begin(), sorted_end3) == 3);
+
+    std::array<int, 6> a6{3, 6, 18, 19, 20, 78};
+    const auto sorted_end6 = RAH_NAMESPACE::is_sorted_until(a6);
+    assert(rah::distance(a6.begin(), sorted_end6) == 6);
+    /// [rah::is_sorted_until]
 }
 void test_sort()
 {
@@ -1208,9 +1229,39 @@ void test_sort()
 }
 void test_partial_sort()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::partial_sort]
+    std::vector<char> v{'x', 'P', 'y', 'C', 'z', 'w', 'P', 'o'};
+
+    const int m{3};
+    RAH_NAMESPACE::partial_sort(v, v.begin() + m);
+    assert((rah::equal(v | rah::views::take(3), std::string("CPP"))));
+
+    std::string s{"3a1b41c5"};
+    RAH_NAMESPACE::partial_sort(s.begin(), s.begin() + m, s.end(), RAH_NAMESPACE::greater{});
+    assert((rah::equal(s | rah::views::take(3), std::string("cba"))));
+    /// [rah::partial_sort]
 }
 void test_partial_sort_copy()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::partial_sort_copy]
+    const std::forward_list<int> source{4, 2, 5, 1, 3};
+
+    std::vector<int> dest1{10, 11, 12};
+    auto lastI_lastO = RAH_NAMESPACE::partial_sort_copy(source, dest1);
+    assert(dest1 == (std::vector<int>{1, 2, 3}));
+    assert(lastI_lastO.in == source.end());
+    assert(lastI_lastO.out == dest1.end());
+
+    std::vector<int> dest2{10, 11, 12, 13, 14, 15, 16};
+    lastI_lastO = RAH_NAMESPACE::partial_sort_copy(source, dest2, RAH_NAMESPACE::greater{});
+    assert(dest2 == (std::vector<int>{5, 4, 3, 2, 1, 15, 16}));
+    assert(lastI_lastO.in == source.end());
+    assert(lastI_lastO.out == dest2.begin() + 5);
+    /// [rah::partial_sort_copy]
 }
 void test_stable_sort()
 {
@@ -1249,6 +1300,32 @@ void test_stable_sort()
 }
 void test_nth_element()
 {
+    testSuite.test_case("sample");
+    /// [rah::nth_element]
+    std::array<int, 9> v{5, 6, 4, 3, 2, 6, 7, 9, 3};
+
+    auto out_last = RAH_NAMESPACE::nth_element(v, v.begin() + 4);
+    assert(v[4] == 5);
+    assert(out_last == v.end());
+
+    out_last = RAH_NAMESPACE::nth_element(v, v.begin() + 1, std::greater<int>());
+    assert(v[1] == 7);
+    assert(out_last == v.end());
+
+    using namespace std::literals;
+    std::array<std::string, 7> names{
+        "Diva",
+        "Cornelius",
+        "Munro",
+        "Rhod"
+        "Zorg",
+        "Korben",
+        "Bender",
+        "Leeloo"};
+    auto out_last2 = RAH_NAMESPACE::nth_element(names, names.begin() + 4);
+    assert(names[4] == "Leeloo");
+    assert(out_last2 == names.end());
+    /// [rah::nth_element]
 }
 void test_lower_bound()
 {

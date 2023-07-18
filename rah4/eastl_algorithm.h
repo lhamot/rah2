@@ -2475,7 +2475,7 @@ namespace RAH_NAMESPACE
 
             if (*i < value)
             {
-                // Disabled because std::lower_bound doesn't specify (23.3.3.3, p3) this can be done: EASTL_VALIDATE_COMPARE(!(value < *i)); // Validate that the compare function is sane.
+                // Disabled because std::lower_bound doesn't specify (23.3.3.3, p3) this can be done: RAH_VALIDATE_COMPARE(!(value < *i)); // Validate that the compare function is sane.
                 first = ++i;
                 d -= d2 + 1;
             }
@@ -2525,7 +2525,7 @@ namespace RAH_NAMESPACE
 
             if (compare(*i, value))
             {
-                // Disabled because std::lower_bound doesn't specify (23.3.3.1, p3) this can be done: EASTL_VALIDATE_COMPARE(!compare(value, *i)); // Validate that the compare function is sane.
+                // Disabled because std::lower_bound doesn't specify (23.3.3.1, p3) this can be done: RAH_VALIDATE_COMPARE(!compare(value, *i)); // Validate that the compare function is sane.
                 first = ++i;
                 d -= d2 + 1;
             }
@@ -2571,7 +2571,7 @@ namespace RAH_NAMESPACE
             }
             else
             {
-                // Disabled because std::upper_bound doesn't specify (23.3.3.2, p3) this can be done: EASTL_VALIDATE_COMPARE(!(*i < value)); // Validate that the compare function is sane.
+                // Disabled because std::upper_bound doesn't specify (23.3.3.2, p3) this can be done: RAH_VALIDATE_COMPARE(!(*i < value)); // Validate that the compare function is sane.
                 len = len2;
             }
         }
@@ -2617,7 +2617,7 @@ namespace RAH_NAMESPACE
             }
             else
             {
-                // Disabled because std::upper_bound doesn't specify (23.3.3.2, p3) this can be done: EASTL_VALIDATE_COMPARE(!compare(*i, value)); // Validate that the compare function is sane.
+                // Disabled because std::upper_bound doesn't specify (23.3.3.2, p3) this can be done: RAH_VALIDATE_COMPARE(!compare(*i, value)); // Validate that the compare function is sane.
                 len = len2;
             }
         }
@@ -3833,7 +3833,7 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first1, *first2))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first2, *first1)); // Validate that the compare function is sane.
                 *result = *first1;
                 ++first1;
@@ -3841,7 +3841,7 @@ namespace RAH_NAMESPACE
             }
             else if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 ++first2;
             }
@@ -3895,13 +3895,13 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first1, *first2))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first2, *first1)); // Validate that the compare function is sane.
                 *result1++ = *first1++;
             }
             else if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 *result2++ = *first2++;
             }
@@ -4001,7 +4001,7 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first1, *first2))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first2, *first1)); // Validate that the compare function is sane.
                 *result = *first1;
                 ++first1;
@@ -4009,7 +4009,7 @@ namespace RAH_NAMESPACE
             }
             else if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 *result = *first2;
                 ++first2;
@@ -4103,13 +4103,13 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first1, *first2))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first2, *first1)); // Validate that the compare function is sane.
                 ++first1;
             }
             else if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 ++first2;
             }
@@ -4194,14 +4194,14 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first1, *first2))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first2, *first1)); // Validate that the compare function is sane.
                 *result = *first1;
                 ++first1;
             }
             else if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 *result = *first2;
                 ++first2;
@@ -4258,13 +4258,13 @@ namespace RAH_NAMESPACE
         {
             if (compare(*first1, *first2))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first2, *first1)); // Validate that the compare function is sane.
                 *result1++ = *first1++;
             }
             else if (compare(*first2, *first1))
             {
-                EASTL_VALIDATE_COMPARE(
+                RAH_VALIDATE_COMPARE(
                     !compare(*first1, *first2)); // Validate that the compare function is sane.
                 *result2++ = *first2++;
             }

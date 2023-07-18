@@ -724,4 +724,78 @@ namespace rah
     };
 
     constexpr partition_point_fn partition_point{};
+
+    template <class I, class O>
+    using partial_sort_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct partial_sort_copy_fn
+    {
+        template <
+            typename I1, // std::input_iterator
+            typename S1, // std::sentinel_for<I1>
+            typename I2, // std::random_access_iterator
+            typename S2, // std::sentinel_for<I2>
+            class Comp = RAH_NAMESPACE::less>
+        //requires std::indirectly_copyable<I1, I2> && std::sortable<I2, Comp, Proj2> && std::
+        //    indirect_strict_weak_order<Comp, std::projected<I1, Proj1>, std::projected<I2, Proj2>>
+        constexpr RAH_NAMESPACE::partial_sort_copy_result<I1, I2>
+        operator()(I1 first, S1 last, I2 result_first, S2 result_last, Comp comp = {}) const
+        {
+            if (result_first == result_last)
+                return {
+                    std::move(RAH_NAMESPACE::next(std::move(first), std::move(last))),
+                    std::move(result_first)};
+
+            auto out_last{result_first};
+            // copy first N elements
+            for (; !(first == last or out_last == result_last); ++out_last, ++first)
+                *out_last = *first;
+
+            // convert N copied elements into a max-heap
+            RAH_STD::make_heap(result_first, out_last, comp);
+
+            // process the rest of the input range (if any), preserving the heap property
+            for (; first != last; ++first)
+            {
+                if (RAH_INVOKE_2(comp, *first, *result_first))
+                {
+                    // pop out the biggest item and push in a newly found smaller one
+                    RAH_STD::pop_heap(result_first, out_last, comp);
+                    *(out_last - 1) = *first;
+                    RAH_STD::push_heap(result_first, out_last, comp);
+                }
+            }
+
+            // first N elements in the output range is still
+            // a heap - convert it into a sorted range
+            RAH_STD::sort_heap(result_first, out_last, comp);
+
+            return {std::move(first), std::move(out_last)};
+        }
+
+        template <
+            typename R1, // ranges::input_range
+            typename R2, // ranges::random_access_range
+            class Comp = RAH_NAMESPACE::less>
+        //requires std::indirectly_copyable<ranges::iterator_t<R1>, ranges::iterator_t<R2>>
+        //         && std::sortable<ranges::iterator_t<R2>, Comp, Proj2>
+        //         && std::indirect_strict_weak_order<
+        //             Comp,
+        //             std::projected<ranges::iterator_t<R1>, Proj1>,
+        //             std::projected<ranges::iterator_t<R2>, Proj2>>
+        constexpr RAH_NAMESPACE::partial_sort_copy_result<
+            RAH_NAMESPACE::borrowed_iterator_t<R1>,
+            RAH_NAMESPACE::borrowed_iterator_t<R2>>
+        operator()(R1&& r, R2&& result_r, Comp comp = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r),
+                RAH_NAMESPACE::end(r),
+                RAH_NAMESPACE::begin(result_r),
+                RAH_NAMESPACE::end(result_r),
+                RAH_STD::move(comp));
+        }
+    };
+
+    constexpr partial_sort_copy_fn partial_sort_copy{};
 } // namespace rah
