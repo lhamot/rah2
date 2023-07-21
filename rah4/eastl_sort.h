@@ -72,7 +72,10 @@ namespace RAH_NAMESPACE
     ///     vector<int>::iterator unsorted_element = is_sorted_until(eastl::end(intArray), eastl::end(intArray));
     ///     vector<int>::iterator unsorted_element_with_user_compare = is_sorted_until(eastl::end(intArray), eastl::end(intArray), RAH_STD::less<int>());
     ///
-    template <typename ForwardIterator, typename Sentinel>
+    template <
+        typename ForwardIterator,
+        typename Sentinel,
+        std::enable_if_t<forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
     ForwardIterator is_sorted_until(ForwardIterator first, Sentinel last)
     {
         if (first != last)
@@ -110,7 +113,7 @@ namespace RAH_NAMESPACE
         return last;
     }
 
-    template <typename ForwardRange, typename Compare>
+    template <typename ForwardRange, typename Compare, std::enable_if_t<forward_range<ForwardRange>>* = nullptr>
     auto is_sorted_until(ForwardRange&& r, Compare compare)
     {
         return is_sorted_until(
@@ -120,7 +123,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange>
     auto is_sorted_until(ForwardRange&& r)
     {
-        return is_sorted_until(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
+        return RAH_NAMESPACE::is_sorted_until(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
     }
 
     struct is_sorted_fn
@@ -167,14 +170,20 @@ namespace RAH_NAMESPACE
     /// This merge is stable in that no element from the first range will be changed
     /// in order relative to other elements from the first range.
     ///
-    template <typename InputIterator1, typename InputIterator2, typename OutputIterator, typename Compare>
+    template <
+        typename InputIterator1,
+        typename Sentinel1,
+        typename InputIterator2,
+        typename Sentinel2,
+        typename OutputIterator,
+        typename Compare = RAH_NAMESPACE::less>
     OutputIterator merge(
         InputIterator1 first1,
-        InputIterator1 last1,
+        Sentinel1 last1,
         InputIterator2 first2,
-        InputIterator2 last2,
+        Sentinel2 last2,
         OutputIterator result,
-        Compare compare)
+        Compare compare = {})
     {
         while ((first1 != last1) && (first2 != last2))
         {
@@ -207,18 +216,17 @@ namespace RAH_NAMESPACE
         }
     }
 
-    template <typename InputIterator1, typename InputIterator2, typename OutputIterator>
-    inline OutputIterator merge(
-        InputIterator1 first1,
-        InputIterator1 last1,
-        InputIterator2 first2,
-        InputIterator2 last2,
-        OutputIterator result)
+    template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare = RAH_NAMESPACE::less>
+    OutputIterator
+    merge(InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare = {})
     {
-        typedef RAH_STD::less<typename RAH_STD::iterator_traits<InputIterator1>::value_type> Less;
-
-        return RAH_NAMESPACE::merge<InputIterator1, InputIterator2, OutputIterator, Less>(
-            first1, last1, first2, last2, result, Less());
+        return merge(
+            RAH_NAMESPACE::begin(range1),
+            RAH_NAMESPACE::end(range1),
+            RAH_NAMESPACE::begin(range2),
+            RAH_NAMESPACE::end(range2),
+            RAH_STD::move(result),
+            RAH_STD::move(compare));
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -429,8 +437,9 @@ namespace RAH_NAMESPACE
                 const difference_type nCount = last - first;
                 RAH_NAMESPACE::copy(pBuffer, pBuffer + nCount, first);
             }
-            RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted<RandomAccessIterator, StrictWeakOrdering>(
-                first, last, compare)));
+            RAH_DEV_ASSERT(
+                (RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
+                    first, last, compare)));
         }
 
     private:
@@ -500,8 +509,9 @@ namespace RAH_NAMESPACE
             }
             else
             {
-                RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted<RandomAccessIterator, StrictWeakOrdering>(
-                    first, last, compare)));
+                RAH_DEV_ASSERT(
+                    (RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
+                        first, last, compare)));
                 return RL_SourceRange;
             }
         }
@@ -551,16 +561,18 @@ namespace RAH_NAMESPACE
                     RAH_NAMESPACE::copy(first + nMid, last, pBuffer + nMid);
                     RAH_NAMESPACE::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(
                         pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted<RandomAccessIterator, StrictWeakOrdering>(
-                        first, last, compare)));
+                    RAH_DEV_ASSERT((
+                        RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
+                            first, last, compare)));
                     return RL_SourceRange;
                 }
                 else
                 {
                     RAH_NAMESPACE::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(
                         pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted<RandomAccessIterator, StrictWeakOrdering>(
-                        first, last, compare)));
+                    RAH_DEV_ASSERT((
+                        RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
+                            first, last, compare)));
                     return RL_SourceRange;
                 }
             }
@@ -1107,7 +1119,7 @@ namespace RAH_NAMESPACE
             while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
             {
                 const RandomAccessIterator position(
-                    RAH_NAMESPACE::get_partition<RandomAccessIterator, value_type>(
+                    RAH_NAMESPACE::get_partition<RandomAccessIterator, Sentinel, value_type>(
                         first,
                         last,
                         RAH_STD::forward<PivotValueType>(RAH_NAMESPACE::median<value_type>(
@@ -1115,7 +1127,7 @@ namespace RAH_NAMESPACE
                             RAH_STD::forward<value_type>(*(first + (last - first) / 2)),
                             RAH_STD::forward<value_type>(*(last - 1))))));
 
-                RAH_NAMESPACE::Internal::quick_sort_impl_helper<RandomAccessIterator, Size, PivotValueType>(
+                RAH_NAMESPACE::Internal::quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, PivotValueType>(
                     position, last, --kRecursionCount);
                 last = position;
             }
@@ -1165,7 +1177,7 @@ namespace RAH_NAMESPACE
             typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
             // copy constructors require const value_type
-            quick_sort_impl_helper<RandomAccessIterator, Size, const value_type>(
+            quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, const value_type>(
                 first, last, kRecursionCount);
         }
 
@@ -1251,17 +1263,18 @@ namespace RAH_NAMESPACE
 
         if (first != last)
         {
-            RAH_NAMESPACE::Internal::quick_sort_impl<RandomAccessIterator, difference_type>(
+            RAH_NAMESPACE::Internal::quick_sort_impl<RandomAccessIterator, Sentinel, difference_type>(
                 first, last, 2 * Internal::Log2(last - first));
 
             if ((last - first) > (difference_type)kQuickSortLimit)
             {
-                RAH_NAMESPACE::insertion_sort<RandomAccessIterator>(first, first + kQuickSortLimit);
-                RAH_NAMESPACE::Internal::insertion_sort_simple<RandomAccessIterator>(
+                RAH_NAMESPACE::insertion_sort<RandomAccessIterator, RandomAccessIterator>(
+                    first, first + kQuickSortLimit);
+                RAH_NAMESPACE::Internal::insertion_sort_simple<RandomAccessIterator, Sentinel>(
                     first + kQuickSortLimit, last);
             }
             else
-                RAH_NAMESPACE::insertion_sort<RandomAccessIterator>(first, last);
+                RAH_NAMESPACE::insertion_sort<RandomAccessIterator, Sentinel>(first, last);
         }
     }
 

@@ -798,4 +798,234 @@ namespace rah
     };
 
     constexpr partial_sort_copy_fn partial_sort_copy{};
+
+    // TODO : This is the slower implementation. Make a better one.
+    struct inplace_merge_fn
+    {
+        template <
+            typename I, // std::bidirectional_iterator
+            typename S, // std::sentinel_for<I>
+            class Comp = RAH_NAMESPACE::less,
+            std::enable_if_t<bidirectional_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        // requires std::sortable<I, Comp, Proj>
+        constexpr I operator()(I first, I middle, S last, Comp comp = {}) const
+        {
+            I last_it = RAH_NAMESPACE::next(middle, last);
+            inplace_merge_slow(
+                first,
+                middle,
+                last_it,
+                RAH_NAMESPACE::distance(first, middle),
+                RAH_NAMESPACE::distance(middle, last_it),
+                std::ref(comp));
+            return last_it;
+        }
+
+        template <
+            typename R, // ranges::bidirectional_range
+            class Comp = RAH_NAMESPACE::less,
+            std::enable_if_t<bidirectional_range<R>>* = nullptr>
+        // requires std::sortable<ranges::iterator_t<R>, Comp, Proj>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R>
+        operator()(R&& r, RAH_NAMESPACE::iterator_t<R> middle, Comp comp = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), std::move(middle), RAH_NAMESPACE::end(r), std::move(comp));
+        }
+
+    private:
+        template <class I, class Comp>
+        static constexpr void inplace_merge_slow(
+            I first,
+            I middle,
+            I last,
+            RAH_NAMESPACE::iter_difference_t<I> n1,
+            RAH_NAMESPACE::iter_difference_t<I> n2,
+            Comp comp)
+        {
+            if (n1 == 0 || n2 == 0)
+                return;
+            if (n1 + n2 == 2 && comp(*middle, *first))
+            {
+                RAH_NAMESPACE::iter_swap(first, middle);
+                return;
+            }
+
+            I cut1 = first, cut2 = middle;
+            RAH_NAMESPACE::iter_difference_t<I> d1{}, d2{};
+
+            if (n1 > n2)
+            {
+                d1 = n1 / 2;
+                RAH_NAMESPACE::advance(cut1, d1);
+                cut2 = RAH_NAMESPACE::lower_bound(middle, last, *cut1, std::ref(comp));
+                d2 = RAH_NAMESPACE::distance(middle, cut2);
+            }
+            else
+            {
+                d2 = n2 / 2;
+                RAH_NAMESPACE::advance(cut2, d2);
+                cut1 = RAH_NAMESPACE::upper_bound(first, middle, *cut2, std::ref(comp));
+                d1 = RAH_NAMESPACE::distance(first, cut1);
+            }
+
+            I new_middle = RAH_NAMESPACE::rotate(cut1, middle, cut2).begin();
+            inplace_merge_slow(first, cut1, new_middle, d1, d2, std::ref(comp));
+            inplace_merge_slow(new_middle, cut2, last, n1 - d1, n2 - d2, std::ref(comp));
+        }
+    };
+
+    constexpr inplace_merge_fn inplace_merge{};
+
+    struct includes_fn
+    {
+        template <
+            typename I1, // std::input_iterator
+            typename S1, // std::sentinel_for<I1>
+            typename I2, // std::input_iterator
+            typename S2, // std::sentinel_for<I2>
+            typename Comp = RAH_NAMESPACE::less // std::indirect_strict_weak_order<std::projected<I1, Proj1>, std::projected<I2, Proj2>>
+            >
+        constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}) const
+        {
+            for (; first2 != last2; ++first1)
+            {
+                if (first1 == last1 || comp(*first2, *first1))
+                    return false;
+                if (!comp(*first1, *first2))
+                    ++first2;
+            }
+            return true;
+        }
+
+        template <
+            typename R1, // ranges::input_range
+            typename R2, // ranges::input_range
+            typename Comp = RAH_NAMESPACE::less // std::indirect_strict_weak_order<
+            >
+        constexpr bool operator()(R1&& r1, R2&& r2, Comp comp = {}) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r1),
+                RAH_NAMESPACE::end(r1),
+                RAH_NAMESPACE::begin(r2),
+                RAH_NAMESPACE::end(r2),
+                RAH_STD::move(comp));
+        }
+    };
+
+    constexpr auto includes = includes_fn{};
+
+    struct max_fn
+    {
+        template <
+            class T,
+            typename Comp = RAH_NAMESPACE::less // std::indirect_strict_weak_order<std::projected<const T*, Proj>>
+            >
+        constexpr const T& operator()(const T& a, const T& b, Comp comp = {}) const
+        {
+            return RAH_INVOKE_2(comp, a, b) ? b : a;
+        }
+
+        template <
+            typename T, // std::copyable
+            typename Comp = RAH_NAMESPACE::less // std::indirect_strict_weak_order<std::projected<const T*, Proj>>
+            >
+        constexpr const T operator()(std::initializer_list<T> r, Comp comp = {}) const
+        {
+            return *RAH_NAMESPACE::max_element(r, std::ref(comp));
+        }
+
+        template <typename R, typename Comp = RAH_NAMESPACE::less, std::enable_if_t<forward_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::range_value_t<R> operator()(R&& r, Comp comp = {}) const
+        {
+            using V = RAH_NAMESPACE::range_value_t<R>;
+            return static_cast<V>(*RAH_NAMESPACE::max_element(r, std::ref(comp)));
+        }
+        template <typename R, typename Comp = RAH_NAMESPACE::less, std::enable_if_t<!forward_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::range_value_t<R> operator()(R&& r, Comp comp = {}) const
+        {
+            using V = RAH_NAMESPACE::range_value_t<R>;
+            auto i = RAH_NAMESPACE::begin(r);
+            auto s = RAH_NAMESPACE::end(r);
+            V m(*i);
+            while (++i != s)
+                if (RAH_INVOKE_2(comp, m, *i))
+                    m = *i;
+            return m;
+        }
+    };
+
+    constexpr max_fn max;
+
+    struct min_fn
+    {
+        template <class T, typename Comp = RAH_NAMESPACE::less>
+        constexpr const T& operator()(const T& a, const T& b, Comp comp = {}) const
+        {
+            return RAH_INVOKE_2(comp, b, a) ? b : a;
+        }
+
+        template <typename T, typename Comp = RAH_NAMESPACE::less>
+        constexpr const T operator()(std::initializer_list<T> r, Comp comp = {}) const
+        {
+            return *RAH_NAMESPACE::min_element(r, std::ref(comp));
+        }
+
+        template <typename R, typename Comp = RAH_NAMESPACE::less, std::enable_if_t<forward_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::range_value_t<R> operator()(R&& r, Comp comp = {}) const
+        {
+            using V = RAH_NAMESPACE::range_value_t<R>;
+            return static_cast<V>(*RAH_NAMESPACE::min_element(r, std::ref(comp)));
+        }
+        template <typename R, typename Comp = RAH_NAMESPACE::less, std::enable_if_t<!forward_range<R>>* = nullptr>
+        constexpr RAH_NAMESPACE::range_value_t<R> operator()(R&& r, Comp comp = {}) const
+        {
+            using V = RAH_NAMESPACE::range_value_t<R>;
+            auto i = RAH_NAMESPACE::begin(r);
+            auto s = RAH_NAMESPACE::end(r);
+            V m(*i);
+            while (++i != s)
+                if (RAH_INVOKE_2(comp, *i, m))
+                    m = *i;
+            return m;
+        }
+    };
+
+    constexpr min_fn min;
+
+    template <class T>
+    using minmax_result = RAH_NAMESPACE::min_max_result<T>;
+
+    struct minmax_fn
+    {
+        template <class T, typename Comp = RAH_NAMESPACE::less>
+        constexpr RAH_NAMESPACE::minmax_result<const T&>
+        operator()(const T& a, const T& b, Comp comp = {}) const
+        {
+            if (RAH_INVOKE_2(comp, b, a))
+                return {b, a};
+
+            return {a, b};
+        }
+
+        template <typename T, typename Comp = RAH_NAMESPACE::less>
+        constexpr RAH_NAMESPACE::minmax_result<T>
+        operator()(std::initializer_list<T> r, Comp comp = {}) const
+        {
+            auto result = RAH_NAMESPACE::minmax_element(r, std::ref(comp));
+            return {*result.min, *result.max};
+        }
+
+        template <typename R, typename Comp = RAH_NAMESPACE::less>
+        // requires std::indirectly_copyable_storable<ranges::iterator_t<R>, ranges::range_value_t<R>*>
+        constexpr RAH_NAMESPACE::minmax_result<RAH_NAMESPACE::range_value_t<R>>
+        operator()(R&& r, Comp comp = {}) const
+        {
+            auto result = RAH_NAMESPACE::minmax_element(r, std::ref(comp));
+            return {std::move(*result.min), std::move(*result.max)};
+        }
+    };
+
+    constexpr minmax_fn minmax;
 } // namespace rah

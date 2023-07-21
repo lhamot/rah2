@@ -332,20 +332,32 @@ namespace RAH_NAMESPACE
     ///    heap.push_back(3);
     ///    push_heap(heap.begin(), heap.end()); // Places '3' appropriately.
     ///
-    template <typename RandomAccessIterator>
-    inline void push_heap(RandomAccessIterator first, RandomAccessIterator last)
+    template <
+        typename RandomAccessIterator,
+        typename Sentinel,
+        std::enable_if_t<
+            random_access_iterator<RandomAccessIterator>
+            && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+    inline RandomAccessIterator push_heap(RandomAccessIterator first, Sentinel last)
     {
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        const value_type tempBottom(RAH_STD::forward<value_type>(*(last - 1)));
+        auto lasti = RAH_NAMESPACE::next(first, last);
+        const value_type tempBottom(RAH_STD::forward<value_type>(*(lasti - 1)));
 
         RAH_NAMESPACE::promote_heap<RandomAccessIterator, difference_type, value_type>(
             first,
             (difference_type)0,
-            (difference_type)(last - first - 1),
+            (difference_type)(lasti - first - 1),
             RAH_STD::forward<const value_type>(tempBottom));
+        return lasti;
+    }
+
+    template <typename RandomAccessRange>
+    inline borrowed_iterator_t<RandomAccessRange> push_heap(RandomAccessRange&& range)
+    {
+        return RAH_NAMESPACE::push_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// push_heap
@@ -358,17 +370,28 @@ namespace RAH_NAMESPACE
     /// The Compare function must work equivalently to the compare function used
     /// to make and maintain the heap.
     ///
-    template <typename RandomAccessIterator, typename Compare>
-    inline void push_heap(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+    template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+    inline RandomAccessIterator push_heap(RandomAccessIterator first, Sentinel last, Compare compare)
     {
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        const value_type tempBottom(*(last - 1));
+        auto lasti = RAH_NAMESPACE::next(first, last);
+        const value_type tempBottom(*(lasti - 1));
 
         RAH_NAMESPACE::promote_heap<RandomAccessIterator, difference_type, value_type, Compare>(
-            first, (difference_type)0, (difference_type)(last - first - 1), tempBottom, compare);
+            first, (difference_type)0, (difference_type)(lasti - first - 1), tempBottom, compare);
+        return lasti;
+    }
+
+    template <
+        typename RandomAccessRange,
+        typename Compare,
+        std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+    inline borrowed_iterator_t<RandomAccessRange> push_heap(RandomAccessRange&& range, Compare compare)
+    {
+        return RAH_NAMESPACE::push_heap(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -390,21 +413,33 @@ namespace RAH_NAMESPACE
     ///    pop_heap(heap.begin(), heap.end());  // Moves heap[0] to the back of the heap and adjusts the heap.
     ///    heap.pop_back();                     // Remove value that was just at the top of the heap
     ///
-    template <typename RandomAccessIterator>
-    inline void pop_heap(RandomAccessIterator first, RandomAccessIterator last)
+    template <
+        typename RandomAccessIterator,
+        typename Sentinel,
+        std::enable_if_t<
+            random_access_iterator<RandomAccessIterator>
+            && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+    inline RandomAccessIterator pop_heap(RandomAccessIterator first, Sentinel last)
     {
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        value_type tempBottom(RAH_STD::forward<value_type>(*(last - 1)));
-        *(last - 1) = RAH_STD::forward<value_type>(*first);
+        auto lasti = RAH_NAMESPACE::next(first, last);
+        value_type tempBottom(RAH_STD::forward<value_type>(*(lasti - 1)));
+        *(lasti - 1) = RAH_STD::forward<value_type>(*first);
         RAH_NAMESPACE::adjust_heap<RandomAccessIterator, difference_type, value_type>(
             first,
             (difference_type)0,
-            (difference_type)(last - first - 1),
+            (difference_type)(lasti - first - 1),
             0,
             RAH_STD::forward<value_type>(tempBottom));
+        return lasti;
+    }
+
+    template <typename RandomAccessRange>
+    inline borrowed_iterator_t<RandomAccessRange> pop_heap(RandomAccessRange&& range)
+    {
+        return RAH_NAMESPACE::pop_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// pop_heap
@@ -417,22 +452,33 @@ namespace RAH_NAMESPACE
     /// The Compare function must work equivalently to the compare function used
     /// to make and maintain the heap.
     ///
-    template <typename RandomAccessIterator, typename Compare>
-    inline void pop_heap(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+    template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+    inline RandomAccessIterator pop_heap(RandomAccessIterator first, Sentinel last, Compare compare)
     {
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        value_type tempBottom(RAH_STD::forward<value_type>(*(last - 1)));
-        *(last - 1) = RAH_STD::forward<value_type>(*first);
+        auto lasti = RAH_NAMESPACE::next(first, last);
+        value_type tempBottom(RAH_STD::forward<value_type>(*(lasti - 1)));
+        *(lasti - 1) = RAH_STD::forward<value_type>(*first);
         RAH_NAMESPACE::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
             first,
             (difference_type)0,
-            (difference_type)(last - first - 1),
+            (difference_type)(lasti - first - 1),
             0,
             RAH_STD::forward<value_type>(tempBottom),
             compare);
+        return lasti;
+    }
+
+    template <
+        typename RandomAccessRange,
+        typename Compare,
+        std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+    inline borrowed_iterator_t<RandomAccessRange> pop_heap(RandomAccessRange&& range, Compare compare)
+    {
+        return RAH_NAMESPACE::pop_heap(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -445,15 +491,21 @@ namespace RAH_NAMESPACE
     /// The complexity is O(n), where n is count of the range.
     /// The input range is not required to be in any order.
     ///
-    template <typename RandomAccessIterator>
-    void make_heap(RandomAccessIterator first, RandomAccessIterator last)
+    template <
+        typename RandomAccessIterator,
+        typename Sentinel,
+        std::enable_if_t<
+            random_access_iterator<RandomAccessIterator>
+            && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+    RandomAccessIterator make_heap(RandomAccessIterator first, Sentinel last)
     {
         // We do bottom-up heap construction as per Sedgewick. Such construction is O(n).
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
-        const difference_type heapSize = last - first;
+        auto lasti = next(first, last);
+        const difference_type heapSize = lasti - first;
 
         if (heapSize
             >= 2) // If there is anything to do... (we need this check because otherwise the math fails below).
@@ -470,16 +522,24 @@ namespace RAH_NAMESPACE
                     first, parentPosition, heapSize, parentPosition, RAH_STD::forward<value_type>(temp));
             } while (parentPosition != 0);
         }
+        return lasti;
     }
 
-    template <typename RandomAccessIterator, typename Compare>
-    void make_heap(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+    template <typename RandomAccessRange>
+    borrowed_iterator_t<RandomAccessRange> make_heap(RandomAccessRange&& range)
+    {
+        return RAH_NAMESPACE::make_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
+    }
+
+    template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+    RandomAccessIterator make_heap(RandomAccessIterator first, Sentinel last, Compare compare)
     {
         typedef
             typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
-        const difference_type heapSize = last - first;
+        auto lasti = next(first, last);
+        const difference_type heapSize = lasti - first;
 
         if (heapSize
             >= 2) // If there is anything to do... (we need this check because otherwise the math fails below).
@@ -501,6 +561,17 @@ namespace RAH_NAMESPACE
                     compare);
             } while (parentPosition != 0);
         }
+        return lasti;
+    }
+
+    template <
+        typename RandomAccessRange,
+        typename Compare,
+        std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+    borrowed_iterator_t<RandomAccessRange> make_heap(RandomAccessRange&& range, Compare compare)
+    {
+        return RAH_NAMESPACE::make_heap(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -519,11 +590,20 @@ namespace RAH_NAMESPACE
     /// by incrementation.
     /// The complexity is at most O(n * log(n)), where n is count of the range.
     ///
-    template <typename RandomAccessIterator>
-    inline void sort_heap(RandomAccessIterator first, RandomAccessIterator last)
+    template <typename RandomAccessIterator, typename Sentinel>
+    inline RandomAccessIterator sort_heap(RandomAccessIterator first, Sentinel last)
     {
-        for (; (last - first) > 1; --last) // We simply use the heap to sort itself.
-            RAH_NAMESPACE::pop_heap<RandomAccessIterator>(first, last);
+        auto lasti = RAH_NAMESPACE::next(first, last);
+        auto res = lasti;
+        for (; (lasti - first) > 1; --lasti) // We simply use the heap to sort itself.
+            RAH_NAMESPACE::pop_heap<RandomAccessIterator>(first, lasti);
+        return res;
+    }
+
+    template <typename RandomAccessRange>
+    inline borrowed_iterator_t<RandomAccessRange> sort_heap(RandomAccessRange&& range)
+    {
+        return RAH_NAMESPACE::sort_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// sort_heap
@@ -531,11 +611,21 @@ namespace RAH_NAMESPACE
     /// The Compare function must work equivalently to the compare function used
     /// to make and maintain the heap.
     ///
-    template <typename RandomAccessIterator, typename Compare>
-    inline void sort_heap(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+    template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+    inline RandomAccessIterator sort_heap(RandomAccessIterator first, Sentinel last, Compare compare)
     {
-        for (; (last - first) > 1; --last) // We simply use the heap to sort itself.
-            RAH_NAMESPACE::pop_heap<RandomAccessIterator, Compare>(first, last, compare);
+        auto lasti = RAH_NAMESPACE::next(first, last);
+        auto res = lasti;
+        for (; (lasti - first) > 1; --lasti) // We simply use the heap to sort itself.
+            RAH_NAMESPACE::pop_heap<RandomAccessIterator, Compare>(first, lasti, compare);
+        return res;
+    }
+
+    template <typename RandomAccessRange, typename Compare>
+    inline borrowed_iterator_t<RandomAccessRange> sort_heap(RandomAccessRange&& range, Compare compare)
+    {
+        return RAH_NAMESPACE::sort_heap(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -653,8 +743,8 @@ namespace RAH_NAMESPACE
 
     /// is_heap_until
     ///
-    template <typename RandomAccessIterator>
-    inline RandomAccessIterator is_heap_until(RandomAccessIterator first, RandomAccessIterator last)
+    template <typename RandomAccessIterator, typename Sentinel>
+    inline RandomAccessIterator is_heap_until(RandomAccessIterator first, Sentinel last)
     {
         int counter = 0;
 
@@ -668,14 +758,19 @@ namespace RAH_NAMESPACE
         return last;
     }
 
+    template <typename RandomAccessRange>
+    inline iterator_t<RandomAccessRange> is_heap_until(RandomAccessRange&& range)
+    {
+        return RAH_NAMESPACE::is_heap_until(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
+    }
+
     /// is_heap_until
     ///
     /// The Compare function must work equivalently to the compare function used
     /// to make and maintain the heap.
     ///
-    template <typename RandomAccessIterator, typename Compare>
-    inline RandomAccessIterator
-    is_heap_until(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+    template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+    inline RandomAccessIterator is_heap_until(RandomAccessIterator first, Sentinel last, Compare compare)
     {
         int counter = 0;
 
@@ -689,6 +784,13 @@ namespace RAH_NAMESPACE
         return last;
     }
 
+    template <typename RandomAccessRange, typename Compare>
+    inline iterator_t<RandomAccessRange> is_heap_until(RandomAccessRange&& range, Compare compare)
+    {
+        return RAH_NAMESPACE::is_heap_until(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
+    }
+
     ///////////////////////////////////////////////////////////////////////
     // is_heap
     ///////////////////////////////////////////////////////////////////////
@@ -698,10 +800,21 @@ namespace RAH_NAMESPACE
     /// This is a useful debugging algorithm for verifying that a random
     /// access container is in heap format.
     ///
-    template <typename RandomAccessIterator>
+    template <
+        typename RandomAccessIterator,
+        typename Sentinel,
+        std::enable_if_t<
+            random_access_iterator<RandomAccessIterator>
+            && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
     inline bool is_heap(RandomAccessIterator first, RandomAccessIterator last)
     {
         return (RAH_NAMESPACE::is_heap_until(first, last) == last);
+    }
+
+    template <typename RandomAccessRange>
+    inline bool is_heap(RandomAccessRange&& range)
+    {
+        return is_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// is_heap
@@ -709,10 +822,20 @@ namespace RAH_NAMESPACE
     /// The Compare function must work equivalently to the compare function used
     /// to make and maintain the heap.
     ///
-    template <typename RandomAccessIterator, typename Compare>
-    inline bool is_heap(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
+    template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+    inline bool is_heap(RandomAccessIterator first, Sentinel last, Compare compare)
     {
         return (RAH_NAMESPACE::is_heap_until(first, last, compare) == last);
+    }
+
+    template <
+        typename RandomAccessRange,
+        typename Compare,
+        std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+    inline bool is_heap(RandomAccessRange&& range, Compare compare)
+    {
+        return is_heap(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     // To consider: The following may be a faster implementation for most cases.

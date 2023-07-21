@@ -1088,18 +1088,17 @@ void test_is_partitioned()
 {
     testSuite.test_case("sample");
     /// [rah::is_partitioned]
-    std::array<int, 9> v;
+    std::array<int, 9> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     auto is_even = [](int i)
     {
         return i % 2 == 0;
     };
 
-    std::iota(v.begin(), v.end(), 1); // or std::ranges::iota(v, 1);
     assert(RAH_NAMESPACE::is_partitioned(v, is_even) == false);
 
     RAH_NAMESPACE::partition(v, is_even);
-    assert(RAH_NAMESPACE::is_partitioned(std::as_const(v), is_even));
+    assert(RAH_NAMESPACE::is_partitioned(v, is_even));
 
     RAH_NAMESPACE::reverse(v);
     assert(RAH_NAMESPACE::is_partitioned(v.cbegin(), v.cend(), is_even) == false);
@@ -1124,7 +1123,7 @@ void test_partition_copy()
     /// [rah::partition_copy]
     const std::vector<char> in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
 
-    std::vector<int> o1(size(in)), o2(size(in));
+    std::vector<int> o1(in.size()), o2(in.size());
 
     auto pred = [](char c)
     {
@@ -1329,9 +1328,23 @@ void test_nth_element()
 }
 void test_lower_bound()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::lower_bound]
+    std::vector<int> data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
+    auto const lower = RAH_NAMESPACE::lower_bound(data, 4);
+    assert(lower == data.begin() + 6);
+    /// [rah::lower_bound]
 }
 void test_upper_bound()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::upper_bound]
+    std::vector<int> data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
+    auto const upper = RAH_NAMESPACE::upper_bound(data, 4);
+    assert(upper == data.begin() + 10);
+    /// [rah::upper_bound]
 }
 void test_binary_search()
 {
@@ -1419,12 +1432,57 @@ void test_equal_range()
 }
 void test_merge()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::merge]
+    std::vector<int> in1 = {1, 2, 3, 4, 5}, in2 = {3, 4, 5, 6, 7};
+    std::vector<int> out(in1.size() + in2.size());
+
+    auto ret = RAH_NAMESPACE::merge(in1, in2, out.begin());
+    assert((rah::equal(
+        rah::make_subrange(out.begin(), ret), std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 6, 7})));
+
+    in1 = {1, 2, 3, 4, 5, 5, 5};
+    in2 = {3, 4, 5, 6, 7};
+    out.clear();
+    RAH_NAMESPACE::merge(in1, in2, std::back_inserter(out));
+    assert(out == (std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 6, 7}));
+    /// [rah::merge]
 }
 void test_inplace_merge()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::inplace_merge]
+    std::vector<int> v{1, 4, 8, 9, 10, 45, 2, 3, 4, 9, 11};
+    auto last = rah::inplace_merge(v, v.begin() + 6);
+    assert(last == v.end());
+    assert(rah::is_sorted(v));
+    /// [rah::inplace_merge]
 }
 void test_includes()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    testSuite.test_case("pred");
+    /// [rah::includes]
+    auto ignore_case = [](char a, char b)
+    {
+        return std::tolower(a) < std::tolower(b);
+    };
+
+    const auto a = {'a', 'b', 'c'}, b = {'a', 'c'}, c = {'a', 'a', 'b'}, d = {'g'},
+               e = {'a', 'c', 'g'}, f = {'A', 'B', 'C'}, g = {'e'},
+               z = {'a', 'b', 'c', 'f', 'h', 'x'};
+
+    assert(rah::includes(z.begin(), z.end(), a.begin(), a.end()));
+    assert(rah::includes(z, b));
+    assert(not rah::includes(z, g));
+    assert(not rah::includes(z, c));
+    assert(not rah::includes(z, d));
+    assert(not rah::includes(z, e));
+    assert(rah::includes(z, f, ignore_case));
+    /// [rah::includes]
 }
 void test_set_difference()
 {
@@ -1450,30 +1508,152 @@ void test_set_intersection()
 }
 void test_set_symmetric_difference()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::set_symmetric_difference]
+    const auto in1 = {1, 3, 4, 6, 7, 9};
+    const auto in2 = {1, 4, 5, 6, 9};
+
+    std::vector<int> out(5);
+
+    auto res = rah::set_symmetric_difference(in1, in2, out.begin());
+    assert(out == (std::vector<int>{3, 5, 7, 0, 0}));
+    assert(res.in1 == in1.end());
+    assert(res.in2 == in2.end());
+    assert(res.out == out.begin() + 3);
+    /// [rah::set_symmetric_difference]
 }
 void test_set_union()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::set_union]
+    std::vector<int> in1 = {1, 2, 3, 4, 5};
+    std::vector<int> in2 = {3, 4, 5, 6, 7};
+    std::vector<int> out(in1.size() + in2.size());
+    const auto ret = rah::set_union(in1, in2, out.begin());
+    assert(out == (std::vector<int>{1, 2, 3, 4, 5, 6, 7, 0, 0, 0}));
+    assert(ret.in1 == in1.end());
+    assert(ret.in2 == in2.end());
+    assert(ret.out == out.begin() + 7);
+
+    in1 = {1, 2, 3, 4, 5, 5, 5};
+    in2 = {3, 4, 5, 6, 7};
+    out.clear();
+    out.reserve(in1.size() + in2.size());
+    const auto ret2 = rah::set_union(in1, in2, std::back_inserter(out));
+    assert(out == (std::vector<int>{1, 2, 3, 4, 5, 5, 5, 6, 7}));
+    assert(ret2.in1 == in1.end());
+    assert(ret2.in2 == in2.end());
+    /// [rah::set_union]
 }
 void test_is_heap()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::is_heap]
+    std::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8};
+    assert(!rah::is_heap(v));
+    std::make_heap(v.begin(), v.end());
+    assert(rah::is_heap(v));
+    /// [rah::is_heap]
 }
 void test_is_heap_until()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::is_heap_until]
+    std::vector<int> v{3, 1, 4, 1, 5, 9};
+    std::make_heap(v.begin(), v.end());
+    assert(rah::is_heap_until(v) == v.end());
+
+    // mess up the heap
+    v.push_back(10);
+    v.push_back(20);
+
+    const auto heap_end = rah::is_heap_until(v);
+    assert(v.begin() + 6 == heap_end);
+    /// [rah::is_heap_until]
 }
 void test_make_heap()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::make_heap]
+    std::vector<int> h{1, 6, 1, 8, 0, 3, 3, 9, 8, 8, 7, 4, 9, 8, 9};
+    assert(!std::is_heap(h.begin(), h.end()));
+    auto last = rah::make_heap(h);
+    assert(last == h.end());
+    assert(std::is_heap(h.begin(), h.end()));
+
+    assert(!std::is_heap(h.begin(), h.end(), rah::greater{}));
+    auto last2 = rah::make_heap(h, rah::greater{});
+    assert(last2 == h.end());
+    assert(std::is_heap(h.begin(), h.end(), rah::greater{}));
+    /// [rah::make_heap]
 }
 void test_push_heap()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::push_heap]
+
+    std::vector<int> v{1, 6, 1, 8, 0, 3};
+    rah::make_heap(v);
+
+    v.push_back(9);
+    auto last = rah::push_heap(v);
+    assert(last == v.end());
+
+    assert(std::is_heap(v.begin(), v.end()));
+    assert(std::count(v.begin(), v.end(), 9));
+    /// [rah::push_heap]
 }
 void test_pop_heap()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::pop_heap]
+    std::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
+
+    std::make_heap(v.begin(), v.end());
+    auto last = rah::pop_heap(v);
+    assert(last == v.end());
+    assert(v.back() == 9);
+    v.pop_back();
+    assert(std::is_heap(v.begin(), v.end()));
+
+    rah::pop_heap(v);
+    assert(v.back() == 6);
+    v.pop_back();
+    assert(std::is_heap(v.begin(), v.end()));
+    /// [rah::pop_heap]
 }
 void test_sort_heap()
 {
+    testSuite.test_case("sample");
+    /// [rah::sort_heap]
+    std::array<int, 6> v{3, 1, 4, 1, 5, 9};
+    std::make_heap(v.begin(), v.end());
+    rah::sort_heap(v);
+    assert(std::is_sorted(v.begin(), v.end()));
+    /// [rah::sort_heap]
 }
 void test_max()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::max]
+    assert(rah::max(1, 3) == 3);
+    assert(rah::max(1, 3, rah::greater{}) == 1);
+
+    assert(rah::max({1, 7, 5}) == 7);
+    assert(rah::max({1, 7, 5}, rah::greater{}) == 1);
+
+    std::vector<int> v{1, 7, 5};
+    assert(rah::max(v) == 7);
+    assert(rah::max(v, rah::greater{}) == 1);
+    /// [rah::max]
 }
 void test_max_element()
 {
@@ -1495,6 +1675,19 @@ void test_max_element()
 }
 void test_min()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::min]
+    assert(rah::min(1, 3) == 1);
+    assert(rah::min(1, 3, rah::greater{}) == 3);
+
+    assert(rah::min({1, 7, 5}) == 1);
+    assert(rah::min({1, 7, 5}, rah::greater{}) == 7);
+
+    std::vector<int> v{1, 7, 5};
+    assert(rah::min(v) == 1);
+    assert(rah::min(v, rah::greater{}) == 7);
+    /// [rah::min]
 }
 void test_min_element()
 {
@@ -1517,9 +1710,44 @@ void test_min_element()
 }
 void test_minmax()
 {
+    testSuite.test_case("sample");
+    /// [rah::minmax]
+
+    auto res1 = rah::minmax(1, 3);
+    assert(res1.min == 1);
+    assert(res1.max == 3);
+    auto res2 = rah::minmax(1, 3, rah::greater{});
+    assert(res2.min == 3);
+    assert(res2.max == 1);
+
+    auto res3 = rah::minmax({1, 7, 5});
+    assert(res3.min == 1);
+    assert(res3.max == 7);
+    auto res4 = rah::minmax({1, 7, 5}, rah::greater{});
+    assert(res4.min == 7);
+    assert(res4.max == 1);
+
+    std::vector<int> v{1, 7, 5};
+    auto res5 = rah::minmax(v);
+    assert(res5.min == 1);
+    assert(res5.max == 7);
+    auto res6 = rah::minmax(v, rah::greater{});
+    assert(res6.min == 7);
+    assert(res6.max == 1);
+    /// [rah::minmax]
 }
 void test_minmax_element()
 {
+    testSuite.test_case("sample");
+    /// [rah::minmax_element]
+    std::vector<int> v{1, 7, 5};
+    auto res5 = rah::minmax_element(v);
+    assert(*res5.min == 1);
+    assert(*res5.max == 7);
+    auto res6 = rah::minmax_element(v, rah::greater{});
+    assert(*res6.min == 7);
+    assert(*res6.max == 1);
+    /// [rah::minmax_element]
 }
 void test_clamp()
 {

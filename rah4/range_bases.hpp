@@ -15,7 +15,7 @@
 #define RAHAllocatorType std::allocator
 #define RAH_ASSERT(expression)
 
-#define RAH_VALIDATE_COMPARE
+#define RAH_VALIDATE_COMPARE(CHECK)
 
 #define RAH_DEV_ASSERT assert
 

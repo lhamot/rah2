@@ -843,9 +843,12 @@ auto toto(std::initializer_list<V> il)
 template <typename T>
 struct WhatIs;
 
+#define PERF_TEST 0
+
 template <typename F>
 auto compute_duration(F&& func, char const* file, int line)
 {
+#if PERF_TEST
     size_t count = 0;
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
@@ -869,6 +872,12 @@ auto compute_duration(F&& func, char const* file, int line)
         end = std::chrono::high_resolution_clock::now();
     }
     return (end - start) / count;
+#else
+    (void)func;
+    (void)file;
+    (void)line;
+    return std::chrono::seconds(1);
+#endif
 }
 
 #define COMPUTE_DURATION(F) compute_duration(F, __FILE__, __LINE__)

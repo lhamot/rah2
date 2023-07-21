@@ -514,61 +514,6 @@ namespace RAH_NAMESPACE
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
-#if EASTL_MINMAX_ENABLED
-
-    /// min
-    ///
-    /// Min returns the lesser of its two arguments; it returns the first
-    /// argument if neither is less than the other. The two arguments are
-    /// compared with operator <.
-    ///
-    /// This min and our other min implementations are defined as returning:
-    ///     b < a ? b : a
-    /// which for example may in practice result in something different than:
-    ///     b <= a ? b : a
-    /// in the case where b is different from a (though they compare as equal).
-    /// We choose the specific ordering here because that's the ordering
-    /// done by other STL implementations.
-    ///
-    /// Some compilers (e.g. VS20003 - VS2013) generate poor code for the case of
-    /// scalars returned by reference, so we provide a specialization for those cases.
-    /// The specialization returns T by value instead of reference, which is
-    /// not that the Standard specifies. The Standard allows you to use
-    /// an expression like &max(x, y), which would be impossible in this case.
-    /// However, we have found no actual code that uses min or max like this and
-    /// this specialization causes no problems in practice. Microsoft has acknowledged
-    /// the problem and may fix it for a future VS version.
-    ///
-    template <typename T>
-    inline RAH_CONSTEXPR typename RAH_STD::enable_if<RAH_NAMESPACE::is_scalar<T>::value, T>::type
-    min(T a, T b)
-    {
-        return b < a ? b : a;
-    }
-
-    template <typename T>
-    inline RAH_CONSTEXPR
-        typename RAH_STD::enable_if<!RAH_NAMESPACE::is_scalar<T>::value, const T&>::type
-        min(const T& a, const T& b)
-    {
-        return b < a ? b : a;
-    }
-
-    inline RAH_CONSTEXPR float min(float a, float b)
-    {
-        return b < a ? b : a;
-    }
-    inline RAH_CONSTEXPR double min(double a, double b)
-    {
-        return b < a ? b : a;
-    }
-    inline RAH_CONSTEXPR long double min(long double a, long double b)
-    {
-        return b < a ? b : a;
-    }
-
-#endif // EASTL_MINMAX_ENABLED
-
     /// min_alt
     ///
     /// This is an alternative version of min that avoids any possible
@@ -603,40 +548,6 @@ namespace RAH_NAMESPACE
         return b < a ? b : a;
     }
 
-#if EASTL_MINMAX_ENABLED
-
-    /// min
-    ///
-    /// Min returns the lesser of its two arguments; it returns the first
-    /// argument if neither is less than the other. The two arguments are
-    /// compared with the Compare function (or function object), which
-    /// takes two arguments and returns true if the first is less than
-    /// the second.
-    ///
-    /// See min(a, b) for detailed specifications.
-    ///
-    /// Example usage:
-    ///    struct A{ int a; };
-    ///    struct Struct{ bool operator()(const A& a1, const A& a2){ return a1.a < a2.a; } };
-    ///
-    ///    A a1, a2, a3;
-    ///    a3 = min(a1, a2, Struct());
-    ///
-    /// Example usage:
-    ///    struct B{ int b; };
-    ///    inline bool Function(const B& b1, const B& b2){ return b1.b < b2.b; }
-    ///
-    ///    B b1, b2, b3;
-    ///    b3 = min(b1, b2, Function);
-    ///
-    template <typename T, typename Compare>
-    inline const T& min(const T& a, const T& b, Compare compare)
-    {
-        return compare(b, a) ? b : a;
-    }
-
-#endif // EASTL_MINMAX_ENABLED
-
     /// min_alt
     ///
     /// This is an alternative version of min that avoids any possible
@@ -649,52 +560,6 @@ namespace RAH_NAMESPACE
     {
         return compare(b, a) ? b : a;
     }
-
-#if EASTL_MINMAX_ENABLED
-
-    /// max
-    ///
-    /// Max returns the greater of its two arguments; it returns the first
-    /// argument if neither is greater than the other. The two arguments are
-    /// compared with operator < (and not operator >).
-    ///
-    /// This min and our other min implementations are defined as returning:
-    ///     a < b ? b : a
-    /// which for example may in practice result in something different than:
-    ///     a <= b ? b : a
-    /// in the case where b is different from a (though they compare as equal).
-    /// We choose the specific ordering here because that's the ordering
-    /// done by other STL implementations.
-    ///
-    template <typename T>
-    inline RAH_CONSTEXPR typename RAH_STD::enable_if<RAH_NAMESPACE::is_scalar<T>::value, T>::type
-    max(T a, T b)
-    {
-        return a < b ? b : a;
-    }
-
-    template <typename T>
-    inline RAH_CONSTEXPR
-        typename RAH_STD::enable_if<!RAH_NAMESPACE::is_scalar<T>::value, const T&>::type
-        max(const T& a, const T& b)
-    {
-        return a < b ? b : a;
-    }
-
-    inline RAH_CONSTEXPR float max(float a, float b)
-    {
-        return a < b ? b : a;
-    }
-    inline RAH_CONSTEXPR double max(double a, double b)
-    {
-        return a < b ? b : a;
-    }
-    inline RAH_CONSTEXPR long double max(long double a, long double b)
-    {
-        return a < b ? b : a;
-    }
-
-#endif // EASTL_MINMAX_ENABLED
 
     /// max_alt
     ///
@@ -729,21 +594,12 @@ namespace RAH_NAMESPACE
         return a < b ? b : a;
     }
 
-#if EASTL_MINMAX_ENABLED
-    /// max
-    ///
-    /// Min returns the lesser of its two arguments; it returns the first
-    /// argument if neither is less than the other. The two arguments are
-    /// compared with the Compare function (or function object), which
-    /// takes two arguments and returns true if the first is less than
-    /// the second.
-    ///
-    template <typename T, typename Compare>
-    inline const T& max(const T& a, const T& b, Compare compare)
+    template <class T>
+    struct min_max_result
     {
-        return compare(a, b) ? b : a;
-    }
-#endif
+        T min;
+        T max;
+    };
 
     /// max_alt
     ///
@@ -756,37 +612,8 @@ namespace RAH_NAMESPACE
         return compare(a, b) ? b : a;
     }
 
-    /// min(std::initializer_list)
-    ///
-    template <typename T>
-    T min(std::initializer_list<T> ilist)
-    {
-        return *RAH_NAMESPACE::min_element(ilist.begin(), ilist.end());
-    }
-
-    /// min(std::initializer_list, Compare)
-    ///
-    template <typename T, typename Compare>
-    T min(std::initializer_list<T> ilist, Compare compare)
-    {
-        return *RAH_NAMESPACE::min_element(ilist.begin(), ilist.end(), compare);
-    }
-
-    /// max(std::initializer_list)
-    ///
-    template <typename T>
-    T max(std::initializer_list<T> ilist)
-    {
-        return *RAH_NAMESPACE::max_element(ilist.begin(), ilist.end());
-    }
-
-    /// max(std::initializer_list, Compare)
-    ///
-    template <typename T, typename Compare>
-    T max(std::initializer_list<T> ilist, Compare compare)
-    {
-        return *RAH_NAMESPACE::max_element(ilist.begin(), ilist.end(), compare);
-    }
+    template <class I>
+    using minmax_element_result = RAH_NAMESPACE::min_max_result<I>;
 
     /// minmax_element
     ///
@@ -798,21 +625,26 @@ namespace RAH_NAMESPACE
     /// Complexity: At most max([(3/2)*(N - 1)], 0) applications of the corresponding predicate,
     /// where N is distance(first, last).
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
-    RAH_STD::pair<ForwardIterator, ForwardIterator>
-    minmax_element(ForwardIterator first, ForwardSentinel last, Compare compare)
+    template <
+        typename ForwardIterator,
+        typename ForwardSentinel,
+        typename Compare = RAH_NAMESPACE::less,
+        std::enable_if_t<
+            forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+    constexpr minmax_element_result<ForwardIterator>
+    minmax_element(ForwardIterator first, ForwardSentinel last, Compare compare = {})
     {
-        RAH_STD::pair<ForwardIterator, ForwardIterator> result(first, first);
+        minmax_element_result<ForwardIterator> result{first, first};
 
         if (!(first == last) && !(++first == last))
         {
-            if (compare(*first, *result.first))
+            if (compare(*first, *result.min))
             {
-                result.second = result.first;
-                result.first = first;
+                result.max = result.min;
+                result.min = first;
             }
             else
-                result.second = first;
+                result.max = first;
 
             while (++first != last)
             {
@@ -820,29 +652,29 @@ namespace RAH_NAMESPACE
 
                 if (++first == last)
                 {
-                    if (compare(*i, *result.first))
-                        result.first = i;
-                    else if (!compare(*i, *result.second))
-                        result.second = i;
+                    if (compare(*i, *result.min))
+                        result.min = i;
+                    else if (!compare(*i, *result.max))
+                        result.max = i;
                     break;
                 }
                 else
                 {
                     if (compare(*first, *i))
                     {
-                        if (compare(*first, *result.first))
-                            result.first = first;
+                        if (compare(*first, *result.min))
+                            result.min = first;
 
-                        if (!compare(*i, *result.second))
-                            result.second = i;
+                        if (!compare(*i, *result.max))
+                            result.max = i;
                     }
                     else
                     {
-                        if (compare(*i, *result.first))
-                            result.first = i;
+                        if (compare(*i, *result.min))
+                            result.min = i;
 
-                        if (!compare(*first, *result.second))
-                            result.second = first;
+                        if (!compare(*first, *result.max))
+                            result.max = first;
                     }
                 }
             }
@@ -851,72 +683,15 @@ namespace RAH_NAMESPACE
         return result;
     }
 
-    template <typename ForwardIterator, typename ForwardSentinel>
-    RAH_STD::pair<ForwardIterator, ForwardIterator>
-    minmax_element(ForwardIterator first, ForwardSentinel last)
+    template <
+        typename ForwardRange,
+        typename Compare = RAH_NAMESPACE::less,
+        std::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+    constexpr minmax_element_result<borrowed_iterator_t<ForwardRange>>
+    minmax_element(ForwardRange&& range, Compare compare = {})
     {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator>::value_type value_type;
-
-        return RAH_NAMESPACE::minmax_element(first, last, RAH_STD::less<value_type>());
-    }
-
-    /// minmax
-    ///
-    /// Requires: Type T shall be LessThanComparable.
-    /// Returns: pair<const T&, const T&>(b, a) if b is smaller than a, and pair<const T&, const T&>(a, b) otherwise.
-    /// Remarks: Returns pair<const T&, const T&>(a, b) when the arguments are equivalent.
-    /// Complexity: Exactly one comparison.
-    ///
-
-    // The following optimization is a problem because it changes the return value in a way that would break
-    // users unless they used auto (e.g. auto result = minmax(17, 33); )
-    //
-    // template <typename T>
-    // inline RAH_CONSTEXPR typename RAH_STD::enable_if<RAH_NAMESPACE::is_scalar<T>::value, RAH_STD::pair<T, T> >::type
-    // minmax(T a, T b)
-    // {
-    //     return (b < a) ? RAH_STD::make_pair(b, a) : RAH_STD::make_pair(a, b);
-    // }
-    //
-    // template <typename T>
-    // inline typename RAH_STD::enable_if<!RAH_NAMESPACE::is_scalar<T>::value, RAH_STD::pair<const T&, const T&> >::type
-    // minmax(const T& a, const T& b)
-    // {
-    //     return (b < a) ? RAH_STD::make_pair(b, a) : RAH_STD::make_pair(a, b);
-    // }
-
-    // It turns out that the following conforming definition of minmax generates a warning when used with VC++ up
-    // to at least VS2012. The VS2012 version of minmax is a broken and non-conforming definition, and we don't
-    // want to do that. We could do it for scalars alone, though we'd have to decide if we are going to do that
-    // for all compilers, because it changes the return value from a pair of references to a pair of values.
-    template <typename T>
-    inline RAH_STD::pair<const T&, const T&> minmax(const T& a, const T& b)
-    {
-        return (b < a) ? RAH_STD::make_pair(b, a) : RAH_STD::make_pair(a, b);
-    }
-
-    template <typename T, typename Compare>
-    RAH_STD::pair<const T&, const T&> minmax(const T& a, const T& b, Compare compare)
-    {
-        return compare(b, a) ? RAH_STD::make_pair(b, a) : RAH_STD::make_pair(a, b);
-    }
-
-    template <typename T>
-    RAH_STD::pair<T, T> minmax(std::initializer_list<T> ilist)
-    {
-        typedef typename std::initializer_list<T>::iterator iterator_type;
-        RAH_STD::pair<iterator_type, iterator_type> iteratorPair =
-            RAH_NAMESPACE::minmax_element(ilist.begin(), ilist.end());
-        return RAH_STD::make_pair(*iteratorPair.first, *iteratorPair.second);
-    }
-
-    template <typename T, class Compare>
-    RAH_STD::pair<T, T> minmax(std::initializer_list<T> ilist, Compare compare)
-    {
-        typedef typename std::initializer_list<T>::iterator iterator_type;
-        RAH_STD::pair<iterator_type, iterator_type> iteratorPair =
-            RAH_NAMESPACE::minmax_element(ilist.begin(), ilist.end(), compare);
-        return RAH_STD::make_pair(*iteratorPair.first, *iteratorPair.second);
+        return RAH_NAMESPACE::minmax_element(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE ::end(range), RAH_STD::move(compare));
     }
 
     template <typename T>
@@ -2118,7 +1893,7 @@ namespace RAH_NAMESPACE
         std::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
     RAH_CPP14_CONSTEXPR inline bool equal(InputRange1&& range1, InputRange2&& range2)
     {
-        return equal(
+        return RAH_NAMESPACE::equal(
             RAH_NAMESPACE::begin(range1),
             RAH_NAMESPACE::end(range1),
             RAH_NAMESPACE::begin(range2),
@@ -2456,8 +2231,8 @@ namespace RAH_NAMESPACE
     /// access iterators (e.g. contiguous array), as the code below will already
     /// take advantage of them.
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename T>
-    ForwardIterator lower_bound(ForwardIterator first, ForwardSentinel last, const T& value)
+    template <typename ForwardIterator, typename Sentinel, typename T>
+    ForwardIterator lower_bound(ForwardIterator first, Sentinel last, const T& value)
     {
         typedef typename RAH_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
 
@@ -2483,6 +2258,12 @@ namespace RAH_NAMESPACE
                 d = d2;
         }
         return first;
+    }
+
+    template <typename ForwardRange, typename T>
+    iterator_t<ForwardRange> lower_bound(ForwardRange&& range, const T& value)
+    {
+        return lower_bound(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
     }
 
     /// lower_bound
@@ -2535,6 +2316,13 @@ namespace RAH_NAMESPACE
         return first;
     }
 
+    template <typename ForwardRange, typename T, typename Compare>
+    iterator_t<ForwardRange> lower_bound(ForwardRange&& range, const T& value, Compare compare)
+    {
+        return lower_bound(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(compare));
+    }
+
     /// upper_bound
     ///
     /// Finds the position of the first element in a sorted range that has a
@@ -2549,8 +2337,8 @@ namespace RAH_NAMESPACE
     ///
     /// Complexity: At most 'log(last - first) + 1' comparisons.
     ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename T>
-    ForwardIterator upper_bound(ForwardIterator first, ForwardSentinel last, const T& value)
+    template <typename ForwardIterator, typename Sentinel, typename T>
+    ForwardIterator upper_bound(ForwardIterator first, Sentinel last, const T& value)
     {
         typedef typename RAH_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
 
@@ -2576,6 +2364,12 @@ namespace RAH_NAMESPACE
             }
         }
         return first;
+    }
+
+    template <typename ForwardRange, typename T>
+    iterator_t<ForwardRange> upper_bound(ForwardRange&& range, const T& value)
+    {
+        return upper_bound(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
     }
 
     /// upper_bound
@@ -2622,6 +2416,13 @@ namespace RAH_NAMESPACE
             }
         }
         return first;
+    }
+
+    template <typename ForwardRange, typename T, typename Compare>
+    iterator_t<ForwardRange> upper_bound(ForwardRange&& range, const T& value, Compare compare)
+    {
+        return upper_bound(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(compare));
     }
 
     /// equal_range
@@ -3933,6 +3734,9 @@ namespace RAH_NAMESPACE
             first1, last1, first2, last2, result1, result2, RAH_STD::less<>{});
     }
 
+    template <class I1, class I2, class O>
+    using set_symmetric_difference_result = RAH_NAMESPACE::in_in_out_result<I1, I2, O>;
+
     /// set_symmetric_difference
     ///
     /// set_difference iterates over both input ranges and copies elements present
@@ -3951,7 +3755,8 @@ namespace RAH_NAMESPACE
     /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
     ///
     template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
-    OutputIterator set_symmetric_difference(
+    set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
+    set_symmetric_difference(
         InputIterator1 first1,
         Sentinel1 last1,
         InputIterator2 first2,
@@ -3978,8 +3783,24 @@ namespace RAH_NAMESPACE
                 ++first2;
             }
         }
+        auto res1 = RAH_NAMESPACE::copy(std::move(first1), std::move(last1), std::move(result));
+        auto res2 = RAH_NAMESPACE::copy(std::move(first2), std::move(last2), std::move(res1.out));
+        return {std::move(res1.in), std::move(res2.in), std::move(res2.out)};
+    }
 
-        return RAH_NAMESPACE::copy(first2, last2, RAH_NAMESPACE::copy(first1, last1, result));
+    template <typename InputRange1, typename InputRange2, typename OutputIterator>
+    set_symmetric_difference_result<
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange1>,
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange2>,
+        OutputIterator>
+    set_symmetric_difference(InputRange1&& range1, InputRange2&& range2, OutputIterator result)
+    {
+        return RAH_NAMESPACE::set_symmetric_difference(
+            RAH_NAMESPACE::begin(range1),
+            RAH_NAMESPACE::end(range1),
+            RAH_NAMESPACE::begin(range2),
+            RAH_NAMESPACE::end(range2),
+            RAH_STD::move(result));
     }
 
     template <
@@ -3989,7 +3810,8 @@ namespace RAH_NAMESPACE
         typename Sentinel2,
         typename OutputIterator,
         typename Compare>
-    OutputIterator set_symmetric_difference(
+    set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
+    set_symmetric_difference(
         InputIterator1 first1,
         Sentinel1 last1,
         InputIterator2 first2,
@@ -4022,7 +3844,26 @@ namespace RAH_NAMESPACE
             }
         }
 
-        return RAH_NAMESPACE::copy(first2, last2, RAH_NAMESPACE::copy(first1, last1, result));
+        auto res1 = RAH_NAMESPACE::copy(std::move(first1), std::move(last1), std::move(result));
+        auto res2 = RAH_NAMESPACE::copy(std::move(first2), std::move(last2), std::move(res1.out));
+        return {std::move(res1.in), std::move(res2.in), std::move(res2.out)};
+    }
+
+    template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
+    set_symmetric_difference_result<
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange1>,
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange2>,
+        OutputIterator>
+    set_symmetric_difference(
+        InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare)
+    {
+        return RAH_NAMESPACE::set_symmetric_difference(
+            RAH_NAMESPACE::begin(range1),
+            RAH_NAMESPACE::end(range1),
+            RAH_NAMESPACE::begin(range2),
+            RAH_NAMESPACE::end(range2),
+            RAH_STD::move(result),
+            RAH_STD::move(compare));
     }
 
     template <class I1, class I2, class O>
@@ -4125,6 +3966,9 @@ namespace RAH_NAMESPACE
         return result;
     }
 
+    template <class I1, class I2, class O>
+    using set_union_result = RAH_NAMESPACE::in_in_out_result<I1, I2, O>;
+
     /// set_union
     ///
     /// set_union iterates over both ranges and copies elements present in
@@ -4144,7 +3988,7 @@ namespace RAH_NAMESPACE
     /// the one from the first range is copied.
     ///
     template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
-    OutputIterator set_union(
+    set_union_result<InputIterator1, InputIterator2, OutputIterator> set_union(
         InputIterator1 first1,
         Sentinel1 last1,
         InputIterator2 first2,
@@ -4172,7 +4016,24 @@ namespace RAH_NAMESPACE
             ++result;
         }
 
-        return RAH_NAMESPACE::copy(first2, last2, RAH_NAMESPACE::copy(first1, last1, result));
+        auto res1 = RAH_NAMESPACE::copy(std::move(first1), std::move(last1), std::move(result));
+        auto res2 = RAH_NAMESPACE::copy(std::move(first2), std::move(last2), std::move(res1.out));
+        return {std::move(res1.in), std::move(res2.in), std::move(res2.out)};
+    }
+
+    template <typename InputRange1, typename InputRange2, typename OutputIterator>
+    set_union_result<
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange1>,
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange2>,
+        OutputIterator>
+    set_union(InputRange1&& range1, InputRange2&& range2, OutputIterator result)
+    {
+        return RAH_NAMESPACE::set_union(
+            RAH_NAMESPACE::begin(range1),
+            RAH_NAMESPACE::end(range1),
+            RAH_NAMESPACE::begin(range2),
+            RAH_NAMESPACE::end(range2),
+            RAH_STD::move(result));
     }
 
     template <
@@ -4182,7 +4043,7 @@ namespace RAH_NAMESPACE
         typename Sentinel2,
         typename OutputIterator,
         typename Compare>
-    OutputIterator set_union(
+    set_union_result<InputIterator1, InputIterator2, OutputIterator> set_union(
         InputIterator1 first1,
         Sentinel1 last1,
         InputIterator2 first2,
@@ -4215,7 +4076,25 @@ namespace RAH_NAMESPACE
             ++result;
         }
 
-        return RAH_NAMESPACE::copy(first2, last2, RAH_NAMESPACE::copy(first1, last1, result));
+        auto res1 = RAH_NAMESPACE::copy(std::move(first1), std::move(last1), std::move(result));
+        auto res2 = RAH_NAMESPACE::copy(std::move(first2), std::move(last2), std::move(res1.out));
+        return {std::move(res1.in), std::move(res2.in), std::move(res2.out)};
+    }
+
+    template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
+    set_union_result<
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange1>,
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange2>,
+        OutputIterator>
+    set_union(InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare)
+    {
+        return RAH_NAMESPACE::set_union(
+            RAH_NAMESPACE::begin(range1),
+            RAH_NAMESPACE::end(range1),
+            RAH_NAMESPACE::begin(range2),
+            RAH_NAMESPACE::end(range2),
+            RAH_STD::move(result),
+            RAH_STD::move(compare));
     }
 
     /// set_decomposition
