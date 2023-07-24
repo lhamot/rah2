@@ -1553,6 +1553,12 @@ namespace rah
         }
     };
 
+    template <class T>
+    constexpr std::add_const_t<T>& as_const(T& t) noexcept
+    {
+        return t;
+    }
+
     // ******************************* views ******************************************************
 
 #define RAH_SELF (*static_cast<T* const>(this))
@@ -1712,10 +1718,183 @@ namespace rah
         p->~T();
     }
 
+    template <class T, class... Args>
+    constexpr T* construct_at(T* p, Args&&... args)
+    {
+        return ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+    }
+
     template <class ForwardIt, class ForwardSnt>
     void destroy(ForwardIt first, ForwardSnt last)
     {
         for (; first != last; ++first)
             RAH_NAMESPACE::destroy_at(std::addressof(*first));
     }
+
+    // ************************************** optional ********************************************
+    namespace details
+    {
+
+        // Small optional impl for C++14 compilers
+        template <typename T>
+        struct optional
+        {
+            optional() = default;
+            optional(optional const& other)
+            {
+                if (other.has_value())
+                {
+                    new (get_ptr()) T(other.value());
+                    is_allocated_ = true;
+                }
+            }
+            optional(optional&& other)
+            {
+                (*this) = RAH_STD::move(other);
+            }
+            optional& operator=(optional const& other)
+            {
+                if (has_value())
+                {
+                    if (other.has_value())
+                    {
+                        // Handle the case where T is not copy assignable
+                        reset();
+                        new (get_ptr()) T(other.value());
+                        is_allocated_ = true;
+                    }
+                    else
+                        reset();
+                }
+                else
+                {
+                    if (other.has_value())
+                    {
+                        new (get_ptr()) T(other.value());
+                        is_allocated_ = true;
+                    }
+                }
+                return *this;
+            }
+            optional& operator=(optional&& other)
+            {
+                if (has_value())
+                {
+                    if (other.has_value())
+                    {
+                        // A lambda with const capture is not move assignable
+                        reset();
+                        new (get_ptr()) T(RAH_STD::move(other.value()));
+                        is_allocated_ = true;
+                    }
+                    else
+                        reset();
+                }
+                else
+                {
+                    if (other.has_value())
+                    {
+                        new (get_ptr()) T(RAH_STD::move(other.value()));
+                        is_allocated_ = true;
+                    }
+                }
+                return *this;
+            }
+            optional(T const& other)
+            {
+                new (get_ptr()) T(other);
+                is_allocated_ = true;
+            }
+            optional(T&& other)
+            {
+                new (get_ptr()) T(RAH_STD::move(other));
+                is_allocated_ = true;
+            }
+            template <typename... Args>
+            optional(std::in_place_t, Args&&... args)
+            {
+                new (get_ptr()) T(RAH_STD::forward<Args>(args)...);
+                is_allocated_ = true;
+            }
+            optional& operator=(T const& other)
+            {
+                reset();
+                new (get_ptr()) T(other);
+                is_allocated_ = true;
+                return *this;
+            }
+            optional& operator=(T&& other)
+            {
+                reset();
+                new (get_ptr()) T(RAH_STD::move(other));
+                is_allocated_ = true;
+                return *this;
+            }
+            ~optional()
+            {
+                reset();
+            }
+
+            bool has_value() const
+            {
+                return is_allocated_;
+            }
+
+            void reset()
+            {
+                if (is_allocated_)
+                {
+                    destruct_value();
+                    is_allocated_ = false;
+                }
+            }
+
+            T& value()
+            {
+                assert(is_allocated_);
+                return *get_ptr();
+            }
+
+            T const& value() const
+            {
+                assert(is_allocated_);
+                return *get_ptr();
+            }
+
+            T& operator*()
+            {
+                return value();
+            }
+            T const& operator*() const
+            {
+                return value();
+            }
+            T* operator->()
+            {
+                assert(is_allocated_);
+                return get_ptr();
+            }
+            T const* operator->() const
+            {
+                assert(is_allocated_);
+                return get_ptr();
+            }
+
+        private:
+            T* get_ptr()
+            {
+                return reinterpret_cast<T*>(&value_);
+            }
+            T const* get_ptr() const
+            {
+                return reinterpret_cast<T const*>(&value_);
+            }
+            void destruct_value()
+            {
+                value().~T();
+            }
+            RAH_STD::aligned_storage_t<sizeof(T), RAH_NAMESPACE::alignment_of_v<T>> value_;
+            bool is_allocated_ = false;
+        };
+    } // namespace details
 } // namespace rah

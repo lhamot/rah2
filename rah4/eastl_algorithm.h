@@ -1182,7 +1182,7 @@ namespace RAH_NAMESPACE
             RAH_NAMESPACE::iter_difference_t<I> counter = 0;
             for (; first != last; ++first)
             {
-                if (proj(*first) == value)
+                if (std::invoke(proj, *first) == value)
                     ++counter;
             }
             return counter;
@@ -4251,6 +4251,16 @@ namespace RAH_NAMESPACE
 
     constexpr is_permutation_fn is_permutation{};
 
+    template <class I>
+    struct in_found_result
+    {
+        I in;
+        bool found;
+    };
+
+    template <class I>
+    using next_permutation_result = RAH_NAMESPACE::in_found_result<I>;
+
     /// next_permutation
     ///
     /// mutates the range [first, last) to the next permutation. Returns true if the
@@ -4277,13 +4287,20 @@ namespace RAH_NAMESPACE
     ///     } while(next_permutation(intArray.begin(), intArray.end()));
     ///
 
-    template <typename BidirectionalIterator, typename Sentinel, typename Compare>
-    bool next_permutation(BidirectionalIterator first, Sentinel last, Compare compare)
+    template <
+        typename BidirectionalIterator,
+        typename Sentinel,
+        typename Compare = RAH_NAMESPACE::less,
+        std::enable_if_t<
+            bidirectional_iterator<BidirectionalIterator>
+            && sentinel_for<Sentinel, BidirectionalIterator>>* = nullptr>
+    next_permutation_result<BidirectionalIterator>
+    next_permutation(BidirectionalIterator first, Sentinel last, Compare compare = {})
     {
         if (first != last) // If there is anything in the range...
         {
-            BidirectionalIterator i = last;
-
+            auto i = RAH_NAMESPACE::next(first, last);
+            auto lasti = i;
             if (first != --i) // If the range has more than one item...
             {
                 for (;;)
@@ -4299,7 +4316,7 @@ namespace RAH_NAMESPACE
                         }
                         RAH_STD::iter_swap(i, j); // Swap the first and the final.
                         RAH_NAMESPACE::reverse(ii, last); // Reverse the ranget from second to last.
-                        return true;
+                        return {RAH_STD::move(lasti), true};
                     }
 
                     if (i == first) // There are no two consecutive values where the first is less than the second, meaning the range is in reverse order. The reverse ordered range is always the last permutation.
@@ -4311,15 +4328,18 @@ namespace RAH_NAMESPACE
             }
         }
 
-        return false;
+        return {RAH_STD::move(first), false};
     }
 
-    template <typename BidirectionalIterator, typename Sentinel>
-    bool next_permutation(BidirectionalIterator first, Sentinel last)
+    template <
+        typename BidirectionalRange,
+        typename Compare = RAH_NAMESPACE::less,
+        std::enable_if_t<bidirectional_range<BidirectionalRange>>* = nullptr>
+    constexpr next_permutation_result<borrowed_iterator_t<BidirectionalRange>>
+    next_permutation(BidirectionalRange&& range, Compare compare = {})
     {
-        typedef typename RAH_STD::iterator_traits<BidirectionalIterator>::value_type value_type;
-
-        return RAH_NAMESPACE::next_permutation(first, last, RAH_STD::less<value_type>());
+        return RAH_NAMESPACE::next_permutation(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     /// rotate

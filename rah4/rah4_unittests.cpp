@@ -1087,7 +1087,7 @@ int main()
     }
 
     EQUAL_RANGE(
-        (iota(0, 3) | transform([](auto i) { return i * 2; }) | enumerate()),
+        (views::iota(0, 3) | transform([](auto i) { return i * 2; }) | enumerate()),
         (il<std::pair<int64_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
 
     std::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
@@ -1101,14 +1101,14 @@ int main()
     //    (il<std::pair<size_t, int>>{ { 10, 60 }, { 11, 66 }, { 12, 72 } }));
 
     EQUAL_RANGE(
-        (zip(vec_abcd, iota(0, 4))),
+        (zip(vec_abcd, views::iota(0, 4))),
         (il<std::tuple<char, int>>{{'a', 0}, {'b', 1}, {'c', 2}, {'d', 3}}));
 
-    EQUAL_RANGE((iota(0, 100) | slice(0, 20) | stride(3)), (il<int>{0, 3, 6, 9, 12, 15, 18}));
+    EQUAL_RANGE((views::iota(0, 100) | slice(0, 20) | stride(3)), (il<int>{0, 3, 6, 9, 12, 15, 18}));
 
-    EQUAL_RANGE((iota(10, 15) | reverse()), (il<int>{14, 13, 12, 11, 10}));
+    EQUAL_RANGE((views::iota(10, 15) | reverse()), (il<int>{14, 13, 12, 11, 10}));
 
-    EQUAL_RANGE((iota(0, 100) | slice(10, 15) | reverse()), (il<int>{14, 13, 12, 11, 10}));
+    EQUAL_RANGE((views::iota(0, 100) | slice(10, 15) | reverse()), (il<int>{14, 13, 12, 11, 10}));
 
     //EQUAL_RANGE(
     //    (iota(10, 15) | enumerate() | reverse()),
@@ -1124,7 +1124,7 @@ int main()
 
     // iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | rah::to<std::vector<int>>();
 
-    iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | slice(1, 9)
+    views::iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | slice(1, 9)
         | rah::to<std::vector<int>>();
 
     {
@@ -1149,11 +1149,11 @@ int main()
         auto getRangeX = [=](int y)
         {
             if (y == startY)
-                return std::make_tuple(y, iota(startX, width));
+                return std::make_tuple(y, views::iota(startX, width));
             else if (y == endY)
-                return std::make_tuple(y, iota(0, endX));
+                return std::make_tuple(y, views::iota(0, endX));
             else
-                return std::make_tuple(y, iota(0, width));
+                return std::make_tuple(y, views::iota(0, width));
         };
 
         std::vector<std::atomic<int>> test(width * height);

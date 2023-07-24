@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <forward_list>
+#include <set>
 #if RAH_CPP20
 #include <ranges>
 #endif
@@ -133,8 +134,7 @@ void test_algo_count()
         const auto count_rng_noproj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count =
-                    std::ranges::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
+                const size_t count = rah::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
         std::cout << "count_rng_noproj : " << count_rng_noproj.count() << std::endl;
@@ -169,8 +169,8 @@ void test_algo_count()
         const auto count_rgn_proj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count = std::ranges::count(
-                    coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, &Coord::x);
+                const size_t count =
+                    rah::count(coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, &Coord::x);
                 assert(count == 79);
             });
         std::cout << "count_rgn_proj : " << count_rgn_proj.count() << std::endl;
@@ -1779,14 +1779,108 @@ void test_is_permutation()
     assert(rah::is_permutation(r1.begin(), r1.end(), r2.begin(), r2.end()));
     /// [rah::is_permutation]
 }
+
+size_t factorial(size_t n)
+{
+    size_t f = 1;
+    for (size_t i = 1; i <= n; ++i)
+        f *= i;
+    return f;
+}
+
 void test_next_permutation()
 {
+    testSuite.test_case("sample");
+    /// [rah::next_permutation]
+
+    // Generate all permutations (iterators case)
+    std::string s{"abc"};
+    std::set<std::string> allPermutation;
+    do
+    {
+        if (not allPermutation.empty())
+            assert(s > *(--allPermutation.end()));
+        allPermutation.emplace(s);
+    } while (rah::next_permutation(s.begin(), s.end()).found);
+    assert(allPermutation.size() == factorial(s.size()));
+
+    std::set<std::array<int, 3>> allPermutation2;
+
+    // Generate all permutations (range case)
+    std::array<int, 3> a{'a', 'b', 'c'};
+    do
+    {
+        assert(allPermutation2.count(a) == 0);
+        if (not allPermutation2.empty())
+            assert(a > *(--allPermutation2.end()));
+        allPermutation2.emplace(a);
+    } while (rah::next_permutation(a).found);
+    assert(allPermutation2.size() == factorial(s.size()));
+
+    std::set<std::array<std::string, 3>> allPermutation3;
+
+    // Generate all permutations using comparator
+    std::array<std::string, 3> z{"C", "B", "A"};
+    do
+    {
+        if (not allPermutation3.empty())
+            assert(z < *(allPermutation3.begin()));
+        allPermutation3.emplace(z);
+    } while (rah::next_permutation(z, RAH_NAMESPACE::greater{}).found);
+    assert(allPermutation3.size() == factorial(s.size()));
+    /// [rah::next_permutation]
 }
 void test_prev_permutation()
 {
+    testSuite.test_case("sample");
+    /// [rah::prev_permutation]
+
+    // Generate all permutations (iterators case)
+    std::string s{"cba"};
+    std::set<std::string> allPermutation;
+    do
+    {
+        if (not allPermutation.empty())
+            assert(s < *(allPermutation.begin()));
+        allPermutation.emplace(s);
+    } while (rah::prev_permutation(s.begin(), s.end()).found);
+    assert(allPermutation.size() == factorial(s.size()));
+
+    std::set<std::array<int, 3>> allPermutation2;
+
+    // Generate all permutations (range case)
+    std::array<int, 3> a{'c', 'b', 'a'};
+    do
+    {
+        if (not allPermutation2.empty())
+            assert(a < *(allPermutation2.begin()));
+        allPermutation2.emplace(a);
+    } while (rah::prev_permutation(a).found);
+    assert(allPermutation2.size() == factorial(s.size()));
+
+    std::set<std::array<std::string, 3>> allPermutation3;
+
+    // Generate all permutations using comparator
+    std::array<std::string, 3> z{"A", "B", "C"};
+    do
+    {
+        if (not allPermutation3.empty())
+            assert(z > *(--allPermutation3.end()));
+        allPermutation3.emplace(z);
+    } while (rah::prev_permutation(z, RAH_NAMESPACE::greater{}).found);
+    assert(allPermutation3.size() == factorial(s.size()));
+    /// [rah::prev_permutation]
 }
 void test_iota()
 {
+    testSuite.test_case("sample");
+    /// [rah::iota]
+    std::list<int> list(8);
+
+    // Fill the list with ascending values: 0, 1, 2, ..., 7
+    rah::iota(list, 0);
+    assert(list == (std::list<int>{0, 1, 2, 3, 4, 5, 6, 7}));
+    /// [rah::iota]
 }
 void test_fold_left()
 {
@@ -1798,24 +1892,191 @@ void test_fold_left()
 }
 void test_fold_left_first()
 {
+    testSuite.test_case("sample");
+    /// [rah::fold_left_first]
+    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
+
+    auto sum = rah::fold_left_first(v.begin(), v.end(), std::plus<int>()); // (1)
+    assert(sum.value() == 36);
+
+    auto mul = rah::fold_left_first(v, std::multiplies<int>()); // (2)
+    assert(mul.value() == 40320);
+
+    // get the product of the std::pair::second of all pairs in the vector:
+    std::vector<std::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
+    auto sec = rah::fold_left_first(data | rah::views::values(), std::multiplies<>());
+    assert(*sec == 42);
+
+    // use a program defined function object (lambda-expression):
+    auto val = rah::fold_left_first(v, [](int x, int y) { return x + y + 13; });
+    assert(*val == 127);
+    /// [rah::fold_left_first]
 }
 void test_fold_right()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::fold_right]
+    auto v = {1, 2, 3, 4, 5, 6, 7, 8};
+    std::vector<std::string> vs{"A", "B", "C", "D"};
+
+    auto r1 = rah::fold_right(v.begin(), v.end(), 6, std::plus<>()); // (1)
+    assert(r1 == 42);
+
+    auto r2 = rah::fold_right(vs, std::string("!"), std::plus<>()); // (2)
+    assert(r2 == std::string("ABCD!"));
+
+    // Use a program defined function object (lambda-expression):
+    std::string r3 =
+        rah::fold_right(v, "A", [](int x, std::string s) { return s + ':' + std::to_string(x); });
+    assert(r3 == std::string("A:8:7:6:5:4:3:2:1"));
+
+    // Get the product of the std::pair::second of all pairs in the vector:
+    std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
+    float r4 = rah::fold_right(data | rah::views::values(), 2.0f, std::multiplies<>());
+    assert(r4 == 42);
+    /// [rah::fold_right]
 }
 void test_fold_right_last()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::fold_right_last]
+    auto v = {1, 2, 3, 4, 5, 6, 7, 8};
+    std::vector<std::string> vs{"A", "B", "C", "D"};
+
+    auto r1 = rah::fold_right_last(v.begin(), v.end(), std::plus<>()); // (1)
+    assert(*r1 == 36);
+
+    auto r2 = rah::fold_right_last(vs, std::plus<>()); // (2)
+    assert(*r2 == "ABCD");
+
+    // Use a program defined function object (lambda-expression):
+    auto r3 = rah::fold_right_last(v, [](int x, int y) { return x + y + 99; });
+    assert(*r3 == 729);
+
+    // Get the product of the std::pair::second of all pairs in the vector:
+    std::vector<std::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
+    auto r4 = rah::fold_right_last(data | rah::views::values(), std::multiplies<>());
+    assert(*r4 == 42);
+    /// [rah::fold_right_last]
 }
 void test_fold_left_with_iter()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::fold_left_with_iter]
+    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
+
+    auto sum = rah::fold_left_with_iter(v.begin(), v.end(), 6, std::plus<int>());
+    assert(sum.value == 42);
+    assert(sum.in == v.end());
+
+    auto mul = rah::fold_left_with_iter(v, 0X69, std::multiplies<int>());
+    assert(mul.value == 4233600);
+    assert(mul.in == v.end());
+
+    // get the product of the std::pair::second of all pairs in the vector:
+    std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
+    auto sec = rah::fold_left_with_iter(data | rah::views::values(), 2.0f, std::multiplies<>());
+    assert(sec.value == 42);
+
+    // use a program defined function object (lambda-expression):
+    auto lambda = [](int x, int y)
+    {
+        return x + 0B110 + y;
+    };
+    auto val = rah::fold_left_with_iter(v, -42, lambda);
+    assert(val.value == 42);
+    assert(val.in == v.end());
+    /// [rah::fold_left_with_iter]
 }
 void test_fold_left_first_with_iter()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::fold_left_first_with_iter]
+
+    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
+
+    auto sum = rah::fold_left_first_with_iter(v.begin(), v.end(), std::plus<int>());
+    assert(sum.value.value() == 36);
+    assert(sum.in == v.end());
+
+    auto mul = rah::fold_left_first_with_iter(v, std::multiplies<int>());
+    assert(mul.value.value() == 40320);
+    assert(mul.in == v.end());
+
+    // get the product of the std::pair::second of all pairs in the vector:
+    std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 7.f}};
+    auto sec = rah::fold_left_first_with_iter(data | rah::views::values(), std::multiplies<>());
+    assert(sec.value.value() == 42);
+
+    // use a program defined function object (lambda-expression):
+    auto lambda = [](int x, int y)
+    {
+        return x + y + 2;
+    };
+    auto val = rah::fold_left_first_with_iter(v, lambda);
+    assert(val.value.value() == 50);
+    assert(val.in == v.end());
+
+    /// [rah::fold_left_first_with_iter]
 }
 void test_uninitialized_copy()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_copy]
+
+    const char* v[]{
+        "This",
+        "is",
+        "an",
+        "example",
+    };
+
+    const auto sz{std::size(v)};
+    void* pbuf = std::malloc(sizeof(std::string) * sz);
+    assert(pbuf);
+    auto first{static_cast<std::string*>(pbuf)};
+    auto last{first + sz};
+    rah::uninitialized_copy(std::begin(v), std::end(v), first, last);
+
+    for (size_t i = 0; i < 4; ++i)
+        assert(v[i] == first[i]);
+
+    rah::destroy(first, last);
+    std::free(pbuf);
+
+    /// [rah::uninitialized_copy]
 }
 void test_uninitialized_copy_n()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_copy_n]
+
+    const char* stars[]{
+        "Procyon",
+        "Spica",
+        "Pollux",
+        "Deneb",
+        "Polaris",
+    };
+
+    constexpr int n{4};
+    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+
+    auto first{reinterpret_cast<std::string*>(out)};
+    auto last{first + n};
+
+    for (size_t i = 0; i < n; ++i)
+        assert(stars[i] == first[i]);
+
+    std::ranges::destroy(first, last);
+
+    /// [rah::uninitialized_copy_n]
 }
 void test_uninitialized_fill()
 {

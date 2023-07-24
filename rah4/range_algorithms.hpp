@@ -34,6 +34,203 @@ namespace rah
 
     constexpr fold_left_fn fold_left;
 
+    struct fold_left_first_fn
+    {
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I>
+            typename F // __indirectly_binary_left_foldable<std::iter_value_t<I>, I>
+            >
+        // requires std::constructible_from<std::iter_value_t<I>, std::iter_reference_t<I>>
+        constexpr auto operator()(I first, S last, F f) const
+        {
+            using U = decltype(RAH_NAMESPACE::fold_left(
+                RAH_STD::move(first), last, RAH_STD::iter_value_t<I>(*first), f));
+            if (first == last)
+                return RAH_NAMESPACE::details::optional<U>();
+            RAH_NAMESPACE::details::optional<U> init(RAH_STD::move(*first));
+            for (++first; first != last; ++first)
+                *init = RAH_INVOKE_2(f, std::move(*init), *first);
+            return RAH_STD::move(init);
+        }
+
+        template <
+            typename R, // input_range
+            typename F // __indirectly_binary_left_foldable<ranges::range_value_t<R>, ranges::iterator_t<R>>
+            >
+        // requires std::constructible_from<ranges::range_value_t<R>, ranges::range_reference_t<R>>
+        constexpr auto operator()(R&& r, F f) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(f));
+        }
+    };
+
+    inline constexpr fold_left_first_fn fold_left_first;
+
+    struct fold_right_fn
+    {
+        template <
+            typename I, // std::bidirectional_iterator
+            typename S, // std::sentinel_for<I>
+            class T,
+            typename F // __indirectly_binary_right_foldable<T, I>
+            >
+        constexpr auto operator()(I first, S last, T init, F f) const
+        {
+            using U = std::decay_t<std::invoke_result_t<F&, RAH_STD::iter_reference_t<I>, T>>;
+            if (first == last)
+                return U(std::move(init));
+            I tail = RAH_NAMESPACE::next(first, last);
+            U accum = RAH_INVOKE_2(f, *--tail, RAH_STD::move(init));
+            while (first != tail)
+                accum = RAH_INVOKE_2(f, *--tail, RAH_STD::move(accum));
+            return accum;
+        }
+
+        template <
+            typename R, // RAH_NAMESPACE::bidirectional_range
+            class T,
+            typename F // __indirectly_binary_right_foldable<T, ranges::iterator_t<R>>
+            >
+        constexpr auto operator()(R&& r, T init, F f) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), RAH_STD::move(init), RAH_STD::ref(f));
+        }
+    };
+
+    inline constexpr fold_right_fn fold_right;
+
+    struct fold_right_last_fn
+    {
+        template <
+            typename I, // std::bidirectional_iterator
+            typename S, // std::sentinel_for<I>
+            typename F // __indirectly_binary_right_foldable<std::iter_value_t<I>, I>
+            >
+        // requires std::constructible_from<std::iter_value_t<I>, std::iter_reference_t<I>>
+        constexpr auto operator()(I first, S last, F f) const
+        {
+            using U =
+                decltype(RAH_NAMESPACE::fold_right(first, last, std::iter_value_t<I>(*first), f));
+
+            if (first == last)
+                return RAH_NAMESPACE::details::optional<U>();
+            I tail = RAH_STD::prev(RAH_NAMESPACE::next(first, std::move(last)));
+            return RAH_NAMESPACE::details::optional<U>(RAH_NAMESPACE::fold_right(
+                std::move(first), tail, std::iter_value_t<I>(*tail), std::move(f)));
+        }
+
+        template <
+            typename R, // ranges::bidirectional_range
+            typename F // __indirectly_binary_right_foldable<ranges::range_value_t<R>, ranges::iterator_t<R>>
+            >
+        // requires std::constructible_from<ranges::range_value_t<R>, ranges::range_reference_t<R>>
+        constexpr auto operator()(R&& r, F f) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(f));
+        }
+    };
+
+    inline constexpr fold_right_last_fn fold_right_last;
+
+    template <class I, class T>
+    struct in_value_result
+    {
+        I in;
+        T value;
+    };
+
+    template <class I, class T>
+    using fold_left_with_iter_result = RAH_NAMESPACE::in_value_result<I, T>;
+
+    class fold_left_with_iter_fn
+    {
+        template <class O, class I, class S, class T, class F>
+        constexpr auto impl(I&& first, S&& last, T&& init, F f) const
+        {
+            using U = std::decay_t<std::invoke_result_t<F&, T, std::iter_reference_t<I>>>;
+            using Ret = RAH_NAMESPACE::fold_left_with_iter_result<O, U>;
+            if (first == last)
+                return Ret{std::move(first), U(std::move(init))};
+            U accum = RAH_INVOKE_2(f, std::move(init), *first);
+            for (++first; first != last; ++first)
+                accum = std::invoke(f, std::move(accum), *first);
+            return Ret{std::move(first), std::move(accum)};
+        }
+
+    public:
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I>
+            class T,
+            typename F // __indirectly_binary_left_foldable<T, I>
+            >
+        constexpr auto operator()(I first, S last, T init, F f) const
+        {
+            return impl<I>(std::move(first), std::move(last), std::move(init), std::ref(f));
+        }
+
+        template <
+            typename R, // ranges::input_range
+            class T,
+            typename F // __indirectly_binary_left_foldable<T, ranges::iterator_t<R>>
+            >
+        constexpr auto operator()(R&& r, T init, F f) const
+        {
+            return impl<RAH_NAMESPACE::borrowed_iterator_t<R>>(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::move(init), std::ref(f));
+        }
+    };
+
+    inline constexpr fold_left_with_iter_fn fold_left_with_iter;
+
+    template <class I, class T>
+    using fold_left_first_with_iter_result = RAH_NAMESPACE::in_value_result<I, T>;
+
+    class fold_left_first_with_iter_fn
+    {
+        template <class O, class I, class S, class F>
+        constexpr auto impl(I&& first, S&& last, F f) const
+        {
+            using U = decltype(RAH_NAMESPACE::fold_left(
+                std::move(first), last, std::iter_value_t<I>(*first), f));
+            using Ret =
+                RAH_NAMESPACE::fold_left_first_with_iter_result<O, RAH_NAMESPACE::details::optional<U>>;
+            if (first == last)
+                return Ret{std::move(first), RAH_NAMESPACE::details::optional<U>()};
+            RAH_NAMESPACE::details::optional<U> init(std::in_place, *first);
+            for (++first; first != last; ++first)
+                *init = std::invoke(f, std::move(*init), *first);
+            return Ret{std::move(first), std::move(init)};
+        }
+
+    public:
+        template <
+            typename I, // std::input_iterator
+            typename S, // std::sentinel_for<I>
+            typename F // __indirectly_binary_left_foldable<std::iter_value_t<I>, I>
+            >
+        // requires std::constructible_from<std::iter_value_t<I>, std::iter_reference_t<I>>
+        constexpr auto operator()(I first, S last, F f) const
+        {
+            return impl<I>(std::move(first), std::move(last), std::ref(f));
+        }
+
+        template <
+            typename R, // ranges::input_range
+            typename F // __indirectly_binary_left_foldable<ranges::range_value_t<R>, ranges::iterator_t<R>>
+            >
+        // requires std::constructible_from<ranges::range_value_t<R>, ranges::range_reference_t<R>>
+        constexpr auto operator()(R&& r, F f) const
+        {
+            return impl<RAH_NAMESPACE::borrowed_iterator_t<R>>(
+                RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), std::ref(f));
+        }
+    };
+
+    inline constexpr fold_left_first_with_iter_fn fold_left_first_with_iter;
+
     struct find_last_fn
     {
         template <
@@ -1028,4 +1225,190 @@ namespace rah
     };
 
     constexpr minmax_fn minmax;
+
+    template <class I>
+    using prev_permutation_result = RAH_NAMESPACE::in_found_result<I>;
+
+    struct prev_permutation_fn
+    {
+        template <
+            typename I,
+            typename S,
+            class Comp = RAH_NAMESPACE::less,
+            std::enable_if_t<std::bidirectional_iterator<I> && sentinel_for<S, I>>* = nullptr>
+        // requires std::sortable<I, Comp, Proj>
+        constexpr RAH_NAMESPACE::prev_permutation_result<I>
+        operator()(I first, S last, Comp comp = {}) const
+        {
+            // check that the sequence has at least two elements
+            if (first == last)
+                return {std::move(first), false};
+            auto i{first};
+            ++i;
+            if (i == last)
+                return {std::move(i), false};
+            auto i_last{RAH_NAMESPACE::next(first, last)};
+            i = i_last;
+            --i;
+            // main "permutating" loop
+            for (;;)
+            {
+                auto i1{i};
+                --i;
+                if (std::invoke(comp, *i1, *i))
+                {
+                    auto j{i_last};
+                    while (!std::invoke(comp, *--j, *i))
+                        ;
+                    RAH_NAMESPACE::iter_swap(i, j);
+                    RAH_NAMESPACE::reverse(i1, last);
+                    return {std::move(i_last), true};
+                }
+                // permutation "space" is exhausted
+                if (i == first)
+                {
+                    RAH_NAMESPACE::reverse(first, last);
+                    return {std::move(i_last), false};
+                }
+            }
+        }
+
+        template <
+            typename R, // rah::bidirectional_range
+            class Comp = RAH_NAMESPACE::less,
+            std::enable_if_t<bidirectional_range<R>>* = nullptr>
+        // requires std::sortable<rah::iterator_t<R>, Comp, Proj>
+        constexpr RAH_NAMESPACE::prev_permutation_result<rah::borrowed_iterator_t<R>>
+        operator()(R&& r, Comp comp = {}) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), RAH_STD::move(comp));
+        }
+    };
+
+    inline constexpr prev_permutation_fn prev_permutation{};
+
+    template <class O, class T>
+    struct out_value_result
+    {
+        O out;
+        T value;
+    };
+
+    template <class O, class T>
+    using iota_result = RAH_NAMESPACE::out_value_result<O, T>;
+
+    struct iota_fn
+    {
+        template <
+            typename O, // std::input_or_output_iterator
+            typename S, // std::sentinel_for<O>
+            typename T // std::weakly_incrementable
+            >
+        // requires std::indirectly_writable<O, const T&>
+        constexpr iota_result<O, T> operator()(O first, S last, T value) const
+        {
+            while (first != last)
+            {
+                *first = RAH_NAMESPACE::as_const(value);
+                ++first;
+                ++value;
+            }
+            return {RAH_STD::move(first), RAH_STD::move(value)};
+        }
+
+        template <
+            typename T, // std::weakly_incrementable
+            typename R // rah::output_range<const T&>
+            >
+        constexpr iota_result<RAH_NAMESPACE::borrowed_iterator_t<R>, T> operator()(R&& r, T value) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), RAH_STD::move(value));
+        }
+    };
+
+    inline constexpr iota_fn iota;
+
+    template <class I, class O>
+    using uninitialized_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct uninitialized_copy_fn
+    {
+        // TODO : improve efficiency when the copied type is a TrivialType
+        template <
+            typename I, // std::input_iterator
+            typename S1, // std::sentinel_for<I>
+            typename O, // no-throw-forward-iterator
+            typename S2 // no-throw-sentinel-for<O>
+            >
+        // requires std::constructible_from<std::iter_value_t<O>, std::iter_reference_t<I>>
+        RAH_NAMESPACE::uninitialized_copy_result<I, O>
+        operator()(I ifirst, S1 ilast, O ofirst, S2 olast) const
+        {
+            O current{ofirst};
+            try
+            {
+                for (; !(ifirst == ilast or current == olast); ++ifirst, ++current)
+                    RAH_NAMESPACE::construct_at(std::addressof(*current), *ifirst);
+                return {std::move(ifirst), std::move(current)};
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; ofirst != current; ++ofirst)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*ofirst));
+                throw;
+            }
+        }
+
+        template <
+            typename IR, // ranges::input_range
+            typename OR // no-throw-forward-range
+            >
+        // requires std::constructible_from<ranges::range_value_t<OR>, ranges::range_reference_t<IR>>
+        RAH_NAMESPACE::uninitialized_copy_result<
+            RAH_NAMESPACE::borrowed_iterator_t<IR>,
+            RAH_NAMESPACE::borrowed_iterator_t<OR>>
+        operator()(IR&& in_range, OR&& out_range) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(in_range),
+                RAH_NAMESPACE::end(in_range),
+                RAH_NAMESPACE::begin(out_range),
+                RAH_NAMESPACE::end(out_range));
+        }
+    };
+
+    inline constexpr uninitialized_copy_fn uninitialized_copy{};
+
+    template <class I, class O>
+    using uninitialized_copy_n_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct uninitialized_copy_n_fn
+    {
+        // TODO : improve efficiency when the copied type is a TrivialType
+        template <
+            typename I, // std::input_iterator
+            typename O, // no-throw-input-iterator
+            typename S // no-throw-sentinel-for<O>
+            >
+        // requires std::constructible_from<std::iter_value_t<O>, std::iter_reference_t<I>>
+        RAH_NAMESPACE::uninitialized_copy_n_result<I, O>
+        operator()(I ifirst, std::iter_difference_t<I> count, O ofirst, S olast) const
+        {
+            O current{ofirst};
+            try
+            {
+                for (; count > 0 && current != olast; ++ifirst, ++current, --count)
+                    RAH_NAMESPACE::construct_at(std::addressof(*current), *ifirst);
+                return {std::move(ifirst), std::move(current)};
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; ofirst != current; ++ofirst)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*ofirst));
+                throw;
+            }
+        }
+    };
+
+    inline constexpr uninitialized_copy_n_fn uninitialized_copy_n{};
 } // namespace rah
