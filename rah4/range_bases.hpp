@@ -1369,6 +1369,31 @@ namespace rah
 
     // ****************************** utility functions *******************************************
 
+    struct in_place_t
+    {
+
+        explicit in_place_t() = default;
+    };
+    constexpr in_place_t in_place{};
+
+    template <class T>
+    struct in_place_type_t
+    {
+        explicit in_place_type_t() = default;
+    };
+
+    template <class T>
+    constexpr in_place_type_t<T> in_place_type{};
+
+    template <std::size_t I>
+    struct in_place_index_t
+    {
+        explicit in_place_index_t() = default;
+    };
+
+    template <std::size_t I>
+    constexpr in_place_index_t<I> in_place_index{};
+
     struct less
     {
         template <class T, class U>
@@ -1710,27 +1735,6 @@ namespace rah
         RAH_NAMESPACE::subrange<RAH_NAMESPACE::iterator_t<R>>,
         RAH_NAMESPACE::dangling>;
 
-    // ************************************ algorithm *********************************************
-
-    template <class T>
-    void destroy_at(T* p)
-    {
-        p->~T();
-    }
-
-    template <class T, class... Args>
-    constexpr T* construct_at(T* p, Args&&... args)
-    {
-        return ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
-    }
-
-    template <class ForwardIt, class ForwardSnt>
-    void destroy(ForwardIt first, ForwardSnt last)
-    {
-        for (; first != last; ++first)
-            RAH_NAMESPACE::destroy_at(std::addressof(*first));
-    }
-
     // ************************************** optional ********************************************
     namespace details
     {
@@ -1811,7 +1815,7 @@ namespace rah
                 is_allocated_ = true;
             }
             template <typename... Args>
-            optional(std::in_place_t, Args&&... args)
+            optional(RAH_NAMESPACE::in_place_t, Args&&... args)
             {
                 new (get_ptr()) T(RAH_STD::forward<Args>(args)...);
                 is_allocated_ = true;

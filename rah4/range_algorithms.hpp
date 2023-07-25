@@ -10,6 +10,38 @@
 
 namespace rah
 {
+    struct destroy_at_fn
+    {
+        template <
+            typename T, // std::destructible
+            std::enable_if_t<std::is_array_v<T>>* = nullptr>
+        constexpr void operator()(T* p) const noexcept
+        {
+            for (auto& elem : *p)
+                operator()(std::addressof(elem));
+        }
+        template <
+            typename T, // std::destructible
+            std::enable_if_t<!std::is_array_v<T>>* = nullptr>
+        constexpr void operator()(T* p) const noexcept
+        {
+            p->~T();
+        }
+    };
+
+    constexpr destroy_at_fn destroy_at{};
+
+    struct construct_at_fn
+    {
+        template <class T, class... Args>
+        constexpr T* operator()(T* p, Args&&... args) const
+        {
+            return ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+        }
+    };
+
+    constexpr construct_at_fn construct_at{};
+
     struct fold_left_fn
     {
         template <typename I, typename S, class T, typename F>
@@ -45,7 +77,7 @@ namespace rah
         constexpr auto operator()(I first, S last, F f) const
         {
             using U = decltype(RAH_NAMESPACE::fold_left(
-                RAH_STD::move(first), last, RAH_STD::iter_value_t<I>(*first), f));
+                RAH_STD::move(first), last, RAH_NAMESPACE::iter_value_t<I>(*first), f));
             if (first == last)
                 return RAH_NAMESPACE::details::optional<U>();
             RAH_NAMESPACE::details::optional<U> init(RAH_STD::move(*first));
@@ -65,7 +97,7 @@ namespace rah
         }
     };
 
-    inline constexpr fold_left_first_fn fold_left_first;
+    constexpr fold_left_first_fn fold_left_first;
 
     struct fold_right_fn
     {
@@ -77,7 +109,7 @@ namespace rah
             >
         constexpr auto operator()(I first, S last, T init, F f) const
         {
-            using U = std::decay_t<std::invoke_result_t<F&, RAH_STD::iter_reference_t<I>, T>>;
+            using U = std::decay_t<decltype(RAH_INVOKE_2(f, *first, RAH_STD::move(init)))>;
             if (first == last)
                 return U(std::move(init));
             I tail = RAH_NAMESPACE::next(first, last);
@@ -99,7 +131,7 @@ namespace rah
         }
     };
 
-    inline constexpr fold_right_fn fold_right;
+    constexpr fold_right_fn fold_right;
 
     struct fold_right_last_fn
     {
@@ -111,14 +143,14 @@ namespace rah
         // requires std::constructible_from<std::iter_value_t<I>, std::iter_reference_t<I>>
         constexpr auto operator()(I first, S last, F f) const
         {
-            using U =
-                decltype(RAH_NAMESPACE::fold_right(first, last, std::iter_value_t<I>(*first), f));
+            using U = decltype(RAH_NAMESPACE::fold_right(
+                first, last, RAH_NAMESPACE::iter_value_t<I>(*first), f));
 
             if (first == last)
                 return RAH_NAMESPACE::details::optional<U>();
-            I tail = RAH_STD::prev(RAH_NAMESPACE::next(first, std::move(last)));
+            I tail = RAH_STD::prev(RAH_NAMESPACE::next(first, RAH_STD::move(last)));
             return RAH_NAMESPACE::details::optional<U>(RAH_NAMESPACE::fold_right(
-                std::move(first), tail, std::iter_value_t<I>(*tail), std::move(f)));
+                RAH_STD::move(first), tail, RAH_NAMESPACE::iter_value_t<I>(*tail), RAH_STD::move(f)));
         }
 
         template <
@@ -132,7 +164,7 @@ namespace rah
         }
     };
 
-    inline constexpr fold_right_last_fn fold_right_last;
+    constexpr fold_right_last_fn fold_right_last;
 
     template <class I, class T>
     struct in_value_result
@@ -149,7 +181,7 @@ namespace rah
         template <class O, class I, class S, class T, class F>
         constexpr auto impl(I&& first, S&& last, T&& init, F f) const
         {
-            using U = std::decay_t<std::invoke_result_t<F&, T, std::iter_reference_t<I>>>;
+            using U = std::decay_t<decltype(RAH_INVOKE_2(f, std::move(init), *first))>;
             using Ret = RAH_NAMESPACE::fold_left_with_iter_result<O, U>;
             if (first == last)
                 return Ret{std::move(first), U(std::move(init))};
@@ -183,7 +215,7 @@ namespace rah
         }
     };
 
-    inline constexpr fold_left_with_iter_fn fold_left_with_iter;
+    constexpr fold_left_with_iter_fn fold_left_with_iter;
 
     template <class I, class T>
     using fold_left_first_with_iter_result = RAH_NAMESPACE::in_value_result<I, T>;
@@ -194,12 +226,12 @@ namespace rah
         constexpr auto impl(I&& first, S&& last, F f) const
         {
             using U = decltype(RAH_NAMESPACE::fold_left(
-                std::move(first), last, std::iter_value_t<I>(*first), f));
+                std::move(first), last, RAH_NAMESPACE::iter_value_t<I>(*first), f));
             using Ret =
                 RAH_NAMESPACE::fold_left_first_with_iter_result<O, RAH_NAMESPACE::details::optional<U>>;
             if (first == last)
                 return Ret{std::move(first), RAH_NAMESPACE::details::optional<U>()};
-            RAH_NAMESPACE::details::optional<U> init(std::in_place, *first);
+            RAH_NAMESPACE::details::optional<U> init(RAH_NAMESPACE::in_place, *first);
             for (++first; first != last; ++first)
                 *init = std::invoke(f, std::move(*init), *first);
             return Ret{std::move(first), std::move(init)};
@@ -229,7 +261,7 @@ namespace rah
         }
     };
 
-    inline constexpr fold_left_first_with_iter_fn fold_left_first_with_iter;
+    constexpr fold_left_first_with_iter_fn fold_left_first_with_iter;
 
     struct find_last_fn
     {
@@ -1235,7 +1267,8 @@ namespace rah
             typename I,
             typename S,
             class Comp = RAH_NAMESPACE::less,
-            std::enable_if_t<std::bidirectional_iterator<I> && sentinel_for<S, I>>* = nullptr>
+            std::enable_if_t<
+                RAH_NAMESPACE::bidirectional_iterator<I> && RAH_NAMESPACE::sentinel_for<S, I>>* = nullptr>
         // requires std::sortable<I, Comp, Proj>
         constexpr RAH_NAMESPACE::prev_permutation_result<I>
         operator()(I first, S last, Comp comp = {}) const
@@ -1285,7 +1318,7 @@ namespace rah
         }
     };
 
-    inline constexpr prev_permutation_fn prev_permutation{};
+    constexpr prev_permutation_fn prev_permutation{};
 
     template <class O, class T>
     struct out_value_result
@@ -1326,7 +1359,7 @@ namespace rah
         }
     };
 
-    inline constexpr iota_fn iota;
+    constexpr iota_fn iota;
 
     template <class I, class O>
     using uninitialized_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
@@ -1377,7 +1410,7 @@ namespace rah
         }
     };
 
-    inline constexpr uninitialized_copy_fn uninitialized_copy{};
+    constexpr uninitialized_copy_fn uninitialized_copy{};
 
     template <class I, class O>
     using uninitialized_copy_n_result = RAH_NAMESPACE::in_out_result<I, O>;
@@ -1392,7 +1425,7 @@ namespace rah
             >
         // requires std::constructible_from<std::iter_value_t<O>, std::iter_reference_t<I>>
         RAH_NAMESPACE::uninitialized_copy_n_result<I, O>
-        operator()(I ifirst, std::iter_difference_t<I> count, O ofirst, S olast) const
+        operator()(I ifirst, RAH_NAMESPACE::iter_difference_t<I> count, O ofirst, S olast) const
         {
             O current{ofirst};
             try
@@ -1410,5 +1443,369 @@ namespace rah
         }
     };
 
-    inline constexpr uninitialized_copy_n_fn uninitialized_copy_n{};
+    constexpr uninitialized_copy_n_fn uninitialized_copy_n{};
+
+    struct uninitialized_fill_fn
+    {
+        template <
+            typename I, // no-throw-forward-iterator
+            typename S, // no-throw-sentinel-for<I>
+            class T>
+        // requires std::constructible_from<std::iter_value_t<I>, const T&>
+        I operator()(I first, S last, const T& x) const
+        {
+            I rollback{first};
+            try
+            {
+                for (; !(first == last); ++first)
+                    RAH_NAMESPACE::construct_at(std::addressof(*first), x);
+                return first;
+            }
+            catch (...)
+            {
+                // rollback: destroy constructed elements
+                for (; rollback != first; ++rollback)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*rollback));
+                throw;
+            }
+        }
+
+        template <
+            typename R, // no-throw-forward-range
+            class T>
+        // requires std::constructible_from<ranges::range_value_t<R>, const T&>
+        RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, const T& x) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), x);
+        }
+    };
+
+    constexpr uninitialized_fill_fn uninitialized_fill{};
+
+    struct uninitialized_fill_n_fn
+    {
+        template <
+            typename I, // no-throw-forward-range
+            class T>
+        // requires std::constructible_from<std::iter_value_t<I>, const T&>
+        I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n, const T& x) const
+        {
+            I rollback{first};
+            try
+            {
+                for (; n-- > 0; ++first)
+                    RAH_NAMESPACE::construct_at(std::addressof(*first), x);
+                return first;
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; rollback != first; ++rollback)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*rollback));
+                throw;
+            }
+        }
+    };
+
+    constexpr uninitialized_fill_n_fn uninitialized_fill_n{};
+
+    template <class I, class O>
+    using uninitialized_move_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct uninitialized_move_fn
+    {
+        template <
+            typename I, // std::input_iterator
+            typename S1, // std::sentinel_for<I>
+            typename O, // no-throw-forward-iterator
+            typename S2 // no-throw-sentinel-for<O>
+            >
+        //requires std::constructible_from<std::iter_value_t<O>, std::iter_rvalue_reference_t<I>>
+        RAH_NAMESPACE::uninitialized_move_result<I, O>
+        operator()(I ifirst, S1 ilast, O ofirst, S2 olast) const
+        {
+            O current{ofirst};
+            try
+            {
+                for (; !(ifirst == ilast or current == olast); ++ifirst, ++current)
+                    ::new (const_cast<void*>(
+                        static_cast<const volatile void*>(std::addressof(*current))))
+                        std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<O>>(
+                            RAH_NAMESPACE::iter_move(ifirst));
+                return {std::move(ifirst), std::move(current)};
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; ofirst != current; ++ofirst)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*ofirst));
+                throw;
+            }
+        }
+
+        template <
+            typename IR, // ranges::input_range
+            typename OR // no-throw-forward-range
+            >
+        // requires std::constructible_from<ranges::range_value_t<OR>, ranges::range_rvalue_reference_t<IR>>
+        RAH_NAMESPACE::uninitialized_move_result<
+            RAH_NAMESPACE::borrowed_iterator_t<IR>,
+            RAH_NAMESPACE::borrowed_iterator_t<OR>>
+        operator()(IR&& in_range, OR&& out_range) const
+        {
+            return (*this)(
+                RAH_NAMESPACE::begin(in_range),
+                RAH_NAMESPACE::end(in_range),
+                RAH_NAMESPACE::begin(out_range),
+                RAH_NAMESPACE::end(out_range));
+        }
+    };
+
+    constexpr uninitialized_move_fn uninitialized_move{};
+
+    template <class I, class O>
+    using uninitialized_move_n_result = RAH_NAMESPACE::in_out_result<I, O>;
+
+    struct uninitialized_move_n_fn
+    {
+        template <
+            typename I, // std::input_iterator
+            typename O, // no-throw-forward-iterator
+            typename S // no-throw-sentinel-for<O>
+            >
+        // requires std::constructible_from<std::iter_value_t<O>, std::iter_rvalue_reference_t<I>>
+        RAH_NAMESPACE::uninitialized_move_n_result<I, O>
+        operator()(I ifirst, RAH_NAMESPACE::iter_difference_t<I> n, O ofirst, S olast) const
+        {
+            O current{ofirst};
+            try
+            {
+                for (; n-- > 0 && current != olast; ++ifirst, ++current)
+                    ::new (const_cast<void*>(
+                        static_cast<const volatile void*>(std::addressof(*current))))
+                        std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<O>>(
+                            RAH_NAMESPACE::iter_move(ifirst));
+                return {std::move(ifirst), std::move(current)};
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; ofirst != current; ++ofirst)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*ofirst));
+                throw;
+            }
+        }
+    };
+
+    constexpr uninitialized_move_n_fn uninitialized_move_n{};
+
+    struct uninitialized_default_construct_fn
+    {
+        template <
+            typename I, // no-throw-forward-iterator
+            typename S, // no-throw-sentinel-for<I>
+            std::enable_if_t<std::is_trivially_default_constructible_v<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+        // requires std::default_initializable<std::iter_value_t<I>>
+        I operator()(I first, S last) const
+        {
+            using ValueType = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>;
+            return RAH_NAMESPACE::next(first, last); // skip initialization
+        }
+        template <
+            typename I, // no-throw-forward-iterator
+            typename S, // no-throw-sentinel-for<I>
+            std::enable_if_t<!std::is_trivially_default_constructible_v<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+        // requires std::default_initializable<std::iter_value_t<I>>
+        I operator()(I first, S last) const
+        {
+            using ValueType = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>;
+            I rollback{first};
+            try
+            {
+                for (; !(first == last); ++first)
+                    ::new (const_cast<void*>(
+                        static_cast<const volatile void*>(std::addressof(*first)))) ValueType;
+                return first;
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; rollback != first; ++rollback)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*rollback));
+                throw;
+            }
+        }
+
+        template <typename R // no-throw-forward-range
+                  >
+        // requires std::default_initializable<ranges::range_value_t<R>>
+        RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
+        }
+    };
+
+    constexpr uninitialized_default_construct_fn uninitialized_default_construct{};
+
+    struct uninitialized_default_construct_n_fn
+    {
+        template <
+            typename I, // no-throw-forward-iterator
+            std::enable_if_t<std::is_trivially_default_constructible_v<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+        // requires std::default_initializable<std::iter_value_t<I>>
+        I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
+        {
+            using ValueType = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>;
+            return RAH_NAMESPACE::next(first, n); // skip initialization
+        }
+
+        template <
+            typename I, // no-throw-forward-iterator
+            std::enable_if_t<!std::is_trivially_default_constructible_v<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+        // requires std::default_initializable<std::iter_value_t<I>>
+        I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
+        {
+            using ValueType = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>;
+            I rollback{first};
+            try
+            {
+                for (; n-- > 0; ++first)
+                    ::new (const_cast<void*>(
+                        static_cast<const volatile void*>(std::addressof(*first)))) ValueType;
+                return first;
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; rollback != first; ++rollback)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*rollback));
+                throw;
+            }
+        }
+    };
+
+    constexpr uninitialized_default_construct_n_fn uninitialized_default_construct_n{};
+
+    struct uninitialized_value_construct_fn
+    {
+        template <
+            typename I, // no-throw-forward-iterator
+            typename S, // no-throw-sentinel-for<I>
+            typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
+            std::enable_if_t<std::is_trivial_v<T> && std::is_copy_assignable_v<T>>* = nullptr>
+        // requires std::default_initializable<std::iter_value_t<I>>
+        I operator()(I first, S last) const
+        {
+            return RAH_NAMESPACE::fill(first, last, T());
+        }
+
+        template <
+            typename I, // no-throw-forward-iterator
+            typename S, // no-throw-sentinel-for<I>
+            typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
+            std::enable_if_t<!(std::is_trivial_v<T> && std::is_copy_assignable_v<T>)>* = nullptr>
+        // requires std::default_initializable<std::iter_value_t<I>>
+        I operator()(I first, S last) const
+        {
+            I rollback{first};
+            try
+            {
+                for (; !(first == last); ++first)
+                    ::new (const_cast<void*>(
+                        static_cast<const volatile void*>(std::addressof(*first)))) T();
+                return first;
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; rollback != first; ++rollback)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*rollback));
+                throw;
+            }
+        }
+
+        template <typename R // no-throw-forward-range
+                  >
+        // requires std::default_initializable<ranges::range_value_t<R>>
+        RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r) const
+        {
+            return (*this)(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
+        }
+    };
+
+    constexpr uninitialized_value_construct_fn uninitialized_value_construct{};
+
+    struct uninitialized_value_construct_n_fn
+    {
+        template <
+            typename I, // no-throw-forward-iterator
+            typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
+            std::enable_if_t<(std::is_trivial_v<T> && std::is_copy_assignable_v<T>)>* = nullptr>
+        I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
+        {
+            return RAH_NAMESPACE::fill_n(first, n, T());
+        }
+
+        template <
+            typename I, // no-throw-forward-iterator
+            typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
+            std::enable_if_t<!(std::is_trivial_v<T> && std::is_copy_assignable_v<T>)>* = nullptr>
+        I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
+        {
+            I rollback{first};
+            try
+            {
+                for (; n-- > 0; ++first)
+                    ::new (const_cast<void*>(
+                        static_cast<const volatile void*>(std::addressof(*first)))) T();
+                return first;
+            }
+            catch (...) // rollback: destroy constructed elements
+            {
+                for (; rollback != first; ++rollback)
+                    RAH_NAMESPACE::destroy_at(std::addressof(*rollback));
+                throw;
+            }
+        }
+    };
+
+    constexpr uninitialized_value_construct_n_fn uninitialized_value_construct_n{};
+
+    struct destroy_fn
+    {
+        template <
+            typename I, // no-throw-input-iterator
+            typename S // no-throw-sentinel-for<I>
+            >
+        // requires std::destructible<std::iter_value_t<I>>
+        constexpr I operator()(I first, S last) const noexcept
+        {
+            for (; first != last; ++first)
+                RAH_NAMESPACE::destroy_at(std::addressof(*first));
+            return first;
+        }
+
+        template <typename R // no-throw-input-range
+                  >
+        // requires std::destructible<std::ranges::range_value_t<R>>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r) const noexcept
+        {
+            return operator()(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
+        }
+    };
+
+    constexpr destroy_fn destroy{};
+
+    struct destroy_n_fn
+    {
+        template <typename I // no-throw-input-iterator
+                  >
+        // requires std::destructible<std::iter_value_t<I>>
+        constexpr I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const noexcept
+        {
+            for (; n != 0; (void)++first, --n)
+                RAH_NAMESPACE::destroy_at(std::addressof(*first));
+            return first;
+        }
+    };
+
+    constexpr destroy_n_fn destroy_n{};
 } // namespace rah

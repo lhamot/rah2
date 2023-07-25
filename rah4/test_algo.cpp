@@ -2056,61 +2056,313 @@ void test_uninitialized_copy_n()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah::uninitialized_copy_n]
-
-    const char* stars[]{
-        "Procyon",
-        "Spica",
-        "Pollux",
-        "Deneb",
-        "Polaris",
-    };
+    const char* stars[] = {"Procyon", "Spica", "Pollux", "Deneb", "Polaris"};
 
     constexpr int n{4};
     alignas(alignof(std::string)) char out[n * sizeof(std::string)];
 
     auto first{reinterpret_cast<std::string*>(out)};
     auto last{first + n};
+    auto ret = rah::uninitialized_copy_n(std::begin(stars), n, first, last);
+    assert(ret.in == stars + n);
+    assert(ret.out == last);
 
     for (size_t i = 0; i < n; ++i)
         assert(stars[i] == first[i]);
 
-    std::ranges::destroy(first, last);
-
+    rah::destroy(first, last);
     /// [rah::uninitialized_copy_n]
 }
 void test_uninitialized_fill()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_fill]
+
+    constexpr int n{4};
+    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+
+    auto first{reinterpret_cast<std::string*>(out)};
+    auto last{first + n};
+    rah::uninitialized_fill(first, last, "▄▀▄▀▄▀▄▀");
+
+    assert(rah::all_of(first, last, ([](auto& x) { return x == "▄▀▄▀▄▀▄▀"; })));
+
+    rah::destroy(first, last);
+
+    /// [rah::uninitialized_fill]
 }
 void test_uninitialized_fill_n()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::uninitialized_fill_n]
+
+    constexpr int n{3};
+    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+
+    auto first{reinterpret_cast<std::string*>(out)};
+    auto last = rah::uninitialized_fill_n(first, n, "cppreference");
+
+    assert(rah::all_of(first, last, ([](auto& x) { return x == "cppreference"; })));
+
+    rah::destroy(first, last);
+
+    /// [rah::uninitialized_fill_n]
 }
 void test_uninitialized_move()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_move]
+
+    std::string in[]{"Home", "World"};
+
+    constexpr auto sz = std::size(in);
+    void* out = std::malloc(sizeof(std::string) * sz);
+    auto first{static_cast<std::string*>(out)};
+    auto last{first + sz};
+    rah::uninitialized_move(std::begin(in), std::end(in), first, last);
+    assert(*first == "Home");
+    assert(*rah::next(first) == "World");
+    rah::destroy(first, last);
+    std::free(out);
+    /// [rah::uninitialized_move]
 }
 void test_uninitialized_move_n()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_move_n]
+
+    std::string in[] = {"No", "Diagnostic", "Required"};
+
+    constexpr auto sz = std::size(in);
+    void* out = std::malloc(sizeof(std::string) * sz);
+    auto first{static_cast<std::string*>(out)};
+    auto last{first + sz};
+    rah::uninitialized_move_n(std::begin(in), sz, first, last);
+    rah::equal(
+        rah::make_subrange(first, last),
+        std::initializer_list<std::string>{"No", "Diagnostic", "Required"});
+
+    rah::destroy(first, last);
+    std::free(out);
+
+    /// [rah::uninitialized_move_n]
 }
 void test_uninitialized_default_construct()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_default_construct]
+
+    struct S
+    {
+        std::string m{"▄▀▄▀▄▀▄▀"};
+    };
+
+    constexpr int n{4};
+    alignas(alignof(S)) char out[n * sizeof(S)];
+
+    auto first{reinterpret_cast<S*>(out)};
+    auto last{first + n};
+
+    rah::uninitialized_default_construct(first, last);
+
+    assert(rah::all_of(first, last, [](S& s) { return s.m == "▄▀▄▀▄▀▄▀"; }));
+
+    rah::destroy(first, last);
+
+    // Notice that for "trivial types" the uninitialized_default_construct
+    // generally does not zero-fill the given uninitialized memory area.
+    constexpr char etalon[]{'A', 'B', 'C', 'D', '\n'};
+    char v[]{'A', 'B', 'C', 'D', '\n'};
+    rah::uninitialized_default_construct(std::begin(v), std::end(v));
+    assert(std::memcmp(v, etalon, sizeof(v)) == 0);
+
+    /// [rah::uninitialized_default_construct]
 }
 void test_uninitialized_default_construct_n()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::uninitialized_default_construct_n]
+    struct S
+    {
+        std::string m{"█▓▒░ █▓▒░ "};
+    };
+
+    constexpr int n{4};
+    alignas(alignof(S)) char out[n * sizeof(S)];
+
+    auto first{reinterpret_cast<S*>(out)};
+    auto last = rah::uninitialized_default_construct_n(first, n);
+    assert(rah::all_of(first, last, [](S& s) { return s.m == "█▓▒░ █▓▒░ "; }));
+
+    rah::destroy(first, last);
+
+    // Notice that for "trivial types" the uninitialized_default_construct_n
+    // generally does not zero-fill the given uninitialized memory area.
+    constexpr int etalon[]{1, 2, 3, 4, 5, 6};
+    int v[]{1, 2, 3, 4, 5, 6};
+    rah::uninitialized_default_construct_n(std::begin(v), std::size(v));
+    assert(std::memcmp(v, etalon, sizeof(v)) == 0);
+    /// [rah::uninitialized_default_construct_n]
 }
 void test_uninitialized_value_construct()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::uninitialized_value_construct]
+    struct S
+    {
+        std::string m{"▄▀▄▀▄▀▄▀"};
+    };
+
+    constexpr int n{4};
+    alignas(alignof(S)) char out[n * sizeof(S)];
+
+    auto first{reinterpret_cast<S*>(out)};
+    auto last{first + n};
+
+    rah::uninitialized_value_construct(first, last);
+    assert(rah::all_of(first, last, [](S& s) { return s.m == "▄▀▄▀▄▀▄▀"; }));
+
+    rah::destroy(first, last);
+    // Notice that for "trivial types" the uninitialized_value_construct
+    // zero-fills the given uninitialized memory area.
+    int v[]{0, 1, 2, 3};
+    rah::uninitialized_value_construct(std::begin(v), std::end(v));
+    assert(rah::all_of(v, [](int i) { return i == 0; }));
+    /// [rah::uninitialized_value_construct]
 }
 void test_uninitialized_value_construct_n()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::uninitialized_value_construct_n]
+    struct S
+    {
+        std::string m{"█▓▒░ █▓▒░ █▓▒░ "};
+    };
+
+    constexpr int n{4};
+    alignas(alignof(S)) char out[n * sizeof(S)];
+
+    auto first{reinterpret_cast<S*>(out)};
+    auto last = rah::uninitialized_value_construct_n(first, n);
+    assert(rah::all_of(first, last, [](S& s) { return s.m == "█▓▒░ █▓▒░ █▓▒░ "; }));
+
+    rah::destroy(first, last);
+
+    // Notice that for "trivial types" the uninitialized_value_construct_n
+    // zero-initializes the given uninitialized memory area.
+    int v[]{1, 2, 3, 4, 5, 6, 7, 8};
+    rah::uninitialized_value_construct_n(std::begin(v), std::size(v));
+    assert(rah::all_of(v, [](int i) { return i == 0; }));
+
+    /// [rah::uninitialized_value_construct_n]
 }
 void test_destroy()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::destroy]
+    struct Tracer
+    {
+        int value;
+        ~Tracer()
+        {
+            value = 42;
+        }
+    };
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+
+    for (int i = 0; i < 8; ++i)
+        new (buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+
+    auto ptr = reinterpret_cast<Tracer*>(buffer);
+
+    rah::destroy(ptr, ptr + 8);
+    assert(rah::all_of(ptr, ptr + 8, [](Tracer& t) { return t.value == 42; }));
+    /// [rah::destroy]
 }
 void test_destroy_n()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::destroy_n]
+    struct Tracer
+    {
+        int value;
+        ~Tracer()
+        {
+            value = 42;
+        }
+    };
+
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+
+    for (int i = 0; i < 8; ++i)
+        new (buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+
+    auto ptr = reinterpret_cast<Tracer*>(buffer);
+
+    rah::destroy_n(ptr, 8);
+    assert(rah::all_of(ptr, ptr + 8, [](Tracer& t) { return t.value == 42; }));
+    /// [rah::destroy_n]
 }
 void test_destroy_at()
 {
+    testSuite.test_case("sample");
+    // testSuite.test_case("return");
+    /// [rah::destroy_at]
+    struct Tracer
+    {
+        int value;
+        ~Tracer()
+        {
+            value = 42;
+        }
+    };
+
+    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+
+    for (int i = 0; i < 8; ++i)
+        new (buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+
+    auto ptr = reinterpret_cast<Tracer*>(buffer);
+
+    for (int i = 0; i < 8; ++i)
+        rah::destroy_at(ptr + i);
+    assert(rah::all_of(ptr, ptr + 8, [](Tracer& t) { return t.value == 42; }));
+    /// [rah::destroy_at]
 }
 void test_construct_at()
 {
+    testSuite.test_case("sample");
+    testSuite.test_case("return");
+    /// [rah::construct_at]
+    struct S
+    {
+        int x;
+        float y;
+        double z;
+
+        S(int x, float y, double z)
+            : x{x}
+            , y{y}
+            , z{z}
+        {
+        }
+    };
+
+    alignas(S) unsigned char buf[sizeof(S)];
+
+    S* ptr = rah::construct_at(reinterpret_cast<S*>(buf), 42, 2.71828f, 3.1415);
+    assert(ptr->x == 42);
+
+    rah::destroy_at(ptr);
+    /// [rah::construct_at]
 }
