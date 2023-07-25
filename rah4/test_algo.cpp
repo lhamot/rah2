@@ -165,17 +165,18 @@ void test_algo_count()
         std::cout << "count_raw_proj : " << count_raw_proj.count() << std::endl;
         assert(count_rah_proj < count_raw_proj * 1.2);
 
-#if RAH_CPP20
         const auto count_rgn_proj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count =
-                    rah::count(coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, &Coord::x);
+                const size_t count = rah::count(
+                    coordsVec.data(),
+                    coordsVec.data() + coordsVec.size(),
+                    2,
+                    [](Coord const& c) { return c.x; });
                 assert(count == 79);
             });
         std::cout << "count_rgn_proj : " << count_rgn_proj.count() << std::endl;
         assert(count_rah_proj < count_rgn_proj * 1.2);
-#endif
     }
 }
 void test_count_if()
@@ -2036,7 +2037,7 @@ void test_uninitialized_copy()
         "example",
     };
 
-    const auto sz{std::size(v)};
+    const auto sz{rah::size(v)};
     void* pbuf = std::malloc(sizeof(std::string) * sz);
     assert(pbuf);
     auto first{static_cast<std::string*>(pbuf)};
@@ -2118,7 +2119,7 @@ void test_uninitialized_move()
 
     std::string in[]{"Home", "World"};
 
-    constexpr auto sz = std::size(in);
+    constexpr auto sz = rah::size(in);
     void* out = std::malloc(sizeof(std::string) * sz);
     auto first{static_cast<std::string*>(out)};
     auto last{first + sz};
@@ -2137,7 +2138,7 @@ void test_uninitialized_move_n()
 
     std::string in[] = {"No", "Diagnostic", "Required"};
 
-    constexpr auto sz = std::size(in);
+    constexpr auto sz = rah::size(in);
     void* out = std::malloc(sizeof(std::string) * sz);
     auto first{static_cast<std::string*>(out)};
     auto last{first + sz};
@@ -2206,7 +2207,7 @@ void test_uninitialized_default_construct_n()
     // generally does not zero-fill the given uninitialized memory area.
     constexpr int etalon[]{1, 2, 3, 4, 5, 6};
     int v[]{1, 2, 3, 4, 5, 6};
-    rah::uninitialized_default_construct_n(std::begin(v), std::size(v));
+    rah::uninitialized_default_construct_n(std::begin(v), rah::size(v));
     assert(std::memcmp(v, etalon, sizeof(v)) == 0);
     /// [rah::uninitialized_default_construct_n]
 }
@@ -2259,7 +2260,7 @@ void test_uninitialized_value_construct_n()
     // Notice that for "trivial types" the uninitialized_value_construct_n
     // zero-initializes the given uninitialized memory area.
     int v[]{1, 2, 3, 4, 5, 6, 7, 8};
-    rah::uninitialized_value_construct_n(std::begin(v), std::size(v));
+    rah::uninitialized_value_construct_n(std::begin(v), rah::size(v));
     assert(rah::all_of(v, [](int i) { return i == 0; }));
 
     /// [rah::uninitialized_value_construct_n]

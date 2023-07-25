@@ -14,7 +14,7 @@ namespace rah
     {
         template <
             typename T, // std::destructible
-            std::enable_if_t<std::is_array_v<T>>* = nullptr>
+            std::enable_if_t<std::is_array<T>::value>* = nullptr>
         constexpr void operator()(T* p) const noexcept
         {
             for (auto& elem : *p)
@@ -22,7 +22,7 @@ namespace rah
         }
         template <
             typename T, // std::destructible
-            std::enable_if_t<!std::is_array_v<T>>* = nullptr>
+            std::enable_if_t<!std::is_array<T>::value>* = nullptr>
         constexpr void operator()(T* p) const noexcept
         {
             p->~T();
@@ -187,7 +187,7 @@ namespace rah
                 return Ret{std::move(first), U(std::move(init))};
             U accum = RAH_INVOKE_2(f, std::move(init), *first);
             for (++first; first != last; ++first)
-                accum = std::invoke(f, std::move(accum), *first);
+                accum = RAH_INVOKE_2(f, std::move(accum), *first);
             return Ret{std::move(first), std::move(accum)};
         }
 
@@ -233,7 +233,7 @@ namespace rah
                 return Ret{std::move(first), RAH_NAMESPACE::details::optional<U>()};
             RAH_NAMESPACE::details::optional<U> init(RAH_NAMESPACE::in_place, *first);
             for (++first; first != last; ++first)
-                *init = std::invoke(f, std::move(*init), *first);
+                *init = RAH_INVOKE_2(f, std::move(*init), *first);
             return Ret{std::move(first), std::move(init)};
         }
 
@@ -1288,10 +1288,10 @@ namespace rah
             {
                 auto i1{i};
                 --i;
-                if (std::invoke(comp, *i1, *i))
+                if (RAH_INVOKE_2(comp, *i1, *i))
                 {
                     auto j{i_last};
-                    while (!std::invoke(comp, *--j, *i))
+                    while (!RAH_INVOKE_2(comp, *--j, *i))
                         ;
                     RAH_NAMESPACE::iter_swap(i, j);
                     RAH_NAMESPACE::reverse(i1, last);
@@ -1601,19 +1601,18 @@ namespace rah
         template <
             typename I, // no-throw-forward-iterator
             typename S, // no-throw-sentinel-for<I>
-            std::enable_if_t<std::is_trivially_default_constructible_v<
-                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+            std::enable_if_t<std::is_trivially_default_constructible<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>::value>* = nullptr>
         // requires std::default_initializable<std::iter_value_t<I>>
         I operator()(I first, S last) const
         {
-            using ValueType = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>;
             return RAH_NAMESPACE::next(first, last); // skip initialization
         }
         template <
             typename I, // no-throw-forward-iterator
             typename S, // no-throw-sentinel-for<I>
-            std::enable_if_t<!std::is_trivially_default_constructible_v<
-                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+            std::enable_if_t<!std::is_trivially_default_constructible<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>::value>* = nullptr>
         // requires std::default_initializable<std::iter_value_t<I>>
         I operator()(I first, S last) const
         {
@@ -1649,19 +1648,18 @@ namespace rah
     {
         template <
             typename I, // no-throw-forward-iterator
-            std::enable_if_t<std::is_trivially_default_constructible_v<
-                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+            std::enable_if_t<std::is_trivially_default_constructible<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>::value>* = nullptr>
         // requires std::default_initializable<std::iter_value_t<I>>
         I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
         {
-            using ValueType = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>;
             return RAH_NAMESPACE::next(first, n); // skip initialization
         }
 
         template <
             typename I, // no-throw-forward-iterator
-            std::enable_if_t<!std::is_trivially_default_constructible_v<
-                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>>* = nullptr>
+            std::enable_if_t<!std::is_trivially_default_constructible<
+                std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>>::value>* = nullptr>
         // requires std::default_initializable<std::iter_value_t<I>>
         I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
         {
@@ -1691,7 +1689,7 @@ namespace rah
             typename I, // no-throw-forward-iterator
             typename S, // no-throw-sentinel-for<I>
             typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
-            std::enable_if_t<std::is_trivial_v<T> && std::is_copy_assignable_v<T>>* = nullptr>
+            std::enable_if_t<std::is_trivial<T>::value && std::is_copy_assignable<T>::value>* = nullptr>
         // requires std::default_initializable<std::iter_value_t<I>>
         I operator()(I first, S last) const
         {
@@ -1702,7 +1700,7 @@ namespace rah
             typename I, // no-throw-forward-iterator
             typename S, // no-throw-sentinel-for<I>
             typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
-            std::enable_if_t<!(std::is_trivial_v<T> && std::is_copy_assignable_v<T>)>* = nullptr>
+            std::enable_if_t<!(std::is_trivial<T>::value && std::is_copy_assignable<T>::value)>* = nullptr>
         // requires std::default_initializable<std::iter_value_t<I>>
         I operator()(I first, S last) const
         {
@@ -1738,7 +1736,7 @@ namespace rah
         template <
             typename I, // no-throw-forward-iterator
             typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
-            std::enable_if_t<(std::is_trivial_v<T> && std::is_copy_assignable_v<T>)>* = nullptr>
+            std::enable_if_t<(std::is_trivial<T>::value && std::is_copy_assignable<T>::value)>* = nullptr>
         I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
         {
             return RAH_NAMESPACE::fill_n(first, n, T());
@@ -1747,7 +1745,7 @@ namespace rah
         template <
             typename I, // no-throw-forward-iterator
             typename T = std::remove_reference_t<RAH_NAMESPACE::iter_reference_t<I>>,
-            std::enable_if_t<!(std::is_trivial_v<T> && std::is_copy_assignable_v<T>)>* = nullptr>
+            std::enable_if_t<!(std::is_trivial<T>::value && std::is_copy_assignable<T>::value)>* = nullptr>
         I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const
         {
             I rollback{first};

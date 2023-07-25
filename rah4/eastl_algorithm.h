@@ -1182,7 +1182,7 @@ namespace RAH_NAMESPACE
             RAH_NAMESPACE::iter_difference_t<I> counter = 0;
             for (; first != last; ++first)
             {
-                if (std::invoke(proj, *first) == value)
+                if (RAH_INVOKE_1(proj, *first) == value)
                     ++counter;
             }
             return counter;

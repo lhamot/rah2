@@ -23,25 +23,25 @@
 #define RAH_INVOKE_1(FUNC, ARG) FUNC(ARG)
 #define RAH_INVOKE_2(FUNC, ARG1, ARG2) FUNC(ARG1, ARG2)
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202000L) || __cplusplus >= 2020000L)
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202000L) || __cplusplus >= 202000L)
 #define RAH_CPP20 1
 #else
 #define RAH_CPP20 0
 #endif
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201700L) || __cplusplus >= 2017000L)
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201700L) || __cplusplus >= 201700L)
 #define RAH_CPP17 1
 #else
 #define RAH_CPP17 0
 #endif
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201400L) || __cplusplus >= 2014000L)
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201400L) || __cplusplus >= 201400L)
 #define RAH_CPP14 1
 #else
 #define RAH_CPP14 0
 #endif
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201100L) || __cplusplus >= 2011000L)
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201100L) || __cplusplus >= 201100L)
 #define RAH_CPP11 1
 #else
 #define RAH_CPP11 0
@@ -994,12 +994,12 @@ namespace rah
         struct size_impl
         {
             template <class T, size_t N>
-            size_t operator()(T (&)[N]) const noexcept
+            constexpr size_t operator()(T (&)[N]) const noexcept
             {
                 return N;
             }
             template <class T, size_t N>
-            size_t operator()(T const (&)[N]) const noexcept
+            constexpr size_t operator()(T const (&)[N]) const noexcept
             {
                 return N;
             }
@@ -1007,7 +1007,7 @@ namespace rah
             template <
                 typename R,
                 std::enable_if_t<has_size_member<R> && !rah::disable_sized_range<std::remove_cv_t<R>>>* = nullptr>
-            auto operator()(R&& range) const
+            constexpr auto operator()(R&& range) const
             {
                 return range.size();
             }
@@ -1017,7 +1017,7 @@ namespace rah
                 std::enable_if_t<!(
                     has_size_member<R>
                     && !rah::disable_sized_range<std::remove_cv_t<R>>)&&has_size_ADL<R>>* = nullptr>
-            auto operator()(R&& range) const
+            constexpr auto operator()(R&& range) const
             {
                 return size(range);
             }
@@ -1027,7 +1027,7 @@ namespace rah
                 std::enable_if_t<
                     !has_size_member<R> && !has_size_ADL<R>
                     && sized_sentinel_for<iterator_t<R>, sentinel_t<R>>>* = nullptr>
-            auto operator()(R&& range) const
+            constexpr auto operator()(R&& range) const
             {
                 return RAH_NAMESPACE::end(range) - RAH_NAMESPACE::begin(range);
             }
