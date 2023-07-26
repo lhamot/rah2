@@ -13,27 +13,28 @@
 #include "range_algorithms.hpp"
 #include "mpark/variant.hpp"
 
-namespace RAH_NAMESPACE
+namespace RAH2_NAMESPACE
 {
 
     // **************************** Range conversions *********************************************
 
     /// @brief Return a container of type C, filled with the content of range
     ///
-    /// @snippet test.cpp rah::to
+    /// @snippet test.cpp RAH2_NAMESPACE::to
     template <
         typename C,
         typename R,
-        decltype(std::declval<C>().push_back(std::declval<RAH_NAMESPACE::range_reference_t<R>>()))* = nullptr>
+        decltype(RAH2_STD::declval<C>().push_back(
+            RAH2_STD::declval<RAH2_NAMESPACE::range_reference_t<R>>()))* = nullptr>
     auto to(R&& range)
     {
         C container;
-        auto iter = RAH_NAMESPACE::begin(range);
-        auto sent = RAH_NAMESPACE::end(range);
+        auto iter = RAH2_NAMESPACE::begin(range);
+        auto sent = RAH2_NAMESPACE::end(range);
         for (; iter != sent; ++iter)
         {
             auto&& elt = *iter;
-            container.push_back(std::forward<decltype(elt)>(elt));
+            container.push_back(RAH2_STD::forward<decltype(elt)>(elt));
         }
         return container;
     }
@@ -41,13 +42,14 @@ namespace RAH_NAMESPACE
     template <
         typename C,
         typename R,
-        decltype(std::declval<C>().insert(std::declval<RAH_NAMESPACE::range_reference_t<R>>()))* = nullptr>
+        decltype(RAH2_STD::declval<C>().insert(
+            RAH2_STD::declval<RAH2_NAMESPACE::range_reference_t<R>>()))* = nullptr>
     auto to(R&& range)
     {
         C container;
         for (auto&& elt : range)
         {
-            container.insert(std::forward<decltype(elt)>(elt));
+            container.insert(RAH2_STD::forward<decltype(elt)>(elt));
         }
         return container;
     }
@@ -55,12 +57,12 @@ namespace RAH_NAMESPACE
     /// @brief Return a container of type C, filled with the content of range
     /// @remark pipeable syntax
     ///
-    /// @snippet test.cpp rah::to_container_pipeable
+    /// @snippet test.cpp RAH2_NAMESPACE::to_container_pipeable
     template <typename C>
     auto to()
     {
         return make_pipeable([=](auto&& range)
-                             { return to<C>(RAH_STD::forward<decltype(range)>(range)); });
+                             { return to<C>(RAH2_STD::forward<decltype(range)>(range)); });
     }
 
     // **************************************** pipeable **********************************************
@@ -74,14 +76,14 @@ namespace RAH_NAMESPACE
     template <typename MakeRange>
     auto make_pipeable(MakeRange&& make_range)
     {
-        return pipeable<MakeRange>{std::forward<MakeRange>(make_range)};
+        return pipeable<MakeRange>{RAH2_STD::forward<MakeRange>(make_range)};
     }
 
     template <typename R, typename MakeRange>
     auto operator|(R&& range, pipeable<MakeRange> const& adapter)
-        -> decltype(adapter.func(RAH_STD::forward<R>(range)))
+        -> decltype(adapter.func(RAH2_STD::forward<R>(range)))
     {
-        return adapter.func(RAH_STD::forward<R>(range));
+        return adapter.func(RAH2_STD::forward<R>(range));
     }
 
     // ************************************ iterator_facade *******************************************
@@ -91,11 +93,11 @@ namespace RAH_NAMESPACE
         template <class Reference>
         struct pointer_type
         {
-            using type = RAH_NAMESPACE::details::optional<Reference>;
+            using type = RAH2_NAMESPACE::details::optional<Reference>;
             template <typename Ref>
             static type to_pointer(Ref&& ref)
             {
-                return RAH_STD::forward<Ref>(ref);
+                return RAH2_STD::forward<Ref>(ref);
             }
         };
 
@@ -111,17 +113,17 @@ namespace RAH_NAMESPACE
         };
     } // namespace details
 
-#undef RAH_SELF
-#undef RAH_SELF_CONST
-#define RAH_SELF (*static_cast<I*>(this))
-#define RAH_SELF_CONST (*static_cast<I const*>(this))
+#undef RAH2_SELF
+#undef RAH2_SELF_CONST
+#define RAH2_SELF (*static_cast<I*>(this))
+#define RAH2_SELF_CONST (*static_cast<I const*>(this))
 
-#define RAH_POST_INCR(CAT)                                                                         \
+#define RAH2_POST_INCR(CAT)                                                                        \
     template <                                                                                     \
         typename C = CAT,                                                                          \
-        RAH_STD::enable_if_t<                                                                      \
-            RAH_NAMESPACE::derived_from<C, RAH_STD::forward_iterator_tag>                          \
-            or RAH_NAMESPACE::derived_from<C, RAH_STD::output_iterator_tag>>* = nullptr>           \
+        RAH2_STD::enable_if_t<                                                                     \
+            RAH2_NAMESPACE::derived_from<C, RAH2_STD::forward_iterator_tag>                        \
+            or RAH2_NAMESPACE::derived_from<C, RAH2_STD::output_iterator_tag>>* = nullptr>         \
     auto operator++(int)                                                                           \
     {                                                                                              \
         auto it = *this;                                                                           \
@@ -130,15 +132,15 @@ namespace RAH_NAMESPACE
     }                                                                                              \
     template <                                                                                     \
         typename C = CAT,                                                                          \
-        RAH_STD::enable_if_t<                                                                      \
-            !RAH_NAMESPACE::derived_from<C, RAH_STD::forward_iterator_tag>                         \
-            and !RAH_NAMESPACE::derived_from<C, RAH_STD::output_iterator_tag>>* = nullptr>         \
+        RAH2_STD::enable_if_t<                                                                     \
+            !RAH2_NAMESPACE::derived_from<C, RAH2_STD::forward_iterator_tag>                       \
+            and !RAH2_NAMESPACE::derived_from<C, RAH2_STD::output_iterator_tag>>* = nullptr>       \
     void operator++(int)                                                                           \
     {                                                                                              \
         ++(*this);                                                                                 \
     }
 
-#define RAH_POST_DECR                                                                              \
+#define RAH2_POST_DECR                                                                             \
     auto operator--(int)                                                                           \
     {                                                                                              \
         auto it = *this;                                                                           \
@@ -154,29 +156,31 @@ namespace RAH_NAMESPACE
     struct iterator_facade;
 
     template <typename I, typename S, typename R>
-    struct iterator_facade<I, S, R, RAH_STD::input_iterator_tag>
+    struct iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH_STD::input_iterator_tag>> deleteCheck;
+        DeleteCheck<iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>> deleteCheck;
 
-        using iterator_category = RAH_STD::input_iterator_tag;
-        using value_type = RAH_NAMESPACE::remove_cvref_t<R>;
+        using iterator_category = RAH2_STD::input_iterator_tag;
+        using value_type = RAH2_NAMESPACE::remove_cvref_t<R>;
         using difference_type = intptr_t;
         using pointer = typename details::pointer_type<R>::type;
         using reference = R;
 
-        static_assert(not RAH_STD::is_reference<value_type>::value, "value_type can't be a reference");
+        static_assert(not RAH2_STD::is_reference<value_type>::value, "value_type can't be a reference");
 
-#if !RAH_CPP20
+#if !RAH2_CPP20
         template <
             typename Sent = S,
-            std::enable_if_t<!RAH_NAMESPACE::is_same_v<Sent, void> and !RAH_NAMESPACE::is_same_v<Sent, I>>* = nullptr>
+            RAH2_STD::enable_if_t<
+                !RAH2_NAMESPACE::is_same_v<Sent, void> and !RAH2_NAMESPACE::is_same_v<Sent, I>>* = nullptr>
         friend bool operator!=(Sent const& sent, I const& it)
         {
             return !(it == sent);
         }
         template <
             typename Sent = S,
-            std::enable_if_t<!RAH_NAMESPACE::is_same_v<Sent, void> and !RAH_NAMESPACE::is_same_v<Sent, I>>* = nullptr>
+            RAH2_STD::enable_if_t<
+                !RAH2_NAMESPACE::is_same_v<Sent, void> and !RAH2_NAMESPACE::is_same_v<Sent, I>>* = nullptr>
         friend bool operator!=(I const& it, Sent const& sent)
         {
             return !(it == sent);
@@ -185,19 +189,19 @@ namespace RAH_NAMESPACE
 
         //bool operator!=(S const& rho) const
         //{
-        //    return !(RAH_SELF_CONST == rho);
+        //    return !(RAH2_SELF_CONST == rho);
         //}
         auto operator->()
         {
-            return RAH_NAMESPACE::details::pointer_type<reference>::to_pointer(*RAH_SELF);
+            return RAH2_NAMESPACE::details::pointer_type<reference>::to_pointer(*RAH2_SELF);
         }
     };
 
     template <typename I, typename S, typename R>
-    struct iterator_facade<I, S, R, RAH_STD::forward_iterator_tag>
-        : iterator_facade<I, S, R, RAH_STD::input_iterator_tag>
+    struct iterator_facade<I, S, R, RAH2_STD::forward_iterator_tag>
+        : iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>
     {
-        using iterator_category = RAH_STD::forward_iterator_tag;
+        using iterator_category = RAH2_STD::forward_iterator_tag;
 
         friend bool operator!=(I const& it1, I const& it2)
         {
@@ -206,21 +210,21 @@ namespace RAH_NAMESPACE
     };
 
     template <typename I, typename S, typename R>
-    struct iterator_facade<I, S, R, RAH_STD::output_iterator_tag>
+    struct iterator_facade<I, S, R, RAH2_STD::output_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH_STD::output_iterator_tag>> deleteCheck;
+        DeleteCheck<iterator_facade<I, S, R, RAH2_STD::output_iterator_tag>> deleteCheck;
 
-        using iterator_category = RAH_STD::output_iterator_tag;
-        using value_type = RAH_STD::remove_reference_t<R>;
+        using iterator_category = RAH2_STD::output_iterator_tag;
+        using value_type = RAH2_STD::remove_reference_t<R>;
         using difference_type = intptr_t;
         using pointer = value_type*;
         using reference = R;
 
-        static_assert(not RAH_NAMESPACE::is_reference_v<value_type>, "value_type can't be a reference");
+        static_assert(not RAH2_NAMESPACE::is_reference_v<value_type>, "value_type can't be a reference");
 
         I& operator++()
         {
-            return RAH_SELF;
+            return RAH2_SELF;
         }
         I operator++(int)
         {
@@ -244,24 +248,24 @@ namespace RAH_NAMESPACE
         template <typename V>
         auto const& operator=(V&& value) const
         {
-            RAH_SELF_CONST.put(RAH_STD::forward<V>(value));
-            return RAH_SELF_CONST;
+            RAH2_SELF_CONST.put(RAH2_STD::forward<V>(value));
+            return RAH2_SELF_CONST;
         }
     };
 
     template <typename I, typename S, typename R>
-    struct iterator_facade<I, S, R, RAH_STD::bidirectional_iterator_tag>
-        : iterator_facade<I, S, R, RAH_STD::forward_iterator_tag>
+    struct iterator_facade<I, S, R, RAH2_STD::bidirectional_iterator_tag>
+        : iterator_facade<I, S, R, RAH2_STD::forward_iterator_tag>
     {
-        using iterator_category = RAH_STD::bidirectional_iterator_tag;
+        using iterator_category = RAH2_STD::bidirectional_iterator_tag;
     };
 
     template <typename I, typename S, typename R>
-    struct iterator_facade<I, S, R, RAH_STD::random_access_iterator_tag>
-        : iterator_facade<I, S, R, RAH_STD::bidirectional_iterator_tag>
+    struct iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>
+        : iterator_facade<I, S, R, RAH2_STD::bidirectional_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH_STD::random_access_iterator_tag>> deleteCheck;
-        using iterator_category = RAH_STD::random_access_iterator_tag;
+        DeleteCheck<iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>> deleteCheck;
+        using iterator_category = RAH2_STD::random_access_iterator_tag;
 
         friend bool operator<=(I const& it1, I const& it2)
         {
@@ -277,7 +281,7 @@ namespace RAH_NAMESPACE
         }
         I& operator-=(int64_t amount)
         {
-            RAH_SELF += -amount;
+            RAH2_SELF += -amount;
             return *this;
         }
         friend I operator-(I const& it, int64_t amount)
@@ -300,24 +304,24 @@ namespace RAH_NAMESPACE
         }
         R operator[](int64_t index)
         {
-            auto copy = RAH_SELF;
+            auto copy = RAH2_SELF;
             copy += index;
             return *copy;
         }
         R operator[](int64_t index) const
         {
-            auto copy = RAH_SELF_CONST;
+            auto copy = RAH2_SELF_CONST;
             copy += index;
             return *copy;
         }
     };
 
     template <typename I, typename S, typename R>
-    struct iterator_facade<I, S, R, RAH_NAMESPACE::contiguous_iterator_tag>
-        : iterator_facade<I, S, R, RAH_STD::random_access_iterator_tag>
+    struct iterator_facade<I, S, R, RAH2_NAMESPACE::contiguous_iterator_tag>
+        : iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH_NAMESPACE::contiguous_iterator_tag>> deleteCheck;
-        using iterator_category = RAH_NAMESPACE::contiguous_iterator_tag;
+        DeleteCheck<iterator_facade<I, S, R, RAH2_NAMESPACE::contiguous_iterator_tag>> deleteCheck;
+        using iterator_category = RAH2_NAMESPACE::contiguous_iterator_tag;
     };
 
     template <typename I>
@@ -325,16 +329,16 @@ namespace RAH_NAMESPACE
                                  counted_iterator<I>,
                                  default_sentinel,
                                  decltype(*details::declval<I>()),
-                                 typename RAH_STD::iterator_traits<I>::iterator_category>
+                                 typename RAH2_STD::iterator_traits<I>::iterator_category>
     {
         I iter_;
         size_t count_ = size_t();
-        using base_cat = typename RAH_STD::iterator_traits<I>::iterator_category;
+        using base_cat = typename RAH2_STD::iterator_traits<I>::iterator_category;
 
     public:
         counted_iterator() = default;
         counted_iterator(I iter, size_t count)
-            : iter_(std::move(iter))
+            : iter_(RAH2_STD::move(iter))
             , count_(count)
         {
         }
@@ -345,22 +349,22 @@ namespace RAH_NAMESPACE
             --count_;
             return *this;
         }
-        RAH_POST_INCR(base_cat)
+        RAH2_POST_INCR(base_cat)
         counted_iterator& operator+=(intptr_t off)
         {
             iter_ += off;
             count_ -= off;
             return this;
         }
-        template <typename U = I, std::enable_if_t<rah::bidirectional_iterator<U>>* = nullptr>
+        template <typename U = I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<U>>* = nullptr>
         counted_iterator& operator--()
         {
             --iter_;
             ++count_;
             return *this;
         }
-        template <typename U = I, std::enable_if_t<rah::bidirectional_iterator<U>>* = nullptr>
-        RAH_POST_DECR;
+        template <typename U = I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<U>>* = nullptr>
+        RAH2_POST_DECR;
         auto operator-(counted_iterator const& r) const
         {
             return r.count_ - count_;
@@ -390,7 +394,7 @@ namespace RAH_NAMESPACE
     template <typename I>
     auto make_counted_iterator(I it, size_t count)
     {
-        return counted_iterator<I>{std::move(it), count};
+        return counted_iterator<I>{RAH2_STD::move(it), count};
     }
 
     namespace views
@@ -437,7 +441,7 @@ namespace RAH_NAMESPACE
 
         public:
             explicit single_view(T val)
-                : value_(std::move(val))
+                : value_(RAH2_STD::move(val))
             {
             }
 
@@ -474,15 +478,15 @@ namespace RAH_NAMESPACE
         template <typename V>
         auto single(V&& value)
         {
-            return single_view<RAH_NAMESPACE::remove_cvref_t<V>>{std::forward<V>(value)};
+            return single_view<RAH2_NAMESPACE::remove_cvref_t<V>>{RAH2_STD::forward<V>(value)};
         }
 
         // ********************************** iota ************************************************
 
-        /// @see rah::iota
+        /// @see RAH2_NAMESPACE::iota
         template <typename W>
         class iota_iterator
-            : public iterator_facade<iota_iterator<W>, default_sentinel, W, RAH_STD::random_access_iterator_tag>
+            : public iterator_facade<iota_iterator<W>, default_sentinel, W, RAH2_STD::random_access_iterator_tag>
         {
             W val_ = {};
 
@@ -498,7 +502,7 @@ namespace RAH_NAMESPACE
                 ++val_;
                 return *this;
             }
-            RAH_POST_INCR(RAH_STD::random_access_iterator_tag)
+            RAH2_POST_INCR(RAH2_STD::random_access_iterator_tag)
             iota_iterator& operator+=(intptr_t value)
             {
                 val_ += W(value);
@@ -514,7 +518,7 @@ namespace RAH_NAMESPACE
                 --val_;
                 return *this;
             }
-            RAH_POST_DECR
+            RAH2_POST_DECR
             auto operator-(iota_iterator const& other) const
             {
                 return (val_ - other.val_);
@@ -556,19 +560,19 @@ namespace RAH_NAMESPACE
 
         // ******************************* istream_view ******************************************************
 
-        template <typename Val, class CharT, class Traits = std::char_traits<CharT>>
+        template <typename Val, class CharT, class Traits = RAH2_STD::char_traits<CharT>>
         class basic_istream_view : view_interface<basic_istream_view<Val, CharT, Traits>>
         {
-            std::istream* stream_ = nullptr;
+            RAH2_STD::istream* stream_ = nullptr;
             Val value_;
 
         public:
-            explicit basic_istream_view(std::istream* stream)
+            explicit basic_istream_view(RAH2_STD::istream* stream)
                 : stream_(stream)
             {
             }
 
-            std::istream* stream() const
+            RAH2_STD::istream* stream() const
             {
                 return stream_;
             }
@@ -578,7 +582,7 @@ namespace RAH_NAMESPACE
             };
 
             class iterator
-                : public iterator_facade<iterator, sentinel, Val, RAH_STD::input_iterator_tag>
+                : public iterator_facade<iterator, sentinel, Val, RAH2_STD::input_iterator_tag>
             {
                 basic_istream_view* istream_;
 
@@ -638,7 +642,7 @@ namespace RAH_NAMESPACE
 
         // ********************************** repeat ******************************************************
 
-        /// @see rah::repeat
+        /// @see RAH2_NAMESPACE::repeat
         template <typename V>
         class repeat_view : public view_interface<repeat_view<V>>
         {
@@ -646,7 +650,7 @@ namespace RAH_NAMESPACE
 
         public:
             class iterator
-                : public iterator_facade<iterator, default_sentinel, V, RAH_STD::random_access_iterator_tag>
+                : public iterator_facade<iterator, default_sentinel, V, RAH2_STD::random_access_iterator_tag>
             {
                 V val_ = V();
                 size_t current_ = 0;
@@ -655,7 +659,7 @@ namespace RAH_NAMESPACE
                 iterator() = default;
                 template <typename U>
                 explicit iterator(U val)
-                    : val_(RAH_STD::forward<U>(val))
+                    : val_(RAH2_STD::forward<U>(val))
                 {
                 }
 
@@ -664,7 +668,7 @@ namespace RAH_NAMESPACE
                     ++current_;
                     return *this;
                 }
-                RAH_POST_INCR(RAH_STD::random_access_iterator_tag)
+                RAH2_POST_INCR(RAH2_STD::random_access_iterator_tag)
                 iterator& operator+=(intptr_t value)
                 {
                     current_ += value;
@@ -675,7 +679,7 @@ namespace RAH_NAMESPACE
                     --current_;
                     return *this;
                 }
-                RAH_POST_DECR
+                RAH2_POST_DECR
                 iterator& operator-=(intptr_t value)
                 {
                     current_ -= value;
@@ -708,7 +712,7 @@ namespace RAH_NAMESPACE
             };
 
             repeat_view(V value)
-                : value_(std::move(value))
+                : value_(RAH2_STD::move(value))
             {
             }
 
@@ -726,7 +730,7 @@ namespace RAH_NAMESPACE
         template <typename V>
         auto repeat(V&& value)
         {
-            return repeat_view<remove_cvref_t<V>>(std::forward<V>(value));
+            return repeat_view<remove_cvref_t<V>>(RAH2_STD::forward<V>(value));
         }
 
         // ********************************* ref_view *********************************************
@@ -735,7 +739,7 @@ namespace RAH_NAMESPACE
         class ref_view : public view_interface<ref_view<R>>
         {
             R* ref_ = nullptr;
-            static constexpr bool is_sized = rah::sized_range<R>;
+            static constexpr bool is_sized = RAH2_NAMESPACE::sized_range<R>;
 
         public:
             explicit ref_view(R& ref)
@@ -744,31 +748,31 @@ namespace RAH_NAMESPACE
             }
             auto begin() const
             {
-                return RAH_NAMESPACE::begin(*ref_);
+                return RAH2_NAMESPACE::begin(*ref_);
             }
             auto end() const
             {
-                return RAH_NAMESPACE::end(*ref_);
+                return RAH2_NAMESPACE::end(*ref_);
             }
             bool empty() const
             {
-                return RAH_NAMESPACE::empty(*ref_);
+                return RAH2_NAMESPACE::empty(*ref_);
             }
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             size_t size() const
             {
-                return RAH_NAMESPACE::size(*ref_);
+                return RAH2_NAMESPACE::size(*ref_);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH_NAMESPACE::size(*ref_);
+                return RAH2_NAMESPACE::size(*ref_);
             }
 
-            template <typename U = R, std::enable_if_t<rah::contiguous_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::contiguous_range<U>>* = nullptr>
             auto data()
             {
-                return RAH_NAMESPACE::data(*ref_);
+                return RAH2_NAMESPACE::data(*ref_);
             }
         };
 
@@ -776,8 +780,8 @@ namespace RAH_NAMESPACE
         auto ref(R& range)
         {
             static_assert(
-                not RAH_NAMESPACE::is_rvalue_reference_v<R>, "range can't be a rvalue reference");
-            return RAH_NAMESPACE::views::ref_view<std::remove_reference_t<R>>(range);
+                not RAH2_NAMESPACE::is_rvalue_reference_v<R>, "range can't be a rvalue reference");
+            return RAH2_NAMESPACE::views::ref_view<RAH2_STD::remove_reference_t<R>>(range);
         }
 
     } // namespace views
@@ -796,7 +800,7 @@ namespace RAH_NAMESPACE
 
         public:
             explicit owning_view(R r)
-                : range_(std::move(r))
+                : range_(RAH2_STD::move(r))
             {
             }
             owning_view(owning_view const&) = delete;
@@ -822,21 +826,21 @@ namespace RAH_NAMESPACE
             }
             bool empty() const
             {
-                return RAH_NAMESPACE::empty(range_);
+                return RAH2_NAMESPACE::empty(range_);
             }
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             size_t size() const
             {
-                return RAH_NAMESPACE::size(range_);
+                return RAH2_NAMESPACE::size(range_);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH_NAMESPACE::size(range_);
+                return RAH2_NAMESPACE::size(range_);
             }
             bool data() const
             {
-                return RAH_NAMESPACE::data(range_);
+                return RAH2_NAMESPACE::data(range_);
             }
         };
 
@@ -844,57 +848,57 @@ namespace RAH_NAMESPACE
         auto owning(R&& range)
         {
             static_assert(
-                not RAH_NAMESPACE::is_lvalue_reference_v<R>, "range can't be a lvalue reference");
-            return RAH_NAMESPACE::views::owning_view<std::remove_reference_t<R>>(
-                std::forward<R>(range));
+                not RAH2_NAMESPACE::is_lvalue_reference_v<R>, "range can't be a lvalue reference");
+            return RAH2_NAMESPACE::views::owning_view<RAH2_STD::remove_reference_t<R>>(
+                RAH2_STD::forward<R>(range));
         }
 
         inline auto owning()
         {
             return make_pipeable(
                 [](auto&& range)
-                { return RAH_NAMESPACE::views::owning(RAH_STD::forward<decltype(range)>(range)); });
+                { return RAH2_NAMESPACE::views::owning(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
         // ********************************** all *************************************************
 
-        template <typename R, RAH_STD::enable_if_t<view<RAH_STD::remove_reference_t<R>>>* = nullptr>
-        auto all(R&& range) -> decltype(RAH_STD::forward<R>(range))
+        template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
+        auto all(R&& range) -> decltype(RAH2_STD::forward<R>(range))
         {
-            return RAH_STD::forward<R>(range);
+            return RAH2_STD::forward<R>(range);
         }
         template <
             typename R,
-            RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>>* = nullptr,
-            RAH_STD::enable_if_t<RAH_NAMESPACE::is_lvalue_reference_v<R>>* = nullptr>
+            RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_lvalue_reference_v<R>>* = nullptr>
         auto all(R&& range)
         {
-            return RAH_NAMESPACE::views::ref(RAH_STD::forward<R>(range));
+            return RAH2_NAMESPACE::views::ref(RAH2_STD::forward<R>(range));
         }
 
         template <
             typename R,
-            RAH_STD::enable_if_t<not view<RAH_STD::remove_reference_t<R>>>* = nullptr,
-            RAH_STD::enable_if_t<not RAH_NAMESPACE::is_lvalue_reference_v<R>>* = nullptr>
+            RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::is_lvalue_reference_v<R>>* = nullptr>
         auto all(R&& range)
         {
-            return owning_view<std::decay_t<R>>(RAH_STD::forward<R>(range));
+            return owning_view<RAH2_STD::decay_t<R>>(RAH2_STD::forward<R>(range));
         }
 
         template <typename V>
-        auto all(std::initializer_list<V>& range)
+        auto all(RAH2_STD::initializer_list<V>& range)
         {
-            return RAH_NAMESPACE::views::ref(range);
+            return RAH2_NAMESPACE::views::ref(range);
         }
 
         inline auto all()
         {
             return make_pipeable([=](auto&& range)
-                                 { return all(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return all(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
-        template <typename R, std::enable_if_t<viewable_range<R>>* = nullptr>
-        using all_t = decltype(views::all(std::declval<R>()));
+        template <typename R, RAH2_STD::enable_if_t<viewable_range<R>>* = nullptr>
+        using all_t = decltype(views::all(RAH2_STD::declval<R>()));
 
         // ***************************************** filter ***************************************
 
@@ -903,11 +907,11 @@ namespace RAH_NAMESPACE
         {
             R range_;
             P pred_;
-            using inner_iterator = RAH_NAMESPACE::iterator_t<R>;
-            using inner_sentinel = RAH_NAMESPACE::sentinel_t<R>;
-            constexpr static bool is_common_range = RAH_NAMESPACE::common_range<R>;
+            using inner_iterator = RAH2_NAMESPACE::iterator_t<R>;
+            using inner_sentinel = RAH2_NAMESPACE::sentinel_t<R>;
+            constexpr static bool is_common_range = RAH2_NAMESPACE::common_range<R>;
             using base_cat =
-                rah::common_iterator_tag<range_iter_categ_t<R>, bidirectional_iterator_tag>;
+                RAH2_NAMESPACE::common_iterator_tag<range_iter_categ_t<R>, bidirectional_iterator_tag>;
 
         public:
             struct sentinel
@@ -918,13 +922,13 @@ namespace RAH_NAMESPACE
                 : public iterator_facade<
                       iterator,
                       sentinel,
-                      typename RAH_STD::iterator_traits<inner_iterator>::reference,
-                      RAH_NAMESPACE::common_iterator_tag<RAH_STD::bidirectional_iterator_tag, base_cat>>
+                      typename RAH2_STD::iterator_traits<inner_iterator>::reference,
+                      RAH2_NAMESPACE::common_iterator_tag<RAH2_STD::bidirectional_iterator_tag, base_cat>>
             {
                 filter_view* view_ = nullptr;
                 inner_iterator iter_;
 
-                typename RAH_STD::iterator_traits<inner_iterator>::pointer value_pointer_;
+                typename RAH2_STD::iterator_traits<inner_iterator>::pointer value_pointer_;
 
                 // Get a pointer to the pointed value,
                 //   OR a pointer to a copy of the pointed value (when not a reference iterator)
@@ -947,11 +951,11 @@ namespace RAH_NAMESPACE
 
                 void next_value()
                 {
-                    while (iter_ != RAH_NAMESPACE::end(view_->range_)
+                    while (iter_ != RAH2_NAMESPACE::end(view_->range_)
                            && not(view_->pred_)(
                                *(value_pointer_ = get_pointer<inner_iterator>::get(iter_))))
                     {
-                        assert(iter_ != RAH_NAMESPACE::end(view_->range_));
+                        assert(iter_ != RAH2_NAMESPACE::end(view_->range_));
                         ++iter_;
                     }
                 }
@@ -961,7 +965,7 @@ namespace RAH_NAMESPACE
 
                 iterator(filter_view* v, inner_iterator iter)
                     : view_(v)
-                    , iter_(RAH_STD::move(iter))
+                    , iter_(RAH2_STD::move(iter))
                 {
                     next_value();
                 }
@@ -972,24 +976,24 @@ namespace RAH_NAMESPACE
                     next_value();
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
-                template <typename U = R, std::enable_if_t<bidirectional_range<U>>* = nullptr>
+                RAH2_POST_INCR(base_cat)
+                template <typename U = R, RAH2_STD::enable_if_t<bidirectional_range<U>>* = nullptr>
                 iterator& operator--()
                 {
                     do
                     {
                         --iter_;
                     } while (not(view_->pred_)(*iter_)
-                             && iter_ != RAH_NAMESPACE::begin(view_->range_));
+                             && iter_ != RAH2_NAMESPACE::begin(view_->range_));
                     return *this;
                 }
-                template <typename U = R, std::enable_if_t<bidirectional_range<U>>* = nullptr>
-                RAH_POST_DECR;
+                template <typename U = R, RAH2_STD::enable_if_t<bidirectional_range<U>>* = nullptr>
+                RAH2_POST_DECR;
                 auto operator*() const -> decltype(*value_pointer_)
                 {
                     return *value_pointer_;
                 }
-                template <typename U = R, std::enable_if_t<equality_comparable<iterator_t<U>>>* = nullptr>
+                template <typename U = R, RAH2_STD::enable_if_t<equality_comparable<iterator_t<U>>>* = nullptr>
                 friend bool operator==(iterator const& it, iterator const& other)
                 {
                     return it.iter_ == other.iter_;
@@ -1001,8 +1005,8 @@ namespace RAH_NAMESPACE
             };
 
             filter_view(R rng, P pred)
-                : range_(std::move(rng))
-                , pred_(std::move(pred))
+                : range_(RAH2_STD::move(rng))
+                , pred_(RAH2_STD::move(pred))
             {
             }
 
@@ -1018,34 +1022,34 @@ namespace RAH_NAMESPACE
 
             iterator begin()
             {
-                return iterator(this, RAH_NAMESPACE::begin(range_));
+                return iterator(this, RAH2_NAMESPACE::begin(range_));
             }
 
-            template <typename U = R, std::enable_if_t<common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<common_range<U>>* = nullptr>
             iterator end()
             {
-                return iterator{this, RAH_NAMESPACE::end(range_)};
+                return iterator{this, RAH2_NAMESPACE::end(range_)};
             }
-            template <typename U = R, std::enable_if_t<not common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<not common_range<U>>* = nullptr>
             sentinel end()
             {
-                return sentinel{RAH_NAMESPACE::end(range_)};
+                return sentinel{RAH2_NAMESPACE::end(range_)};
             }
         };
 
         template <typename R, typename P>
         auto filter(R&& range, P&& pred)
         {
-            auto view_ref = all(RAH_STD::forward<R>(range));
-            return filter_view<decltype(view_ref), RAH_NAMESPACE::remove_cvref_t<P>>(
-                RAH_STD::move(view_ref), RAH_STD::forward<P>(pred));
+            auto view_ref = all(RAH2_STD::forward<R>(range));
+            return filter_view<decltype(view_ref), RAH2_NAMESPACE::remove_cvref_t<P>>(
+                RAH2_STD::move(view_ref), RAH2_STD::forward<P>(pred));
         }
 
         template <typename P>
         auto filter(P&& pred)
         {
             return make_pipeable([=](auto&& range)
-                                 { return filter(RAH_STD::forward<decltype(range)>(range), pred); });
+                                 { return filter(RAH2_STD::forward<decltype(range)>(range), pred); });
         }
 
         // ******************************************* transform ******************************************
@@ -1054,10 +1058,10 @@ namespace RAH_NAMESPACE
         class transform_view : public view_interface<transform_view<R, F>>
         {
             R base_;
-            RAH_NAMESPACE::details::optional<F> func_;
-            constexpr static bool is_common_range = RAH_NAMESPACE::common_range<R>;
-            using category =
-                rah::common_iterator_tag<std::random_access_iterator_tag, range_iter_categ_t<R>>;
+            RAH2_NAMESPACE::details::optional<F> func_;
+            constexpr static bool is_common_range = RAH2_NAMESPACE::common_range<R>;
+            using category = RAH2_NAMESPACE::
+                common_iterator_tag<RAH2_STD::random_access_iterator_tag, range_iter_categ_t<R>>;
             constexpr static bool is_sized = sized_range<R>;
 
         public:
@@ -1071,20 +1075,20 @@ namespace RAH_NAMESPACE
             class iterator : public iterator_facade<iterator, sentinel, reference, category>
             {
                 iterator_t<R> iter_;
-                RAH_NAMESPACE::details::optional<F> func_;
+                RAH2_NAMESPACE::details::optional<F> func_;
 
             public:
                 using difference_type = intptr_t;
                 using reference =
                     decltype(details::declval<F>()(details::declval<range_reference_t<R>>()));
                 using pointer = typename details::pointer_type<reference>::type;
-                using value_type = RAH_STD::remove_reference_t<reference>;
+                using value_type = RAH2_STD::remove_reference_t<reference>;
                 using iterator_category = range_iter_categ_t<R>;
 
                 iterator() = default;
                 iterator(iterator_t<R> iter, F func)
-                    : iter_(std::move(iter))
-                    , func_(std::move(func))
+                    : iter_(RAH2_STD::move(iter))
+                    , func_(RAH2_STD::move(func))
                 {
                 }
 
@@ -1093,7 +1097,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR(category)
+                RAH2_POST_INCR(category)
                 iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
@@ -1106,7 +1110,8 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = category,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --iter_;
@@ -1114,11 +1119,13 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = category,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
                 template <
                     typename C = category,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& r) const
                 {
                     return iter_ - r.iter_;
@@ -1129,7 +1136,8 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = category,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator<(iterator const it2) const
                 {
                     return iter_ < it2.iter_;
@@ -1150,46 +1158,46 @@ namespace RAH_NAMESPACE
 
             transform_view() = default;
             transform_view(R base, F func)
-                : base_(std::move(base))
-                , func_(std::move(func))
+                : base_(RAH2_STD::move(base))
+                , func_(RAH2_STD::move(func))
             {
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return RAH_NAMESPACE::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH_NAMESPACE::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
 
             auto begin()
             {
-                return iterator(RAH_NAMESPACE::begin(base_), *func_);
+                return iterator(RAH2_NAMESPACE::begin(base_), *func_);
             }
 
-            template <typename U = R, std::enable_if_t<is_common_range, U>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<is_common_range, U>* = nullptr>
             auto end()
             {
-                return iterator(RAH_NAMESPACE::end(base_), *func_);
+                return iterator(RAH2_NAMESPACE::end(base_), *func_);
             }
 
-            template <typename U = R, std::enable_if_t<not is_common_range, U>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<not is_common_range, U>* = nullptr>
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(base_)};
+                return sentinel{RAH2_NAMESPACE::end(base_)};
             }
         };
 
         template <typename R, typename F>
         constexpr auto transform(R&& range, F&& func)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return transform_view<decltype(ref), RAH_NAMESPACE::remove_cvref_t<F>>(
-                std::move(ref), std::forward<F>(func));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return transform_view<decltype(ref), RAH2_NAMESPACE::remove_cvref_t<F>>(
+                RAH2_STD::move(ref), RAH2_STD::forward<F>(func));
         }
 
         template <typename F>
@@ -1197,7 +1205,7 @@ namespace RAH_NAMESPACE
         {
             return make_pipeable(
                 [=](auto&& range)
-                { return transform(RAH_STD::forward<decltype(range)>(range), func); });
+                { return transform(RAH2_STD::forward<decltype(range)>(range), func); });
         }
 
         // ******************************************* take ***********************************************
@@ -1208,64 +1216,64 @@ namespace RAH_NAMESPACE
             R input_view_;
             size_t count_;
             static constexpr bool IsCommon =
-                RAH_NAMESPACE::random_access_range<R> && RAH_NAMESPACE::sized_range<R>;
+                RAH2_NAMESPACE::random_access_range<R> && RAH2_NAMESPACE::sized_range<R>;
             constexpr static bool is_sized = sized_range<R>;
 
         public:
-            using base_iterator = RAH_NAMESPACE::iterator_t<R>;
-            using base_sentinel = RAH_NAMESPACE::sentinel_t<R>;
+            using base_iterator = RAH2_NAMESPACE::iterator_t<R>;
+            using base_sentinel = RAH2_NAMESPACE::sentinel_t<R>;
             using reference = range_reference_t<R>;
 
             take_view(R input_view, size_t count)
-                : input_view_(std::move(input_view))
+                : input_view_(RAH2_STD::move(input_view))
                 , count_(count)
             {
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return std::min(count_, static_cast<size_t>(RAH_NAMESPACE::size(input_view_)));
+                return RAH2_STD::min(count_, static_cast<size_t>(RAH2_NAMESPACE::size(input_view_)));
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return std::min(count_, static_cast<size_t>(RAH_NAMESPACE::size(input_view_)));
+                return RAH2_STD::min(count_, static_cast<size_t>(RAH2_NAMESPACE::size(input_view_)));
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::contiguous_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::contiguous_range<U>>* = nullptr>
             auto data()
             {
                 return input_view_.data();
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::contiguous_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::contiguous_range<U>>* = nullptr>
             auto data() const
             {
                 return input_view_.data();
             }
 
-            template <bool C = IsCommon, std::enable_if_t<C>* = nullptr>
+            template <bool C = IsCommon, RAH2_STD::enable_if_t<C>* = nullptr>
             auto begin()
             {
-                return RAH_NAMESPACE::begin(input_view_);
+                return RAH2_NAMESPACE::begin(input_view_);
             }
 
-            template <bool C = IsCommon, std::enable_if_t<not C>* = nullptr>
+            template <bool C = IsCommon, RAH2_STD::enable_if_t<not C>* = nullptr>
             auto begin()
             {
-                return counted_iterator<iterator_t<R>>(RAH_NAMESPACE::begin(input_view_), count_);
+                return counted_iterator<iterator_t<R>>(RAH2_NAMESPACE::begin(input_view_), count_);
             }
 
-            template <bool C = IsCommon, std::enable_if_t<C>* = nullptr>
+            template <bool C = IsCommon, RAH2_STD::enable_if_t<C>* = nullptr>
             auto end()
             {
-                auto iter = RAH_NAMESPACE::begin(input_view_);
-                RAH_NAMESPACE::advance(iter, count_, RAH_NAMESPACE::end(input_view_));
+                auto iter = RAH2_NAMESPACE::begin(input_view_);
+                RAH2_NAMESPACE::advance(iter, count_, RAH2_NAMESPACE::end(input_view_));
                 return iter;
             }
 
-            template <bool C = IsCommon, std::enable_if_t<not C>* = nullptr>
+            template <bool C = IsCommon, RAH2_STD::enable_if_t<not C>* = nullptr>
             default_sentinel end()
             {
                 return default_sentinel{};
@@ -1275,20 +1283,20 @@ namespace RAH_NAMESPACE
         template <typename R>
         auto take(R&& range, size_t count)
         {
-            auto range_view = all(std::forward<R>(range));
-            return take_view<decltype(range_view)>(RAH_STD::move(range_view), count);
+            auto range_view = all(RAH2_STD::forward<R>(range));
+            return take_view<decltype(range_view)>(RAH2_STD::move(range_view), count);
         }
 
         inline auto take(size_t count)
         {
             return make_pipeable([=](auto&& range)
-                                 { return take(RAH_STD::forward<decltype(range)>(range), count); });
+                                 { return take(RAH2_STD::forward<decltype(range)>(range), count); });
         }
     } // namespace views
 
     template <class T>
     constexpr bool enable_borrowed_range<views::take_view<T>> =
-        RAH_NAMESPACE::enable_borrowed_range<T>;
+        RAH2_NAMESPACE::enable_borrowed_range<T>;
 
     namespace views
     {
@@ -1304,43 +1312,44 @@ namespace RAH_NAMESPACE
             constexpr static bool is_sized = sized_range<R>;
 
         public:
-            using iterator = RAH_NAMESPACE::iterator_t<R>;
+            using iterator = RAH2_NAMESPACE::iterator_t<R>;
 
             drop_view() = default;
             drop_view(R v, const size_t drop_count)
-                : base_(std::move(v))
+                : base_(RAH2_STD::move(v))
                 , drop_count_(drop_count)
             {
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                auto const subsize = static_cast<size_t>(RAH_NAMESPACE::size(base_));
-                return size_t(std::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
+                auto const subsize = static_cast<size_t>(RAH2_NAMESPACE::size(base_));
+                return size_t(RAH2_STD::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                auto const subsize = static_cast<size_t>(RAH_NAMESPACE::size(base_));
-                return size_t(std::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
+                auto const subsize = static_cast<size_t>(RAH2_NAMESPACE::size(base_));
+                return size_t(RAH2_STD::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
             }
 
             auto begin()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                RAH_NAMESPACE::advance(iter, drop_count_, RAH_NAMESPACE::end(base_));
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                RAH2_NAMESPACE::advance(iter, drop_count_, RAH2_NAMESPACE::end(base_));
                 return iter;
             }
 
             auto end()
             {
-                return RAH_NAMESPACE::end(base_);
+                return RAH2_NAMESPACE::end(base_);
             }
 
             template <
                 typename C = category,
-                std::enable_if_t<RAH_NAMESPACE::derived_from<C, rah::contiguous_iterator_tag>>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    RAH2_NAMESPACE::derived_from<C, RAH2_NAMESPACE::contiguous_iterator_tag>>* = nullptr>
             auto data()
             {
                 return &(*begin());
@@ -1350,20 +1359,20 @@ namespace RAH_NAMESPACE
         template <typename R>
         auto drop(R&& range, size_t count)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return drop_view<decltype(ref)>(std::move(ref), count);
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return drop_view<decltype(ref)>(RAH2_STD::move(ref), count);
         }
 
         inline auto drop(size_t count)
         {
             return make_pipeable([=](auto&& range)
-                                 { return drop(RAH_STD::forward<decltype(range)>(range), count); });
+                                 { return drop(RAH2_STD::forward<decltype(range)>(range), count); });
         }
     } // namespace views
 
     template <class T>
     constexpr bool enable_borrowed_range<views::drop_view<T>> =
-        RAH_NAMESPACE::enable_borrowed_range<T>;
+        RAH2_NAMESPACE::enable_borrowed_range<T>;
 
     namespace views
     {
@@ -1377,20 +1386,20 @@ namespace RAH_NAMESPACE
             using category = range_iter_categ_t<R>;
 
         public:
-            using iterator = RAH_NAMESPACE::iterator_t<R>;
-            using sentinel = RAH_NAMESPACE::sentinel_t<R>;
+            using iterator = RAH2_NAMESPACE::iterator_t<R>;
+            using sentinel = RAH2_NAMESPACE::sentinel_t<R>;
 
             drop_while_view() = default;
             drop_while_view(R v, F func)
-                : base_(std::move(v))
-                , pred_(std::move(func))
+                : base_(RAH2_STD::move(v))
+                , pred_(RAH2_STD::move(func))
             {
             }
 
             iterator begin()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                auto end = RAH_NAMESPACE::end(base_);
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                auto end = RAH2_NAMESPACE::end(base_);
                 while (pred_(*iter) and iter != end)
                 {
                     ++iter;
@@ -1400,12 +1409,13 @@ namespace RAH_NAMESPACE
 
             sentinel end()
             {
-                return RAH_NAMESPACE::end(base_);
+                return RAH2_NAMESPACE::end(base_);
             }
 
             template <
                 typename C = category,
-                std::enable_if_t<RAH_NAMESPACE::derived_from<C, rah::contiguous_iterator_tag>>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    RAH2_NAMESPACE::derived_from<C, RAH2_NAMESPACE::contiguous_iterator_tag>>* = nullptr>
             auto data()
             {
                 return &(*begin());
@@ -1415,28 +1425,30 @@ namespace RAH_NAMESPACE
         /// @brief A view of elements from an underlying sequence, beginning at the first element
         /// for which the predicate returns false.
         ///
-        /// @snippet test.cpp rah::views::drop_while
-        /// @snippet test.cpp rah::views::drop_while_pipeable
+        /// @snippet test.cpp RAH2_NAMESPACE::views::drop_while
+        /// @snippet test.cpp RAH2_NAMESPACE::views::drop_while_pipeable
         template <typename R, typename P>
         auto drop_while(R&& range, P&& predicate)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return drop_while_view<decltype(ref), RAH_NAMESPACE::remove_cvref_t<P>>(
-                std::move(ref), std::forward<P>(predicate));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return drop_while_view<decltype(ref), RAH2_NAMESPACE::remove_cvref_t<P>>(
+                RAH2_STD::move(ref), RAH2_STD::forward<P>(predicate));
         }
 
         template <typename P>
         auto drop_while(P&& predicate)
         {
             return make_pipeable(
-                [pred = std::forward<P>(predicate)](auto&& range)
-                { return drop_while(RAH_STD::forward<decltype(range)>(range), std::move(pred)); });
+                [pred = RAH2_STD::forward<P>(predicate)](auto&& range) {
+                    return drop_while(
+                        RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
+                });
         }
     } // namespace views
 
     template <class T, class Pred>
     constexpr bool enable_borrowed_range<views::drop_while_view<T, Pred>> =
-        RAH_NAMESPACE::enable_borrowed_range<T>;
+        RAH2_NAMESPACE::enable_borrowed_range<T>;
 
     namespace views
     {
@@ -1448,8 +1460,8 @@ namespace RAH_NAMESPACE
             R base_;
             using iterator1 = iterator_t<R>;
             using iterator2 = sentinel_t<R>;
-            using sub_range_type = RAH_NAMESPACE::range_reference_t<R>;
-            using sub_range_ref_traits = RAH_NAMESPACE::details::pointer_type<sub_range_type>;
+            using sub_range_type = RAH2_NAMESPACE::range_reference_t<R>;
+            using sub_range_ref_traits = RAH2_NAMESPACE::details::pointer_type<sub_range_type>;
             using sub_range_type_ptr = typename sub_range_ref_traits::type;
             using sub_iter_begin = iterator_t<sub_range_type>;
             using sub_iter_end = sentinel_t<sub_range_type>;
@@ -1459,7 +1471,7 @@ namespace RAH_NAMESPACE
             sub_iter_begin sub_range_iter_;
             sub_iter_end sub_range_end_;
             bool init_ = false;
-            using base_cat = RAH_STD::input_iterator_tag;
+            using base_cat = RAH2_STD::input_iterator_tag;
 
             void next_valid()
             {
@@ -1472,8 +1484,8 @@ namespace RAH_NAMESPACE
                     else
                     {
                         subrange_ = sub_range_ref_traits::to_pointer(*range_iter_);
-                        sub_range_iter_ = RAH_NAMESPACE::begin(*subrange_);
-                        sub_range_end_ = RAH_NAMESPACE::end(*subrange_);
+                        sub_range_iter_ = RAH2_NAMESPACE::begin(*subrange_);
+                        sub_range_end_ = RAH2_NAMESPACE::end(*subrange_);
                     }
                 }
             }
@@ -1501,7 +1513,7 @@ namespace RAH_NAMESPACE
                     view_->next_valid();
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 auto operator*() const -> decltype(*view_->sub_range_iter_)
                 {
                     return *view_->sub_range_iter_;
@@ -1519,13 +1531,13 @@ namespace RAH_NAMESPACE
             join_view() = default;
 
             explicit join_view(R base)
-                : base_(std::move(base))
+                : base_(RAH2_STD::move(base))
             {
             }
 
             bool empty() const
             {
-                return RAH_NAMESPACE::empty(base_);
+                return RAH2_NAMESPACE::empty(base_);
             }
 
             auto base() const
@@ -1536,11 +1548,11 @@ namespace RAH_NAMESPACE
             auto begin()
             {
                 init_ = true;
-                range_iter_ = RAH_NAMESPACE::begin(base_);
-                range_end_ = RAH_NAMESPACE::end(base_);
+                range_iter_ = RAH2_NAMESPACE::begin(base_);
+                range_end_ = RAH2_NAMESPACE::end(base_);
                 subrange_ = sub_range_ref_traits::to_pointer(*range_iter_);
-                sub_range_iter_ = RAH_NAMESPACE::begin(*subrange_);
-                sub_range_end_ = RAH_NAMESPACE::end(*subrange_);
+                sub_range_iter_ = RAH2_NAMESPACE::begin(*subrange_);
+                sub_range_end_ = RAH2_NAMESPACE::end(*subrange_);
 
                 return iterator(this);
             }
@@ -1554,8 +1566,8 @@ namespace RAH_NAMESPACE
         template <typename R>
         auto join(R&& range_of_ranges)
         {
-            auto rangeRef = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range_of_ranges));
-            return join_view<decltype(rangeRef)>(std::move(rangeRef));
+            auto rangeRef = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range_of_ranges));
+            return join_view<decltype(rangeRef)>(RAH2_STD::move(rangeRef));
         }
 
         inline auto join()
@@ -1565,30 +1577,30 @@ namespace RAH_NAMESPACE
 
         // ************************************ split_view ****************************************
 
-        template <typename R, typename P, std::enable_if_t<forward_range<R>>* = nullptr>
+        template <typename R, typename P, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
         class split_view : public view_interface<split_view<R, P>>
         {
             R base_;
             P pattern_;
-            using inner_iterator = RAH_NAMESPACE::iterator_t<R>;
-            using inner_sentinel = RAH_NAMESPACE::sentinel_t<R>;
+            using inner_iterator = RAH2_NAMESPACE::iterator_t<R>;
+            using inner_sentinel = RAH2_NAMESPACE::sentinel_t<R>;
             details::optional<subrange<inner_iterator, inner_iterator>> cached_begin_;
-            using base_cat = std::input_iterator_tag;
+            using base_cat = RAH2_STD::input_iterator_tag;
 
             auto find_next(inner_iterator const& it)
             {
-                auto sub = RAH_NAMESPACE::search(
-                    RAH_NAMESPACE::make_subrange(it, RAH_NAMESPACE::end(base_)), pattern_);
+                auto sub = RAH2_NAMESPACE::search(
+                    RAH2_NAMESPACE::make_subrange(it, RAH2_NAMESPACE::end(base_)), pattern_);
                 auto b = sub.begin();
                 auto e = sub.end();
 
-                if (b != RAH_NAMESPACE::end(base_) and RAH_NAMESPACE::empty(pattern_))
+                if (b != RAH2_NAMESPACE::end(base_) and RAH2_NAMESPACE::empty(pattern_))
                 {
                     ++b;
                     ++e;
                 }
 
-                return RAH_NAMESPACE::make_subrange(b, e);
+                return RAH2_NAMESPACE::make_subrange(b, e);
             }
 
         public:
@@ -1610,8 +1622,8 @@ namespace RAH_NAMESPACE
                     inner_iterator cur,
                     subrange<inner_iterator, inner_iterator> next)
                     : parent_(parent)
-                    , cur_(std::move(cur))
-                    , next_(std::move(next))
+                    , cur_(RAH2_STD::move(cur))
+                    , next_(RAH2_STD::move(next))
                 {
                 }
 
@@ -1619,10 +1631,10 @@ namespace RAH_NAMESPACE
                 {
                     cur_ = next_.begin();
 
-                    if (cur_ != RAH_NAMESPACE::end(parent_->base_))
+                    if (cur_ != RAH2_NAMESPACE::end(parent_->base_))
                     {
                         cur_ = next_.end();
-                        if (cur_ == RAH_NAMESPACE::end(parent_->base_))
+                        if (cur_ == RAH2_NAMESPACE::end(parent_->base_))
                         {
                             trailing_empty_ = true;
                             next_ = {cur_, cur_};
@@ -1635,7 +1647,7 @@ namespace RAH_NAMESPACE
 
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 auto operator*()
                 {
                     return subrange<inner_iterator>{cur_, next_.begin()};
@@ -1652,53 +1664,53 @@ namespace RAH_NAMESPACE
             };
 
             split_view(R base, P pattern)
-                : base_(std::move(base))
-                , pattern_(std::move(pattern))
+                : base_(RAH2_STD::move(base))
+                , pattern_(RAH2_STD::move(pattern))
             {
             }
 
             iterator begin()
             {
                 if (!cached_begin_.has_value())
-                    cached_begin_ = find_next(RAH_NAMESPACE::begin(base_));
-                return iterator(this, RAH_NAMESPACE::begin(base_), *cached_begin_);
+                    cached_begin_ = find_next(RAH2_NAMESPACE::begin(base_));
+                return iterator(this, RAH2_NAMESPACE::begin(base_), *cached_begin_);
             }
 
             sentinel end()
             {
-                return sentinel{RAH_NAMESPACE::end(base_)};
+                return sentinel{RAH2_NAMESPACE::end(base_)};
             }
         };
 
-        template <typename R, typename P, std::enable_if_t<forward_range<R>>* = nullptr>
+        template <typename R, typename P, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
         auto split(R&& range, P&& pattern)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return split_view<decltype(ref), RAH_NAMESPACE::remove_cvref_t<P>>(
-                std::move(ref), std::forward<P>(pattern));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return split_view<decltype(ref), RAH2_NAMESPACE::remove_cvref_t<P>>(
+                RAH2_STD::move(ref), RAH2_STD::forward<P>(pattern));
         }
 
         template <typename P>
         auto split(P&& pattern)
         {
             return make_pipeable(
-                [p = std::forward<P>(pattern)](auto&& range)
-                { return split(RAH_STD::forward<decltype(range)>(range), std::move(p)); });
+                [p = RAH2_STD::forward<P>(pattern)](auto&& range)
+                { return split(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(p)); });
         }
 
         // ******************************************* counted ************************************
 
-        template <typename I, std::enable_if_t<RAH_NAMESPACE::random_access_iterator<I>>* = nullptr>
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
         auto counted(I&& it, size_t n)
         {
-            using iterator = RAH_STD::remove_reference_t<I>;
+            using iterator = RAH2_STD::remove_reference_t<I>;
             return make_subrange(iterator(it), iterator(it + n));
         }
 
-        template <typename I, std::enable_if_t<!RAH_NAMESPACE::random_access_iterator<I>>* = nullptr>
+        template <typename I, RAH2_STD::enable_if_t<!RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
         auto counted(I&& it, size_t n)
         {
-            using iterator = counted_iterator<RAH_STD::remove_reference_t<I>>;
+            using iterator = counted_iterator<RAH2_STD::remove_reference_t<I>>;
             return make_subrange(iterator(it, n), default_sentinel{});
         }
 
@@ -1711,18 +1723,18 @@ namespace RAH_NAMESPACE
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
             using input_iter_cat = range_iter_categ_t<R>;
-            using Cat = std::conditional_t<
-                RAH_NAMESPACE::is_same_v<input_iter_cat, std::input_iterator_tag>,
-                std::forward_iterator_tag,
+            using Cat = RAH2_STD::conditional_t<
+                RAH2_NAMESPACE::is_same_v<input_iter_cat, RAH2_STD::input_iterator_tag>,
+                RAH2_STD::forward_iterator_tag,
                 input_iter_cat>;
-            static constexpr bool is_sized = rah::sized_range<R>;
+            static constexpr bool is_sized = RAH2_NAMESPACE::sized_range<R>;
 
             static_assert(not common_range<R>, "expect not common_range<R>");
-            static_assert(RAH_NAMESPACE::copyable<iterator_t<R>>, "expect copyable<iterator_t<R>>");
+            static_assert(RAH2_NAMESPACE::copyable<iterator_t<R>>, "expect copyable<iterator_t<R>>");
 
         public:
             explicit common_view(R r)
-                : base_(std::move(r))
+                : base_(RAH2_STD::move(r))
             {
             }
 
@@ -1730,12 +1742,12 @@ namespace RAH_NAMESPACE
                 : public iterator_facade<common_iterator, void, iter_reference_t<base_iterator>, Cat>
             {
                 static_assert(
-                    RAH_NAMESPACE::input_or_output_iterator<base_iterator>,
-                    "RAH_NAMESPACE::input_or_output_iterator<I>");
+                    RAH2_NAMESPACE::input_or_output_iterator<base_iterator>,
+                    "RAH2_NAMESPACE::input_or_output_iterator<I>");
                 static_assert(
-                    !RAH_NAMESPACE::same_as<base_iterator, base_sentinel>,
-                    "!RAH_NAMESPACE::same_as<I, S>");
-                static_assert(RAH_NAMESPACE::copyable<base_iterator>, "RAH_NAMESPACE::copyable<I>");
+                    !RAH2_NAMESPACE::same_as<base_iterator, base_sentinel>,
+                    "!RAH2_NAMESPACE::same_as<I, S>");
+                static_assert(RAH2_NAMESPACE::copyable<base_iterator>, "RAH2_NAMESPACE::copyable<I>");
                 mpark::variant<base_iterator, base_sentinel> var_;
 
                 struct lesser
@@ -1782,12 +1794,12 @@ namespace RAH_NAMESPACE
 
                 struct equal
                 {
-                    template <typename I = base_iterator, std::enable_if_t<equality_comparable<I>>* = nullptr>
+                    template <typename I = base_iterator, RAH2_STD::enable_if_t<equality_comparable<I>>* = nullptr>
                     auto operator()(base_iterator const& it1, base_iterator const& it2)
                     {
                         return it1 == it2;
                     }
-                    template <typename I = base_iterator, std::enable_if_t<!equality_comparable<I>>* = nullptr>
+                    template <typename I = base_iterator, RAH2_STD::enable_if_t<!equality_comparable<I>>* = nullptr>
                     auto operator()(base_iterator const&, base_iterator const&)
                     {
                         assert("This iterator is not equality comparable");
@@ -1828,11 +1840,11 @@ namespace RAH_NAMESPACE
                 common_iterator() = default;
 
                 explicit common_iterator(base_iterator it)
-                    : var_(std::move(it))
+                    : var_(RAH2_STD::move(it))
                 {
                 }
                 explicit common_iterator(base_sentinel sent)
-                    : var_(std::move(sent))
+                    : var_(RAH2_STD::move(sent))
                 {
                 }
 
@@ -1846,7 +1858,7 @@ namespace RAH_NAMESPACE
                     ++mpark::get<base_iterator>(var_);
                     return *this;
                 }
-                RAH_POST_INCR(Cat)
+                RAH2_POST_INCR(Cat)
                 bool operator==(common_iterator const& it) const
                 {
                     return dispatch(equal(), *this, it);
@@ -1855,7 +1867,7 @@ namespace RAH_NAMESPACE
                 template <
                     typename I = base_iterator,
                     typename S = base_sentinel,
-                    std::enable_if_t<sized_sentinel_for<I, S> && sized_sentinel_for<I, I>>* = nullptr>
+                    RAH2_STD::enable_if_t<sized_sentinel_for<I, S> && sized_sentinel_for<I, I>>* = nullptr>
                 common_iterator operator-(common_iterator const& it)
                 {
                     return dispatch(sub(), *this, it);
@@ -1863,14 +1875,14 @@ namespace RAH_NAMESPACE
 
                 /* template <
                     typename C = Cat,
-                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator<(common_iterator const& it)
                 {
                     return dispatch(lesser(), *this, it);
                 }
                 template <
                     typename C = Cat,
-                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 common_iterator& operator+=(int64_t value)
                 {
                     if (mpark::holds_alternative<base_iterator>(var_))
@@ -1886,61 +1898,63 @@ namespace RAH_NAMESPACE
 
             auto begin()
             {
-                return common_iterator(RAH_NAMESPACE::begin(base_));
+                return common_iterator(RAH2_NAMESPACE::begin(base_));
             }
 
             auto end()
             {
-                return common_iterator(RAH_NAMESPACE::end(base_));
+                return common_iterator(RAH2_NAMESPACE::end(base_));
             }
 
-            template <typename C = Cat, std::enable_if_t<derived_from<C, rah::contiguous_iterator_tag>>* = nullptr>
+            template <
+                typename C = Cat,
+                RAH2_STD::enable_if_t<derived_from<C, RAH2_NAMESPACE::contiguous_iterator_tag>>* = nullptr>
             auto data()
             {
                 return &(*begin());
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return rah::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return rah::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
         };
 
         /// @brief Adapts a given view with different types for iterator/sentinel pair into a view
         /// that is also a common_range. A common_view always has the same iterator/sentinel type.
         ///
-        /// @snippet test.cpp rah::views::common
-        template <typename R, std::enable_if_t<not common_range<R>>* = nullptr>
+        /// @snippet test.cpp RAH2_NAMESPACE::views::common
+        template <typename R, RAH2_STD::enable_if_t<not common_range<R>>* = nullptr>
         auto common(R&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
-            return common_view<decltype(ref)>(std::move(ref));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return common_view<decltype(ref)>(RAH2_STD::move(ref));
         }
 
-        template <typename R, std::enable_if_t<common_range<R>>* = nullptr>
+        template <typename R, RAH2_STD::enable_if_t<common_range<R>>* = nullptr>
         auto common(R&& range)
         {
-            return RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
+            return RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
         }
 
-        /// @snippet test.cpp rah::views::common_pipeable
+        /// @snippet test.cpp RAH2_NAMESPACE::views::common_pipeable
         inline auto common()
         {
             return make_pipeable(
                 [](auto&& range)
-                { return RAH_NAMESPACE::views::common(RAH_STD::forward<decltype(range)>(range)); });
+                { return RAH2_NAMESPACE::views::common(RAH2_STD::forward<decltype(range)>(range)); });
         }
     } // namespace views
 
     template <class T>
     constexpr bool enable_borrowed_range<views::common_view<T>> =
-        RAH_NAMESPACE::enable_borrowed_range<T>;
+        RAH2_NAMESPACE::enable_borrowed_range<T>;
 
     namespace views
     {
@@ -1950,44 +1964,44 @@ namespace RAH_NAMESPACE
         class reverse_view : public view_interface<reverse_view<R>>
         {
             R base_;
-            static constexpr bool is_sized = rah::sized_range<R>;
-            static constexpr bool is_const_sized = rah::sized_range<R const>;
+            static constexpr bool is_sized = RAH2_NAMESPACE::sized_range<R>;
+            static constexpr bool is_const_sized = RAH2_NAMESPACE::sized_range<R const>;
 
         public:
             reverse_view() = default;
 
             explicit reverse_view(R base)
-                : base_(std::move(base))
+                : base_(RAH2_STD::move(base))
             {
             }
 
-            template <typename X = R, std::enable_if_t<common_range<X>>* = nullptr>
+            template <typename X = R, RAH2_STD::enable_if_t<common_range<X>>* = nullptr>
             auto begin()
             {
-                return std::make_reverse_iterator(RAH_NAMESPACE::end(base_));
+                return RAH2_STD::make_reverse_iterator(RAH2_NAMESPACE::end(base_));
             }
 
-            template <typename X = R, std::enable_if_t<!common_range<X>>* = nullptr>
+            template <typename X = R, RAH2_STD::enable_if_t<!common_range<X>>* = nullptr>
             auto begin()
             {
-                return std::make_reverse_iterator(
-                    RAH_NAMESPACE::next(RAH_NAMESPACE::begin(base_), RAH_NAMESPACE::end(base_)));
+                return RAH2_STD::make_reverse_iterator(
+                    RAH2_NAMESPACE::next(RAH2_NAMESPACE::begin(base_), RAH2_NAMESPACE::end(base_)));
             }
 
             auto end()
             {
-                return std::make_reverse_iterator(RAH_NAMESPACE::begin(base_));
+                return RAH2_STD::make_reverse_iterator(RAH2_NAMESPACE::begin(base_));
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return RAH_NAMESPACE::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH_NAMESPACE::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
         };
 
@@ -1995,22 +2009,23 @@ namespace RAH_NAMESPACE
         auto reverse(R&& range)
         {
             static_assert(
-                RAH_NAMESPACE::bidirectional_range<R>, "reverse expect a bidirectional_range");
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return reverse_view<decltype(ref)>(std::move(ref));
+                RAH2_NAMESPACE::bidirectional_range<R>, "reverse expect a bidirectional_range");
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return reverse_view<decltype(ref)>(RAH2_STD::move(ref));
         }
 
         inline auto reverse()
         {
             return make_pipeable(
-                [=](auto&& range)
-                { return RAH_NAMESPACE::views::reverse(RAH_STD::forward<decltype(range)>(range)); });
+                [=](auto&& range) {
+                    return RAH2_NAMESPACE::views::reverse(RAH2_STD::forward<decltype(range)>(range));
+                });
         }
     } // namespace views
 
     template <class T>
     constexpr bool enable_borrowed_range<views::reverse_view<T>> =
-        RAH_NAMESPACE::enable_borrowed_range<T>;
+        RAH2_NAMESPACE::enable_borrowed_range<T>;
 
     namespace views
     {
@@ -2029,11 +2044,11 @@ namespace RAH_NAMESPACE
             elements_view() = default;
 
             explicit elements_view(R base)
-                : base_(std::move(base))
+                : base_(RAH2_STD::move(base))
             {
             }
 
-            using reference = decltype(std::get<N>(std::declval<range_reference_t<R>>()));
+            using reference = decltype(RAH2_STD::get<N>(RAH2_STD::declval<range_reference_t<R>>()));
 
             struct sentinel
             {
@@ -2047,13 +2062,13 @@ namespace RAH_NAMESPACE
             public:
                 iterator() = default;
                 explicit iterator(inner_iterator it)
-                    : iter_(std::move(it))
+                    : iter_(RAH2_STD::move(it))
                 {
                 }
 
                 reference operator*()
                 {
-                    return std::get<N>(*iter_);
+                    return RAH2_STD::get<N>(*iter_);
                 }
 
                 iterator& operator++()
@@ -2061,10 +2076,11 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --iter_;
@@ -2072,11 +2088,13 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
                 bool operator==(iterator const& it) const
                 {
                     return iter_ == it.iter_;
@@ -2087,21 +2105,24 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator<(iterator const& it2)
                 {
                     return iter_ < it2.iter_;
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator-(iterator const& it2) const
                 {
                     return iter_ - it2.iter_;
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 iterator& operator+=(int64_t value)
                 {
                     iter_ += value;
@@ -2109,7 +2130,7 @@ namespace RAH_NAMESPACE
                 }
                 //template <
                 //    typename C = base_cat,
-                //    std::enable_if_t<sized_sentinel_for<inner_iterator, inner_sentinel>>* = nullptr>
+                //    RAH2_STD::enable_if_t<sized_sentinel_for<inner_iterator, inner_sentinel>>* = nullptr>
                 //bool operator-(sentinel const& sent)
                 //{
                 //    return iter_ - sent.sent;
@@ -2118,34 +2139,34 @@ namespace RAH_NAMESPACE
 
             auto begin()
             {
-                return iterator{RAH_NAMESPACE::begin(base_)};
+                return iterator{RAH2_NAMESPACE::begin(base_)};
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                return iterator(RAH_NAMESPACE::end(base_));
+                return iterator(RAH2_NAMESPACE::end(base_));
             }
 
-            template <typename U = R, std::enable_if_t<!RAH_NAMESPACE::common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<!RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(base_)};
+                return sentinel{RAH2_NAMESPACE::end(base_)};
             }
         };
 
         template <size_t N, typename T>
         auto elements(T&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
-            return elements_view<decltype(ref), N>(std::move(ref));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<T>(range));
+            return elements_view<decltype(ref), N>(RAH2_STD::move(ref));
         }
 
         template <size_t N>
         auto elements()
         {
             return make_pipeable([=](auto&& range)
-                                 { return elements<N>(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return elements<N>(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
         template <typename T>
@@ -2154,14 +2175,14 @@ namespace RAH_NAMESPACE
         template <typename T>
         auto keys(T&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
-            return keys_view<decltype(ref)>(std::move(ref));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<T>(range));
+            return keys_view<decltype(ref)>(RAH2_STD::move(ref));
         }
 
         inline auto keys()
         {
             return make_pipeable([=](auto&& range)
-                                 { return keys(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return keys(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
         template <typename T>
@@ -2170,14 +2191,14 @@ namespace RAH_NAMESPACE
         template <typename T>
         auto values(T&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<T>(range));
-            return values_view<decltype(ref)>(std::move(ref));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<T>(range));
+            return values_view<decltype(ref)>(RAH2_STD::move(ref));
         }
 
         inline auto values()
         {
             return make_pipeable([=](auto&& range)
-                                 { return values(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return values(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
         // *************************** enumerate **********************************************************
@@ -2189,15 +2210,15 @@ namespace RAH_NAMESPACE
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
             using base_cat = common_iterator_tag<random_access_iterator_tag, range_iter_categ_t<R>>;
-            static constexpr bool is_sized = rah::sized_range<R>;
+            static constexpr bool is_sized = RAH2_NAMESPACE::sized_range<R>;
 
         public:
             explicit enumerate_view(R base)
-                : base_(std::move(base))
+                : base_(RAH2_STD::move(base))
             {
             }
 
-            using value_type = std::pair<int64_t, range_reference_t<R>>;
+            using value_type = RAH2_STD::pair<int64_t, range_reference_t<R>>;
 
             struct sentinel
             {
@@ -2212,7 +2233,7 @@ namespace RAH_NAMESPACE
             public:
                 iterator() = default;
                 iterator(inner_iterator current, int64_t pos)
-                    : current_(std::move(current))
+                    : current_(RAH2_STD::move(current))
                     , pos_(pos)
                 {
                 }
@@ -2223,10 +2244,10 @@ namespace RAH_NAMESPACE
                     ++pos_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     ++current_;
@@ -2235,40 +2256,46 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR value_type operator*()
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR value_type operator*()
                 {
                     return {pos_, *current_};
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
                 bool operator==(iterator const& iter) const
                 {
                     return iter.pos_ == pos_;
                 }
-                template <typename I = iterator, std::enable_if_t<!RAH_NAMESPACE::is_same_v<I, sentinel>>* = nullptr>
+                template <
+                    typename I = iterator,
+                    RAH2_STD::enable_if_t<!RAH2_NAMESPACE::is_same_v<I, sentinel>>* = nullptr>
                 friend bool operator==(iterator const& iter, sentinel const& sent)
                 {
                     return iter.current_ == sent.sent;
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<RAH_NAMESPACE::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator<(iterator const& iter)
                 {
                     return pos_ < iter.pos_;
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& it2) const
                 {
                     return pos_ - it2.pos_;
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 iterator& operator+=(int64_t value)
                 {
                     current_ += value;
@@ -2279,54 +2306,56 @@ namespace RAH_NAMESPACE
 
             auto begin()
             {
-                return iterator(RAH_NAMESPACE::begin(base_), 0);
+                return iterator(RAH2_NAMESPACE::begin(base_), 0);
             }
 
             template <
                 typename U = R,
-                std::enable_if_t<RAH_NAMESPACE::sized_range<U> and RAH_NAMESPACE::common_range<U>>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    RAH2_NAMESPACE::sized_range<U> and RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                return iterator(RAH_NAMESPACE::end(base_), RAH_NAMESPACE::size(base_));
+                return iterator(RAH2_NAMESPACE::end(base_), RAH2_NAMESPACE::size(base_));
             }
 
             template <
                 typename U = R,
-                std::enable_if_t<not(RAH_NAMESPACE::sized_range<U> and RAH_NAMESPACE::common_range<U>)>* = nullptr>
+                RAH2_STD::enable_if_t<not(
+                    RAH2_NAMESPACE::sized_range<U> and RAH2_NAMESPACE::common_range<U>)>* = nullptr>
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(base_)};
+                return sentinel{RAH2_NAMESPACE::end(base_)};
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return rah::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return rah::size(base_);
+                return RAH2_NAMESPACE::size(base_);
             }
         };
 
         template <typename R>
         auto enumerate(R&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return enumerate_view<decltype(ref)>(std::move(ref));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return enumerate_view<decltype(ref)>(RAH2_STD::move(ref));
         }
 
         inline auto enumerate()
         {
             return make_pipeable([](auto&& range)
-                                 { return enumerate(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return enumerate(RAH2_STD::forward<decltype(range)>(range)); });
         }
     } // namespace views
 
     template <class T>
     constexpr bool enable_borrowed_range<views::enumerate_view<T>> =
-        RAH_NAMESPACE::enable_borrowed_range<T>;
+        RAH2_NAMESPACE::enable_borrowed_range<T>;
 
     namespace views
     {
@@ -2335,118 +2364,120 @@ namespace RAH_NAMESPACE
         namespace details
         {
             template <typename Tuple, typename F, size_t... Indices>
-            void for_each_impl(Tuple&& tuple, F&& f, RAH_STD::index_sequence<Indices...>)
+            void for_each_impl(Tuple&& tuple, F&& f, RAH2_STD::index_sequence<Indices...>)
             {
                 using swallow = int[];
                 (void)swallow{
-                    1, (f(RAH_STD::get<Indices>(RAH_STD::forward<Tuple>(tuple))), void(), int{})...};
+                    1,
+                    (f(RAH2_STD::get<Indices>(RAH2_STD::forward<Tuple>(tuple))), void(), int{})...};
             }
 
             template <typename Tuple, typename F>
             void for_each(Tuple&& tuple, F&& f)
             {
-                constexpr size_t N = RAH_STD::tuple_size<RAH_STD::remove_reference_t<Tuple>>::value;
+                constexpr size_t N = RAH2_STD::tuple_size<RAH2_STD::remove_reference_t<Tuple>>::value;
                 for_each_impl(
-                    RAH_STD::forward<Tuple>(tuple),
-                    RAH_STD::forward<F>(f),
-                    RAH_STD::make_index_sequence<N>{});
+                    RAH2_STD::forward<Tuple>(tuple),
+                    RAH2_STD::forward<F>(f),
+                    RAH2_STD::make_index_sequence<N>{});
             }
 
             template <typename Tuple, size_t Index, typename Check>
             struct all_type_impl
             {
                 static constexpr bool value =
-                    Check::template value<std::tuple_element_t<Index, Tuple>>
+                    Check::template value<RAH2_STD::tuple_element_t<Index, Tuple>>
                     && all_type_impl<Tuple, Index - 1, Check>::value;
             };
 
             template <typename Tuple, typename Check>
             struct all_type_impl<Tuple, 0, Check>
             {
-                static constexpr bool value = Check::template value<std::tuple_element_t<0, Tuple>>;
+                static constexpr bool value =
+                    Check::template value<RAH2_STD::tuple_element_t<0, Tuple>>;
             };
 
             template <typename Tuple, typename Check>
             constexpr bool all_type()
             {
-                return all_type_impl<Tuple, RAH_NAMESPACE::tuple_size_v<Tuple> - 1, Check>::value;
+                return all_type_impl<Tuple, RAH2_NAMESPACE::tuple_size_v<Tuple> - 1, Check>::value;
             }
 
             template <class F, typename... Args, size_t... Is>
             auto transform_each_impl(
-                const RAH_STD::tuple<Args...>& t, F&& f, RAH_STD::index_sequence<Is...>)
+                const RAH2_STD::tuple<Args...>& t, F&& f, RAH2_STD::index_sequence<Is...>)
             {
-                return RAH_STD::make_tuple(f(RAH_STD::get<Is>(t))...);
+                return RAH2_STD::make_tuple(f(RAH2_STD::get<Is>(t))...);
             }
 
             template <class F, typename... Args, size_t... Is>
-            auto transform_each_impl(RAH_STD::tuple<Args...>& t, F&& f, RAH_STD::index_sequence<Is...>)
+            auto transform_each_impl(RAH2_STD::tuple<Args...>& t, F&& f, RAH2_STD::index_sequence<Is...>)
             {
-                return RAH_STD::make_tuple(f(RAH_STD::get<Is>(t))...);
+                return RAH2_STD::make_tuple(f(RAH2_STD::get<Is>(t))...);
             }
 
             template <class F, typename... Args>
-            auto transform_each(const RAH_STD::tuple<Args...>& t, F&& f)
+            auto transform_each(const RAH2_STD::tuple<Args...>& t, F&& f)
             {
                 return transform_each_impl(
-                    t, RAH_STD::forward<F>(f), RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                    t, RAH2_STD::forward<F>(f), RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <class F, typename... Args>
-            auto transform_each(RAH_STD::tuple<Args...>& t, F&& f)
+            auto transform_each(RAH2_STD::tuple<Args...>& t, F&& f)
             {
                 return transform_each_impl(
-                    t, RAH_STD::forward<F>(f), RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                    t, RAH2_STD::forward<F>(f), RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename... Args, size_t... Is>
-            auto deref_impl(const RAH_STD::tuple<Args...>& t, RAH_STD::index_sequence<Is...>)
+            auto deref_impl(const RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
             {
-                return RAH_STD::tuple<typename RAH_STD::iterator_traits<Args>::reference...>(
-                    (*RAH_STD::get<Is>(t))...);
+                return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::reference...>(
+                    (*RAH2_STD::get<Is>(t))...);
             }
 
             template <typename... Args>
-            auto deref(const RAH_STD::tuple<Args...>& t)
+            auto deref(const RAH2_STD::tuple<Args...>& t)
             {
-                return deref_impl(t, RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                return deref_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename... Args, size_t... Is>
-            auto deref_impl(RAH_STD::tuple<Args...>& t, RAH_STD::index_sequence<Is...>)
+            auto deref_impl(RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
             {
-                return RAH_STD::tuple<typename RAH_STD::iterator_traits<Args>::reference...>(
-                    (*RAH_STD::get<Is>(t))...);
+                return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::reference...>(
+                    (*RAH2_STD::get<Is>(t))...);
             }
 
             template <typename... Args>
-            auto deref(RAH_STD::tuple<Args...>& t)
+            auto deref(RAH2_STD::tuple<Args...>& t)
             {
-                return deref_impl(t, RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                return deref_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename F, typename... Args, size_t... Is>
-            auto
-            deref_call_impl(F const& func, RAH_STD::tuple<Args...>& t, RAH_STD::index_sequence<Is...>)
+            auto deref_call_impl(
+                F const& func, RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
             {
-                return func((*RAH_STD::get<Is>(t))...);
+                return func((*RAH2_STD::get<Is>(t))...);
             }
 
             template <typename F, typename... Args>
-            auto deref_call(F const& func, RAH_STD::tuple<Args...>& t)
+            auto deref_call(F const& func, RAH2_STD::tuple<Args...>& t)
             {
-                return deref_call_impl(func, t, RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                return deref_call_impl(func, t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <size_t Index>
             struct equal_tuple
             {
                 template <typename... Args, typename... Args2>
-                bool operator()(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b) const
+                bool operator()(RAH2_STD::tuple<Args...> const& a, RAH2_STD::tuple<Args2...> const& b) const
                 {
                     // Used to find the end of the sequence, so if one iterator is end, it is the end
                     // This is why OR is used.
-                    return (RAH_STD::get<Index - 1>(a) == RAH_STD::get<Index - 1>(b))
+                    return (RAH2_STD::get<Index - 1>(a) == RAH2_STD::get<Index - 1>(b))
                            || equal_tuple<Index - 1>{}(a, b);
                 }
             };
@@ -2455,14 +2486,14 @@ namespace RAH_NAMESPACE
             struct equal_tuple<0>
             {
                 template <typename... Args, typename... Args2>
-                bool operator()(RAH_STD::tuple<Args...> const&, RAH_STD::tuple<Args2...> const&) const
+                bool operator()(RAH2_STD::tuple<Args...> const&, RAH2_STD::tuple<Args2...> const&) const
                 {
                     return false;
                 }
             };
 
             template <typename... Args, typename... Args2>
-            auto equal(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b)
+            auto equal(RAH2_STD::tuple<Args...> const& a, RAH2_STD::tuple<Args2...> const& b)
             {
                 return equal_tuple<sizeof...(Args)>{}(a, b);
             }
@@ -2471,9 +2502,9 @@ namespace RAH_NAMESPACE
             struct lesser_tuple
             {
                 template <typename... Args, typename... Args2>
-                bool operator()(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b) const
+                bool operator()(RAH2_STD::tuple<Args...> const& a, RAH2_STD::tuple<Args2...> const& b) const
                 {
-                    return (RAH_STD::get<Index - 1>(a) < RAH_STD::get<Index - 1>(b))
+                    return (RAH2_STD::get<Index - 1>(a) < RAH2_STD::get<Index - 1>(b))
                            && equal_tuple<Index - 1>{}(a, b);
                 }
             };
@@ -2482,61 +2513,61 @@ namespace RAH_NAMESPACE
             struct lesser_tuple<0>
             {
                 template <typename... Args, typename... Args2>
-                bool operator()(RAH_STD::tuple<Args...> const&, RAH_STD::tuple<Args2...> const&) const
+                bool operator()(RAH2_STD::tuple<Args...> const&, RAH2_STD::tuple<Args2...> const&) const
                 {
                     return false;
                 }
             };
 
             template <typename... Args, typename... Args2>
-            auto lesser(RAH_STD::tuple<Args...> const& a, RAH_STD::tuple<Args2...> const& b)
+            auto lesser(RAH2_STD::tuple<Args...> const& a, RAH2_STD::tuple<Args2...> const& b)
             {
                 return lesser_tuple<sizeof...(Args)>{}(a, b);
             }
 
             template <typename... Args, size_t... Is>
-            auto get_begin_tuple_impl(const RAH_STD::tuple<Args...>& t, RAH_STD::index_sequence<Is...>)
+            auto get_begin_tuple_impl(const RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
             {
-                return RAH_STD::make_tuple((RAH_NAMESPACE::begin(RAH_STD::get<Is>(t)))...);
+                return RAH2_STD::make_tuple((RAH2_NAMESPACE::begin(RAH2_STD::get<Is>(t)))...);
             }
 
             template <typename... Args>
-            auto get_begin_tuple(RAH_STD::tuple<Args...> const& a)
+            auto get_begin_tuple(RAH2_STD::tuple<Args...> const& a)
             {
-                return get_begin_tuple_impl(a, RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                return get_begin_tuple_impl(a, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename... Args, size_t... Is>
-            auto get_end_tuple_impl(const RAH_STD::tuple<Args...>& t, RAH_STD::index_sequence<Is...>)
+            auto get_end_tuple_impl(const RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
             {
-                return RAH_STD::make_tuple((RAH_NAMESPACE::end(RAH_STD::get<Is>(t)))...);
+                return RAH2_STD::make_tuple((RAH2_NAMESPACE::end(RAH2_STD::get<Is>(t)))...);
             }
 
             template <typename... Args>
-            auto get_end_tuple(RAH_STD::tuple<Args...> const& a)
+            auto get_end_tuple(RAH2_STD::tuple<Args...> const& a)
             {
-                return get_end_tuple_impl(a, RAH_STD::make_index_sequence<sizeof...(Args)>{});
+                return get_end_tuple_impl(a, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename Function, typename Tuple, size_t... I>
-            auto apply(Function&& f, Tuple&& t, std::index_sequence<I...>)
+            auto apply(Function&& f, Tuple&& t, RAH2_STD::index_sequence<I...>)
             {
-                return f(std::get<I>(t)...);
+                return f(RAH2_STD::get<I>(t)...);
             }
 
             template <typename Function, typename Tuple>
             auto apply(Function&& f, Tuple&& t)
             {
                 static constexpr auto tup_size =
-                    std::tuple_size<std::remove_reference_t<Tuple>>::value;
-                return apply(f, t, std::make_index_sequence<tup_size>{});
+                    RAH2_STD::tuple_size<RAH2_STD::remove_reference_t<Tuple>>::value;
+                return apply(f, t, RAH2_STD::make_index_sequence<tup_size>{});
             }
             struct range_begin
             {
                 template <typename R>
                 auto operator()(R&& r) const
                 {
-                    return RAH_NAMESPACE::begin(r);
+                    return RAH2_NAMESPACE::begin(r);
                 }
             };
             struct range_end
@@ -2544,31 +2575,32 @@ namespace RAH_NAMESPACE
                 template <typename R>
                 auto operator()(R&& r) const
                 {
-                    return RAH_NAMESPACE::end(r);
+                    return RAH2_NAMESPACE::end(r);
                 }
             };
             template <typename Cat>
             struct range_has_cat
             {
                 template <typename Range>
-                static constexpr bool value = rah::derived_from<rah::range_iter_categ_t<Range>, Cat>;
+                static constexpr bool value =
+                    RAH2_NAMESPACE::derived_from<RAH2_NAMESPACE::range_iter_categ_t<Range>, Cat>;
             };
             template <typename RangeTuple>
-            using tuple_base_cat = std::conditional_t<
-                details::all_type<RangeTuple, details::range_has_cat<rah::contiguous_iterator_tag>>(),
-                rah::contiguous_iterator_tag,
-                std::conditional_t<
-                    details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>(),
-                    rah::random_access_iterator_tag,
-                    std::conditional_t<
-                        details::all_type<RangeTuple, details::range_has_cat<rah::bidirectional_iterator_tag>>(),
-                        rah::bidirectional_iterator_tag,
-                        std::conditional_t<
-                            details::all_type<RangeTuple, details::range_has_cat<rah::forward_iterator_tag>>(),
-                            rah::forward_iterator_tag,
-                            std::conditional_t<
-                                details::all_type<RangeTuple, details::range_has_cat<rah::input_iterator_tag>>(),
-                                rah::input_iterator_tag,
+            using tuple_base_cat = RAH2_STD::conditional_t<
+                details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::contiguous_iterator_tag>>(),
+                RAH2_NAMESPACE::contiguous_iterator_tag,
+                RAH2_STD::conditional_t<
+                    details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::random_access_iterator_tag>>(),
+                    RAH2_NAMESPACE::random_access_iterator_tag,
+                    RAH2_STD::conditional_t<
+                        details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::bidirectional_iterator_tag>>(),
+                        RAH2_NAMESPACE::bidirectional_iterator_tag,
+                        RAH2_STD::conditional_t<
+                            details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::forward_iterator_tag>>(),
+                            RAH2_NAMESPACE::forward_iterator_tag,
+                            RAH2_STD::conditional_t<
+                                details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::input_iterator_tag>>(),
+                                RAH2_NAMESPACE::input_iterator_tag,
                                 bool>>>>>;
 
         } // namespace details
@@ -2585,26 +2617,26 @@ namespace RAH_NAMESPACE
             struct is_sized_range
             {
                 template <typename Range>
-                static constexpr bool value = rah::sized_range<Range>;
+                static constexpr bool value = RAH2_NAMESPACE::sized_range<Range>;
             };
             struct is_const_sized_range
             {
                 template <typename Range>
-                static constexpr bool value = rah::sized_range<Range const>;
+                static constexpr bool value = RAH2_NAMESPACE::sized_range<Range const>;
             };
             struct is_borrowed_range_impl
             {
                 template <typename Range>
-                static constexpr bool value = rah::borrowed_range<Range const>;
+                static constexpr bool value = RAH2_NAMESPACE::borrowed_range<Range const>;
             };
             static constexpr bool common_one_range =
-                RAH_NAMESPACE::tuple_size_v<RangeTuple> == 1
-                && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
+                RAH2_NAMESPACE::tuple_size_v<RangeTuple> == 1
+                && RAH2_NAMESPACE::common_range<RAH2_STD::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool all_const_sized =
                 details::all_type<RangeTuple, is_const_sized_range>();
             static constexpr bool common_all_sized_random_access =
-                details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
+                details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::random_access_iterator_tag>>()
                 && all_sized;
 
             struct compute_min_size
@@ -2612,7 +2644,8 @@ namespace RAH_NAMESPACE
                 template <typename... Args>
                 auto operator()(Args... args) const
                 {
-                    return std::min(std::initializer_list<size_t>{static_cast<size_t>(args)...});
+                    return RAH2_STD::min(
+                        RAH2_STD::initializer_list<size_t>{static_cast<size_t>(args)...});
                 }
             };
 
@@ -2628,7 +2661,7 @@ namespace RAH_NAMESPACE
                 : public iterator_facade<
                       iterator,
                       sentinel,
-                      decltype(details::deref(RAH_NAMESPACE::details::declval<IterTuple>())),
+                      decltype(details::deref(RAH2_NAMESPACE::details::declval<IterTuple>())),
                       base_cat>
             {
                 IterTuple iters_;
@@ -2636,7 +2669,7 @@ namespace RAH_NAMESPACE
             public:
                 iterator() = default;
                 explicit iterator(IterTuple iters)
-                    : iters_(std::move(iters))
+                    : iters_(RAH2_STD::move(iters))
                 {
                 }
                 iterator& operator++()
@@ -2644,7 +2677,7 @@ namespace RAH_NAMESPACE
                     details::for_each(iters_, [](auto& iter) { ++iter; });
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t val)
                 {
                     details::for_each(iters_, [val](auto& iter) { iter += val; });
@@ -2652,7 +2685,8 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     details::for_each(iters_, [](auto& iter) { --iter; });
@@ -2660,29 +2694,33 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
                 auto operator*()
                 {
                     return details::deref(iters_);
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& other) const
                 {
-                    return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(other.iters_);
+                    return RAH2_STD::get<0>(iters_) - RAH2_STD::get<0>(other.iters_);
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 auto operator<(iterator const& other) const
                 {
                     return details::lesser(iters_, other.iters_);
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
                 bool operator==(iterator const& iter) const
                 {
                     return details::equal(iters_, iter.iters_);
@@ -2698,7 +2736,7 @@ namespace RAH_NAMESPACE
             };
 
             explicit zip_view(RangeTuple rangeTuple)
-                : bases_(RAH_STD::move(rangeTuple))
+                : bases_(RAH2_STD::move(rangeTuple))
             {
             }
 
@@ -2708,7 +2746,7 @@ namespace RAH_NAMESPACE
                 return iterator(details::transform_each(bases_, details::range_begin()));
             }
 
-            template <bool C = common_one_range, std::enable_if_t<C>* = nullptr>
+            template <bool C = common_one_range, RAH2_STD::enable_if_t<C>* = nullptr>
             iterator end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
@@ -2718,35 +2756,38 @@ namespace RAH_NAMESPACE
             template <
                 bool A = common_one_range,
                 bool B = common_all_sized_random_access,
-                std::enable_if_t<!A && B>* = nullptr>
+                RAH2_STD::enable_if_t<!A && B>* = nullptr>
             iterator end()
             {
-                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                auto sizes = details::transform_each(
+                    bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
                 auto const min_size = details::apply(compute_min_size(), sizes);
                 return iterator(details::transform_each(
-                    bases_, [min_size](auto&& r) { return rah::begin(r) + min_size; }));
+                    bases_, [min_size](auto&& r) { return RAH2_NAMESPACE::begin(r) + min_size; }));
             }
 
             template <
                 bool A = common_one_range,
                 bool B = common_all_sized_random_access,
-                std::enable_if_t<!A && !B>* = nullptr>
+                RAH2_STD::enable_if_t<!A && !B>* = nullptr>
             sentinel end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return sentinel{details::transform_each(bases_, details::range_end())};
             }
 
-            template <bool AllSized = all_const_sized, std::enable_if_t<AllSized>* = nullptr>
+            template <bool AllSized = all_const_sized, RAH2_STD::enable_if_t<AllSized>* = nullptr>
             auto size() const
             {
-                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                auto sizes = details::transform_each(
+                    bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
                 return details::apply(compute_min_size(), sizes);
             }
-            template <bool IsSized = all_sized, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = all_sized, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                auto sizes = details::transform_each(
+                    bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
                 return details::apply(compute_min_size(), sizes);
             }
         };
@@ -2755,8 +2796,8 @@ namespace RAH_NAMESPACE
         auto zip(R&&... ranges)
         {
             auto refTuple =
-                RAH_STD::make_tuple(RAH_NAMESPACE::views::all(RAH_STD::forward<R>(ranges))...);
-            return zip_view<decltype(refTuple)>(RAH_STD::move(refTuple));
+                RAH2_STD::make_tuple(RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(ranges))...);
+            return zip_view<decltype(refTuple)>(RAH2_STD::move(refTuple));
         }
     } // namespace views
 
@@ -2780,14 +2821,14 @@ namespace RAH_NAMESPACE
             struct is_sized_range
             {
                 template <typename Range>
-                static constexpr bool value = rah::sized_range<Range>;
+                static constexpr bool value = RAH2_NAMESPACE::sized_range<Range>;
             };
             static constexpr bool common_one_range =
-                RAH_NAMESPACE::tuple_size_v<RangeTuple> == 1
-                && rah::common_range<std::tuple_element_t<0, RangeTuple>>;
+                RAH2_NAMESPACE::tuple_size_v<RangeTuple> == 1
+                && RAH2_NAMESPACE::common_range<RAH2_STD::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool common_all_sized_random_access =
-                details::all_type<RangeTuple, details::range_has_cat<rah::random_access_iterator_tag>>()
+                details::all_type<RangeTuple, details::range_has_cat<RAH2_NAMESPACE::random_access_iterator_tag>>()
                 && all_sized;
 
             struct compute_min_size
@@ -2795,7 +2836,8 @@ namespace RAH_NAMESPACE
                 template <typename... Args>
                 auto operator()(Args... args) const
                 {
-                    return std::min(std::initializer_list<size_t>{static_cast<size_t>(args)...});
+                    return RAH2_STD::min(
+                        RAH2_STD::initializer_list<size_t>{static_cast<size_t>(args)...});
                 }
             };
 
@@ -2809,12 +2851,12 @@ namespace RAH_NAMESPACE
                 : public iterator_facade<
                       iterator,
                       sentinel,
-                      decltype(details::deref(RAH_NAMESPACE::details::declval<IterTuple>())),
+                      decltype(details::deref(RAH2_NAMESPACE::details::declval<IterTuple>())),
                       base_cat>
             {
                 IterTuple iters_;
                 zip_transform_view* parent_ = nullptr;
-                static constexpr size_t tuple_size = RAH_NAMESPACE::tuple_size_v<RangeTuple>;
+                static constexpr size_t tuple_size = RAH2_NAMESPACE::tuple_size_v<RangeTuple>;
 
             public:
                 iterator() = default;
@@ -2828,7 +2870,7 @@ namespace RAH_NAMESPACE
                     details::for_each(iters_, [](auto& iter) { ++iter; });
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t val)
                 {
                     details::for_each(iters_, [val](auto& iter) { iter += val; });
@@ -2836,7 +2878,8 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     details::for_each(iters_, [](auto& iter) { --iter; });
@@ -2844,30 +2887,34 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
                 auto operator*()
                 {
                     return details::deref_call_impl(
-                        parent_->func_, iters_, std::make_index_sequence<tuple_size>{});
+                        parent_->func_, iters_, RAH2_STD::make_index_sequence<tuple_size>{});
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& other) const
                 {
-                    return RAH_STD::get<0>(iters_) - RAH_STD::get<0>(other.iters_);
+                    return RAH2_STD::get<0>(iters_) - RAH2_STD::get<0>(other.iters_);
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 auto operator<(iterator const& other) const
                 {
                     return details::lesser(iters_, other.iters_);
                 }
                 template <
                     typename C = base_cat,
-                    std::enable_if_t<rah::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NAMESPACE::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
                 bool operator==(iterator const& iter) const
                 {
                     return details::equal(iters_, iter.iters_);
@@ -2883,8 +2930,8 @@ namespace RAH_NAMESPACE
             };
 
             explicit zip_transform_view(Func f, RangeTuple rangeTuple)
-                : func_(std::move(f))
-                , bases_(RAH_STD::move(rangeTuple))
+                : func_(RAH2_STD::move(f))
+                , bases_(RAH2_STD::move(rangeTuple))
             {
             }
 
@@ -2894,7 +2941,7 @@ namespace RAH_NAMESPACE
                 return iterator(this, details::transform_each(bases_, details::range_begin()));
             }
 
-            template <bool C = common_one_range, std::enable_if_t<C>* = nullptr>
+            template <bool C = common_one_range, RAH2_STD::enable_if_t<C>* = nullptr>
             iterator end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
@@ -2904,21 +2951,22 @@ namespace RAH_NAMESPACE
             template <
                 bool A = common_one_range,
                 bool B = common_all_sized_random_access,
-                std::enable_if_t<!A && B>* = nullptr>
+                RAH2_STD::enable_if_t<!A && B>* = nullptr>
             iterator end()
             {
-                auto sizes = details::transform_each(bases_, [](auto&& r) { return rah::size(r); });
+                auto sizes = details::transform_each(
+                    bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
                 auto const min_size = details::apply(compute_min_size(), sizes);
                 return iterator(
                     this,
                     details::transform_each(
-                        bases_, [min_size](auto&& r) { return rah::begin(r) + min_size; }));
+                        bases_, [min_size](auto&& r) { return RAH2_NAMESPACE::begin(r) + min_size; }));
             }
 
             template <
                 bool A = common_one_range,
                 bool B = common_all_sized_random_access,
-                std::enable_if_t<!A && !B>* = nullptr>
+                RAH2_STD::enable_if_t<!A && !B>* = nullptr>
             sentinel end()
             {
                 view_interface<zip_view<RangeTuple>>::deleteCheck.check();
@@ -2930,9 +2978,9 @@ namespace RAH_NAMESPACE
         auto zip_transform(F&& func, R&&... ranges)
         {
             auto ref_tuple =
-                RAH_STD::make_tuple(RAH_NAMESPACE::views::all(RAH_STD::forward<R>(ranges))...);
-            return zip_transform_view<std::remove_reference_t<F>, decltype(ref_tuple)>(
-                std::forward<F>(func), RAH_STD::move(ref_tuple));
+                RAH2_STD::make_tuple(RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(ranges))...);
+            return zip_transform_view<RAH2_STD::remove_reference_t<F>, decltype(ref_tuple)>(
+                RAH2_STD::forward<F>(func), RAH2_STD::move(ref_tuple));
         }
 
         // ******************************************* adjacent ***********************************
@@ -2956,14 +3004,14 @@ namespace RAH_NAMESPACE
                 using type = base_value;
             };
 
-            template <std::size_t... Is>
-            static auto make_tuple(std::index_sequence<Is...>)
+            template <RAH2_STD::size_t... Is>
+            static auto make_tuple(RAH2_STD::index_sequence<Is...>)
             {
-                return std::tuple<typename GetType<Is>::type...>();
+                return RAH2_STD::tuple<typename GetType<Is>::type...>();
             }
 
         public:
-            using value = decltype(make_tuple(std::make_integer_sequence<size_t, N>{}));
+            using value = decltype(make_tuple(RAH2_STD::make_integer_sequence<size_t, N>{}));
             using reference = value;
 
             struct sentinel
@@ -2979,7 +3027,7 @@ namespace RAH_NAMESPACE
 
                 iterator() = default;
                 iterator(base_iterator subRangeBegin, base_sentinel sentinel)
-                    : subRangeBegin_(std::move(subRangeBegin))
+                    : subRangeBegin_(RAH2_STD::move(subRangeBegin))
                 {
                     for (; result_output_index < (N - 1) && subRangeBegin_ != sentinel;
                          ++result_output_index, ++subRangeBegin_)
@@ -2994,10 +3042,10 @@ namespace RAH_NAMESPACE
                     result_output_index = (result_output_index + 1) % N;
                     return *this;
                 }
-                RAH_POST_INCR(iterator_category)
+                RAH2_POST_INCR(iterator_category)
                 template <
                     typename C = iterator_category,
-                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --subRangeBegin_;
@@ -3006,18 +3054,19 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = iterator_category,
-                    std::enable_if_t<derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
-                template <std::size_t... Is>
-                auto make_result(std::index_sequence<Is...>)
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
+                template <RAH2_STD::size_t... Is>
+                auto make_result(RAH2_STD::index_sequence<Is...>)
                 {
                     sliding_result[result_output_index] = *subRangeBegin_;
-                    return std::make_tuple((sliding_result[(result_output_index + 1 + Is) % N])...);
+                    return RAH2_STD::make_tuple(
+                        (sliding_result[(result_output_index + 1 + Is) % N])...);
                 }
 
                 auto operator*()
                 {
-                    return make_result(std::make_integer_sequence<size_t, N>{});
+                    return make_result(RAH2_STD::make_integer_sequence<size_t, N>{});
                 }
                 friend bool operator==(iterator const& i, iterator const& i2)
                 {
@@ -3029,21 +3078,21 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = iterator_category,
-                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator<(iterator iter) const
                 {
                     return subRangeBegin_ < iter.subRangeBegin_;
                 }
                 template <
                     typename C = iterator_category,
-                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 int64_t operator-(iterator iter) const
                 {
                     return subRangeBegin_ - iter.subRangeBegin_;
                 }
                 template <
                     typename C = iterator_category,
-                    std::enable_if_t<derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 iterator& operator+=(int64_t value)
                 {
                     subRangeBegin_ += value;
@@ -3052,75 +3101,75 @@ namespace RAH_NAMESPACE
             };
 
             explicit adjacent_view(R inputView)
-                : input_view_(std::move(inputView))
+                : input_view_(RAH2_STD::move(inputView))
             {
             }
 
             auto begin()
             {
-                auto const range_end = RAH_NAMESPACE::end(input_view_);
-                auto const sub_range_begin = RAH_NAMESPACE::begin(input_view_);
-                return iterator(std::move(sub_range_begin), std::move(range_end));
+                auto const range_end = RAH2_NAMESPACE::end(input_view_);
+                auto const sub_range_begin = RAH2_NAMESPACE::begin(input_view_);
+                return iterator(RAH2_STD::move(sub_range_begin), RAH2_STD::move(range_end));
             }
 
-            template <typename R2 = R, std::enable_if_t<common_range<R2>>* = nullptr>
+            template <typename R2 = R, RAH2_STD::enable_if_t<common_range<R2>>* = nullptr>
             auto end()
             {
-                auto const range_end = RAH_NAMESPACE::end(input_view_);
-                auto sub_range_begin = RAH_NAMESPACE::begin(input_view_);
-                rah::advance(sub_range_begin, N + 1, range_end);
-                return iterator{std::move(sub_range_begin), std::move(range_end)};
+                auto const range_end = RAH2_NAMESPACE::end(input_view_);
+                auto sub_range_begin = RAH2_NAMESPACE::begin(input_view_);
+                RAH2_NAMESPACE::advance(sub_range_begin, N + 1, range_end);
+                return iterator{RAH2_STD::move(sub_range_begin), RAH2_STD::move(range_end)};
             }
-            template <typename R2 = R, std::enable_if_t<!common_range<R2>>* = nullptr>
+            template <typename R2 = R, RAH2_STD::enable_if_t<!common_range<R2>>* = nullptr>
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(input_view_)};
+                return sentinel{RAH2_NAMESPACE::end(input_view_)};
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return rah::size(input_view_) - (N - 1);
+                return RAH2_NAMESPACE::size(input_view_) - (N - 1);
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return rah::size(input_view_) - (N - 1);
+                return RAH2_NAMESPACE::size(input_view_) - (N - 1);
             }
         };
 
-        template <size_t N, typename R, std::enable_if_t<N != 0>* = nullptr>
+        template <size_t N, typename R, RAH2_STD::enable_if_t<N != 0>* = nullptr>
         auto adjacent(R&& range)
         {
             auto range_view = all(range);
-            return adjacent_view<decltype(range_view), N>(std::move(range_view));
+            return adjacent_view<decltype(range_view), N>(RAH2_STD::move(range_view));
         }
 
-        template <size_t N, typename R, std::enable_if_t<N == 0>* = nullptr>
+        template <size_t N, typename R, RAH2_STD::enable_if_t<N == 0>* = nullptr>
         auto adjacent(R&& range)
         {
             auto range_view = all(range);
-            return views::empty<std::tuple<>>();
+            return views::empty<RAH2_STD::tuple<>>();
         }
 
         template <size_t N>
         auto adjacent()
         {
             return make_pipeable([=](auto&& range)
-                                 { return adjacent<N>(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return adjacent<N>(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
         template <typename R>
         auto pairwise(R&& range)
         {
             auto range_view = all(range);
-            return adjacent_view<decltype(range_view), 2>(std::move(range_view));
+            return adjacent_view<decltype(range_view), 2>(RAH2_STD::move(range_view));
         }
 
         inline auto pairwise()
         {
             return make_pipeable([=](auto&& range)
-                                 { return adjacent<2>(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return adjacent<2>(RAH2_STD::forward<decltype(range)>(range)); });
         }
     } // namespace views
 
@@ -3144,10 +3193,11 @@ namespace RAH_NAMESPACE
             using adjacent_iterator = iterator_t<inner_adjacent_view>;
             using adjacent_reference = range_reference_t<inner_adjacent_view>;
             using adjacent_sentinel = sentinel_t<inner_adjacent_view>;
-            using base_cat = std::forward_iterator_tag;
+            using base_cat = RAH2_STD::forward_iterator_tag;
 
         public:
-            using reference = decltype(details::apply(func_, std::declval<adjacent_reference>()));
+            using reference =
+                decltype(details::apply(func_, RAH2_STD::declval<adjacent_reference>()));
             using value = reference;
 
             struct sentinel
@@ -3164,7 +3214,7 @@ namespace RAH_NAMESPACE
                 iterator() = default;
                 iterator(adjacent_transform_view* parent, adjacent_iterator iter)
                     : view_(parent)
-                    , iter_(std::move(iter))
+                    , iter_(RAH2_STD::move(iter))
                 {
                 }
 
@@ -3173,10 +3223,10 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 auto operator*()
                 {
-                    return details::apply(view_->func_, *iter_, std::make_index_sequence<N>{});
+                    return details::apply(view_->func_, *iter_, RAH2_STD::make_index_sequence<N>{});
                 }
                 friend bool operator==(iterator const& i, iterator const& i2)
                 {
@@ -3193,34 +3243,34 @@ namespace RAH_NAMESPACE
             };
 
             adjacent_transform_view(R inputView, F func)
-                : func_(std::move(func))
-                , inner_(std::move(inputView))
+                : func_(RAH2_STD::move(func))
+                , inner_(RAH2_STD::move(inputView))
             {
             }
 
             auto begin()
             {
-                return iterator(this, RAH_NAMESPACE::begin(inner_));
+                return iterator(this, RAH2_NAMESPACE::begin(inner_));
             }
 
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(inner_)};
+                return sentinel{RAH2_NAMESPACE::end(inner_)};
             }
         };
 
-        template <size_t N, typename R, typename F, std::enable_if_t<N != 0>* = nullptr>
+        template <size_t N, typename R, typename F, RAH2_STD::enable_if_t<N != 0>* = nullptr>
         auto adjacent_transform(R&& range, F&& func)
         {
             auto range_view = all(range);
             return adjacent_transform_view<decltype(range_view), F, N>(
-                std::move(range_view), std::forward<F>(func));
+                RAH2_STD::move(range_view), RAH2_STD::forward<F>(func));
         }
 
-        template <size_t N, typename R, typename F, std::enable_if_t<N == 0>* = nullptr>
+        template <size_t N, typename R, typename F, RAH2_STD::enable_if_t<N == 0>* = nullptr>
         auto adjacent_transform(R&&, F&&)
         {
-            return views::empty<std::tuple<>>();
+            return views::empty<RAH2_STD::tuple<>>();
         }
 
         template <size_t N, typename F>
@@ -3228,7 +3278,7 @@ namespace RAH_NAMESPACE
         {
             return make_pipeable(
                 [=](auto&& range)
-                { return adjacent_transform<N>(RAH_STD::forward<decltype(range)>(range), func); });
+                { return adjacent_transform<N>(RAH2_STD::forward<decltype(range)>(range), func); });
         }
 
         // ******************************************* sliding ********************************************
@@ -3241,7 +3291,7 @@ namespace RAH_NAMESPACE
 
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
-            using base_cat = RAH_NAMESPACE::range_iter_categ_t<R>;
+            using base_cat = RAH2_NAMESPACE::range_iter_categ_t<R>;
 
         public:
             struct sentinel
@@ -3261,8 +3311,8 @@ namespace RAH_NAMESPACE
 
                 iterator() = default;
                 iterator(base_iterator subRangeBegin, base_iterator subRangeLast)
-                    : subRangeBegin_(std::move(subRangeBegin))
-                    , subRangeLast_(std::move(subRangeLast))
+                    : subRangeBegin_(RAH2_STD::move(subRangeBegin))
+                    , subRangeLast_(RAH2_STD::move(subRangeLast))
                 {
                 }
 
@@ -3272,7 +3322,7 @@ namespace RAH_NAMESPACE
                     ++subRangeLast_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t off)
                 {
                     subRangeBegin_ += off;
@@ -3285,7 +3335,7 @@ namespace RAH_NAMESPACE
                     --subRangeLast_;
                     return *this;
                 }
-                template <typename U = R, std::enable_if_t<random_access_range<U>>* = nullptr>
+                template <typename U = R, RAH2_STD::enable_if_t<random_access_range<U>>* = nullptr>
                 auto operator-(iterator const& r) const
                 {
                     return subRangeBegin_ - r.subRangeBegin_;
@@ -3311,21 +3361,21 @@ namespace RAH_NAMESPACE
             };
 
             slide_view(R input_view, const intptr_t count)
-                : input_view(std::move(input_view))
+                : input_view(RAH2_STD::move(input_view))
                 , count_(count)
             {
             }
 
             auto begin()
             {
-                auto const range_end = RAH_NAMESPACE::end(input_view);
-                auto const sub_range_begin = RAH_NAMESPACE::begin(input_view);
+                auto const range_end = RAH2_NAMESPACE::end(input_view);
+                auto const sub_range_begin = RAH2_NAMESPACE::begin(input_view);
                 auto sub_range_last = sub_range_begin;
                 if (count_ == 0)
                 {
                     return iterator(sub_range_last, sub_range_last);
                 }
-                auto const left = RAH_NAMESPACE::advance(sub_range_last, count_ - 1, range_end);
+                auto const left = RAH2_NAMESPACE::advance(sub_range_last, count_ - 1, range_end);
                 if (left != 0)
                 {
                     return iterator(sub_range_last, sub_range_last);
@@ -3333,17 +3383,17 @@ namespace RAH_NAMESPACE
                 return iterator(sub_range_begin, sub_range_last);
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                auto const range_end = RAH_NAMESPACE::end(input_view);
+                auto const range_end = RAH2_NAMESPACE::end(input_view);
                 if (count_ == 0)
                 {
                     return iterator(range_end, range_end);
                 }
-                auto const sub_range_begin = RAH_NAMESPACE::begin(input_view);
+                auto const sub_range_begin = RAH2_NAMESPACE::begin(input_view);
                 auto sub_range_first = range_end;
-                auto const left = RAH_NAMESPACE::advance(sub_range_first, -count_, sub_range_begin);
+                auto const left = RAH2_NAMESPACE::advance(sub_range_first, -count_, sub_range_begin);
                 if (left != 0)
                 {
                     return iterator(range_end, range_end);
@@ -3352,10 +3402,10 @@ namespace RAH_NAMESPACE
                 return iterator(sub_range_first, range_end);
             }
 
-            template <typename U = R, std::enable_if_t<not RAH_NAMESPACE::common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<not RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(input_view)};
+                return sentinel{RAH2_NAMESPACE::end(input_view)};
             }
         };
 
@@ -3363,13 +3413,13 @@ namespace RAH_NAMESPACE
         auto slide(R&& range, size_t n)
         {
             auto range_view = all(range);
-            return slide_view<decltype(range_view)>(std::move(range_view), n);
+            return slide_view<decltype(range_view)>(RAH2_STD::move(range_view), n);
         }
 
         inline auto slide(size_t n)
         {
             return make_pipeable([=](auto&& range)
-                                 { return slide(RAH_STD::forward<decltype(range)>(range), n); });
+                                 { return slide(RAH2_STD::forward<decltype(range)>(range), n); });
         }
 
         // ************************************ chunk *********************************************
@@ -3381,7 +3431,7 @@ namespace RAH_NAMESPACE
             size_t step_;
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
-            using base_cat = RAH_STD::forward_iterator_tag;
+            using base_cat = RAH2_STD::forward_iterator_tag;
 
         public:
             struct sentinel
@@ -3413,10 +3463,10 @@ namespace RAH_NAMESPACE
                 iterator& operator++()
                 {
                     iter_ = iter2_;
-                    RAH_NAMESPACE::advance(iter2_, step_, end_);
+                    RAH2_NAMESPACE::advance(iter2_, step_, end_);
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 auto operator*() const
                 {
                     return make_subrange(iter_, iter2_);
@@ -3436,62 +3486,62 @@ namespace RAH_NAMESPACE
             };
 
             chunk_view(R base, const size_t step)
-                : base_(std::move(base))
+                : base_(RAH2_STD::move(base))
                 , step_(step)
             {
             }
 
             auto begin()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                auto end_iter = RAH_NAMESPACE::end(base_);
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                auto end_iter = RAH2_NAMESPACE::end(base_);
                 iterator begin{iter, iter, end_iter, step_};
                 ++begin;
                 return begin;
             }
 
-            template <typename U = R, std::enable_if_t<RAH_NAMESPACE::common_range<U>>* = nullptr>
+            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                auto endIter = RAH_NAMESPACE::end(base_);
+                auto endIter = RAH2_NAMESPACE::end(base_);
                 return iterator{endIter, endIter, endIter, step_};
             }
 
             template <
                 typename U = R,
-                std::enable_if_t<
-                    !RAH_NAMESPACE::common_range<U>
-                    and !RAH_NAMESPACE::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    !RAH2_NAMESPACE::common_range<U>
+                    and !RAH2_NAMESPACE::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
             auto end()
             {
-                return sentinel{RAH_NAMESPACE::end(base_)};
+                return sentinel{RAH2_NAMESPACE::end(base_)};
             }
 
             template <
                 typename U = R,
-                std::enable_if_t<
-                    !RAH_NAMESPACE::common_range<U>
-                    and RAH_NAMESPACE::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    !RAH2_NAMESPACE::common_range<U>
+                    and RAH2_NAMESPACE::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
             auto end()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                auto sent = RAH_NAMESPACE::end(base_);
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                auto sent = RAH2_NAMESPACE::end(base_);
                 iter = sent;
                 return iterator{iter, iter, sent, step_};
             }
         };
 
-        template <typename R, RAH_STD::enable_if_t<not RAH_NAMESPACE::is_rvalue_reference_v<R&&>, int> = 0>
+        template <typename R, RAH2_STD::enable_if_t<not RAH2_NAMESPACE::is_rvalue_reference_v<R&&>, int> = 0>
         auto chunk(R&& range, size_t step)
         {
-            auto ref = RAH_NAMESPACE::views::all(RAH_STD::forward<R>(range));
-            return chunk_view<decltype(ref)>(std::move(ref), step);
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return chunk_view<decltype(ref)>(RAH2_STD::move(ref), step);
         }
 
         inline auto chunk(size_t step)
         {
             return make_pipeable([=](auto&& range)
-                                 { return chunk(RAH_STD::forward<decltype(range)>(range), step); });
+                                 { return chunk(RAH2_STD::forward<decltype(range)>(range), step); });
         }
 
         // ***************************************** stride ***********************************************
@@ -3517,8 +3567,8 @@ namespace RAH_NAMESPACE
             public:
                 iterator() = default;
                 iterator(base_iterator iter, base_sentinel end, size_t stride, size_t missing)
-                    : current_(RAH_STD::move(iter))
-                    , end_(RAH_STD::move(end))
+                    : current_(RAH2_STD::move(iter))
+                    , end_(RAH2_STD::move(end))
                     , stride_(stride)
                     , missing_(missing)
                 {
@@ -3527,26 +3577,26 @@ namespace RAH_NAMESPACE
                 iterator& operator++()
                 {
                     assert(missing_ == 0);
-                    missing_ = RAH_NAMESPACE::advance(current_, stride_, end_);
+                    missing_ = RAH2_NAMESPACE::advance(current_, stride_, end_);
                     return *this;
                 }
-                RAH_POST_INCR(iter_cat)
+                RAH2_POST_INCR(iter_cat)
                 template <
                     typename C = iter_cat,
-                    std::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
-                    RAH_NAMESPACE::advance(current_, missing_ - stride_);
+                    RAH2_NAMESPACE::advance(current_, missing_ - stride_);
                     missing_ = 0;
                     return *this;
                 }
                 template <
                     typename C = iter_cat,
-                    std::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
-                RAH_POST_DECR;
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
                 template <
                     typename C = iter_cat,
-                    std::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
                 iterator& operator+=(intptr_t value)
                 {
                     current_ += stride_ * value;
@@ -3562,14 +3612,14 @@ namespace RAH_NAMESPACE
                 }
                 template <
                     typename C = iter_cat,
-                    std::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& other) const
                 {
                     return (current_ - other.current_) / stride_;
                 }
                 template <
                     typename C = iter_cat,
-                    std::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
                 auto operator<(iterator const& other) const
                 {
                     return current_ < other.current_;
@@ -3577,57 +3627,59 @@ namespace RAH_NAMESPACE
             };
 
             stride_view(R base, size_t step)
-                : base_(RAH_STD::move(base))
+                : base_(RAH2_STD::move(base))
                 , stride_(step)
             {
             }
 
             auto begin()
             {
-                return iterator(RAH_NAMESPACE::begin(base_), RAH_NAMESPACE::end(base_), stride_, 0);
+                return iterator(RAH2_NAMESPACE::begin(base_), RAH2_NAMESPACE::end(base_), stride_, 0);
             }
 
             template <
                 typename Base = R,
-                std::enable_if_t<sized_range<Base> && common_range<Base> && forward_range<Base>>* = nullptr>
+                RAH2_STD::enable_if_t<sized_range<Base> && common_range<Base> && forward_range<Base>>* = nullptr>
             auto end()
             {
-                auto missing = (stride_ - RAH_NAMESPACE::distance(base_) % stride_) % stride_;
+                auto missing = (stride_ - RAH2_NAMESPACE::distance(base_) % stride_) % stride_;
                 return iterator(
-                    RAH_NAMESPACE::end(base_), RAH_NAMESPACE::end(base_), stride_, missing);
+                    RAH2_NAMESPACE::end(base_), RAH2_NAMESPACE::end(base_), stride_, missing);
             }
             template <
                 typename Base = R,
-                std::enable_if_t<!sized_range<Base> && common_range<Base> && !bidirectional_range<Base>>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    !sized_range<Base> && common_range<Base> && !bidirectional_range<Base>>* = nullptr>
             auto end()
             {
-                return iterator(RAH_NAMESPACE::end(base_), RAH_NAMESPACE::end(base_), stride_, 0);
+                return iterator(RAH2_NAMESPACE::end(base_), RAH2_NAMESPACE::end(base_), stride_, 0);
             }
             template <
                 typename Base = R,
-                std::enable_if_t<!common_range<Base> || (!sized_range<Base> && bidirectional_range<Base>)>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    !common_range<Base> || (!sized_range<Base> && bidirectional_range<Base>)>* = nullptr>
             auto end()
             {
                 return default_sentinel();
             }
-            template <typename Base = R, std::enable_if_t<sized_range<Base>>* = nullptr>
+            template <typename Base = R, RAH2_STD::enable_if_t<sized_range<Base>>* = nullptr>
             auto size()
             {
-                return RAH_NAMESPACE::size(base_) / stride_;
+                return RAH2_NAMESPACE::size(base_) / stride_;
             }
         };
 
         template <typename R>
         auto stride(R&& range, size_t step)
         {
-            auto views = all(RAH_STD::forward<R>(range));
-            return stride_view<decltype(views)>(RAH_STD::move(views), step);
+            auto views = all(RAH2_STD::forward<R>(range));
+            return stride_view<decltype(views)>(RAH2_STD::move(views), step);
         }
 
         inline auto stride(size_t step)
         {
             return make_pipeable([=](auto&& range)
-                                 { return stride(RAH_STD::forward<decltype(range)>(range), step); });
+                                 { return stride(RAH2_STD::forward<decltype(range)>(range), step); });
         }
 
     } // namespace views
@@ -3645,11 +3697,11 @@ namespace RAH_NAMESPACE
         class unbounded_view : public view_interface<unbounded_view<I>>
         {
             I iter_;
-            using base_cat = typename RAH_STD::iterator_traits<I>::iterator_category;
+            using base_cat = typename RAH2_STD::iterator_traits<I>::iterator_category;
 
         public:
             explicit unbounded_view(I iter)
-                : iter_(std::move(iter))
+                : iter_(RAH2_STD::move(iter))
             {
             }
             class iterator
@@ -3660,7 +3712,7 @@ namespace RAH_NAMESPACE
             public:
                 iterator() = default;
                 explicit iterator(I iter)
-                    : iter_(std::move(iter))
+                    : iter_(RAH2_STD::move(iter))
                 {
                 }
 
@@ -3669,7 +3721,7 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
@@ -3720,18 +3772,18 @@ namespace RAH_NAMESPACE
         template <typename I>
         auto unbounded(I&& it)
         {
-            return unbounded_view<I>(std::forward<I>(it));
+            return unbounded_view<I>(RAH2_STD::forward<I>(it));
         }
 
         // ********************************** irange **********************************************
-        /// @see rah::irange
+        /// @see RAH2_NAMESPACE::irange
         template <typename T, bool Infinite>
         class irange_view : public view_interface<irange_view<T, Infinite>>
         {
             T start_;
             T stop_;
             T step_;
-            using base_cat = RAH_STD::random_access_iterator_tag;
+            using base_cat = RAH2_STD::random_access_iterator_tag;
 
         public:
             class iterator : public iterator_facade<iterator, sentinel_iterator, T, base_cat>
@@ -3752,7 +3804,7 @@ namespace RAH_NAMESPACE
                     val_ += step_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 iterator& operator+=(intptr_t value)
                 {
                     val_ += T(step_ * value);
@@ -3763,7 +3815,7 @@ namespace RAH_NAMESPACE
                     val_ -= step_;
                     return *this;
                 }
-                RAH_POST_DECR
+                RAH2_POST_DECR
                 auto operator-(iterator const& other) const
                 {
                     return (val_ - other.val_) / step_;
@@ -3801,12 +3853,12 @@ namespace RAH_NAMESPACE
             {
                 return iterator(start_, step_);
             }
-            template <bool I = Infinite, std::enable_if_t<I>* = nullptr>
+            template <bool I = Infinite, RAH2_STD::enable_if_t<I>* = nullptr>
             auto end()
             {
                 return default_sentinel{};
             }
-            template <bool Inf = Infinite, std::enable_if_t<not Inf>* = nullptr>
+            template <bool Inf = Infinite, RAH2_STD::enable_if_t<not Inf>* = nullptr>
             auto end()
             {
                 auto const last_index = (stop_ - start_);
@@ -3841,8 +3893,8 @@ namespace RAH_NAMESPACE
             class iterator : public iterator_facade<
                                  iterator,
                                  default_sentinel,
-                                 RAH_NAMESPACE::range_reference_t<R>,
-                                 common_iterator_tag<RAH_STD::bidirectional_iterator_tag, base_cat>>
+                                 RAH2_NAMESPACE::range_reference_t<R>,
+                                 common_iterator_tag<RAH2_STD::bidirectional_iterator_tag, base_cat>>
             {
                 cycle_view* view_;
                 base_iterator begin_iter_;
@@ -3853,8 +3905,8 @@ namespace RAH_NAMESPACE
                 iterator() = default;
                 explicit iterator(cycle_view* v)
                     : view_(v)
-                    , begin_iter_(RAH_NAMESPACE::begin(v->base_))
-                    , end_iter_(RAH_NAMESPACE::end(v->base_))
+                    , begin_iter_(RAH2_NAMESPACE::begin(v->base_))
+                    , end_iter_(RAH2_NAMESPACE::end(v->base_))
                     , iter_(begin_iter_)
                 {
                 }
@@ -3865,33 +3917,34 @@ namespace RAH_NAMESPACE
                     ++iter_;
                     while (iter_ == end_iter_)
                     {
-                        iter_ = RAH_NAMESPACE::begin(view_->base_);
+                        iter_ = RAH2_NAMESPACE::begin(view_->base_);
                     }
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 template <
                     typename U = R,
-                    std::enable_if_t<
+                    RAH2_STD::enable_if_t<
                         bidirectional_range<U>
-                        && assignable_from<std::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* = nullptr>
+                        && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* = nullptr>
                 iterator& operator--()
                 {
                     assert(view_ != nullptr);
                     while (iter_ == begin_iter_)
                     {
-                        iter_ = RAH_NAMESPACE::end(view_->base_);
+                        iter_ = RAH2_NAMESPACE::end(view_->base_);
                     }
                     --iter_;
                     return *this;
                 }
                 template <
                     typename U = R,
-                    std::enable_if_t<
+                    RAH2_STD::enable_if_t<
                         bidirectional_range<U>
-                        && assignable_from<std::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* = nullptr>
-                RAH_POST_DECR;
-                RAH_NAMESPACE::range_reference_t<R> operator*()
+                        && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* =
+                        nullptr>
+                RAH2_POST_DECR;
+                RAH2_NAMESPACE::range_reference_t<R> operator*()
                 {
                     assert(view_ != nullptr);
                     return *iter_;
@@ -3912,7 +3965,7 @@ namespace RAH_NAMESPACE
 
             cycle_view() = default;
             explicit cycle_view(R base)
-                : base_(std::move(base))
+                : base_(RAH2_STD::move(base))
             {
             }
 
@@ -3933,21 +3986,21 @@ namespace RAH_NAMESPACE
 
             bool empty()
             {
-                return RAH_NAMESPACE::empty(base_);
+                return RAH2_NAMESPACE::empty(base_);
             }
         };
 
         template <typename R>
         auto cycle(R&& range)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return cycle_view<decltype(ref)>(std::move(ref));
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return cycle_view<decltype(ref)>(RAH2_STD::move(ref));
         }
 
         inline auto cycle()
         {
             return make_pipeable([](auto&& range)
-                                 { return cycle(RAH_STD::forward<decltype(range)>(range)); });
+                                 { return cycle(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
         // ********************************** generate ****************************************************
@@ -3955,15 +4008,15 @@ namespace RAH_NAMESPACE
         class generate_view : public view_interface<generate_view<F>>
         {
             using value =
-                RAH_NAMESPACE::remove_cvref_t<decltype(RAH_NAMESPACE::details::declval<F>()())>;
+                RAH2_NAMESPACE::remove_cvref_t<decltype(RAH2_NAMESPACE::details::declval<F>()())>;
             F func_;
-            using base_cat = RAH_STD::input_iterator_tag;
+            using base_cat = RAH2_STD::input_iterator_tag;
 
         public:
             class iterator : public iterator_facade<iterator, default_sentinel, value, base_cat>
             {
                 generate_view* parent_ = nullptr;
-                RAH_NAMESPACE::details::optional<value> value_;
+                RAH2_NAMESPACE::details::optional<value> value_;
 
             public:
                 iterator() = default;
@@ -3977,7 +4030,7 @@ namespace RAH_NAMESPACE
                     value_ = parent_->func_();
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 value operator*()
                 {
                     return *value_;
@@ -3993,7 +4046,7 @@ namespace RAH_NAMESPACE
             };
 
             explicit generate_view(F func)
-                : func_(std::move(func))
+                : func_(RAH2_STD::move(func))
             {
             }
 
@@ -4010,14 +4063,14 @@ namespace RAH_NAMESPACE
         template <typename F>
         auto generate(F&& func)
         {
-            using functor = RAH_STD::remove_cv_t<RAH_STD::remove_reference_t<F>>;
-            return generate_view<functor>(RAH_STD::forward<F>(func));
+            using functor = RAH2_STD::remove_cv_t<RAH2_STD::remove_reference_t<F>>;
+            return generate_view<functor>(RAH2_STD::forward<F>(func));
         }
 
         template <typename F>
         auto generate_n(const size_t count, F&& func)
         {
-            return generate(RAH_STD::forward<F>(func)) | take(count);
+            return generate(RAH2_STD::forward<F>(func)) | take(count);
         }
 
         // ******************************************* set_difference *************************************
@@ -4032,7 +4085,7 @@ namespace RAH_NAMESPACE
             using inner_sentinel2 = sentinel_t<InputRng2>;
             InputRng1 base1_;
             InputRng2 base2_;
-            using base_cat = RAH_STD::forward_iterator_tag;
+            using base_cat = RAH2_STD::forward_iterator_tag;
 
         public:
             class iterator : public iterator_facade<iterator, default_sentinel, reference, base_cat>
@@ -4064,10 +4117,10 @@ namespace RAH_NAMESPACE
                     inner_sentinel1 last1,
                     inner_iterator2 first2,
                     inner_sentinel2 last2)
-                    : first1_(std::move(first1))
-                    , last1_(std::move(last1))
-                    , first2_(std::move(first2))
-                    , last2_(std::move(last2))
+                    : first1_(RAH2_STD::move(first1))
+                    , last1_(RAH2_STD::move(last1))
+                    , first2_(RAH2_STD::move(first2))
+                    , last2_(RAH2_STD::move(last2))
                 {
                     next_value();
                 }
@@ -4078,7 +4131,7 @@ namespace RAH_NAMESPACE
                     next_value();
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 auto operator*() const -> decltype(*first1_)
                 {
                     return *first1_;
@@ -4089,17 +4142,17 @@ namespace RAH_NAMESPACE
                 }
             };
             set_difference_view(InputRng1 base1, InputRng2 base2)
-                : base1_(std::move(base1))
-                , base2_(std::move(base2))
+                : base1_(RAH2_STD::move(base1))
+                , base2_(RAH2_STD::move(base2))
             {
             }
             auto begin()
             {
                 return iterator(
-                    RAH_NAMESPACE::begin(base1_),
-                    RAH_NAMESPACE::end(base1_),
-                    RAH_NAMESPACE::begin(base2_),
-                    RAH_NAMESPACE::end(base2_));
+                    RAH2_NAMESPACE::begin(base1_),
+                    RAH2_NAMESPACE::end(base1_),
+                    RAH2_NAMESPACE::begin(base2_),
+                    RAH2_NAMESPACE::end(base2_));
             }
             default_sentinel end()
             {
@@ -4110,10 +4163,10 @@ namespace RAH_NAMESPACE
         template <typename R1, typename R2>
         auto set_difference(R1&& range1, R2&& range2)
         {
-            auto ref1 = RAH_NAMESPACE::views::all(RAH_STD::forward<R1>(range1));
-            auto ref2 = RAH_NAMESPACE::views::all(RAH_STD::forward<R2>(range2));
+            auto ref1 = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R1>(range1));
+            auto ref2 = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R2>(range2));
             return set_difference_view<decltype(ref1), decltype(ref2)>(
-                std::move(ref1), std::move(ref2));
+                RAH2_STD::move(ref1), RAH2_STD::move(ref2));
         }
 
         template <typename R2>
@@ -4121,7 +4174,7 @@ namespace RAH_NAMESPACE
         {
             return make_pipeable(
                 [r2 = all(range2)](auto&& range)
-                { return set_difference(RAH_STD::forward<decltype(range)>(range), r2); });
+                { return set_difference(RAH2_STD::forward<decltype(range)>(range), r2); });
         }
 
         // ********************************** for_each ****************************************************
@@ -4129,7 +4182,7 @@ namespace RAH_NAMESPACE
         template <typename R, typename F>
         auto for_each(R&& range, F&& func)
         {
-            return range | RAH_NAMESPACE::views::transform(func) | RAH_NAMESPACE::views::join();
+            return range | RAH2_NAMESPACE::views::transform(func) | RAH2_NAMESPACE::views::join();
         }
 
         template <typename F>
@@ -4137,8 +4190,8 @@ namespace RAH_NAMESPACE
         {
             return make_pipeable(
                 [=](auto&& range) {
-                    return RAH_NAMESPACE::views::for_each(
-                        RAH_STD::forward<decltype(range)>(range), func);
+                    return RAH2_NAMESPACE::views::for_each(
+                        RAH2_STD::forward<decltype(range)>(range), func);
                 });
         }
 
@@ -4150,78 +4203,80 @@ namespace RAH_NAMESPACE
             R base_;
             intptr_t begin_idx_ = 0;
             intptr_t end_idx_ = 0;
-            using iterator = RAH_NAMESPACE::iterator_t<R>;
+            using iterator = RAH2_NAMESPACE::iterator_t<R>;
             static constexpr bool base_is_sized_random_access =
-                RAH_NAMESPACE::random_access_range<R> && RAH_NAMESPACE::sized_range<R>;
-            static constexpr bool is_sized = RAH_NAMESPACE::sized_range<R>;
+                RAH2_NAMESPACE::random_access_range<R> && RAH2_NAMESPACE::sized_range<R>;
+            static constexpr bool is_sized = RAH2_NAMESPACE::sized_range<R>;
 
         public:
             slice_view() = default;
             slice_view(R v, const intptr_t begin_idx, const intptr_t end_idx)
-                : base_(std::move(v))
+                : base_(RAH2_STD::move(v))
                 , begin_idx_(begin_idx)
                 , end_idx_(end_idx)
             {
             }
 
-            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto begin()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                iter += std::min(begin_idx_, int64_t(RAH_NAMESPACE::size(base_)));
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                iter += RAH2_STD::min(begin_idx_, int64_t(RAH2_NAMESPACE::size(base_)));
                 return iter;
             }
 
-            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<!IsSized>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, RAH2_STD::enable_if_t<!IsSized>* = nullptr>
             auto begin()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                RAH_NAMESPACE::advance(iter, begin_idx_, RAH_NAMESPACE::end(base_));
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                RAH2_NAMESPACE::advance(iter, begin_idx_, RAH2_NAMESPACE::end(base_));
                 return counted_iterator<iterator_t<R>>(iter, end_idx_ - begin_idx_);
             }
 
-            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto end()
             {
-                auto iter = RAH_NAMESPACE::begin(base_);
-                iter += std::min(end_idx_, int64_t(RAH_NAMESPACE::size(base_)));
+                auto iter = RAH2_NAMESPACE::begin(base_);
+                iter += RAH2_STD::min(end_idx_, int64_t(RAH2_NAMESPACE::size(base_)));
                 return iter;
             }
 
-            template <bool IsSized = base_is_sized_random_access, std::enable_if_t<!IsSized>* = nullptr>
+            template <bool IsSized = base_is_sized_random_access, RAH2_STD::enable_if_t<!IsSized>* = nullptr>
             default_sentinel end()
             {
                 return default_sentinel{};
             }
 
-            template <bool IsSized = rah::sized_range<R const>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                auto const base_size = RAH_NAMESPACE::size(base_);
+                auto const base_size = RAH2_NAMESPACE::size(base_);
                 return size_t(
-                    std::min<int64_t>(end_idx_, base_size) - std::min<int64_t>(begin_idx_, base_size));
+                    RAH2_STD::min<int64_t>(end_idx_, base_size)
+                    - RAH2_STD::min<int64_t>(begin_idx_, base_size));
             }
-            template <bool IsSized = rah::sized_range<R>, std::enable_if_t<IsSized>* = nullptr>
+            template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                auto const base_size = RAH_NAMESPACE::size(base_);
+                auto const base_size = RAH2_NAMESPACE::size(base_);
                 return size_t(
-                    std::min<int64_t>(end_idx_, base_size) - std::min<int64_t>(begin_idx_, base_size));
+                    RAH2_STD::min<int64_t>(end_idx_, base_size)
+                    - RAH2_STD::min<int64_t>(begin_idx_, base_size));
             }
         };
 
         template <typename R>
         auto slice(R&& range, intptr_t begin_idx, intptr_t end_idx)
         {
-            auto ref = RAH_NAMESPACE::views::all(std::forward<R>(range));
-            return slice_view<decltype(ref)>{std::move(ref), begin_idx, end_idx};
+            auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
+            return slice_view<decltype(ref)>{RAH2_STD::move(ref), begin_idx, end_idx};
         }
 
         inline auto slice(intptr_t beg, intptr_t sent)
         {
             return make_pipeable(
                 [=](auto&& range)
-                { return slice(RAH_STD::forward<decltype(range)>(range), beg, sent); });
+                { return slice(RAH2_STD::forward<decltype(range)>(range), beg, sent); });
         }
 
         // ***************************************** concat ***********************************************
@@ -4235,11 +4290,11 @@ namespace RAH_NAMESPACE
             using r2_iterator = iterator_t<R2>;
             using r1_sentinel = sentinel_t<R1>;
             using r2_sentinel = sentinel_t<R2>;
-            using base_cat = RAH_STD::forward_iterator_tag;
+            using base_cat = RAH2_STD::forward_iterator_tag;
 
         public:
             static_assert(
-                RAH_NAMESPACE::is_same_v<range_reference_t<R1>, range_reference_t<R2>>,
+                RAH2_NAMESPACE::is_same_v<range_reference_t<R1>, range_reference_t<R2>>,
                 "R1 and R2 doesn't have the same reference type");
             using reference = range_reference_t<R1>;
 
@@ -4253,10 +4308,10 @@ namespace RAH_NAMESPACE
 
             public:
                 iterator(r1_iterator iter1, r1_sentinel sent1, r2_iterator iter2, r2_sentinel sent2)
-                    : iter1_(std::move(iter1))
-                    , sent1_(std::move(sent1))
-                    , iter2_(std::move(iter2))
-                    , sent2_(std::move(sent2))
+                    : iter1_(RAH2_STD::move(iter1))
+                    , sent1_(RAH2_STD::move(sent1))
+                    , iter2_(RAH2_STD::move(iter2))
+                    , sent2_(RAH2_STD::move(sent2))
                     , range_index_(0)
                 {
                     if (iter1 == sent1)
@@ -4276,7 +4331,7 @@ namespace RAH_NAMESPACE
                         ++iter2_;
                     return *this;
                 }
-                RAH_POST_INCR(base_cat)
+                RAH2_POST_INCR(base_cat)
                 auto operator*() const -> decltype(*iter1_)
                 {
                     if (range_index_ == 0)
@@ -4311,18 +4366,18 @@ namespace RAH_NAMESPACE
             };
 
             concat_view(R1 base1, R2 base2)
-                : base1_(std::move(base1))
-                , base2_(std::move(base2))
+                : base1_(RAH2_STD::move(base1))
+                , base2_(RAH2_STD::move(base2))
             {
             }
 
             auto begin()
             {
                 return iterator(
-                    RAH_NAMESPACE::begin(base1_),
-                    RAH_NAMESPACE::end(base1_),
-                    RAH_NAMESPACE::begin(base2_),
-                    RAH_NAMESPACE::end(base2_));
+                    RAH2_NAMESPACE::begin(base1_),
+                    RAH2_NAMESPACE::end(base1_),
+                    RAH2_NAMESPACE::begin(base2_),
+                    RAH2_NAMESPACE::end(base2_));
             }
 
             default_sentinel end()
@@ -4335,45 +4390,47 @@ namespace RAH_NAMESPACE
         template <typename R1>
         auto concat(R1&& range1)
         {
-            return RAH_STD::forward<R1>(range1);
+            return RAH2_STD::forward<R1>(range1);
         }
 
         template <typename R1, typename R2>
         auto concat(R1&& range1, R2&& range2)
         {
-            auto r1 = views::all(RAH_STD::forward<R1>(range1));
-            auto r2 = views::all(RAH_STD::forward<R2>(range2));
-            return concat_view<decltype(r1), decltype(r2)>(std::move(r1), std::move(r2));
+            auto r1 = views::all(RAH2_STD::forward<R1>(range1));
+            auto r2 = views::all(RAH2_STD::forward<R2>(range2));
+            return concat_view<decltype(r1), decltype(r2)>(RAH2_STD::move(r1), RAH2_STD::move(r2));
         }
 
-        /// @see rah::views::concat(R1&& range1, R2&& range2)
+        /// @see RAH2_NAMESPACE::views::concat(R1&& range1, R2&& range2)
         template <typename R1, typename R2, typename... Ranges>
         auto concat(R1&& range1, R2&& range2, Ranges&&... ranges)
         {
             return concat(
-                concat(RAH_STD::forward<R1>(range1), RAH_STD::forward<R2>(range2)), ranges...);
+                concat(RAH2_STD::forward<R1>(range1), RAH2_STD::forward<R2>(range2)), ranges...);
         }
 
         template <
             typename R,
-            std::enable_if_t<rah::enable_view<std::remove_reference_t<R>> && has_begin_member<R>>* = nullptr>
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::enable_view<RAH2_STD::remove_reference_t<R>> && has_begin_member<R>>* = nullptr>
         auto begin(R&& r)
         {
             return r.begin();
         }
         template <
             typename R,
-            std::enable_if_t<rah::enable_view<std::remove_reference_t<R>> && has_end_member<R>>* = nullptr>
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::enable_view<RAH2_STD::remove_reference_t<R>> && has_end_member<R>>* = nullptr>
         auto end(R&& r)
         {
             return r.end();
         }
 
-        template <typename R, std::enable_if_t<rah::contiguous_range<R>>* = nullptr>
+        template <typename R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::contiguous_range<R>>* = nullptr>
         auto data(R&& r)
         {
             return r.data();
         }
     } // namespace views
 
-} // namespace RAH_NAMESPACE
+} // namespace RAH2_NAMESPACE

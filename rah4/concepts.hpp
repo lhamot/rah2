@@ -1,6 +1,14 @@
 #pragma once
 
-namespace rah
+#ifndef RAH2_STD
+#define RAH2_STD ::std
+#endif
+
+#ifndef RAH2_NAMESPACE
+#define RAH2_NAMESPACE rah2
+#endif
+
+namespace RAH2_NAMESPACE
 {
 
     template <typename... Ts>
@@ -60,15 +68,15 @@ namespace rah
     struct test_impl
     {
         template <class T>
-        using has_begin = decltype(begin(std::declval<T>()));
+        using has_begin = decltype(begin(RAH2_STD::declval<T>()));
 
         template <class T>
-        using has_iter_incr = std::enable_if_t<std::is_same<
-            std::remove_reference_t<decltype(++begin(std::declval<T>()))>,
-            std::remove_reference_t<decltype(begin(std::declval<T>()))>>::value>;
+        using has_iter_incr = RAH2_STD::enable_if_t<RAH2_STD::is_same<
+            RAH2_STD::remove_reference_t<decltype(++begin(RAH2_STD::declval<T>()))>,
+            RAH2_STD::remove_reference_t<decltype(begin(RAH2_STD::declval<T>()))>>::value>;
 
         template <class T>
-        using has_end = decltype(begin(std::declval<T>()));
+        using has_end = decltype(begin(RAH2_STD::declval<T>()));
 
         static constexpr bool value = compiles<false, R, has_begin> && compiles<false, R, has_end>
                                       && compiles<false, R, has_iter_incr>;
@@ -142,4 +150,4 @@ namespace rah
     template <bool Diagnostic, bool Val>
     static constexpr bool is_true_v = is_true_v_impl<Diagnostic, Val>::value;
 
-} // namespace rah
+} // namespace RAH2_NAMESPACE
