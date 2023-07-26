@@ -1088,12 +1088,12 @@ int main()
 
     EQUAL_RANGE(
         (views::iota(0, 3) | transform([](auto i) { return i * 2; }) | enumerate()),
-        (il<std::pair<int64_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
+        (il<std::pair<intptr_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
 
     std::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
     EQUAL_RANGE(
         (vec_abcd | transform([](char i) { return char(i + 1); }) | enumerate()),
-        (il<std::pair<int64_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
+        (il<std::pair<intptr_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
 
     // TODO : Make Zip bidirectional when possible
     //EQUAL_RANGE(
@@ -1156,7 +1156,7 @@ int main()
                 return std::make_tuple(y, views::iota(0, width));
         };
 
-        std::vector<std::atomic<int>> test(width * height);
+        std::vector<std::atomic<int>> test_(width * height);
 
         auto updateRaw = [&](auto&& y_xRange)
         {
@@ -1164,7 +1164,7 @@ int main()
             auto xRange = std::get<1>(y_xRange);
 
             for (int x : xRange)
-                ++test[x + y * width];
+                ++test_[x + y * width];
         };
 
         for (int ySelector : rah2::views::iota(0, 3))
@@ -1173,9 +1173,9 @@ int main()
             rah2::for_each(rng, updateRaw);
         }
 
-        assert(all_of(test | slice(0, start), [](auto&& val) { return val == 0; }));
-        assert(all_of(test | slice(start, end), [](auto&& val) { return val == 1; }));
-        assert(all_of(test | slice(end, test.size()), [](auto&& val) { return val == 0; }));
+        assert(all_of(test_ | slice(0, start), [](auto&& val) { return val == 0; }));
+        assert(all_of(test_ | slice(start, end), [](auto&& val) { return val == 1; }));
+        assert(all_of(test_ | slice(end, test_.size()), [](auto&& val) { return val == 0; }));
     }
 
     testSuite.report();

@@ -6,7 +6,6 @@
 //
 #pragma once
 
-#include <cassert>
 #include <tuple>
 
 #include "range_bases.hpp"
@@ -278,36 +277,36 @@ namespace RAH2_NAMESPACE
         {
             return !(it1 < it2);
         }
-        I& operator-=(int64_t amount)
+        I& operator-=(intptr_t amount)
         {
             RAH2_SELF += -amount;
             return *this;
         }
-        friend I operator-(I const& it, int64_t amount)
+        friend I operator-(I const& it, intptr_t amount)
         {
-            auto copy = it;
-            copy += -amount;
-            return copy;
+            auto copy_ = it;
+            copy_ += -amount;
+            return copy_;
         }
-        friend I operator+(I const& it, int64_t amount)
+        friend I operator+(I const& it, intptr_t amount)
+        {
+            auto copy_ = it;
+            copy_ += amount;
+            return copy_;
+        }
+        friend I operator+(intptr_t amount, I const& it)
         {
             auto copy = it;
             copy += amount;
             return copy;
         }
-        friend I operator+(int64_t amount, I const& it)
-        {
-            auto copy = it;
-            copy += amount;
-            return copy;
-        }
-        R operator[](int64_t index)
+        R operator[](intptr_t index)
         {
             auto copy = RAH2_SELF;
             copy += index;
             return *copy;
         }
-        R operator[](int64_t index) const
+        R operator[](intptr_t index) const
         {
             auto copy = RAH2_SELF_CONST;
             copy += index;
@@ -336,9 +335,9 @@ namespace RAH2_NAMESPACE
 
     public:
         counted_iterator() = default;
-        counted_iterator(I iter, size_t count)
+        counted_iterator(I iter, size_t count_)
             : iter_(RAH2_STD::move(iter))
-            , count_(count)
+            , count_(count_)
         {
         }
 
@@ -704,7 +703,7 @@ namespace RAH2_NAMESPACE
                 {
                     return it1.current_ < it2.current_;
                 }
-                friend int64_t operator-(iterator const& it1, iterator const& it2)
+                friend intptr_t operator-(iterator const& it1, iterator const& it2)
                 {
                     return it1.current_ - it2.current_;
                 }
@@ -1223,9 +1222,9 @@ namespace RAH2_NAMESPACE
             using base_sentinel = RAH2_NAMESPACE::sentinel_t<R>;
             using reference = range_reference_t<R>;
 
-            take_view(R input_view, size_t count)
+            take_view(R input_view, size_t count_)
                 : input_view_(RAH2_STD::move(input_view))
-                , count_(count)
+                , count_(count_)
             {
             }
 
@@ -1324,13 +1323,13 @@ namespace RAH2_NAMESPACE
             auto size() const
             {
                 auto const subsize = static_cast<size_t>(RAH2_NAMESPACE::size(base_));
-                return size_t(RAH2_STD::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
+                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - intptr_t(drop_count_)));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
                 auto const subsize = static_cast<size_t>(RAH2_NAMESPACE::size(base_));
-                return size_t(RAH2_STD::max(int64_t(0), int64_t(subsize) - int64_t(drop_count_)));
+                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - intptr_t(drop_count_)));
             }
 
             auto begin()
@@ -1892,28 +1891,6 @@ namespace RAH2_NAMESPACE
                 {
                     return dispatch(sub(), *this, it);
                 }
-
-                /* template <
-                    typename C = Cat,
-                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                bool operator<(common_iterator const& it)
-                {
-                    return dispatch(lesser(), *this, it);
-                }
-                template <
-                    typename C = Cat,
-                    RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                common_iterator& operator+=(int64_t value)
-                {
-                    if (mpark::holds_alternative<base_iterator>(var_))
-                    {
-                        return mpark::get<0>(var_) += value;
-                    }
-                    else
-                    {
-                        assert("Can't increment a sentinel");
-                    }
-                }*/
             };
 
             auto begin()
@@ -2143,18 +2120,11 @@ namespace RAH2_NAMESPACE
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<
                         RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                iterator& operator+=(int64_t value)
+                iterator& operator+=(intptr_t value)
                 {
                     iter_ += value;
                     return *this;
                 }
-                //template <
-                //    typename C = base_cat,
-                //    RAH2_STD::enable_if_t<sized_sentinel_for<inner_iterator, inner_sentinel>>* = nullptr>
-                //bool operator-(sentinel const& sent)
-                //{
-                //    return iter_ - sent.sent;
-                //}
             };
 
             auto begin()
@@ -2238,7 +2208,7 @@ namespace RAH2_NAMESPACE
             {
             }
 
-            using value_type = RAH2_STD::pair<int64_t, range_reference_t<R>>;
+            using value_type = RAH2_STD::pair<intptr_t, range_reference_t<R>>;
 
             struct sentinel
             {
@@ -2248,11 +2218,11 @@ namespace RAH2_NAMESPACE
             class iterator : public iterator_facade<iterator, sentinel, value_type, base_cat>
             {
                 inner_iterator current_;
-                int64_t pos_;
+                intptr_t pos_;
 
             public:
                 iterator() = default;
-                iterator(inner_iterator current, int64_t pos)
+                iterator(inner_iterator current, intptr_t pos)
                     : current_(RAH2_STD::move(current))
                     , pos_(pos)
                 {
@@ -2316,7 +2286,7 @@ namespace RAH2_NAMESPACE
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<
                         RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                iterator& operator+=(int64_t value)
+                iterator& operator+=(intptr_t value)
                 {
                     current_ += value;
                     pos_ += value;
@@ -3106,14 +3076,14 @@ namespace RAH2_NAMESPACE
                 template <
                     typename C = iterator_category,
                     RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                int64_t operator-(iterator iter) const
+                intptr_t operator-(iterator iter) const
                 {
                     return subRangeBegin_ - iter.subRangeBegin_;
                 }
                 template <
                     typename C = iterator_category,
                     RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                iterator& operator+=(int64_t value)
+                iterator& operator+=(intptr_t value)
                 {
                     subRangeBegin_ += value;
                     return *this;
@@ -3380,9 +3350,9 @@ namespace RAH2_NAMESPACE
                 }
             };
 
-            slide_view(R input_view, const intptr_t count)
+            slide_view(R input_view, const intptr_t count_)
                 : input_view(RAH2_STD::move(input_view))
-                , count_(count)
+                , count_(count_)
             {
             }
 
@@ -3752,7 +3722,7 @@ namespace RAH2_NAMESPACE
                     --iter_;
                     return *this;
                 }
-                friend int64_t operator-(iterator const& it1, iterator const& it2)
+                friend intptr_t operator-(iterator const& it1, iterator const& it2)
                 {
                     return it1.iter_ - it2.iter_;
                 }
@@ -4241,7 +4211,7 @@ namespace RAH2_NAMESPACE
             auto begin()
             {
                 auto iter = RAH2_NAMESPACE::begin(base_);
-                iter += RAH2_STD::min(begin_idx_, int64_t(RAH2_NAMESPACE::size(base_)));
+                iter += RAH2_STD::min(begin_idx_, intptr_t(RAH2_NAMESPACE::size(base_)));
                 return iter;
             }
 
@@ -4257,7 +4227,7 @@ namespace RAH2_NAMESPACE
             auto end()
             {
                 auto iter = RAH2_NAMESPACE::begin(base_);
-                iter += RAH2_STD::min(end_idx_, int64_t(RAH2_NAMESPACE::size(base_)));
+                iter += RAH2_STD::min(end_idx_, intptr_t(RAH2_NAMESPACE::size(base_)));
                 return iter;
             }
 
@@ -4272,16 +4242,16 @@ namespace RAH2_NAMESPACE
             {
                 auto const base_size = RAH2_NAMESPACE::size(base_);
                 return size_t(
-                    RAH2_STD::min<int64_t>(end_idx_, base_size)
-                    - RAH2_STD::min<int64_t>(begin_idx_, base_size));
+                    RAH2_STD::min<intptr_t>(end_idx_, base_size)
+                    - RAH2_STD::min<intptr_t>(begin_idx_, base_size));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
                 auto const base_size = RAH2_NAMESPACE::size(base_);
                 return size_t(
-                    RAH2_STD::min<int64_t>(end_idx_, base_size)
-                    - RAH2_STD::min<int64_t>(begin_idx_, base_size));
+                    RAH2_STD::min<intptr_t>(end_idx_, base_size)
+                    - RAH2_STD::min<intptr_t>(begin_idx_, base_size));
             }
         };
 

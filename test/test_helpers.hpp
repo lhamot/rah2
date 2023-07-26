@@ -171,7 +171,7 @@ public:
         template <
             typename C = Cat,
             std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
-        iterator& operator-=(int64_t value)
+        iterator& operator-=(intptr_t value)
         {
             val_ -= int(step_ * value);
             return *this;
@@ -309,7 +309,7 @@ public:
         template <
             typename C = Cat,
             std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
-        iterator& operator-=(int64_t value)
+        iterator& operator-=(intptr_t value)
         {
             iter_ -= value;
             return *this;

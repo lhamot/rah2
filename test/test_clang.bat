@@ -1,20 +1,20 @@
-PATH = %PATH%;C:\C_libs\llvm-mingw-20230614-msvcrt-x86_64\bin
+PATH = %PATH%;C:\C_libs\llvm-mingw-20230614-msvcrt-x86_64\bin;C:\Program Files\LLVM\bin
 
-rem del gcc_rah2_11.exe
-rem g++ -O0 -ftemplate-backtrace-limit=0 -ogcc_rah2_11.exe rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++11 -Wall -m64 -Wno-c++17-extensions
-rem pause
-rem gcc_rah2_11.exe
-rem pause
-del gcc_rah2_14.exe
-g++ -O0 -ftemplate-backtrace-limit=0 -ogcc_rah2_14.exe rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++14 -I../includes -Wall -m64 -Wno-c++17-extensions
-gcc_rah2_14.exe
-del gcc_rah2_20.exe
-g++ -O0 -ftemplate-backtrace-limit=0 -ogcc_rah2_20.exe rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++20 -I../includes -Wall -m64
-gcc_rah2_20.exe
-del clang_rah2_14.exe
-"C:\Program Files\LLVM\bin\clang++.exe" -O0 -ftemplate-backtrace-limit=0 -oclang_rah2_14.exe rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++14 -I../includes -Wall -m64 -Wno-c++17-extensions
-clang_rah2_14.exe
-del clang_rah2_20.exe
-"C:\Program Files\LLVM\bin\clang++.exe" -O0 -ftemplate-backtrace-limit=0 -oclang_rah2_20.exe rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++20 -I../includes -Wall -m64
-clang_rah2_20.exe
+call :test_rah2 g 14 64
+call :test_rah2 g 14 32
+call :test_rah2 g 20 64
+call :test_rah2 clang 14 64
+call :test_rah2 clang 20 64
+call :test_rah2 clang 20 32
+
 pause
+exit /b
+
+:test_rah2
+rem 1 = compiler exe name  (g, clang)
+rem 2 = c++ version (14/17/20)
+rem 3 = arch
+del %~1_rah2_%~2_%~3.exe
+%~1++ -O0 -m%~3 -ftemplate-backtrace-limit=0 -o%~1_rah2_%~2_%~3.exe rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++%~2 -I../includes -Wall -Wno-c++17-extensions
+%~1_rah2_%~2_%~3.exe
+exit /b

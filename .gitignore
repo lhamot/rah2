@@ -5,3 +5,5 @@ test/Release
 **/.opencppcov
 **/LastCoverageResults.log
 *.exe
+/Release
+/Debug

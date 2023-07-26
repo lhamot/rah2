@@ -1,6 +1,8 @@
 #pragma once
 
 #include "concepts.hpp"
+
+#include <assert.h>
 #include <iterator>
 
 #define RAH2_CONSTEXPR constexpr

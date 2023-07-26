@@ -1399,15 +1399,15 @@ namespace RAH2_NAMESPACE
         //
         // This function will return a value that is always in the range of [32, 64].
         //
-        static inline intptr_t timsort_compute_minrun(intptr_t size)
+        static inline intptr_t timsort_compute_minrun(intptr_t size_)
         {
             const int32_t top_bit =
-                (int32_t)((sizeof(intptr_t) * 8) - EASTL_COUNT_LEADING_ZEROES((uintptr_t)size));
+                (int32_t)((sizeof(intptr_t) * 8) - EASTL_COUNT_LEADING_ZEROES((uintptr_t)size_));
             const int32_t shift = (top_bit > 6) ? (top_bit - 6) : 0;
             const intptr_t mask = (intptr_t(1) << shift) - 1;
-            intptr_t minrun = (intptr_t)(size >> shift);
+            intptr_t minrun = (intptr_t)(size_ >> shift);
 
-            if (mask & size)
+            if (mask & size_)
                 ++minrun;
 
             return minrun;
