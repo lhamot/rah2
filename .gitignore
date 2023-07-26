@@ -1,3 +1,7 @@
 .vs
 x64
-/rah4/*.exe
+test/Debug
+test/Release
+**/.opencppcov
+**/LastCoverageResults.log
+*.exe

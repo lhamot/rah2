@@ -1,4 +1,4 @@
-#include "rah4.hpp"
+#include <rah4/rah4.hpp>
 
 #include <sstream>
 #include <array>

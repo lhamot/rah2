@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rah4.hpp"
+#include <rah4/rah4.hpp>
 
 #include <map>
 #include <iostream>
