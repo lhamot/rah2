@@ -431,11 +431,11 @@ int main()
 
     {
         /// [for_each]
-        auto createRange = [](int i)
+        auto createRange = [](size_t i)
         {
             return rah2::views::repeat(char('a' + i)) | rah2::views::take(i);
         };
-        auto range = rah2::views::for_each(rah2::views::iota(0, 5), createRange);
+        auto range = rah2::views::for_each(rah2::views::iota<size_t>(0, 5), createRange);
         std::string result;
         rah2::copy(range, std::back_inserter(result));
         assert(result == "bccdddeeee");
@@ -507,7 +507,7 @@ int main()
         assert(
             result
             == (std::vector<std::tuple<size_t, size_t>>{
-                {0, 0}, {0, 1}, {1, 0}, {1, 1}, {2, 0}, {2, 1}}));
+                {0llu, 0llu}, {0llu, 1llu}, {1llu, 0llu}, {1llu, 1llu}, {2llu, 0llu}, {2llu, 1llu}}));
 
         size_t zSize = 4;
         auto xyzIndexes = [=](size_t z)
@@ -528,10 +528,11 @@ int main()
         assert(
             resultZYX
             == (std::vector<std::tuple<size_t, size_t, size_t>>{
-                {0, 0, 0}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}, {0, 2, 0}, {0, 2, 1},
-                {1, 0, 0}, {1, 0, 1}, {1, 1, 0}, {1, 1, 1}, {1, 2, 0}, {1, 2, 1},
-                {2, 0, 0}, {2, 0, 1}, {2, 1, 0}, {2, 1, 1}, {2, 2, 0}, {2, 2, 1},
-                {3, 0, 0}, {3, 0, 1}, {3, 1, 0}, {3, 1, 1}, {3, 2, 0}, {3, 2, 1}}));
+                {0lu, 0lu, 0lu}, {0lu, 0lu, 1lu}, {0lu, 1lu, 0lu}, {0lu, 1lu, 1lu}, {0lu, 2lu, 0lu},
+                {0lu, 2lu, 1lu}, {1lu, 0lu, 0lu}, {1lu, 0lu, 1lu}, {1lu, 1lu, 0lu}, {1lu, 1lu, 1lu},
+                {1lu, 2lu, 0lu}, {1lu, 2lu, 1lu}, {2lu, 0lu, 0lu}, {2lu, 0lu, 1lu}, {2lu, 1lu, 0lu},
+                {2lu, 1lu, 1lu}, {2lu, 2lu, 0lu}, {2lu, 2lu, 1lu}, {3lu, 0lu, 0lu}, {3lu, 0lu, 1lu},
+                {3lu, 1lu, 0lu}, {3lu, 1lu, 1lu}, {3lu, 2lu, 0lu}, {3lu, 2lu, 1lu}}));
     }
 
     {
@@ -917,8 +918,8 @@ int main()
         {
             std::vector<int> in1;
             std::vector<int> in2;
-            size_t const size1 = rand() % 100;
-            size_t const size2 = rand() % 100;
+            size_t const size1 = size_t(rand() % 100);
+            size_t const size2 = size_t(rand() % 100);
             for (size_t i = 0; i < size1; ++i)
                 in1.push_back(rand() % 100);
             for (size_t i = 0; i < size2; ++i)
@@ -1072,18 +1073,18 @@ int main()
         EQUAL_RANGE(
             globalRange,
             (il<std::tuple<size_t, size_t>>{
-                {0, 0},
-                {0, 1},
-                {0, 2},
-                {1, 0},
-                {1, 1},
-                {1, 2},
-                {2, 0},
-                {2, 1},
-                {2, 2},
-                {3, 0},
-                {3, 1},
-                {3, 2}}));
+                {0lu, 0lu},
+                {0lu, 1lu},
+                {0lu, 2lu},
+                {1lu, 0lu},
+                {1lu, 1lu},
+                {1lu, 2lu},
+                {2lu, 0lu},
+                {2lu, 1lu},
+                {2lu, 2lu},
+                {3lu, 0lu},
+                {3lu, 1lu},
+                {3lu, 2lu}}));
     }
 
     EQUAL_RANGE(
@@ -1163,11 +1164,11 @@ int main()
             auto y = std::get<0>(y_xRange);
             auto xRange = std::get<1>(y_xRange);
 
-            for (int x : xRange)
-                ++test_[x + y * width];
+            for (auto x : xRange)
+                ++test_[size_t(x + y * width)];
         };
 
-        for (int ySelector : rah2::views::iota(0, 3))
+        for (auto ySelector : rah2::views::iota(0, 3))
         {
             auto rng = rah2::views::irange(startY + ySelector, endY + 1, 3) | transform(getRangeX);
             rah2::for_each(rng, updateRaw);

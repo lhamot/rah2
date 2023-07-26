@@ -1432,14 +1432,6 @@ namespace RAH2_NAMESPACE
                 // Copy to another location so we have room in the main array to put the sorted items.
                 RAH2_NAMESPACE::copy(first + curr, first + curr + A, pBuffer);
 
-#if EASTL_DEV_DEBUG
-                typedef
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-                for (intptr_t i = 0; i < A; i++)
-                    *(first + curr + i) = value_type();
-#endif
-
                 intptr_t i = 0;
                 intptr_t j = curr + A;
 
@@ -1540,10 +1532,6 @@ namespace RAH2_NAMESPACE
                     run_stack[0].length += run_stack[1].length;
                     stack_curr--;
 
-#if EASTL_DEV_DEBUG
-                    memset(&run_stack[stack_curr], 0, sizeof(run_stack[stack_curr]));
-#endif
-
                     break;
                 }
                 // Check if the invariant is off for a run_stack of 2 elements.
@@ -1553,10 +1541,6 @@ namespace RAH2_NAMESPACE
                         first, run_stack, stack_curr, pBuffer, compare);
                     run_stack[0].length += run_stack[1].length;
                     stack_curr--;
-
-#if EASTL_DEV_DEBUG
-                    memset(&run_stack[stack_curr], 0, sizeof(run_stack[stack_curr]));
-#endif
 
                     break;
                 }
@@ -1578,16 +1562,6 @@ namespace RAH2_NAMESPACE
                         run_stack[stack_curr - 2].length +=
                             run_stack[stack_curr - 1].length; // Merge A and B.
                         run_stack[stack_curr - 1] = run_stack[stack_curr];
-
-#if EASTL_DEV_DEBUG
-                        RAH2_DEV_ASSERT(
-                            (run_stack[stack_curr - 2].start + run_stack[stack_curr - 2].length)
-                            <= size);
-                        RAH2_DEV_ASSERT(
-                            (run_stack[stack_curr - 1].start + run_stack[stack_curr - 1].length)
-                            <= size);
-                        memset(&run_stack[stack_curr], 0, sizeof(run_stack[stack_curr]));
-#endif
                     }
                     else
                     {
@@ -1596,13 +1570,6 @@ namespace RAH2_NAMESPACE
 
                         stack_curr--;
                         run_stack[stack_curr - 1].length += run_stack[stack_curr].length;
-
-#if EASTL_DEV_DEBUG
-                        RAH2_DEV_ASSERT(
-                            (run_stack[stack_curr - 1].start + run_stack[stack_curr - 1].length)
-                            <= size);
-                        memset(&run_stack[stack_curr], 0, sizeof(run_stack[stack_curr]));
-#endif
                     }
                 }
                 else if (B <= C) // Check second invariant
@@ -1612,12 +1579,6 @@ namespace RAH2_NAMESPACE
 
                     stack_curr--;
                     run_stack[stack_curr - 1].length += run_stack[stack_curr].length; // Merge B and C.
-
-#if EASTL_DEV_DEBUG
-                    RAH2_DEV_ASSERT(
-                        (run_stack[stack_curr - 1].start + run_stack[stack_curr - 1].length) <= size);
-                    memset(&run_stack[stack_curr], 0, sizeof(run_stack[stack_curr]));
-#endif
                 }
                 else
                     break;
@@ -1685,12 +1646,6 @@ namespace RAH2_NAMESPACE
 
                     run_stack[stack_curr - 2].length += run_stack[stack_curr - 1].length;
                     stack_curr--;
-
-#if EASTL_DEV_DEBUG
-                    RAH2_DEV_ASSERT(
-                        (run_stack[stack_curr - 1].start + run_stack[stack_curr - 1].length) <= size);
-                    memset(&run_stack[stack_curr], 0, sizeof(run_stack[stack_curr]));
-#endif
                 }
 
                 return true; // We are done with sorting.
@@ -1753,10 +1708,6 @@ namespace RAH2_NAMESPACE
             intptr_t len, run;
             intptr_t curr = 0;
             const intptr_t minrun = timsort_compute_minrun(size);
-
-#if EASTL_DEV_DEBUG
-            memset(run_stack, 0, sizeof(run_stack));
-#endif
 
             if (tim_sort_add_run<RandomAccessIterator, T, StrictWeakOrdering>(
                     run_stack, first, pBuffer, size, minrun, len, run, curr, stack_curr, compare))

@@ -1448,7 +1448,7 @@ namespace RAH2_NAMESPACE
     };
 
     template <typename I, typename S, typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>>
-    constexpr intptr_t advance(I& i, intptr_t n, S const& bound)
+    constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
     {
         // RAH2_STD::abs is not constexpr until C++23
         auto abs = [](intptr_t const x)
@@ -1479,7 +1479,7 @@ namespace RAH2_NAMESPACE
         typename S,
         typename = RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>,
         typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>>
-    constexpr intptr_t advance(I& i, intptr_t n, S const& bound)
+    constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
     {
         while (n > 0 && i != bound)
         {
@@ -1499,10 +1499,9 @@ namespace RAH2_NAMESPACE
     template <
         typename I,
         typename S,
-        typename = RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>,
-        typename = RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>,
-        int = 0>
-    constexpr intptr_t advance(I& i, intptr_t n, S const& bound)
+        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr,
+        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+    constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
     {
         while (n > 0 && i != bound)
         {

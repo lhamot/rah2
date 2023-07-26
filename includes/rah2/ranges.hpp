@@ -1305,7 +1305,8 @@ namespace RAH2_NAMESPACE
         class drop_view : view_interface<drop_view<R>>
         {
             R base_;
-            size_t drop_count_ = 0;
+            using base_diff_t = range_difference_t<R>;
+            base_diff_t drop_count_ = 0;
             using category = range_iter_categ_t<R>;
             constexpr static bool is_sized = sized_range<R>;
 
@@ -1313,7 +1314,7 @@ namespace RAH2_NAMESPACE
             using iterator = RAH2_NAMESPACE::iterator_t<R>;
 
             drop_view() = default;
-            drop_view(R v, const size_t drop_count)
+            drop_view(R v, const base_diff_t drop_count)
                 : base_(RAH2_STD::move(v))
                 , drop_count_(drop_count)
             {
@@ -1322,14 +1323,14 @@ namespace RAH2_NAMESPACE
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                auto const subsize = static_cast<size_t>(RAH2_NAMESPACE::size(base_));
-                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - intptr_t(drop_count_)));
+                auto const subsize = RAH2_NAMESPACE::size(base_);
+                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - drop_count_));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                auto const subsize = static_cast<size_t>(RAH2_NAMESPACE::size(base_));
-                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - intptr_t(drop_count_)));
+                auto const subsize = RAH2_NAMESPACE::size(base_);
+                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - drop_count_));
             }
 
             auto begin()
@@ -2112,7 +2113,7 @@ namespace RAH2_NAMESPACE
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<
                         RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                bool operator-(iterator const& it2) const
+                auto operator-(iterator const& it2) const
                 {
                     return iter_ - it2.iter_;
                 }
@@ -2201,6 +2202,7 @@ namespace RAH2_NAMESPACE
             using inner_sentinel = sentinel_t<R>;
             using base_cat = common_iterator_tag<random_access_iterator_tag, range_iter_categ_t<R>>;
             static constexpr bool is_sized = RAH2_NAMESPACE::sized_range<R>;
+            using base_diff_type = range_difference_t<R>;
 
         public:
             explicit enumerate_view(R base)
@@ -2218,11 +2220,11 @@ namespace RAH2_NAMESPACE
             class iterator : public iterator_facade<iterator, sentinel, value_type, base_cat>
             {
                 inner_iterator current_;
-                intptr_t pos_;
+                base_diff_type pos_;
 
             public:
                 iterator() = default;
-                iterator(inner_iterator current, intptr_t pos)
+                iterator(inner_iterator current, base_diff_type pos)
                     : current_(RAH2_STD::move(current))
                     , pos_(pos)
                 {
@@ -2753,7 +2755,10 @@ namespace RAH2_NAMESPACE
                     bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
                 auto const min_size = details::apply(compute_min_size(), sizes);
                 return iterator(details::transform_each(
-                    bases_, [min_size](auto&& r) { return RAH2_NAMESPACE::begin(r) + min_size; }));
+                    bases_,
+                    [min_size](auto&& r) {
+                        return RAH2_NAMESPACE::begin(r) + range_difference_t<decltype(r)>(min_size);
+                    }));
             }
 
             template <
@@ -3538,11 +3543,12 @@ namespace RAH2_NAMESPACE
         template <typename R>
         class stride_view : view_interface<stride_view<R>>
         {
-            R base_;
-            size_t stride_;
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
             using iter_cat = range_iter_categ_t<R>;
+            using base_diff_type = range_difference_t<R>;
+            R base_;
+            base_diff_type stride_;
 
         public:
             // TODO : Make a version non-bidirectional without "missing_" for perf
@@ -3551,12 +3557,12 @@ namespace RAH2_NAMESPACE
             {
                 base_iterator current_;
                 base_sentinel end_;
-                size_t stride_ = 0;
-                size_t missing_ = 0;
+                base_diff_type stride_ = 0;
+                base_diff_type missing_ = 0;
 
             public:
                 iterator() = default;
-                iterator(base_iterator iter, base_sentinel end, size_t stride, size_t missing)
+                iterator(base_iterator iter, base_sentinel end, base_diff_type stride, base_diff_type missing)
                     : current_(RAH2_STD::move(iter))
                     , end_(RAH2_STD::move(end))
                     , stride_(stride)
@@ -3616,7 +3622,7 @@ namespace RAH2_NAMESPACE
                 }
             };
 
-            stride_view(R base, size_t step)
+            stride_view(R base, base_diff_type step)
                 : base_(RAH2_STD::move(base))
                 , stride_(step)
             {
@@ -3660,7 +3666,7 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R>
-        auto stride(R&& range, size_t step)
+        auto stride(R&& range, range_difference_t<R> step)
         {
             auto views = all(RAH2_STD::forward<R>(range));
             return stride_view<decltype(views)>(RAH2_STD::move(views), step);
@@ -3668,8 +3674,13 @@ namespace RAH2_NAMESPACE
 
         inline auto stride(size_t step)
         {
-            return make_pipeable([=](auto&& range)
-                                 { return stride(RAH2_STD::forward<decltype(range)>(range), step); });
+            return make_pipeable(
+                [=](auto&& range)
+                {
+                    return stride(
+                        RAH2_STD::forward<decltype(range)>(range),
+                        range_difference_t<decltype(range)>(step));
+                });
         }
 
     } // namespace views

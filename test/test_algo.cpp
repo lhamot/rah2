@@ -1611,7 +1611,7 @@ void test_push_heap()
     assert(last == v.end());
 
     assert(std::is_heap(v.begin(), v.end()));
-    assert(std::count(v.begin(), v.end(), 9));
+    assert(std::count(v.begin(), v.end(), 9) != 0);
     /// [rah2::push_heap]
 }
 void test_pop_heap()
@@ -2043,7 +2043,7 @@ void test_uninitialized_copy()
 
     const auto sz{rah2::size(v)};
     void* pbuf = std::malloc(sizeof(std::string) * sz);
-    assert(pbuf);
+    assert(pbuf != nullptr);
     auto first{static_cast<std::string*>(pbuf)};
     auto last{first + sz};
     rah2::uninitialized_copy(std::begin(v), std::end(v), first, last);
