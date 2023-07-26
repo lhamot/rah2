@@ -513,7 +513,7 @@ namespace RAH2_NAMESPACE
             value_type* const pBuffer = (value_type*)allocate_memory(
                 allocator, nCount * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
 #else
-            value_type* const pBuffer = allocator.allocate(nCount);
+            value_type* const pBuffer = allocator.allocate(size_t(nCount));
 #endif
 
             RAH2_STD::uninitialized_fill(pBuffer, pBuffer + nCount, value_type());
@@ -525,7 +525,7 @@ namespace RAH2_NAMESPACE
 #ifdef RAH2_EASTL
             EASTLFree(allocator, pBuffer, nCount * sizeof(value_type));
 #else
-            allocator.deallocate(pBuffer, nCount);
+            allocator.deallocate(pBuffer, size_t(nCount));
 #endif
         }
     }
@@ -608,7 +608,7 @@ namespace RAH2_NAMESPACE
         //value_type* const buffer = (value_type*)allocate_memory(
         //    allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
         auto allocator = RAH2_STD::allocator<value_type>();
-        value_type* const buffer = allocator.allocate(requested_size);
+        value_type* const buffer = allocator.allocate(size_t(requested_size));
         RAH2_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
 
         ForwardIterator result1 = first;

@@ -1787,7 +1787,10 @@ namespace RAH2_NAMESPACE
 
             for (RandomAccessIterator i = first + 1; i != last; ++i)
                 RAH2_NAMESPACE::iter_swap(
-                    i, first + uid(urng, uniform_int_distribution_param_type(0, i - first)));
+                    i,
+                    first
+                        + iter_difference_t<RandomAccessIterator>(
+                            uid(urng, uniform_int_distribution_param_type(0u, size_t(i - first)))));
         }
     }
 

@@ -473,9 +473,9 @@ void test_join_view()
     {
         testSuite.test_case("rvalue_input");
         // Test join on a range of rvalue
-        auto range = rah2::views::iota(0, 6)
+        auto range = rah2::views::iota<size_t>(0, 6)
                      | rah2::views::transform(
-                         [](int i) { return rah2::views::repeat(1) | rah2::views::take(i); })
+                         [](auto i) { return rah2::views::repeat(1) | rah2::views::take(i); })
                      | rah2::views::join();
         std::vector<int> result;
         rah2::copy(range, std::back_inserter(result));
@@ -716,22 +716,22 @@ void test_enumerate_view()
         testSuite.test_case("sample");
         /// [enumerate]
         std::vector<int> input{4, 5, 6, 7};
-        std::vector<std::tuple<size_t, int>> result;
+        std::vector<std::tuple<intptr_t, int>> result;
         auto toto = rah2::views::enumerate(input);
         auto prout = toto.end();
         for (auto i_value : rah2::views::enumerate(input))
             result.emplace_back(i_value);
-        assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
+        assert(result == (std::vector<std::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate]
     }
     {
         testSuite.test_case("sample_pipeable");
         /// [enumerate_pipeable]
         std::vector<int> input{4, 5, 6, 7};
-        std::vector<std::tuple<size_t, int>> result;
+        std::vector<std::tuple<intptr_t, int>> result;
         for (auto i_value : input | rah2::views::enumerate() | rah2::views::common())
             result.emplace_back(i_value);
-        assert(result == (std::vector<std::tuple<size_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
+        assert(result == (std::vector<std::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate_pipeable]
     }
 
@@ -743,9 +743,9 @@ void test_enumerate_view()
                      | rah2::views::filter([](auto&& index_bool) { return std::get<1>(index_bool); })
                      | rah2::views::keys();
 
-        std::vector<size_t> ref;
+        std::vector<intptr_t> ref;
         rah2::copy(range, std::back_inserter(ref));
-        assert(ref == (std::vector<size_t>{1, 2, 5}));
+        assert(ref == (std::vector<intptr_t>{1, 2, 5}));
     }
 
     testSuite.test_case("concepts");

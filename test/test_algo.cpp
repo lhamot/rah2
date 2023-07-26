@@ -56,7 +56,8 @@ void test_for_each_n()
     testSuite.test_case("sample");
     /// [rah2::for_each_n]
     std::vector<int> testFE{4, 4, 4, 4};
-    auto res = rah2::for_each_n(testFE.begin(), testFE.size(), [](auto& value) { return ++value; });
+    auto res = rah2::for_each_n(
+        testFE.begin(), intptr_t(testFE.size()), [](auto& value) { return ++value; });
     EQUAL_RANGE(testFE, std::initializer_list<int>({5, 5, 5, 5}));
     assert(res.in == testFE.end());
     /// [rah2::for_each_n]
@@ -105,7 +106,7 @@ void test_algo_count()
         const auto count_rah_noproj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count = rah2::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
+                const auto count = rah2::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
         std::cout << "count_rah_noproj : " << count_rah_noproj.count() << std::endl;
@@ -127,7 +128,7 @@ void test_algo_count()
         const auto count_std_noproj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count = std::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
+                const auto count = std::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
         std::cout << "count_std_noproj : " << count_std_noproj.count() << std::endl;
@@ -145,7 +146,7 @@ void test_algo_count()
         const auto count_rah_proj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count = rah2::count(
+                const auto count = rah2::count(
                     coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, getter_lbd);
                 assert(count == 79);
             });
@@ -170,7 +171,7 @@ void test_algo_count()
         const auto count_rgn_proj = COMPUTE_DURATION(
             [&]
             {
-                const size_t count = rah2::count(
+                const auto count = rah2::count(
                     coordsVec.data(),
                     coordsVec.data() + coordsVec.size(),
                     2,
@@ -207,7 +208,7 @@ void test_count_if()
         const auto count_if_rah_pred = COMPUTE_DURATION(
             [&]
             {
-                const size_t count =
+                const auto count =
                     rah2::count_if(coordsVec.data(), coordsVec.data() + coordsVec.size(), pred);
                 assert(count == 79);
             });
@@ -232,7 +233,7 @@ void test_count_if()
         auto count_if_std_pred = COMPUTE_DURATION(
             [&]
             {
-                const size_t count =
+                const auto count =
                     std::count_if(coordsVec.data(), coordsVec.data() + coordsVec.size(), pred);
                 assert(count == 79);
             });
@@ -801,7 +802,7 @@ void test_generate_n()
     testSuite.test_case("sample");
     /// [rah2::generate_n]
     std::array<int, 8> v = {};
-    rah2::generate_n(v.begin(), v.size(), [n{0}]() mutable { return n++; });
+    rah2::generate_n(v.begin(), intptr_t(v.size()), [n{0}]() mutable { return n++; });
     assert(v == (std::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::generate_n]
 }
@@ -1042,16 +1043,16 @@ void test_sample()
     const auto in = {1, 2, 3, 4, 5, 6};
 
     std::vector<int> out(in.size() + 2);
-    const size_t max = in.size() + 2;
+    const auto max = intptr_t(in.size() + 2);
     auto gen = std::mt19937{std::random_device{}()};
 
-    for (size_t n{}; n != max; ++n)
+    for (intptr_t n{}; n != max; ++n)
     {
         auto o = RAH2_NAMESPACE::sample(in, out.begin(), n, gen);
-        assert((o - out.begin()) == std::min<intptr_t>(n, in.size()));
+        assert((o - out.begin()) == std::min(n, intptr_t(in.size())));
     }
 
-    auto o = RAH2_NAMESPACE::sample(in, out.begin(), in.size(), gen);
+    auto o = RAH2_NAMESPACE::sample(in, out.begin(), intptr_t(in.size()), gen);
     assert(rah2::equal(in.begin(), in.end(), out.begin(), o));
 
     /// [rah2::sample]
@@ -2211,7 +2212,7 @@ void test_uninitialized_default_construct_n()
     // generally does not zero-fill the given uninitialized memory area.
     constexpr int etalon[]{1, 2, 3, 4, 5, 6};
     int v[]{1, 2, 3, 4, 5, 6};
-    rah2::uninitialized_default_construct_n(std::begin(v), rah2::size(v));
+    rah2::uninitialized_default_construct_n(std::begin(v), intptr_t(rah2::size(v)));
     assert(std::memcmp(v, etalon, sizeof(v)) == 0);
     /// [rah2::uninitialized_default_construct_n]
 }
@@ -2264,7 +2265,7 @@ void test_uninitialized_value_construct_n()
     // Notice that for "trivial types" the uninitialized_value_construct_n
     // zero-initializes the given uninitialized memory area.
     int v[]{1, 2, 3, 4, 5, 6, 7, 8};
-    rah2::uninitialized_value_construct_n(std::begin(v), rah2::size(v));
+    rah2::uninitialized_value_construct_n(std::begin(v), intptr_t(rah2::size(v)));
     assert(rah2::all_of(v, [](int i) { return i == 0; }));
 
     /// [rah2::uninitialized_value_construct_n]

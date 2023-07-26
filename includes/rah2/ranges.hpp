@@ -330,12 +330,12 @@ namespace RAH2_NAMESPACE
                                  typename RAH2_STD::iterator_traits<I>::iterator_category>
     {
         I iter_;
-        size_t count_ = size_t();
+        iter_difference_t<I> count_ = {};
         using base_cat = typename RAH2_STD::iterator_traits<I>::iterator_category;
 
     public:
         counted_iterator() = default;
-        counted_iterator(I iter, size_t count_)
+        counted_iterator(I iter, iter_difference_t<I> count_)
             : iter_(RAH2_STD::move(iter))
             , count_(count_)
         {
@@ -348,7 +348,7 @@ namespace RAH2_NAMESPACE
             return *this;
         }
         RAH2_POST_INCR(base_cat)
-        counted_iterator& operator+=(intptr_t off)
+        counted_iterator& operator+=(iter_difference_t<I> off)
         {
             iter_ += off;
             count_ -= off;
@@ -390,7 +390,7 @@ namespace RAH2_NAMESPACE
     };
 
     template <typename I>
-    auto make_counted_iterator(I it, size_t count)
+    auto make_counted_iterator(I it, iter_difference_t<I> count)
     {
         return counted_iterator<I>{RAH2_STD::move(it), count};
     }
@@ -1212,7 +1212,8 @@ namespace RAH2_NAMESPACE
         class take_view : public view_interface<take_view<R>>
         {
             R input_view_;
-            size_t count_;
+            using base_diff_type = range_difference_t<R>;
+            base_diff_type count_;
             static constexpr bool IsCommon =
                 RAH2_NAMESPACE::random_access_range<R> && RAH2_NAMESPACE::sized_range<R>;
             constexpr static bool is_sized = sized_range<R>;
@@ -1222,7 +1223,7 @@ namespace RAH2_NAMESPACE
             using base_sentinel = RAH2_NAMESPACE::sentinel_t<R>;
             using reference = range_reference_t<R>;
 
-            take_view(R input_view, size_t count_)
+            take_view(R input_view, base_diff_type count_)
                 : input_view_(RAH2_STD::move(input_view))
                 , count_(count_)
             {
@@ -1231,12 +1232,14 @@ namespace RAH2_NAMESPACE
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return RAH2_STD::min(count_, static_cast<size_t>(RAH2_NAMESPACE::size(input_view_)));
+                return RAH2_STD::min(
+                    count_, static_cast<base_diff_type>(RAH2_NAMESPACE::size(input_view_)));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH2_STD::min(count_, static_cast<size_t>(RAH2_NAMESPACE::size(input_view_)));
+                return RAH2_STD::min(
+                    count_, static_cast<base_diff_type>(RAH2_NAMESPACE::size(input_view_)));
             }
 
             template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::contiguous_range<U>>* = nullptr>
@@ -1279,7 +1282,7 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R>
-        auto take(R&& range, size_t count)
+        auto take(R&& range, range_difference_t<R> count)
         {
             auto range_view = all(RAH2_STD::forward<R>(range));
             return take_view<decltype(range_view)>(RAH2_STD::move(range_view), count);
@@ -1287,8 +1290,13 @@ namespace RAH2_NAMESPACE
 
         inline auto take(size_t count)
         {
-            return make_pipeable([=](auto&& range)
-                                 { return take(RAH2_STD::forward<decltype(range)>(range), count); });
+            return make_pipeable(
+                [=](auto&& range)
+                {
+                    return take(
+                        RAH2_STD::forward<decltype(range)>(range),
+                        range_difference_t<decltype(range)>(count));
+                });
         }
     } // namespace views
 
@@ -1356,7 +1364,7 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R>
-        auto drop(R&& range, size_t count)
+        auto drop(R&& range, range_difference_t<R> count)
         {
             auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
             return drop_view<decltype(ref)>(RAH2_STD::move(ref), count);
@@ -1364,8 +1372,13 @@ namespace RAH2_NAMESPACE
 
         inline auto drop(size_t count)
         {
-            return make_pipeable([=](auto&& range)
-                                 { return drop(RAH2_STD::forward<decltype(range)>(range), count); });
+            return make_pipeable(
+                [=](auto&& range)
+                {
+                    return drop(
+                        RAH2_STD::forward<decltype(range)>(range),
+                        range_difference_t<decltype(range)>(count));
+                });
         }
     } // namespace views
 
@@ -1721,14 +1734,14 @@ namespace RAH2_NAMESPACE
         // ******************************************* counted ************************************
 
         template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
-        auto counted(I&& it, size_t n)
+        auto counted(I&& it, iter_difference_t<I> n)
         {
             using iterator = RAH2_STD::remove_reference_t<I>;
             return make_subrange(iterator(it), iterator(it + n));
         }
 
         template <typename I, RAH2_STD::enable_if_t<!RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
-        auto counted(I&& it, size_t n)
+        auto counted(I&& it, iter_difference_t<I> n)
         {
             using iterator = counted_iterator<RAH2_STD::remove_reference_t<I>>;
             return make_subrange(iterator(it, n), default_sentinel{});
@@ -2307,7 +2320,8 @@ namespace RAH2_NAMESPACE
                     RAH2_NAMESPACE::sized_range<U> and RAH2_NAMESPACE::common_range<U>>* = nullptr>
             auto end()
             {
-                return iterator(RAH2_NAMESPACE::end(base_), RAH2_NAMESPACE::size(base_));
+                return iterator(
+                    RAH2_NAMESPACE::end(base_), range_difference_t<U>(RAH2_NAMESPACE::size(base_)));
             }
 
             template <
@@ -2955,7 +2969,11 @@ namespace RAH2_NAMESPACE
                 return iterator(
                     this,
                     details::transform_each(
-                        bases_, [min_size](auto&& r) { return RAH2_NAMESPACE::begin(r) + min_size; }));
+                        bases_,
+                        [min_size](auto&& r) {
+                            return RAH2_NAMESPACE::begin(r)
+                                   + range_difference_t<decltype(r)>(min_size);
+                        }));
             }
 
             template <
@@ -3405,7 +3423,7 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R>
-        auto slide(R&& range, size_t n)
+        auto slide(R&& range, range_difference_t<R> n)
         {
             auto range_view = all(range);
             return slide_view<decltype(range_view)>(RAH2_STD::move(range_view), n);
@@ -3413,8 +3431,13 @@ namespace RAH2_NAMESPACE
 
         inline auto slide(size_t n)
         {
-            return make_pipeable([=](auto&& range)
-                                 { return slide(RAH2_STD::forward<decltype(range)>(range), n); });
+            return make_pipeable(
+                [=](auto&& range)
+                {
+                    return slide(
+                        RAH2_STD::forward<decltype(range)>(range),
+                        range_difference_t<decltype(range)>(n));
+                });
         }
 
         // ************************************ chunk *********************************************
@@ -3423,7 +3446,8 @@ namespace RAH2_NAMESPACE
         class chunk_view : public view_interface<chunk_view<R>>
         {
             R base_;
-            size_t step_;
+            using base_diff_type = range_difference_t<R>;
+            base_diff_type step_;
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
             using base_cat = RAH2_STD::forward_iterator_tag;
@@ -3440,14 +3464,14 @@ namespace RAH2_NAMESPACE
                 iterator_t<R> iter_;
                 iterator_t<R> iter2_;
                 sentinel_t<R> end_;
-                size_t step_;
+                base_diff_type step_;
 
             public:
                 iterator(
                     iterator_t<R> const& iter,
                     iterator_t<R> const& iter2,
                     sentinel_t<R> const& end,
-                    size_t step = 0)
+                    base_diff_type step = 0)
                     : iter_(iter)
                     , iter2_(iter2)
                     , end_(end)
@@ -3480,7 +3504,7 @@ namespace RAH2_NAMESPACE
                 }
             };
 
-            chunk_view(R base, const size_t step)
+            chunk_view(R base, const base_diff_type step)
                 : base_(RAH2_STD::move(base))
                 , step_(step)
             {
@@ -3527,7 +3551,7 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R, RAH2_STD::enable_if_t<not RAH2_NAMESPACE::is_rvalue_reference_v<R&&>, int> = 0>
-        auto chunk(R&& range, size_t step)
+        auto chunk(R&& range, range_difference_t<R> step)
         {
             auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
             return chunk_view<decltype(ref)>(RAH2_STD::move(ref), step);
@@ -3535,8 +3559,13 @@ namespace RAH2_NAMESPACE
 
         inline auto chunk(size_t step)
         {
-            return make_pipeable([=](auto&& range)
-                                 { return chunk(RAH2_STD::forward<decltype(range)>(range), step); });
+            return make_pipeable(
+                [=](auto&& range)
+                {
+                    return chunk(
+                        RAH2_STD::forward<decltype(range)>(range),
+                        range_difference_t<decltype(range)>(step));
+                });
         }
 
         // ***************************************** stride ***********************************************
@@ -4267,17 +4296,22 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R>
-        auto slice(R&& range, intptr_t begin_idx, intptr_t end_idx)
+        auto slice(R&& range, range_difference_t<R> begin_idx, range_difference_t<R> end_idx)
         {
             auto ref = RAH2_NAMESPACE::views::all(RAH2_STD::forward<R>(range));
             return slice_view<decltype(ref)>{RAH2_STD::move(ref), begin_idx, end_idx};
         }
 
-        inline auto slice(intptr_t beg, intptr_t sent)
+        inline auto slice(size_t beg, size_t sent)
         {
             return make_pipeable(
                 [=](auto&& range)
-                { return slice(RAH2_STD::forward<decltype(range)>(range), beg, sent); });
+                {
+                    return slice(
+                        RAH2_STD::forward<decltype(range)>(range),
+                        range_difference_t<decltype(range)>(beg),
+                        range_difference_t<decltype(range)>(sent));
+                });
         }
 
         // ***************************************** concat ***********************************************
