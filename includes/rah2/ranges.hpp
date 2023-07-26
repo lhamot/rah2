@@ -10,7 +10,6 @@
 #include <tuple>
 
 #include "range_bases.hpp"
-#include "base_algorithm.hpp" // Only used for search
 #include "mpark/variant.hpp"
 
 namespace RAH2_NAMESPACE
@@ -1587,10 +1586,31 @@ namespace RAH2_NAMESPACE
             details::optional<subrange<inner_iterator, inner_iterator>> cached_begin_;
             using base_cat = RAH2_STD::input_iterator_tag;
 
+            template <typename I1, typename S1, typename I2, typename S2>
+            static constexpr subrange<I1> search(I1 first1, S1 last1, I2 first2, S2 last2)
+            {
+                for (;; ++first1)
+                {
+                    I1 it1 = first1;
+                    for (I2 it2 = first2;; ++it1, ++it2)
+                    {
+                        if (it2 == last2)
+                            return {first1, it1};
+                        if (it1 == last1)
+                            return {it1, it1};
+                        if (!(*it1 == *it2))
+                            break;
+                    }
+                }
+            }
+
             auto find_next(inner_iterator const& it)
             {
-                auto sub = RAH2_NAMESPACE::search(
-                    RAH2_NAMESPACE::make_subrange(it, RAH2_NAMESPACE::end(base_)), pattern_);
+                auto sub = split_view::search(
+                    it,
+                    RAH2_NAMESPACE::end(base_),
+                    RAH2_NAMESPACE::begin(pattern_),
+                    RAH2_NAMESPACE::end(pattern_));
                 auto b = sub.begin();
                 auto e = sub.end();
 
