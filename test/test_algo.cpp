@@ -1,4 +1,5 @@
 #include <rah2/ranges.hpp>
+#include <rah2/algorithm.hpp>
 
 #include <array>
 #include <complex>

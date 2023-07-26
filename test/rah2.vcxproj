@@ -24,12 +24,12 @@
     <ClCompile Include="test_views.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\includes\rah2\algorithm.hpp" />
     <ClInclude Include="..\includes\rah2\algo_heap.hpp" />
     <ClInclude Include="..\includes\rah2\algo_sort.hpp" />
     <ClInclude Include="..\includes\rah2\base_algorithm.hpp" />
     <ClInclude Include="..\includes\rah2\concepts.hpp" />
     <ClInclude Include="..\includes\rah2\ranges.hpp" />
-    <ClInclude Include="..\includes\rah2\range_algorithms.hpp" />
     <ClInclude Include="..\includes\rah2\range_bases.hpp" />
     <ClInclude Include="test_helpers.hpp" />
   </ItemGroup>

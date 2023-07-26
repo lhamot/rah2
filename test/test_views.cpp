@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <array>
+#include <algorithm>
 
 #include "test_helpers.hpp"
 

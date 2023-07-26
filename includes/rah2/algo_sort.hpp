@@ -856,7 +856,7 @@ namespace RAH2_NAMESPACE
             typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
-        RAH2_STD::make_heap<RandomAccessIterator>(first, middle);
+        RAH2_NAMESPACE::make_heap<RandomAccessIterator, RandomAccessIterator>(first, middle);
 
         for (RandomAccessIterator i = middle; i < last; ++i)
         {
@@ -875,7 +875,7 @@ namespace RAH2_NAMESPACE
             }
         }
 
-        RAH2_STD::sort_heap<RandomAccessIterator>(first, middle);
+        RAH2_NAMESPACE::sort_heap<RandomAccessIterator, RandomAccessIterator>(first, middle);
     }
 
     template <typename RandomAccessRange, typename RandomAccessIterator>
@@ -893,7 +893,8 @@ namespace RAH2_NAMESPACE
             typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
-        RAH2_STD::make_heap<RandomAccessIterator, Compare>(first, middle, compare);
+        RAH2_NAMESPACE::make_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
+            first, middle, compare);
 
         for (RandomAccessIterator i = middle; i < last; ++i)
         {
@@ -912,7 +913,8 @@ namespace RAH2_NAMESPACE
             }
         }
 
-        RAH2_STD::sort_heap<RandomAccessIterator, Compare>(first, middle, compare);
+        RAH2_NAMESPACE::sort_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
+            first, middle, compare);
     }
 
     template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>

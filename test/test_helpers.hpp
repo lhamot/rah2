@@ -1,10 +1,12 @@
 #pragma once
 
 #include <rah2/ranges.hpp>
+#include <rah2/algorithm.hpp>
 
 #include <map>
 #include <iostream>
 #include <chrono>
+#include <vector>
 
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 

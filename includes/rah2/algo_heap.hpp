@@ -583,7 +583,8 @@ namespace RAH2_NAMESPACE
         auto lasti = RAH2_NAMESPACE::next(first, last);
         auto res = lasti;
         for (; (lasti - first) > 1; --lasti) // We simply use the heap to sort itself.
-            RAH2_NAMESPACE::pop_heap<RandomAccessIterator, Compare>(first, lasti, compare);
+            RAH2_NAMESPACE::pop_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
+                first, lasti, compare);
         return res;
     }
 

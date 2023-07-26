@@ -10,7 +10,7 @@
 #include <tuple>
 
 #include "range_bases.hpp"
-#include "range_algorithms.hpp"
+#include "base_algorithm.hpp" // Only used for search
 #include "mpark/variant.hpp"
 
 namespace RAH2_NAMESPACE

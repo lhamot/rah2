@@ -38,9 +38,6 @@
     <ClInclude Include="..\includes\rah2\range_bases.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\includes\rah2\range_algorithms.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\includes\rah2\concepts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\includes\rah2\algo_sort.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\includes\rah2\algorithm.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
