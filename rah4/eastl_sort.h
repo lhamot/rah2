@@ -1,42 +1,3 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) Electronic Arts Inc. All rights reserved.
-//////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////
-// This file implements sorting algorithms. Some of these are equivalent to
-// std C++ sorting algorithms, while others don't have equivalents in the
-// C++ standard. We implement the following sorting algorithms:
-//    is_sorted             --
-//    sort                  -- Unstable.    The implementation of this is mapped to quick_sort by default.
-//    quick_sort            -- Unstable.    This is actually an intro-sort (quick sort with switch to insertion sort).
-//    tim_sort              -- Stable.
-//    tim_sort_buffer       -- Stable.
-//    partial_sort          -- Unstable.
-//    insertion_sort        -- Stable.
-//    shell_sort            -- Unstable.
-//    heap_sort             -- Unstable.
-//    stable_sort           -- Stable.      The implementation of this is simply mapped to merge_sort.
-//    merge                 --
-//    merge_sort            -- Stable.
-//    merge_sort_buffer     -- Stable.
-//    nth_element           -- Unstable.
-//    radix_sort            -- Stable.      Important and useful sort for integral data, and faster than all others for this.
-//    comb_sort             -- Unstable.    Possibly the best combination of small code size but fast sort.
-//    bubble_sort           -- Stable.      Useful in practice for sorting tiny sets of data (<= 10 elements).
-//    selection_sort*       -- Unstable.
-//    shaker_sort*          -- Stable.
-//    bucket_sort*          -- Stable.
-//
-// * Found in sort_extra.h.
-//
-// Additional sorting and related algorithms we may want to implement:
-//    partial_sort_copy     This would be like the std STL version.
-//    paritition            This would be like the std STL version. This is not categorized as a sort routine by the language standard.
-//    stable_partition      This would be like the std STL version.
-//    counting_sort         Maybe we don't want to implement this.
-//
-//////////////////////////////////////////////////////////////////////////////
-
 #pragma once
 
 #include "range_bases.hpp"
@@ -116,7 +77,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename Compare, std::enable_if_t<forward_range<ForwardRange>>* = nullptr>
     auto is_sorted_until(ForwardRange&& r, Compare compare)
     {
-        return is_sorted_until(
+        return RAH_NAMESPACE::is_sorted_until(
             RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r), RAH_STD::move(compare));
     }
 
@@ -164,6 +125,9 @@ namespace RAH_NAMESPACE
     ///
     constexpr is_sorted_fn is_sorted;
 
+    template <class I1, class I2, class O>
+    using merge_result = RAH_NAMESPACE::in_in_out_result<I1, I2, O>;
+
     /// merge
     ///
     /// This function merges two sorted input sorted ranges into a result sorted range.
@@ -177,7 +141,7 @@ namespace RAH_NAMESPACE
         typename Sentinel2,
         typename OutputIterator,
         typename Compare = RAH_NAMESPACE::less>
-    OutputIterator merge(
+    merge_result<InputIterator1, InputIterator2, OutputIterator> merge(
         InputIterator1 first1,
         Sentinel1 last1,
         InputIterator2 first2,
@@ -208,19 +172,24 @@ namespace RAH_NAMESPACE
         // be overhead from calling memmove with a zero size copy.
         if (first1 == last1)
         {
-            return RAH_NAMESPACE::copy(first2, last2, result);
+            auto ret = RAH_NAMESPACE::copy(first2, last2, result);
+            return {first1, ret.in, ret.out};
         }
         else
         {
-            return RAH_NAMESPACE::copy(first1, last1, result);
+            auto ret = RAH_NAMESPACE::copy(first1, last1, result);
+            return {ret.in, first2, ret.out};
         }
     }
 
     template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare = RAH_NAMESPACE::less>
-    OutputIterator
+    merge_result<
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange1>,
+        RAH_NAMESPACE::borrowed_iterator_t<InputRange2>,
+        OutputIterator>
     merge(InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare = {})
     {
-        return merge(
+        return RAH_NAMESPACE::merge(
             RAH_NAMESPACE::begin(range1),
             RAH_NAMESPACE::end(range1),
             RAH_NAMESPACE::begin(range2),
@@ -277,93 +246,6 @@ namespace RAH_NAMESPACE
         insertion_sort<BidirectionalIterator>(first, last, Less());
 
     } // insertion_sort
-
-    /// shell_sort
-    ///
-    /// Implements the ShellSort algorithm. This algorithm is a serious algorithm for larger
-    /// data sets, as reported by Sedgewick in his discussions on QuickSort. Note that shell_sort
-    /// requires a random access iterator, which usually means an array (eg. vector, deque).
-    /// ShellSort has good performance with presorted sequences.
-    /// The term "shell" derives from the name of the inventor, David Shell.
-    ///
-    /// To consider: Allow the user to specify the "h-sequence" array.
-    ///
-    template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
-    void shell_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
-    {
-        typedef
-            typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-
-        // We use the Knuth 'h' sequence below, as it is easy to calculate at runtime.
-        // However, possibly we are better off using a different sequence based on a table.
-        // One such sequence which averages slightly better than Knuth is:
-        //    1, 5, 19, 41, 109, 209, 505, 929, 2161, 3905, 8929, 16001, 36289,
-        //    64769, 146305, 260609, 587521, 1045505, 2354689, 4188161, 9427969, 16764929
-
-        if (first != last)
-        {
-            RandomAccessIterator iCurrent, iBack, iSorted, iInsertFirst;
-            difference_type nSize = last - first;
-            difference_type nSpace = 1; // nSpace is the 'h' value of the ShellSort algorithm.
-
-            while (nSpace < nSize)
-                nSpace =
-                    (nSpace * 3)
-                    + 1; // This is the Knuth 'h' sequence: 1, 4, 13, 40, 121, 364, 1093, 3280, 9841, 29524, 88573, 265720, 797161, 2391484, 7174453, 21523360, 64570081, 193710244,
-
-            for (nSpace = (nSpace - 1) / 3; nSpace >= 1;
-                 nSpace = (nSpace - 1) / 3) // Integer division is less than ideal.
-            {
-                for (difference_type i = 0; i < nSpace; i++)
-                {
-                    iInsertFirst = first + i;
-
-                    for (iSorted = iInsertFirst + nSpace; iSorted < last; iSorted += nSpace)
-                    {
-                        iBack = iCurrent = iSorted;
-
-                        for (; (iCurrent != iInsertFirst) && compare(*iCurrent, *(iBack -= nSpace));
-                             iCurrent = iBack)
-                        {
-                            RAH_VALIDATE_COMPARE(!compare(
-                                *iBack, *iCurrent)); // Validate that the compare function is sane.
-                            RAH_STD::iter_swap(iCurrent, iBack);
-                        }
-                    }
-                }
-            }
-        }
-    } // shell_sort
-
-    template <typename RandomAccessIterator, typename Sentinel>
-    inline void shell_sort(RandomAccessIterator first, Sentinel last)
-    {
-        typedef RAH_STD::less<typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type> Less;
-
-        RAH_NAMESPACE::shell_sort<RandomAccessIterator, Less>(first, last, Less());
-    }
-
-    /// heap_sort
-    ///
-    /// Implements the HeapSort algorithm.
-    /// Note that heap_sort requires a random access iterator, which usually means
-    /// an array (eg. vector, deque).
-    ///
-    template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
-    void heap_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
-    {
-        // We simply call our heap algorithms to do the work for us.
-        RAH_NAMESPACE::make_heap<RandomAccessIterator, StrictWeakOrdering>(first, last, compare);
-        RAH_NAMESPACE::sort_heap<RandomAccessIterator, StrictWeakOrdering>(first, last, compare);
-    }
-
-    template <typename RandomAccessIterator, typename Sentinel>
-    inline void heap_sort(RandomAccessIterator first, Sentinel last)
-    {
-        typedef RAH_STD::less<typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type> Less;
-
-        RAH_NAMESPACE::heap_sort<RandomAccessIterator, Less>(first, last, Less());
-    }
 
     namespace Internal
     {
@@ -437,8 +319,8 @@ namespace RAH_NAMESPACE
                 const difference_type nCount = last - first;
                 RAH_NAMESPACE::copy(pBuffer, pBuffer + nCount, first);
             }
-            RAH_DEV_ASSERT(
-                (RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
+            RAH_DEV_ASSERT((
+                RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
                     first, last, compare)));
         }
 
@@ -473,7 +355,7 @@ namespace RAH_NAMESPACE
             if (lastSortedEnd < 1)
             {
                 lastSortedEnd =
-                    RAH_NAMESPACE::is_sorted_until<RandomAccessIterator, StrictWeakOrdering>(
+                    RAH_NAMESPACE::is_sorted_until<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
                         first, last, compare)
                     - first;
             }
@@ -484,8 +366,9 @@ namespace RAH_NAMESPACE
                 // If the size is less than or equal to InsertionSortLimit use insertion sort instead of recursing further.
                 if (nCount <= InsertionSortLimit)
                 {
-                    RAH_NAMESPACE::Internal::insertion_sort_already_started<RandomAccessIterator, StrictWeakOrdering>(
-                        first, last, first + lastSortedEnd, compare);
+                    RAH_NAMESPACE::Internal::
+                        insertion_sort_already_started<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                            first, last, first + lastSortedEnd, compare);
                     return RL_SourceRange;
                 }
                 else
@@ -503,15 +386,15 @@ namespace RAH_NAMESPACE
                     ResultLocation secondHalfLocation =
                         sort_impl(first + nMid, last, pBuffer + nMid, lastSortedEnd - nMid, compare);
 
-                    return merge_halves(
+                    return MergeSorter::merge_halves(
                         first, last, nMid, pBuffer, firstHalfLocation, secondHalfLocation, compare);
                 }
             }
             else
             {
-                RAH_DEV_ASSERT(
-                    (RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
-                        first, last, compare)));
+                RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted.
+                                operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                    first, last, compare)));
                 return RL_SourceRange;
             }
         }
@@ -536,7 +419,13 @@ namespace RAH_NAMESPACE
             {
                 if (secondHalfLocation == RL_SourceRange)
                 {
-                    RAH_NAMESPACE::merge<RandomAccessIterator, RandomAccessIterator, T*, StrictWeakOrdering>(
+                    RAH_NAMESPACE::merge<
+                        RandomAccessIterator,
+                        RandomAccessIterator,
+                        RandomAccessIterator,
+                        Sentinel,
+                        T*,
+                        StrictWeakOrdering>(
                         first, first + nMid, first + nMid, last, pBuffer, compare);
                     RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted.operator()<T*, T*, StrictWeakOrdering>(
                         pBuffer, pBuffer + nCount, compare)));
@@ -545,12 +434,11 @@ namespace RAH_NAMESPACE
                 else
                 {
                     RAH_NAMESPACE::copy(first, first + nMid, pBuffer);
-                    RAH_NAMESPACE::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                    RAH_NAMESPACE::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
                         pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                    RAH_DEV_ASSERT(
-                        (RAH_NAMESPACE::is_sorted.
-                         operator()<RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering>(
-                             first, last, compare)));
+                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted.
+                                    operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                        first, last, compare)));
                     return RL_SourceRange;
                 }
             }
@@ -559,20 +447,20 @@ namespace RAH_NAMESPACE
                 if (secondHalfLocation == RL_SourceRange)
                 {
                     RAH_NAMESPACE::copy(first + nMid, last, pBuffer + nMid);
-                    RAH_NAMESPACE::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                    RAH_NAMESPACE::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
                         pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                    RAH_DEV_ASSERT((
-                        RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
-                            first, last, compare)));
+                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted.
+                                    operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                        first, last, compare)));
                     return RL_SourceRange;
                 }
                 else
                 {
-                    RAH_NAMESPACE::merge<T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                    RAH_NAMESPACE::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
                         pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                    RAH_DEV_ASSERT((
-                        RAH_NAMESPACE::is_sorted.operator()<RandomAccessIterator, StrictWeakOrdering>(
-                            first, last, compare)));
+                    RAH_DEV_ASSERT((RAH_NAMESPACE::is_sorted.
+                                    operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                        first, last, compare)));
                     return RL_SourceRange;
                 }
             }
@@ -627,14 +515,14 @@ namespace RAH_NAMESPACE
 
             RAH_STD::uninitialized_fill(pBuffer, pBuffer + nCount, value_type());
 
-            RAH_NAMESPACE::merge_sort_buffer<RandomAccessIterator, value_type, StrictWeakOrdering>(
+            RAH_NAMESPACE::merge_sort_buffer<RandomAccessIterator, Sentinel, value_type, StrictWeakOrdering>(
                 first, last, pBuffer, compare);
 
             RAH_NAMESPACE::destroy(pBuffer, pBuffer + nCount);
 #ifdef RAH_EASTL
             EASTLFree(allocator, pBuffer, nCount * sizeof(value_type));
 #else
-            allocator.deallocate(pBuffer);
+            allocator.deallocate(pBuffer, nCount);
 #endif
         }
     }
@@ -743,7 +631,7 @@ namespace RAH_NAMESPACE
         RAH_NAMESPACE::copy(buffer, result2, result1);
 
         RAH_NAMESPACE::destroy(buffer, buffer + requested_size);
-        EASTLFree(allocator, buffer, requested_size * sizeof(value_type));
+        allocator.deallocate(buffer, requested_size * sizeof(value_type));
 
         return {result1, last};
     }
@@ -751,7 +639,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename Predicate>
     auto stable_partition(ForwardRange&& range, Predicate pred)
     {
-        return stable_partition(
+        return RAH_NAMESPACE::stable_partition(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(pred));
     }
 
@@ -990,7 +878,8 @@ namespace RAH_NAMESPACE
     template <typename RandomAccessRange, typename RandomAccessIterator>
     inline void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle)
     {
-        return partial_sort(RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range));
+        return RAH_NAMESPACE::partial_sort(
+            RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range));
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
@@ -1026,7 +915,7 @@ namespace RAH_NAMESPACE
     template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>
     inline void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle, Compare compare)
     {
-        return partial_sort(
+        return RAH_NAMESPACE::partial_sort(
             RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
@@ -2183,24 +2072,6 @@ namespace RAH_NAMESPACE
         }
     } // namespace Internal
 
-    template <typename ForwardIterator, typename Sentinel, typename StrictWeakOrdering>
-    inline void bubble_sort(ForwardIterator first, Sentinel last, StrictWeakOrdering compare)
-    {
-        typedef typename RAH_STD::iterator_traits<ForwardIterator>::iterator_category IC;
-
-        RAH_NAMESPACE::Internal::bubble_sort_impl<ForwardIterator, StrictWeakOrdering>(
-            first, last, compare, IC());
-    }
-
-    template <typename ForwardIterator, typename Sentinel>
-    inline void bubble_sort(ForwardIterator first, Sentinel last)
-    {
-        typedef RAH_STD::less<typename RAH_STD::iterator_traits<ForwardIterator>::value_type> Less;
-        typedef typename RAH_STD::iterator_traits<ForwardIterator>::iterator_category IC;
-
-        RAH_NAMESPACE::Internal::bubble_sort_impl<ForwardIterator, Less>(first, last, Less(), IC());
-    }
-
     /// sort
     ///
     /// We use quick_sort by default. See quick_sort for details.
@@ -2290,8 +2161,9 @@ namespace RAH_NAMESPACE
 #else
         using Allocator =
             std::allocator<typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type>;
-        RAH_NAMESPACE::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
-            first, last, Allocator(), compare);
+        Allocator allocator;
+        RAH_NAMESPACE::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
+            first, last, allocator, compare);
 #endif
 #endif
     }
@@ -2302,7 +2174,8 @@ namespace RAH_NAMESPACE
         std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
     void stable_sort(RandomAccessRange&& range, StrictWeakOrdering compare)
     {
-        stable_sort(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
+        RAH_NAMESPACE::stable_sort(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
     template <

@@ -1,38 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) Electronic Arts Inc. All rights reserved.
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// This file implements heap functionality much like the std C++ heap algorithms.
-// Such heaps are not the same thing as memory heaps or pools, but rather are
-// semi-sorted random access containers which have the primary purpose of
-// supporting the implementation of priority_queue and similar data structures.
-//
-// The primary distinctions between this heap functionality and std::heap are:
-//    - This heap exposes some extra functionality such as is_heap and change_heap.
-//    - This heap is more efficient than versions found in typical STL
-//      implementations such as STLPort, Microsoft, and Metrowerks. This comes
-//      about due to better use of array dereferencing and branch prediction.
-//      You should expect of 5-30%, depending on the usage and platform.
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// The publicly usable functions we define are:
-//    push_heap     -- Adds an entry to a heap.                             Same as C++ std::push_heap.
-//    pop_heap      -- Removes the top entry from a heap.                   Same as C++ std::pop_heap.
-//    make_heap     -- Converts an array to a heap.                         Same as C++ std::make_heap.
-//    sort_heap     -- Sorts a heap in place.                               Same as C++ std::sort_heap.
-//    remove_heap   -- Removes an arbitrary entry from a heap.
-//    change_heap   -- Changes the priority of an entry in the heap.
-//    is_heap       -- Returns true if an array appears is in heap format.   Same as C++11 std::is_heap.
-//    is_heap_until -- Returns largest part of the range which is a heap.    Same as C++11 std::is_heap_until.
-///////////////////////////////////////////////////////////////////////////////
-
 #pragma once
-
-//#include <EASTL/internal/config.h>
-//#include <EASTL/iterator.h>
-//#include <stddef.h>
 
 #include "range_bases.hpp"
 
@@ -629,115 +595,6 @@ namespace RAH_NAMESPACE
     }
 
     ///////////////////////////////////////////////////////////////////////
-    // remove_heap
-    ///////////////////////////////////////////////////////////////////////
-
-    /// remove_heap
-    ///
-    /// Removes an arbitrary entry from the heap and adjusts the heap appropriately.
-    /// This function is unlike pop_heap in that pop_heap moves the top item
-    /// to the back of the heap, whereas remove_heap moves an arbitrary item to
-    /// the back of the heap.
-    ///
-    /// Note: Since this function moves the element to the back of the heap and
-    /// doesn't actually remove it from the given container, the user must call
-    /// the container erase function if the user wants to erase the element
-    /// from the container.
-    ///
-    template <typename RandomAccessIterator, typename Distance>
-    inline void remove_heap(RandomAccessIterator first, Distance heapSize, Distance position)
-    {
-        typedef
-            typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        const value_type tempBottom(*(first + heapSize - 1));
-        *(first + heapSize - 1) = *(first + position);
-        RAH_NAMESPACE::adjust_heap<RandomAccessIterator, difference_type, value_type>(
-            first,
-            (difference_type)0,
-            (difference_type)(heapSize - 1),
-            (difference_type)position,
-            tempBottom);
-    }
-
-    /// remove_heap
-    ///
-    /// The Compare function must work equivalently to the compare function used
-    /// to make and maintain the heap.
-    ///
-    /// Note: Since this function moves the element to the back of the heap and
-    /// doesn't actually remove it from the given container, the user must call
-    /// the container erase function if the user wants to erase the element
-    /// from the container.
-    ///
-    template <typename RandomAccessIterator, typename Distance, typename Compare>
-    inline void
-    remove_heap(RandomAccessIterator first, Distance heapSize, Distance position, Compare compare)
-    {
-        typedef
-            typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        const value_type tempBottom(*(first + heapSize - 1));
-        *(first + heapSize - 1) = *(first + position);
-        RAH_NAMESPACE::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
-            first,
-            (difference_type)0,
-            (difference_type)(heapSize - 1),
-            (difference_type)position,
-            tempBottom,
-            compare);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    // change_heap
-    ///////////////////////////////////////////////////////////////////////
-
-    /// change_heap
-    ///
-    /// Given a value in the heap that has changed in priority, this function
-    /// adjusts the heap appropriately. The heap size remains unchanged after
-    /// this operation.
-    ///
-    template <typename RandomAccessIterator, typename Distance>
-    inline void change_heap(RandomAccessIterator first, Distance heapSize, Distance position)
-    {
-        typedef
-            typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        RAH_NAMESPACE::remove_heap<RandomAccessIterator, Distance>(first, heapSize, position);
-
-        value_type tempBottom(*(first + heapSize - 1));
-
-        RAH_NAMESPACE::promote_heap<RandomAccessIterator, difference_type, value_type>(
-            first, (difference_type)0, (difference_type)(heapSize - 1), tempBottom);
-    }
-
-    /// change_heap
-    ///
-    /// The Compare function must work equivalently to the compare function used
-    /// to make and maintain the heap.
-    ///
-    template <typename RandomAccessIterator, typename Distance, typename Compare>
-    inline void
-    change_heap(RandomAccessIterator first, Distance heapSize, Distance position, Compare compare)
-    {
-        typedef
-            typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-
-        RAH_NAMESPACE::remove_heap<RandomAccessIterator, Distance, Compare>(
-            first, heapSize, position, compare);
-
-        value_type tempBottom(*(first + heapSize - 1));
-
-        RAH_NAMESPACE::promote_heap<RandomAccessIterator, difference_type, value_type, Compare>(
-            first, (difference_type)0, (difference_type)(heapSize - 1), tempBottom, compare);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
     // is_heap_until
     ///////////////////////////////////////////////////////////////////////
 
@@ -806,7 +663,7 @@ namespace RAH_NAMESPACE
         std::enable_if_t<
             random_access_iterator<RandomAccessIterator>
             && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-    inline bool is_heap(RandomAccessIterator first, RandomAccessIterator last)
+    inline bool is_heap(RandomAccessIterator first, Sentinel last)
     {
         return (RAH_NAMESPACE::is_heap_until(first, last) == last);
     }
@@ -814,7 +671,7 @@ namespace RAH_NAMESPACE
     template <typename RandomAccessRange>
     inline bool is_heap(RandomAccessRange&& range)
     {
-        return is_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
+        return RAH_NAMESPACE::is_heap(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// is_heap
@@ -834,30 +691,8 @@ namespace RAH_NAMESPACE
         std::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
     inline bool is_heap(RandomAccessRange&& range, Compare compare)
     {
-        return is_heap(
+        return RAH_NAMESPACE::is_heap(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
-
-    // To consider: The following may be a faster implementation for most cases.
-    //
-    // template <typename RandomAccessIterator>
-    // inline bool is_heap(RandomAccessIterator first, RandomAccessIterator last)
-    // {
-    //     if(((uintptr_t)(last - first) & 1) == 0) // If the range has an even number of elements...
-    //         --last;
-    //
-    //     RandomAccessIterator parent = first, child = (first + 1);
-    //
-    //     for(; child < last; child += 2, ++parent)
-    //     {
-    //         if((*parent < *child) || (*parent < *(child + 1)))
-    //             return false;
-    //     }
-    //
-    //     if((((uintptr_t)(last - first) & 1) == 0) && (*parent < *child))
-    //         return false;
-    //
-    //     return true;
-    // }
 
 } // namespace RAH_NAMESPACE

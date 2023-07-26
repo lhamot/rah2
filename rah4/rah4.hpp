@@ -10,7 +10,6 @@
 #include <tuple>
 
 #include "range_bases.hpp"
-#include "eastl_algorithm.h"
 #include "range_algorithms.hpp"
 #include "mpark/variant.hpp"
 

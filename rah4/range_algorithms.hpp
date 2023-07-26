@@ -167,13 +167,6 @@ namespace rah
     constexpr fold_right_last_fn fold_right_last;
 
     template <class I, class T>
-    struct in_value_result
-    {
-        I in;
-        T value;
-    };
-
-    template <class I, class T>
     using fold_left_with_iter_result = RAH_NAMESPACE::in_value_result<I, T>;
 
     class fold_left_with_iter_fn
@@ -1319,13 +1312,6 @@ namespace rah
     };
 
     constexpr prev_permutation_fn prev_permutation{};
-
-    template <class O, class T>
-    struct out_value_result
-    {
-        O out;
-        T value;
-    };
 
     template <class O, class T>
     using iota_result = RAH_NAMESPACE::out_value_result<O, T>;

@@ -1,236 +1,3 @@
-/////////////////////////////////////////////////////////////////////////////
-// Copyright (c) Electronic Arts Inc. All rights reserved.
-/////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// This file implements some of the primary algorithms from the C++ STL
-// algorithm library. These versions are just like that STL versions and so
-// are redundant. They are provided solely for the purpose of projects that
-// either cannot use standard C++ STL or want algorithms that have guaranteed
-// identical behaviour across platforms.
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Definitions
-//
-// You will notice that we are very particular about the templated typenames
-// we use here. You will notice that we follow the C++ standard closely in
-// these respects. Each of these typenames have a specific meaning;
-// this is why we don't just label templated arguments with just letters
-// such as T, U, V, A, B. Here we provide a quick reference for the typenames
-// we use. See the C++ standard, section 25-8 for more details.
-//    --------------------------------------------------------------
-//    typename                     Meaning
-//    --------------------------------------------------------------
-//    T                            The value type.
-//    Compare                      A function which takes two arguments and returns the lesser of the two.
-//    Predicate                    A function which takes one argument returns true if the argument meets some criteria.
-//    BinaryPredicate              A function which takes two arguments and returns true if some criteria is met (e.g. they are equal).
-//    StrickWeakOrdering           A BinaryPredicate that compares two objects, returning true if the first precedes the second. Like Compare but has additional requirements. Used for sorting routines.
-//    Function                     A function which takes one argument and applies some operation to the target.
-//    Size                         A count or size.
-//    Generator                    A function which takes no arguments and returns a value (which will usually be assigned to an object).
-//    UnaryOperation               A function which takes one argument and returns a value (which will usually be assigned to second object).
-//    BinaryOperation              A function which takes two arguments and returns a value (which will usually be assigned to a third object).
-//    InputIterator                An input iterator (iterator you read from) which allows reading each element only once and only in a forward direction.
-//    ForwardIterator              An input iterator which is like InputIterator except it can be reset back to the beginning.
-//    BidirectionalIterator        An input iterator which is like ForwardIterator except it can be read in a backward direction as well.
-//    RandomAccessIterator         An input iterator which can be addressed like an array. It is a superset of all other input iterators.
-//    OutputIterator               An output iterator (iterator you write to) which allows writing each element only once in only in a forward direction.
-//
-// Note that with iterators that a function which takes an InputIterator will
-// also work with a ForwardIterator, BidirectionalIterator, or RandomAccessIterator.
-// The given iterator type is merely the -minimum- supported functionality the
-// iterator must support.
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Optimizations
-//
-// There are a number of opportunities for opptimizations that we take here
-// in this library. The most obvious kinds are those that subsitute memcpy
-// in the place of a conventional loop for data types with which this is
-// possible. The algorithms here are optimized to a higher level than currently
-// available C++ STL algorithms from vendors such as Microsoft. This is especially
-// so for game programming on console devices, as we do things such as reduce
-// branching relative to other STL algorithm implementations. However, the
-// proper implementation of these algorithm optimizations is a fairly tricky
-// thing.
-//
-// The various things we look to take advantage of in order to implement
-// optimizations include:
-//    - Taking advantage of random access iterators.
-//    - Taking advantage of POD (plain old data) data types.
-//    - Taking advantage of type_traits in general.
-//    - Reducing branching and taking advantage of likely branch predictions.
-//    - Taking advantage of issues related to pointer and reference aliasing.
-//    - Improving cache coherency during memory accesses.
-//    - Making code more likely to be inlinable by the compiler.
-//
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// Supported Algorithms
-//
-// Algorithms that we implement are listed here. Note that these items are not
-// all within this header file, as we split up the header files in order to
-// improve compilation performance. Items marked with '+' are items that are
-// extensions which don't exist in the C++ standard.
-//
-//    -------------------------------------------------------------------------------
-//      Algorithm                                   Notes
-//    -------------------------------------------------------------------------------
-//      adjacent_find
-//      adjacent_find<Compare>
-//      all_of                                      C++11
-//      any_of                                      C++11
-//      none_of                                     C++11
-//      binary_search
-//      binary_search<Compare>
-//     +binary_search_i
-//     +binary_search_i<Compare>
-//     +change_heap                                 Found in heap.h
-//     +change_heap<Compare>                        Found in heap.h
-//      clamp
-//      copy
-//      copy_if                                     C++11
-//      copy_n                                      C++11
-//      copy_backward
-//      count
-//      count_if
-//      equal
-//      equal<Compare>
-//      equal_range
-//      equal_range<Compare>
-//      fill
-//      fill_n
-//      find
-//      find_end
-//      find_end<Compare>
-//      find_first_of
-//      find_first_of<Compare>
-//     +find_first_not_of
-//     +find_first_not_of<Compare>
-//     +find_last_of
-//     +find_last_of<Compare>
-//     +find_last_not_of
-//     +find_last_not_of<Compare>
-//      find_if
-//      find_if_not
-//      for_each
-//      generate
-//      generate_n
-//     +identical
-//     +identical<Compare>
-//      iter_swap
-//      lexicographical_compare
-//      lexicographical_compare<Compare>
-//      lexicographical_compare_three_way
-//      lower_bound
-//      lower_bound<Compare>
-//      make_heap                                   Found in heap.h
-//      make_heap<Compare>                          Found in heap.h
-//      min
-//      min<Compare>
-//      max
-//      max<Compare>
-//     +min_alt                                     Exists to work around the problem of conflicts with min/max #defines on some systems.
-//     +min_alt<Compare>
-//     +max_alt
-//     +max_alt<Compare>
-//     +median
-//     +median<Compare>
-//      merge                                       Found in sort.h
-//      merge<Compare>                              Found in sort.h
-//      min_element
-//      min_element<Compare>
-//      max_element
-//      max_element<Compare>
-//      mismatch
-//      mismatch<Compare>
-//      move
-//      move_backward
-//      nth_element                                 Found in sort.h
-//      nth_element<Compare>                        Found in sort.h
-//      partial_sort                                Found in sort.h
-//      partial_sort<Compare>                       Found in sort.h
-//      push_heap                                   Found in heap.h
-//      push_heap<Compare>                          Found in heap.h
-//      pop_heap                                    Found in heap.h
-//      pop_heap<Compare>                           Found in heap.h
-//      random_shuffle<Random>
-//      remove
-//      remove_if
-//     +apply_and_remove
-//     +apply_and_remove_if
-//      remove_copy
-//      remove_copy_if
-//     +remove_heap                                 Found in heap.h
-//     +remove_heap<Compare>                        Found in heap.h
-//      replace
-//      replace_if
-//      replace_copy
-//      replace_copy_if
-//      reverse_copy
-//      reverse
-//      random_shuffle
-//      rotate
-//      rotate_copy
-//      search
-//      search<Compare>
-//      search_n
-//      set_difference
-//      set_difference<Compare>
-//      set_difference_2
-//      set_difference_2<Compare>
-//      set_decomposition
-//      set_decomposition<Compare>
-//      set_intersection
-//      set_intersection<Compare>
-//      set_symmetric_difference
-//      set_symmetric_difference<Compare>
-//      set_union
-//      set_union<Compare>
-//      sort                                        Found in sort.h
-//      sort<Compare>                               Found in sort.h
-//      sort_heap                                   Found in heap.h
-//      sort_heap<Compare>                          Found in heap.h
-//      stable_sort                                 Found in sort.h
-//      stable_sort<Compare>                        Found in sort.h
-//      swap
-//      swap_ranges
-//      transform
-//      transform<Operation>
-//      unique
-//      unique<Compare>
-//      upper_bound
-//      upper_bound<Compare>
-//      is_permutation
-//      is_permutation<Predicate>
-//      next_permutation
-//      next_permutation<Compare>
-//
-// Algorithms from the C++ standard that we don't implement are listed here.
-// Most of these items are absent because they aren't used very often.
-// They also happen to be the more complicated than other algorithms.
-// However, we can implement any of these functions for users that might
-// need them.
-//      includes
-//      includes<Compare>
-//      inplace_merge
-//      inplace_merge<Compare>
-//      partial_sort_copy
-//      partial_sort_copy<Compare>
-//      paritition
-//      prev_permutation
-//      prev_permutation<Compare>
-//      search_n<Compare>
-//      stable_partition
-//      unique_copy
-//      unique_copy<Compare>
-//
-///////////////////////////////////////////////////////////////////////////////
-
 #pragma once
 
 #include "range_bases.hpp"
@@ -239,29 +6,7 @@
 namespace RAH_NAMESPACE
 {
     template <class I, class O>
-    struct in_out_result
-    {
-        I in;
-        O out;
-    };
-    template <class I1, class I2, class O>
-    struct in_in_out_result
-    {
-        I1 in1;
-        I2 in2;
-        O out;
-    };
-
-    template <class I, class O>
     using move_result = RAH_NAMESPACE::in_out_result<I, O>;
-
-    template <class I, class O1, class O2>
-    struct in_out_out_result
-    {
-        I in;
-        O1 out1;
-        O2 out2;
-    };
 
     struct move_fn
     {
@@ -394,7 +139,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange>
     auto min_element(ForwardRange&& range)
     {
-        return min_element(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
+        return RAH_NAMESPACE::min_element(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// min_element
@@ -431,7 +176,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename Compare>
     auto min_element(ForwardRange&& range, Compare compare)
     {
-        return min_element(
+        return RAH_NAMESPACE::min_element(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
     }
 
@@ -473,7 +218,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange>
     iterator_t<ForwardRange> max_element(ForwardRange&& range)
     {
-        return max_element(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
+        return RAH_NAMESPACE::max_element(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range));
     }
 
     /// max_element
@@ -510,106 +255,8 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename Compare, std::enable_if_t<forward_range<ForwardRange>>* = nullptr>
     iterator_t<ForwardRange> max_element(ForwardRange&& range, Compare compare)
     {
-        return max_element(
+        return RAH_NAMESPACE::max_element(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(compare));
-    }
-
-    /// min_alt
-    ///
-    /// This is an alternative version of min that avoids any possible
-    /// collisions with Microsoft #defines of min and max.
-    ///
-    /// See min(a, b) for detailed specifications.
-    ///
-    template <typename T>
-    inline RAH_CONSTEXPR typename RAH_STD::enable_if<RAH_NAMESPACE::is_scalar<T>::value, T>::type
-    min_alt(T a, T b)
-    {
-        return b < a ? b : a;
-    }
-
-    template <typename T>
-    inline typename RAH_STD::enable_if<!RAH_NAMESPACE::is_scalar<T>::value, const T&>::type
-    min_alt(const T& a, const T& b)
-    {
-        return b < a ? b : a;
-    }
-
-    inline RAH_CONSTEXPR float min_alt(float a, float b)
-    {
-        return b < a ? b : a;
-    }
-    inline RAH_CONSTEXPR double min_alt(double a, double b)
-    {
-        return b < a ? b : a;
-    }
-    inline RAH_CONSTEXPR long double min_alt(long double a, long double b)
-    {
-        return b < a ? b : a;
-    }
-
-    /// min_alt
-    ///
-    /// This is an alternative version of min that avoids any possible
-    /// collisions with Microsoft #defines of min and max.
-    ///
-    /// See min(a, b) for detailed specifications.
-    ///
-    template <typename T, typename Compare>
-    inline const T& min_alt(const T& a, const T& b, Compare compare)
-    {
-        return compare(b, a) ? b : a;
-    }
-
-    /// max_alt
-    ///
-    /// This is an alternative version of max that avoids any possible
-    /// collisions with Microsoft #defines of min and max.
-    ///
-    template <typename T>
-    inline RAH_CONSTEXPR typename RAH_STD::enable_if<RAH_NAMESPACE::is_scalar<T>::value, T>::type
-    max_alt(T a, T b)
-    {
-        return a < b ? b : a;
-    }
-
-    template <typename T>
-    inline RAH_CONSTEXPR
-        typename RAH_STD::enable_if<!RAH_NAMESPACE::is_scalar<T>::value, const T&>::type
-        max_alt(const T& a, const T& b)
-    {
-        return a < b ? b : a;
-    }
-
-    inline RAH_CONSTEXPR float max_alt(float a, float b)
-    {
-        return a < b ? b : a;
-    }
-    inline RAH_CONSTEXPR double max_alt(double a, double b)
-    {
-        return a < b ? b : a;
-    }
-    inline RAH_CONSTEXPR long double max_alt(long double a, long double b)
-    {
-        return a < b ? b : a;
-    }
-
-    template <class T>
-    struct min_max_result
-    {
-        T min;
-        T max;
-    };
-
-    /// max_alt
-    ///
-    /// This is an alternative version of max that avoids any possible
-    /// collisions with Microsoft #defines of min and max.
-    ///
-    template <typename T, typename Compare>
-    inline const T& max_alt(const T& a, const T& b, Compare compare)
-    {
-        return compare(a, b) ? b : a;
     }
 
     template <class I>
@@ -772,7 +419,7 @@ namespace RAH_NAMESPACE
     template <typename T, typename Compare>
     inline const T& median(const T& a, const T& b, const T& c, Compare compare)
     {
-        return median_impl<const T&, Compare>(a, b, c, compare);
+        return RAH_NAMESPACE::median_impl<const T&, Compare>(a, b, c, compare);
     }
 
     /// median
@@ -808,7 +455,8 @@ namespace RAH_NAMESPACE
     template <typename InputRange, typename Predicate>
     inline bool all_of(InputRange&& range, Predicate p)
     {
-        return all_of(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(p));
+        return RAH_NAMESPACE::all_of(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(p));
     }
 
     /// any_of
@@ -829,7 +477,8 @@ namespace RAH_NAMESPACE
     template <typename InputRange, typename Predicate>
     inline bool any_of(InputRange&& range, Predicate p)
     {
-        return any_of(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(p));
+        return RAH_NAMESPACE::any_of(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(p));
     }
 
     /// none_of
@@ -933,82 +582,18 @@ namespace RAH_NAMESPACE
             uniform_int_distribution uid;
 
             for (RandomAccessIterator i = first + 1; i != last; ++i)
-                iter_swap(i, first + uid(urng, uniform_int_distribution_param_type(0, i - first)));
+                RAH_NAMESPACE::iter_swap(
+                    i, first + uid(urng, uniform_int_distribution_param_type(0, i - first)));
         }
     }
 
     template <typename RandomRange, typename UniformRandomNumberGenerator>
     void shuffle(RandomRange&& range, UniformRandomNumberGenerator&& urng)
     {
-        shuffle(
+        RAH_NAMESPACE::shuffle(
             RAH_NAMESPACE::begin(range),
             RAH_NAMESPACE::end(range),
             RAH_STD::forward<UniformRandomNumberGenerator>(urng));
-    }
-
-    /// random_shuffle
-    ///
-    /// Randomizes a sequence of values.
-    ///
-    /// Effects: Shuffles the elements in the range [first, last) with uniform distribution.
-    ///
-    /// Complexity: Exactly '(last - first) - 1' swaps.
-    ///
-    /// Example usage:
-    ///     RAH_STD::size_t Rand(RAH_STD::size_t n) { return (RAH_STD::size_t)(rand() % n); } // Note: The C rand function is poor and slow.
-    ///     pointer_to_unary_function<RAH_STD::size_t, RAH_STD::size_t> randInstance(Rand);
-    ///     random_shuffle(pArrayBegin, pArrayEnd, randInstance);
-    ///
-    /// Example usage:
-    ///     struct Rand{ RAH_STD::size_t operator()(RAH_STD::size_t n) { return (RAH_STD::size_t)(rand() % n); } }; // Note: The C rand function is poor and slow.
-    ///     Rand randInstance;
-    ///     random_shuffle(pArrayBegin, pArrayEnd, randInstance);
-    ///
-    template <typename RandomAccessIterator, typename Sentinel, typename RandomNumberGenerator>
-    inline void random_shuffle(RandomAccessIterator first, Sentinel last, RandomNumberGenerator&& rng)
-    {
-        typedef
-            typename RAH_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-
-        // We must do 'rand((i - first) + 1)' here and cannot do 'rand(last - first)',
-        // as it turns out that the latter results in unequal distribution probabilities.
-        // http://www.cigital.com/papers/download/developer_gambling.php
-
-        for (RandomAccessIterator i = first + 1; i < last; ++i)
-            iter_swap(i, first + (difference_type)rng((RAH_STD::size_t)((i - first) + 1)));
-    }
-
-    /// random_shuffle
-    ///
-    /// Randomizes a sequence of values.
-    ///
-    /// Effects: Shuffles the elements in the range [first, last) with uniform distribution.
-    ///
-    /// Complexity: Exactly '(last - first) - 1' swaps.
-    ///
-    /// Example usage:
-    ///     random_shuffle(pArrayBegin, pArrayEnd);
-    ///
-    /// *** Disabled until we decide if we want to get into the business of writing random number generators. ***
-    ///
-    /// template <typename RandomAccessIterator, typename Sentinel>
-    /// inline void random_shuffle(RandomAccessIterator first, Sentinel last)
-    /// {
-    ///     for(RandomAccessIterator i = first + 1; i < last; ++i)
-    ///         iter_swap(i, first + SomeRangedRandomNumberGenerator((i - first) + 1));
-    /// }
-
-    /// move_n
-    ///
-    /// Same as move(InputIterator, InputIterator, OutputIterator) except based on count instead of iterator range.
-    ///
-    template <typename InputIterator, typename Size, typename OutputIterator>
-    inline OutputIterator
-    move_n_impl(InputIterator first, Size n, OutputIterator result, RAH_ITC_NS::input_iterator_tag)
-    {
-        for (; n > 0; --n)
-            *result++ = RAH_STD::move(*first++);
-        return result;
     }
 
     template <class I, class O>
@@ -1452,172 +1037,6 @@ namespace RAH_NAMESPACE
 
     constexpr find_first_of_fn find_first_of{};
 
-    /// find_first_not_of
-    ///
-    /// Searches through first range for the first element that does not belong the second input range.
-    /// This is very much like the C++ string find_first_not_of function.
-    ///
-    /// Returns: The first iterator i in the range [first1, last1) such that for some
-    /// integer j in the range [first2, last2) the following conditions hold: !(*i == *j).
-    /// Returns last1 if no such iterator is found.
-    ///
-    /// Complexity: At most '(last1 - first1) * (last2 - first2)' applications of the
-    /// corresponding predicate.
-    ///
-    template <class ForwardIterator1, typename ForwardSentinel1, class ForwardIterator2, typename ForwardSentinel2>
-    ForwardIterator1 find_first_not_of(
-        ForwardIterator1 first1, ForwardSentinel1 last1, ForwardIterator2 first2, ForwardSentinel2 last2)
-    {
-        for (; first1 != last1; ++first1)
-        {
-            if (RAH_NAMESPACE::find(first2, last2, *first1) == last2)
-                break;
-        }
-
-        return first1;
-    }
-
-    /// find_first_not_of
-    ///
-    /// Searches through first range for the first element that does not belong the second input range.
-    /// This is very much like the C++ string find_first_not_of function.
-    ///
-    /// Returns: The first iterator i in the range [first1, last1) such that for some
-    /// integer j in the range [first2, last2) the following conditions hold: pred(*i, *j) == false.
-    /// Returns last1 if no such iterator is found.
-    ///
-    /// Complexity: At most '(last1 - first1) * (last2 - first2)' applications of the
-    /// corresponding predicate.
-    ///
-    template <class ForwardIterator1, typename ForwardSentinel1, class ForwardIterator2, typename ForwardSentinel2, class BinaryPredicate>
-    inline ForwardIterator1 find_first_not_of(
-        ForwardIterator1 first1,
-        ForwardSentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        BinaryPredicate predicate)
-    {
-        for (; first1 != last1; ++first1)
-        {
-            if (RAH_NAMESPACE::find_if(
-                    first2,
-                    last2,
-                    [f1 = *first1, &predicate](auto&& v)
-                    { return predicate(f1, RAH_STD::forward<decltype(v)>(v)); })
-                == last2)
-                break;
-        }
-
-        return first1;
-    }
-
-    template <class BidirectionalIterator1, class BidirectionalSentinel1, class ForwardIterator2, typename ForwardSentinel2>
-    inline BidirectionalIterator1 find_last_of(
-        BidirectionalIterator1 first1,
-        BidirectionalSentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2)
-    {
-        if ((first1 != last1) && (first2 != last2))
-        {
-            BidirectionalIterator1 it1(last1);
-
-            while ((--it1 != first1) && (RAH_NAMESPACE::find(first2, last2, *it1) == last2))
-                ; // Do nothing
-
-            if ((it1 != first1) || (RAH_NAMESPACE::find(first2, last2, *it1) != last2))
-                return it1;
-        }
-
-        return last1;
-    }
-
-    template <class BidirectionalIterator1, typename Sentinel1, class ForwardIterator2, typename ForwardSentinel2, class BinaryPredicate>
-    BidirectionalIterator1 find_last_of(
-        BidirectionalIterator1 first1,
-        Sentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        BinaryPredicate predicate)
-    {
-        if ((first1 != last1) && (first2 != last2))
-        {
-            BidirectionalIterator1 it1(last1);
-
-            while ((--it1 != first1)
-                   && (RAH_NAMESPACE::find_if(
-                           first2,
-                           last2,
-                           [v1 = *it1, predicate](auto&& v)
-                           { return predicate(v1, RAH_STD::forward<decltype(v)>(v)); })
-                       == last2))
-                ; // Do nothing
-
-            if ((it1 != first1)
-                || (RAH_NAMESPACE::find_if(
-                        first2,
-                        last2,
-                        [v1 = *it1, predicate](auto&& v)
-                        { return predicate(v1, RAH_STD::forward<decltype(v)>(v)); })
-                    != last2))
-                return it1;
-        }
-
-        return last1;
-    }
-
-    template <class BidirectionalIterator1, typename Sentinel1, class ForwardIterator2, typename ForwardSentinel2>
-    inline BidirectionalIterator1 find_last_not_of(
-        BidirectionalIterator1 first1, Sentinel1 last1, ForwardIterator2 first2, ForwardSentinel2 last2)
-    {
-        if ((first1 != last1) && (first2 != last2))
-        {
-            BidirectionalIterator1 it1(last1);
-
-            while ((--it1 != first1) && (RAH_NAMESPACE::find(first2, last2, *it1) != last2))
-                ; // Do nothing
-
-            if ((it1 != first1) || (RAH_NAMESPACE::find(first2, last2, *it1) == last2))
-                return it1;
-        }
-
-        return last1;
-    }
-
-    template <class BidirectionalIterator1, typename Sentinel1, class ForwardIterator2, typename ForwardSentinel2, class BinaryPredicate>
-    inline BidirectionalIterator1 find_last_not_of(
-        BidirectionalIterator1 first1,
-        Sentinel1 last1,
-        ForwardIterator2 first2,
-        ForwardSentinel2 last2,
-        BinaryPredicate predicate)
-    {
-        if ((first1 != last1) && (first2 != last2))
-        {
-            BidirectionalIterator1 it1(last1);
-
-            while ((--it1 != first1)
-                   && (RAH_NAMESPACE::find_if(
-                           first2,
-                           last2,
-                           [v1 = *it1, predicate](auto&& v)
-                           { return predicate(v1, RAH_STD::forward<decltype(v)>(v)); })
-                       != last2))
-                ; // Do nothing
-
-            if ((it1 != first1)
-                || (RAH_NAMESPACE::find_if(
-                       first2,
-                       last2,
-                       [v1 = *it1, predicate](auto&& v)
-                       { return predicate(v1, RAH_STD::forward<decltype(v)>(v)); }))
-                       != last2)
-                return it1;
-        }
-
-        return last1;
-    }
-
     /// for_each
     ///
     /// Calls the Function function for each value in the range [first, last).
@@ -1643,15 +1062,9 @@ namespace RAH_NAMESPACE
     template <typename InputRange, typename Function>
     inline auto for_each(InputRange&& range, Function function)
     {
-        return for_each(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), std::move(function));
+        return RAH_NAMESPACE::for_each(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), std::move(function));
     }
-
-    template <class I, class F>
-    struct in_fun_result
-    {
-        I in;
-        F fun;
-    };
 
     template <class I, class F>
     using for_each_n_result = RAH_NAMESPACE::in_fun_result<I, F>;
@@ -1971,60 +1384,12 @@ namespace RAH_NAMESPACE
     RAH_CPP14_CONSTEXPR inline bool
     equal(InputRange1&& range1, InputRange2 range2, BinaryPredicate&& predicate)
     {
-        return equal(
+        return RAH_NAMESPACE::equal(
             RAH_NAMESPACE::begin(range1),
             RAH_NAMESPACE::end(range1),
             RAH_NAMESPACE::begin(range2),
             RAH_NAMESPACE::end(range2),
             RAH_STD::forward<BinaryPredicate>(predicate));
-    }
-
-    /// identical
-    ///
-    /// Returns true if the two input ranges are equivalent.
-    /// There is a subtle difference between this algorithm and
-    /// the 'equal' algorithm. The equal algorithm assumes the
-    /// two ranges are of equal length. This algorithm efficiently
-    /// compares two ranges for both length equality and for
-    /// element equality. There is no other standard algorithm
-    /// that can do this.
-    ///
-    /// Returns: true if the sequence of elements defined by the range
-    /// [first1, last1) is of the same length as the sequence of
-    /// elements defined by the range of [first2, last2) and if
-    /// the elements in these ranges are equal as per the
-    /// equal algorithm.
-    ///
-    /// Complexity: At most 'min((last1 - first1), (last2 - first2))' applications
-    /// of the corresponding comparison.
-    ///
-    template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2>
-    bool identical(InputIterator1 first1, Sentinel1 last1, InputIterator2 first2, Sentinel2 last2)
-    {
-        while ((first1 != last1) && (first2 != last2) && (*first1 == *first2))
-        {
-            ++first1;
-            ++first2;
-        }
-        return (first1 == last1) && (first2 == last2);
-    }
-
-    /// identical
-    ///
-    template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename BinaryPredicate>
-    bool identical(
-        InputIterator1 first1,
-        Sentinel1 last1,
-        InputIterator2 first2,
-        Sentinel2 last2,
-        BinaryPredicate predicate)
-    {
-        while ((first1 != last1) && (first2 != last2) && predicate(*first1, *first2))
-        {
-            ++first1;
-            ++first2;
-        }
-        return (first1 == last1) && (first2 == last2);
     }
 
     /// lexicographical_compare
@@ -2148,13 +1513,6 @@ namespace RAH_NAMESPACE
     constexpr lexicographical_compare_fn lexicographical_compare;
 
     template <class I1, class I2>
-    struct in_in_result
-    {
-        I1 in1;
-        I2 in2;
-    };
-
-    template <class I1, class I2>
     using mismatch_result = RAH_NAMESPACE::in_in_result<I1, I2>;
 
     /// mismatch
@@ -2263,7 +1621,8 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename T>
     iterator_t<ForwardRange> lower_bound(ForwardRange&& range, const T& value)
     {
-        return lower_bound(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
+        return RAH_NAMESPACE::lower_bound(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
     }
 
     /// lower_bound
@@ -2319,7 +1678,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename T, typename Compare>
     iterator_t<ForwardRange> lower_bound(ForwardRange&& range, const T& value, Compare compare)
     {
-        return lower_bound(
+        return RAH_NAMESPACE::lower_bound(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(compare));
     }
 
@@ -2369,7 +1728,8 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename T>
     iterator_t<ForwardRange> upper_bound(ForwardRange&& range, const T& value)
     {
-        return upper_bound(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
+        return RAH_NAMESPACE::upper_bound(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
     }
 
     /// upper_bound
@@ -2421,7 +1781,7 @@ namespace RAH_NAMESPACE
     template <typename ForwardRange, typename T, typename Compare>
     iterator_t<ForwardRange> upper_bound(ForwardRange&& range, const T& value, Compare compare)
     {
-        return upper_bound(
+        return RAH_NAMESPACE::upper_bound(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(compare));
     }
 
@@ -2814,88 +2174,6 @@ namespace RAH_NAMESPACE
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), RAH_STD::move(predicate));
     }
 
-    /// apply_and_remove_if
-    ///
-    /// Calls the Function function for all elements referred to  my iterator i in the range
-    /// [first, last) for which the following corresponding condition holds:
-    /// predicate(*i) == true
-    /// and then left shift moves potential non-matching elements over it.
-    ///
-    /// Returns: a past-the-end iterator for the new end of the range.
-    ///
-    /// Complexity: Exactly 'last - first' applications of the corresponding predicate + applies
-    /// function once for every time the condition holds.
-    ///
-    /// Note: Since removing is done by shifting (by means of copy move assignment) the elements
-    /// in the range in such a way that the elements that are not to be removed appear in the
-    /// beginning of the range doesn't actually remove it from the given container, the user must call
-    /// the container erase function if the user wants to erase the element
-    /// from the container. I.e. in the same they as for remove_if the excess elements
-    /// are left in a valid but possibly moved from state.
-    ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename Function, typename Predicate>
-    inline ForwardIterator apply_and_remove_if(
-        ForwardIterator first, ForwardSentinel last, Function function, Predicate predicate)
-    {
-        first = RAH_NAMESPACE::find_if(first, last, predicate);
-        if (first != last)
-        {
-            function(*first);
-            for (auto i = next(first); i != last; ++i)
-            {
-                if (predicate(*i))
-                {
-                    function(*i);
-                    continue;
-                }
-                *first = RAH_STD::move(*i);
-                ++first;
-            }
-        }
-        return first;
-    }
-
-    /// apply_and_remove
-    ///
-    /// Calls the Function function for all elements referred to my iterator i in the range
-    /// [first, last) for which the following corresponding condition holds:
-    /// value == *i
-    /// and then left shift moves potential non-matching elements over it.
-    ///
-    /// Returns: a past-the-end iterator for the new end of the range.
-    ///
-    /// Complexity: Exactly 'last - first' applications of the corresponding equality test
-    /// + applies function once for every time the condition holds.
-    ///
-    /// Note: Since removing is done by shifting (by means of copy move assignment) the elements
-    /// in the range in such a way that the elements that are not to be removed appear in the
-    /// beginning of the range doesn't actually remove it from the given container, the user must call
-    /// the container erase function if the user wants to erase the element
-    /// from the container. I.e. in the same they as for remove_if the excess elements
-    /// are left in a valid but possibly moved from state.
-    ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename Function, typename T>
-    inline ForwardIterator
-    apply_and_remove(ForwardIterator first, ForwardSentinel last, Function function, const T& value)
-    {
-        first = RAH_NAMESPACE::find(first, last, value);
-        if (first != last)
-        {
-            function(*first);
-            for (auto i = next(first); i != last; ++i)
-            {
-                if (value == *i)
-                {
-                    function(*i);
-                    continue;
-                }
-                *first = RAH_STD::move(*i);
-                ++first;
-            }
-        }
-        return first;
-    }
-
     template <class I, class O>
     using replace_copy_result = RAH_NAMESPACE::in_out_result<I, O>;
 
@@ -3032,7 +2310,8 @@ namespace RAH_NAMESPACE
     inline borrowed_iterator_t<BidirectionalRange> reverse(BidirectionalRange&& range)
     {
         using IC = range_iter_categ_t<BidirectionalRange>;
-        return reverse_impl(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), IC());
+        return RAH_NAMESPACE::reverse_impl(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), IC());
     }
 
     template <class I, class O>
@@ -3138,103 +2417,6 @@ namespace RAH_NAMESPACE
 
     constexpr search_fn search{};
 
-    // search_n helper functions
-    //
-    template <typename ForwardIterator, typename ForwardSentinel, typename Size, typename T>
-    ForwardIterator // Generic implementation.
-    search_n_impl(
-        ForwardIterator first,
-        ForwardSentinel last,
-        Size count,
-        const T& value,
-        RAH_ITC_NS::forward_iterator_tag)
-    {
-        if (count <= 0)
-            return first;
-
-        Size d1 = (Size)RAH_NAMESPACE::distance(
-            first,
-            last); // Should d1 be of type Size, ptrdiff_t, or iterator_traits<ForwardIterator>::difference_type?
-        // The problem with using iterator_traits<ForwardIterator>::difference_type is that
-        if (count > d1) // ForwardIterator may not be a true iterator but instead something like a pointer.
-            return last;
-
-        for (; d1 >= count; ++first, --d1)
-        {
-            ForwardIterator i(first);
-
-            for (Size n = 0; n < count; ++n, ++i, --d1)
-            {
-                if (!(*i == value)) // Note that we always express value comparisons in terms of < or ==.
-                    goto not_found;
-            }
-            return first;
-
-        not_found:
-            first = i;
-        }
-        return last;
-    }
-
-    template <typename RandomAccessIterator, typename Sentinel, typename Size, typename T>
-    inline RandomAccessIterator // Random access iterator implementation. Much faster than generic implementation.
-    search_n_impl(
-        RandomAccessIterator first,
-        Sentinel last,
-        Size count,
-        const T& value,
-        RAH_ITC_NS::random_access_iterator_tag)
-    {
-        if (count <= 0)
-            return first;
-        else if (count == 1)
-            return RAH_NAMESPACE::find(first, last, value);
-        else if (last > first)
-        {
-            RandomAccessIterator lookAhead;
-            RandomAccessIterator backTrack;
-
-            Size skipOffset = (count - 1);
-            Size tailSize = (Size)(last - first);
-            Size remainder;
-            Size prevRemainder;
-
-            for (lookAhead = first + skipOffset; tailSize >= count; lookAhead += count)
-            {
-                tailSize -= count;
-
-                if (*lookAhead == value)
-                {
-                    remainder = skipOffset;
-
-                    for (backTrack = lookAhead - 1; *backTrack == value; --backTrack)
-                    {
-                        if (--remainder == 0)
-                            return (lookAhead - skipOffset); // success
-                    }
-
-                    if (remainder <= tailSize)
-                    {
-                        prevRemainder = remainder;
-
-                        while (*(++lookAhead) == value)
-                        {
-                            if (--remainder == 0)
-                                return (backTrack + 1); // success
-                        }
-                        tailSize -= (prevRemainder - remainder);
-                    }
-                    else
-                        return last; // failure
-                }
-
-                // lookAhead here is always pointing to the element of the last mismatch.
-            }
-        }
-
-        return last; // failure
-    }
-
     /// search_n
     ///
     /// Returns: The first iterator i in the range [first, last count) such that
@@ -3338,7 +2520,8 @@ namespace RAH_NAMESPACE
     inline bool binary_search(ForwardIterator first, Sentinel last, const T& value)
     {
         // To do: This can be made slightly faster by not using lower_bound.
-        ForwardIterator i(RAH_NAMESPACE::lower_bound<ForwardIterator, T>(first, last, value));
+        ForwardIterator i(
+            RAH_NAMESPACE::lower_bound<ForwardIterator, Sentinel, T>(first, last, value));
         return (
             (i != last)
             && !(value < *i)); // Note that we always express value comparisons in terms of < or ==.
@@ -3347,7 +2530,8 @@ namespace RAH_NAMESPACE
     template <typename Range, typename T>
     inline bool binary_search(Range&& range, const T& value)
     {
-        return binary_search(RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
+        return RAH_NAMESPACE::binary_search(
+            RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value);
     }
 
     /// binary_search
@@ -3379,45 +2563,6 @@ namespace RAH_NAMESPACE
     {
         return binary_search(
             RAH_NAMESPACE::begin(range), RAH_NAMESPACE::end(range), value, RAH_STD::move(compare));
-    }
-
-    /// binary_search_i
-    ///
-    /// Returns: iterator if there is an iterator i in the range [first last) that
-    /// satisfies the corresponding conditions: !(*i < value) && !(value < *i).
-    /// Returns last if the value is not found.
-    ///
-    /// Complexity: At most 'log(last - first) + 2' comparisons.
-    ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename T>
-    inline ForwardIterator binary_search_i(ForwardIterator first, ForwardSentinel last, const T& value)
-    {
-        // To do: This can be made slightly faster by not using lower_bound.
-        ForwardIterator i(RAH_NAMESPACE::lower_bound<ForwardIterator, T>(first, last, value));
-        if ((i != last)
-            && !(value < *i)) // Note that we always express value comparisons in terms of < or ==.
-            return i;
-        return last;
-    }
-
-    /// binary_search_i
-    ///
-    /// Returns: iterator if there is an iterator i in the range [first last) that
-    /// satisfies the corresponding conditions: !(*i < value) && !(value < *i).
-    /// Returns last if the value is not found.
-    ///
-    /// Complexity: At most 'log(last - first) + 2' comparisons.
-    ///
-    template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
-    inline ForwardIterator
-    binary_search_i(ForwardIterator first, ForwardSentinel last, const T& value, Compare compare)
-    {
-        // To do: This can be made slightly faster by not using lower_bound.
-        ForwardIterator i(
-            RAH_NAMESPACE::lower_bound<ForwardIterator, T, Compare>(first, last, value, compare));
-        if ((i != last) && !compare(value, *i))
-            return i;
-        return last;
     }
 
     /// unique
@@ -3654,84 +2799,6 @@ namespace RAH_NAMESPACE
         }
 
         return RAH_NAMESPACE::copy(first1, last1, result);
-    }
-
-    /// set_difference_2
-    ///
-    /// set_difference_2 iterates over both input ranges and copies elements present
-    /// in the first range but not the second to the first output range and copies
-    /// elements present in the second range but not in the first to the second output
-    /// range.
-    ///
-    /// Effects: Copies the elements of the range [first1, last1) which are not
-    /// present in the range [first2, last2) to the first output range beginning at
-    /// result1 AND copies the element of range [first2, last2) which are not present
-    /// in the range [first1, last) to the second output range beginning at result2.
-    /// The elements in the constructed range are sorted.
-    ///
-    /// Requires: The input ranges must be sorted.
-    /// Requires: The output ranges shall not overlap with either of the original ranges.
-    ///
-    /// Returns:  Nothing.
-    ///
-    /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
-    ///
-    template <
-        typename InputIterator1,
-        typename Sentinel1,
-        typename InputIterator2,
-        typename Sentinel2,
-        typename OutputIterator,
-        typename Compare>
-    void set_difference_2(
-        InputIterator1 first1,
-        Sentinel1 last1,
-        InputIterator2 first2,
-        Sentinel2 last2,
-        OutputIterator result1,
-        OutputIterator result2,
-        Compare compare)
-    {
-        while ((first1 != last1) && (first2 != last2))
-        {
-            if (compare(*first1, *first2))
-            {
-                RAH_VALIDATE_COMPARE(
-                    !compare(*first2, *first1)); // Validate that the compare function is sane.
-                *result1++ = *first1++;
-            }
-            else if (compare(*first2, *first1))
-            {
-                RAH_VALIDATE_COMPARE(
-                    !compare(*first1, *first2)); // Validate that the compare function is sane.
-                *result2++ = *first2++;
-            }
-            else
-            {
-                ++first1;
-                ++first2;
-            }
-        }
-
-        RAH_NAMESPACE::copy(first2, last2, result2);
-        RAH_NAMESPACE::copy(first1, last1, result1);
-    }
-
-    /// set_difference_2
-    ///
-    ///  set_difference_2 with the default comparison object is RAH_STD::less<>.
-    ///
-    template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
-    void set_difference_2(
-        InputIterator1 first1,
-        Sentinel1 last1,
-        InputIterator2 first2,
-        Sentinel2 last2,
-        OutputIterator result1,
-        OutputIterator result2)
-    {
-        RAH_NAMESPACE::set_difference_2(
-            first1, last1, first2, last2, result1, result2, RAH_STD::less<>{});
     }
 
     template <class I1, class I2, class O>
@@ -4097,94 +3164,6 @@ namespace RAH_NAMESPACE
             RAH_STD::move(compare));
     }
 
-    /// set_decomposition
-    ///
-    /// set_decomposition iterates over both ranges and copies elements to one of the three
-    /// categories of output ranges.
-    ///
-    /// Effects: Constructs three sorted containers of the elements from the two ranges.
-    ///             * OutputIterator1 is elements only in Container1.
-    ///             * OutputIterator2 is elements only in Container2.
-    ///             * OutputIterator3 is elements that are in both Container1 and Container2.
-    ///
-    /// Requires: The input ranges must be sorted.
-    /// Requires: The resulting ranges shall not overlap with either of the original ranges.
-    ///
-    /// Returns: The end of the constructed range of elements in both Container1 and Container2.
-    ///
-    /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
-    ///
-    template <
-        typename InputIterator1,
-        typename Sentinel1,
-        typename InputIterator2,
-        typename Sentinel2,
-        typename OutputIterator1,
-        typename OutputIterator2,
-        typename OutputIterator3,
-        typename Compare>
-    OutputIterator3 set_decomposition(
-        InputIterator1 first1,
-        Sentinel1 last1,
-        InputIterator2 first2,
-        Sentinel2 last2,
-        OutputIterator1 result1,
-        OutputIterator2 result2,
-        OutputIterator3 result3,
-        Compare compare)
-    {
-        while ((first1 != last1) && (first2 != last2))
-        {
-            if (compare(*first1, *first2))
-            {
-                RAH_VALIDATE_COMPARE(
-                    !compare(*first2, *first1)); // Validate that the compare function is sane.
-                *result1++ = *first1++;
-            }
-            else if (compare(*first2, *first1))
-            {
-                RAH_VALIDATE_COMPARE(
-                    !compare(*first1, *first2)); // Validate that the compare function is sane.
-                *result2++ = *first2++;
-            }
-            else
-            {
-                *result3++ = *first1++;
-                ++first2;
-            }
-        }
-
-        RAH_NAMESPACE::copy(first1, last1, result1);
-        RAH_NAMESPACE::copy(first2, last2, result2);
-
-        return result3;
-    }
-
-    /// set_decomposition
-    ///
-    ///  set_decomposition with the default comparison object is RAH_STD::less<>.
-    ///
-    template <
-        typename InputIterator1,
-        typename Sentinel1,
-        typename InputIterator2,
-        typename Sentinel2,
-        typename OutputIterator1,
-        typename OutputIterator2,
-        typename OutputIterator3>
-    OutputIterator3 set_decomposition(
-        InputIterator1 first1,
-        Sentinel1 last1,
-        InputIterator2 first2,
-        Sentinel2 last2,
-        OutputIterator1 result1,
-        OutputIterator2 result2,
-        OutputIterator3 result3)
-    {
-        return RAH_NAMESPACE::set_decomposition(
-            first1, last1, first2, last2, result1, result2, result3, RAH_STD::less<>{});
-    }
-
     /// is_permutation
     ///
     struct is_permutation_fn
@@ -4250,13 +3229,6 @@ namespace RAH_NAMESPACE
     };
 
     constexpr is_permutation_fn is_permutation{};
-
-    template <class I>
-    struct in_found_result
-    {
-        I in;
-        bool found;
-    };
 
     template <class I>
     using next_permutation_result = RAH_NAMESPACE::in_found_result<I>;
@@ -4613,9 +3585,9 @@ namespace RAH_NAMESPACE
     }
 
     template <typename ForwardRange>
-    iterator_t<ForwardRange> rotate(ForwardRange&& range, iterator_t<ForwardRange> middle)
+    borrowed_subrange_t<ForwardRange> rotate(ForwardRange&& range, iterator_t<ForwardRange> middle)
     {
-        return rotate(RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range));
+        return RAH_NAMESPACE::rotate(RAH_NAMESPACE::begin(range), middle, RAH_NAMESPACE::end(range));
     }
 
     template <class I, class O>

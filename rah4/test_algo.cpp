@@ -1146,7 +1146,7 @@ void test_stable_partition()
     /// [rah::stable_partition]
     std::vector<int> in{1, 2, 3, 4, 5};
     auto boundary = rah::stable_partition(in, [](auto a) { return a >= 4; });
-    assert(boundary == in.begin() + 2);
+    assert(boundary.begin() == in.begin() + 2);
     assert(in == std::vector<int>({4, 5, 1, 2, 3}));
     /// [rah::stable_partition]
 }
@@ -1441,7 +1441,7 @@ void test_merge()
 
     auto ret = RAH_NAMESPACE::merge(in1, in2, out.begin());
     assert((rah::equal(
-        rah::make_subrange(out.begin(), ret), std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 6, 7})));
+        rah::make_subrange(out.begin(), ret.out), std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 6, 7})));
 
     in1 = {1, 2, 3, 4, 5, 5, 5};
     in2 = {3, 4, 5, 6, 7};
