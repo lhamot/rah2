@@ -1,9 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <utility>
-#include <vector>
-#include <type_traits>
+#pragma once
 
 namespace rah
 {

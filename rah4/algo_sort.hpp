@@ -1,7 +1,8 @@
 #pragma once
 
 #include "range_bases.hpp"
-#include "eastl_heap.h"
+#include "base_algorithm.hpp"
+#include "algo_heap.hpp"
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 #pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.

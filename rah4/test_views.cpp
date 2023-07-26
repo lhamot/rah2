@@ -1,8 +1,9 @@
+#include "rah4.hpp"
+
 #include <sstream>
 #include <array>
 
 #include "test_helpers.hpp"
-#include "rah4.hpp"
 
 auto inputSentView = make_test_view<Sentinel, std::input_iterator_tag, false>();
 auto fwdSentView = make_test_view<Sentinel, std::forward_iterator_tag, false>();

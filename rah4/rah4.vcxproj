@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="algo_heap.hpp" />
+    <ClInclude Include="algo_sort.hpp" />
+    <ClInclude Include="base_algorithm.hpp" />
     <ClInclude Include="concepts.hpp" />
-    <ClInclude Include="eastl_algorithm.h" />
-    <ClInclude Include="eastl_heap.h" />
-    <ClInclude Include="eastl_sort.h" />
     <ClInclude Include="rah4.hpp" />
     <ClInclude Include="range_algorithms.hpp" />
     <ClInclude Include="range_bases.hpp" />

@@ -3690,4 +3690,75 @@ namespace RAH_NAMESPACE
 
     constexpr fill_n_fn fill_n{};
 
+    struct destroy_at_fn
+    {
+        template <
+            typename T, // std::destructible
+            std::enable_if_t<std::is_array<T>::value>* = nullptr>
+        constexpr void operator()(T* p) const noexcept
+        {
+            for (auto& elem : *p)
+                operator()(std::addressof(elem));
+        }
+        template <
+            typename T, // std::destructible
+            std::enable_if_t<!std::is_array<T>::value>* = nullptr>
+        constexpr void operator()(T* p) const noexcept
+        {
+            p->~T();
+        }
+    };
+
+    constexpr destroy_at_fn destroy_at{};
+
+    struct construct_at_fn
+    {
+        template <class T, class... Args>
+        constexpr T* operator()(T* p, Args&&... args) const
+        {
+            return ::new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+        }
+    };
+
+    constexpr construct_at_fn construct_at{};
+
+    struct destroy_fn
+    {
+        template <
+            typename I, // no-throw-input-iterator
+            typename S // no-throw-sentinel-for<I>
+            >
+        // requires std::destructible<std::iter_value_t<I>>
+        constexpr I operator()(I first, S last) const noexcept
+        {
+            for (; first != last; ++first)
+                RAH_NAMESPACE::destroy_at(std::addressof(*first));
+            return first;
+        }
+
+        template <typename R // no-throw-input-range
+                  >
+        // requires std::destructible<std::ranges::range_value_t<R>>
+        constexpr RAH_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r) const noexcept
+        {
+            return operator()(RAH_NAMESPACE::begin(r), RAH_NAMESPACE::end(r));
+        }
+    };
+
+    constexpr destroy_fn destroy{};
+
+    struct destroy_n_fn
+    {
+        template <typename I // no-throw-input-iterator
+                  >
+        // requires std::destructible<std::iter_value_t<I>>
+        constexpr I operator()(I first, RAH_NAMESPACE::iter_difference_t<I> n) const noexcept
+        {
+            for (; n != 0; (void)++first, --n)
+                RAH_NAMESPACE::destroy_at(std::addressof(*first));
+            return first;
+        }
+    };
+
+    constexpr destroy_n_fn destroy_n{};
 } // namespace RAH_NAMESPACE

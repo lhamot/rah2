@@ -30,13 +30,13 @@
     <ClInclude Include="concepts.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="eastl_algorithm.h">
+    <ClInclude Include="base_algorithm.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="eastl_heap.h">
+    <ClInclude Include="algo_sort.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="eastl_sort.h">
+    <ClInclude Include="algo_heap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

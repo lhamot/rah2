@@ -1,12 +1,13 @@
+#include "rah4.hpp"
+
 #include <array>
 #include <complex>
 #include <list>
 
 #include "test_helpers.hpp"
-#include "rah4.hpp"
-#include "eastl_sort.h"
 
 #include <algorithm>
+#include <numeric>
 #include <forward_list>
 #include <set>
 #if RAH_CPP20
