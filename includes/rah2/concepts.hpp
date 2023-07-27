@@ -98,5 +98,5 @@ namespace RAH2_NAMESPACE
     template <typename T>                                                                          \
     using __##NAME##_impl = decltype(NEED_COMPILE);                                                \
     template <typename T>                                                                          \
-    constexpr bool NAME = ::RAH2_NAMESPACE::compiles<false, T, ::RAH2_NAMESPACE::__##NAME##_impl>;
+    constexpr bool NAME = ::RAH2_NAMESPACE::compiles<false, T, __##NAME##_impl>;
 } // namespace RAH2_NAMESPACE

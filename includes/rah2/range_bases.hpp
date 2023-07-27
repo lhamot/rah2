@@ -154,22 +154,21 @@ namespace RAH2_NAMESPACE
     };
 
     // **************************** range access **************************************************
-
-    MAKE_CONCEPT(has_begin_member, (details::declval<T>().begin()));
-    MAKE_CONCEPT(has_begin_ADL, (begin(details::declval<T>())));
-    MAKE_CONCEPT(has_end_member, (details::declval<T>().end()));
-    MAKE_CONCEPT(has_end_ADL, (end(details::declval<T>())));
-    MAKE_CONCEPT(has_rbegin_member, details::declval<RAH2_STD::remove_reference_t<T>>().rbegin())
-    MAKE_CONCEPT(has_rbegin_ADL, rbegin(details::declval<RAH2_STD::remove_reference_t<T>>()))
-    MAKE_CONCEPT(has_rend_member, details::declval<RAH2_STD::remove_reference_t<T>>().rend())
-    MAKE_CONCEPT(has_rend_ADL, rend(details::declval<RAH2_STD::remove_reference_t<T>>()))
-    MAKE_CONCEPT(has_size_member, details::declval<RAH2_STD::remove_reference_t<T>>().size())
-    MAKE_CONCEPT(has_size_ADL, size(details::declval<RAH2_STD::remove_reference_t<T>>()))
-    MAKE_CONCEPT(has_data_member, details::declval<RAH2_STD::remove_reference_t<T>>().data())
-    MAKE_CONCEPT(has_data_ADL, data(details::declval<RAH2_STD::remove_reference_t<T>>()))
-
     namespace details
     {
+        MAKE_CONCEPT(has_begin_member, (details::declval<T>().begin()));
+        MAKE_CONCEPT(has_begin_ADL, (begin(details::declval<T>())));
+        MAKE_CONCEPT(has_end_member, (details::declval<T>().end()));
+        MAKE_CONCEPT(has_end_ADL, (end(details::declval<T>())));
+        MAKE_CONCEPT(has_rbegin_member, details::declval<RAH2_STD::remove_reference_t<T>>().rbegin())
+        MAKE_CONCEPT(has_rbegin_ADL, rbegin(details::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_rend_member, details::declval<RAH2_STD::remove_reference_t<T>>().rend())
+        MAKE_CONCEPT(has_rend_ADL, rend(details::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_size_member, details::declval<RAH2_STD::remove_reference_t<T>>().size())
+        MAKE_CONCEPT(has_size_ADL, size(details::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_data_member, details::declval<RAH2_STD::remove_reference_t<T>>().data())
+        MAKE_CONCEPT(has_data_ADL, data(details::declval<RAH2_STD::remove_reference_t<T>>()))
+
         struct begin_impl
         {
             template <class T, size_t N>
@@ -495,21 +494,24 @@ namespace RAH2_NAMESPACE
     template <typename T>
     constexpr bool input_iterator = input_iterator_impl<T>::value;
 
-    template <class T, class U, bool Diagnostic = false>
-    struct WeaklyEqualityComparableWithImpl
+    namespace details
     {
-        template <class T2>
-        using check =
-            decltype(!(RAH2_STD::declval<T2>() == RAH2_STD::declval<U>()), !(RAH2_STD::declval<T2>() != RAH2_STD::declval<U>()), !(RAH2_STD::declval<U>() == RAH2_STD::declval<T2>()), !(RAH2_STD::declval<U>() != RAH2_STD::declval<T2>()));
+        template <class T, class U, bool Diagnostic = false>
+        struct weakly_equality_comparable_with_impl
+        {
+            template <class T2>
+            using check =
+                decltype(!(RAH2_STD::declval<T2>() == RAH2_STD::declval<U>()), !(RAH2_STD::declval<T2>() != RAH2_STD::declval<U>()), !(RAH2_STD::declval<U>() == RAH2_STD::declval<T2>()), !(RAH2_STD::declval<U>() != RAH2_STD::declval<T2>()));
 
-        constexpr static bool value = compiles<Diagnostic, T, check>;
-    };
-    template <class T, class U>
-    constexpr static bool __WeaklyEqualityComparableWith =
-        WeaklyEqualityComparableWithImpl<T, U>::value;
+            constexpr static bool value = compiles<Diagnostic, T, check>;
+        };
+        template <class T, class U>
+        constexpr static bool weakly_equality_comparable_with =
+            weakly_equality_comparable_with_impl<T, U>::value;
+    } // namespace details
 
     template <class T>
-    constexpr bool equality_comparable = __WeaklyEqualityComparableWith<T, T>;
+    constexpr bool equality_comparable = details::weakly_equality_comparable_with<T, T>;
 
     template <class T>
     constexpr bool destructible = RAH2_NAMESPACE::is_nothrow_destructible_v<T>;
@@ -550,7 +552,7 @@ namespace RAH2_NAMESPACE
         static constexpr bool value =
             is_true_v<Diagnostic, RAH2_NAMESPACE::semiregular<S>>
             && is_true_v<Diagnostic, RAH2_NAMESPACE::input_or_output_iterator<I>>
-            && WeaklyEqualityComparableWithImpl<I, S, Diagnostic>::value;
+            && details::weakly_equality_comparable_with_impl<I, S, Diagnostic>::value;
     };
 
     template <class S, class I>
@@ -770,7 +772,7 @@ namespace RAH2_NAMESPACE
         typename S,
         RAH2_STD::enable_if_t<
             !RAH2_NAMESPACE::sized_sentinel_for<S, I>
-            && RAH2_NAMESPACE::__WeaklyEqualityComparableWith<S, I>>* = nullptr>
+            && RAH2_NAMESPACE::details::weakly_equality_comparable_with<S, I>>* = nullptr>
     RAH2_NAMESPACE::iter_difference_t<I> distance(I first, S last)
     {
         iter_difference_t<I> len = 0;
@@ -1596,7 +1598,8 @@ namespace RAH2_NAMESPACE
         static_assert(
             RAH2_NAMESPACE::input_or_output_iterator<I>,
             "RAH2_NAMESPACE::input_or_output_iterator<I>");
-        static_assert(__WeaklyEqualityComparableWith<I, S>, "__WeaklyEqualityComparableWith<I, S>");
+        static_assert(
+            details::weakly_equality_comparable_with<I, S>, "weakly_equality_comparable_with<I, S>");
         RAH2_NAMESPACE::advance(i, bound);
         return i;
     }

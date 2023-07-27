@@ -4452,7 +4452,8 @@ namespace RAH2_NAMESPACE
         template <
             typename R,
             RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::enable_view<RAH2_STD::remove_reference_t<R>> && has_begin_member<R>>* = nullptr>
+                RAH2_NAMESPACE::enable_view<RAH2_STD::remove_reference_t<R>>
+                && RAH2_NAMESPACE::details::has_begin_member<R>>* = nullptr>
         auto begin(R&& r)
         {
             return r.begin();
@@ -4460,7 +4461,8 @@ namespace RAH2_NAMESPACE
         template <
             typename R,
             RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::enable_view<RAH2_STD::remove_reference_t<R>> && has_end_member<R>>* = nullptr>
+                RAH2_NAMESPACE::enable_view<RAH2_STD::remove_reference_t<R>>
+                && RAH2_NAMESPACE::details::has_end_member<R>>* = nullptr>
         auto end(R&& r)
         {
             return r.end();
