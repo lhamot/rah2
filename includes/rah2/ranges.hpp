@@ -80,6 +80,15 @@ namespace RAH2_NAMESPACE
     struct pipeable
     {
         Func func;
+
+        pipeable(Func f)
+            : func(RAH2_STD::move(f))
+        {
+        }
+        pipeable(pipeable const&) = delete;
+        pipeable(pipeable&&) = default;
+        pipeable& operator=(pipeable const&) = delete;
+        pipeable& operator=(pipeable&&) = delete;
     };
 
     template <typename MakeRange>
