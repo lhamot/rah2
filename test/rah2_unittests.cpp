@@ -206,7 +206,93 @@ void test_construct_at();
 
 TestSuite testSuite;
 
-void test_range_concepts()
+template <typename T, bool Diagnostic = false>
+struct concept_test_impl
+{
+    template <typename T2>
+    using check_build = decltype(std::declval<T2>().a());
+
+    template <typename T2>
+    using check_true = std::enable_if_t<rah2::is_same_v<decltype(std::declval<T2>().b()), int>>;
+
+    constexpr static bool value =
+        rah2::is_true_v<Diagnostic, !std::has_virtual_destructor<T>::value>
+        && rah2::compiles<Diagnostic, T, check_build> && rah2::compiles<Diagnostic, T, check_true>;
+};
+
+template <typename T>
+constexpr bool concept_test = concept_test_impl<T>::value;
+
+void test_concepts()
+{
+    // Check a code have to build (And in Diagnostic mode we have to wee where)
+    // Check a criteria have to be true (And in Diagnostic mode we have to wee where)
+    // Check a criteria have to be true AND build (And in Diagnostic mode we have to wee where)
+
+    struct TestOk
+    {
+        auto a() const
+        {
+            return 0;
+        }
+        auto b() const
+        {
+            return 0;
+        }
+    };
+    struct CheckBuildFail
+    {
+        auto b() const
+        {
+            return 0;
+        }
+    };
+    struct CheckTrueNoBuild
+    {
+        auto a() const
+        {
+            return 0;
+        }
+    };
+    struct CheckTrueIsFalse
+    {
+        auto a() const
+        {
+            return 0;
+        }
+        auto b() const
+        {
+            return false;
+        }
+    };
+    struct CheckTraitsIsFalse
+    {
+        virtual ~CheckTraitsIsFalse() = default;
+
+        auto a() const
+        {
+            return 0;
+        }
+        auto b() const
+        {
+            return 0;
+        }
+    };
+
+    STATIC_ASSERT(concept_test<TestOk>);
+    STATIC_ASSERT(!concept_test<CheckBuildFail>);
+    STATIC_ASSERT(!concept_test<CheckTrueNoBuild>);
+    STATIC_ASSERT(!concept_test<CheckTrueIsFalse>);
+    STATIC_ASSERT(!concept_test<CheckTraitsIsFalse>);
+
+    // To check error messages
+    // STATIC_ASSERT((concept_test_impl<CheckBuildFail, true>::value)); // Ok with compiles + decltype
+    // STATIC_ASSERT((concept_test_impl<CheckTrueNoBuild, true>::value)); // Ok with compiles + enable_if_t
+    // STATIC_ASSERT((concept_test_impl<CheckTrueIsFalse, true>::value)); // Ok with compiles + enable_if_t
+    // STATIC_ASSERT((concept_test_impl<CheckTraitsIsFalse, true>::value)); // Ok with is_true_v
+}
+
+void test_range_traits()
 {
     testSuite.test_case("on non-range");
     STATIC_ASSERT(!rah2::range<int>);
@@ -228,7 +314,7 @@ int main()
 {
     // std::cout.imbue(std::locale("en_EN"));
 
-    testSuite.addTest("Range_concepts", "*", test_range_concepts);
+    testSuite.addTest("Range_concepts", "*", test_range_traits);
 
     // Range_factories
     char const* range_factories = "Range_factories";

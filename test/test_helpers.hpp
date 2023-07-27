@@ -381,8 +381,6 @@ public:
     }
 };
 
-MAKE_CONCEPT(has_pos_incr, true, (std::declval<T>()++));
-
 template <CommonOrSent Sent, typename Cat, bool Sized>
 auto make_test_view(int start, int stop, int step)
 {

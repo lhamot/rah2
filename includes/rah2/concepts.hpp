@@ -67,65 +67,6 @@ namespace RAH2_NAMESPACE
     template <bool Diagnostic, typename T, typename U, template <class, class> class check_helper>
     static constexpr bool compiles2 = compiles2_impl<Diagnostic, T, U, check_helper>::value;
 
-    template <typename R>
-    struct test_impl
-    {
-        template <class T>
-        using has_begin = decltype(begin(RAH2_STD::declval<T>()));
-
-        template <class T>
-        using has_iter_incr = RAH2_STD::enable_if_t<RAH2_STD::is_same<
-            RAH2_STD::remove_reference_t<decltype(++begin(RAH2_STD::declval<T>()))>,
-            RAH2_STD::remove_reference_t<decltype(begin(RAH2_STD::declval<T>()))>>::value>;
-
-        template <class T>
-        using has_end = decltype(begin(RAH2_STD::declval<T>()));
-
-        static constexpr bool value = compiles<false, R, has_begin> && compiles<false, R, has_end>
-                                      && compiles<false, R, has_iter_incr>;
-    };
-
-    template <typename T>
-    constexpr bool test = test_impl<T>::value;
-
-    namespace concepts
-    {
-        template <typename...>
-        struct TypeList
-        {
-        };
-
-        template <bool Diagnostic, bool Val>
-        struct is_true_impl;
-
-    } // namespace concepts
-
-    template <bool Diagnostic, bool Val>
-    struct is_true_impl;
-
-    template <>
-    struct is_true_impl<true, false>
-    {
-        // static_assert(false, "Requirement not meet");
-        // using type = int;
-    };
-
-    template <>
-    struct is_true_impl<true, true>
-    {
-        // static_assert(Val, "Requirement not meet");
-        using type = int;
-    };
-
-    template <>
-    struct is_true_impl<false, true>
-    {
-        using type = int;
-    };
-
-    template <bool Diagnostic, bool Val>
-    using is_true = typename is_true_impl<Diagnostic, Val>::type;
-
     template <bool Diagnostic, bool Val>
     struct is_true_v_impl;
 
@@ -153,16 +94,9 @@ namespace RAH2_NAMESPACE
     template <bool Diagnostic, bool Val>
     static constexpr bool is_true_v = is_true_v_impl<Diagnostic, Val>::value;
 
-#define MAKE_CONCEPT(NAME, IS_TRUE, NEED_COMPILE)                                                  \
-    template <typename T2>                                                                         \
-    struct NAME##_impl                                                                             \
-    {                                                                                              \
-        template <typename T>                                                                      \
-        using require = decltype(NEED_COMPILE);                                                    \
-        template <typename T>                                                                      \
-        static constexpr bool check = IS_TRUE;                                                     \
-        static constexpr bool value = check<T2> && ::RAH2_NAMESPACE::compiles<false, T2, require>; \
-    };                                                                                             \
+#define MAKE_CONCEPT(NAME, NEED_COMPILE)                                                           \
     template <typename T>                                                                          \
-    constexpr bool NAME = NAME##_impl<T>::value;
+    using __##NAME##_impl = decltype(NEED_COMPILE);                                                \
+    template <typename T>                                                                          \
+    constexpr bool NAME = ::RAH2_NAMESPACE::compiles<false, T, ::RAH2_NAMESPACE::__##NAME##_impl>;
 } // namespace RAH2_NAMESPACE

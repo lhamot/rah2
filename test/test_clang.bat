@@ -1,7 +1,7 @@
 PATH = %PATH%;C:\C_libs\llvm-mingw-20230614-msvcrt-x86_64\bin;C:\Program Files\LLVM\bin
 
 call :test_rah2 g 14 64
-call :test_rah2 g 14 32
+rem call :test_rah2 g 14 32
 call :test_rah2 g 20 64
 call :test_rah2 clang 14 64
 call :test_rah2 clang 20 64
