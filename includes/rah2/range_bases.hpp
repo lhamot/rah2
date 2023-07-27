@@ -1059,9 +1059,9 @@ namespace RAH2_NAMESPACE
         struct ssize_impl
         {
             template <typename R>
-            auto operator()(R const& range) const
+            std::ptrdiff_t operator()(R const& range) const
             {
-                return range.ssize();
+                return std::ptrdiff_t(size_impl{}(range));
             }
         };
 

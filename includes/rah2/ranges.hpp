@@ -777,7 +777,7 @@ namespace RAH2_NAMESPACE
                 return RAH2_NAMESPACE::empty(*ref_);
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
-            size_t size() const
+            auto size() const
             {
                 return RAH2_NAMESPACE::size(*ref_);
             }
@@ -847,7 +847,7 @@ namespace RAH2_NAMESPACE
                 return RAH2_NAMESPACE::empty(range_);
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
-            size_t size() const
+            auto size() const
             {
                 return RAH2_NAMESPACE::size(range_);
             }
@@ -1252,14 +1252,12 @@ namespace RAH2_NAMESPACE
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return RAH2_STD::min(
-                    count_, static_cast<base_diff_type>(RAH2_NAMESPACE::size(input_view_)));
+                return RAH2_STD::min(range_size_t<R>(count_), RAH2_NAMESPACE::size(input_view_));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH2_STD::min(
-                    count_, static_cast<base_diff_type>(RAH2_NAMESPACE::size(input_view_)));
+                return RAH2_STD::min(range_size_t<R>(count_), RAH2_NAMESPACE::size(input_view_));
             }
 
             template <typename U = R, RAH2_STD::enable_if_t<RAH2_NAMESPACE::contiguous_range<U>>* = nullptr>
@@ -1351,14 +1349,16 @@ namespace RAH2_NAMESPACE
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
+                using base_size_t = range_size_t<R>;
                 auto const subsize = RAH2_NAMESPACE::size(base_);
-                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - drop_count_));
+                return RAH2_STD::max(base_size_t(0), base_size_t(subsize - drop_count_));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
+                using base_size_t = range_size_t<R>;
                 auto const subsize = RAH2_NAMESPACE::size(base_);
-                return size_t(RAH2_STD::max(intptr_t(0), intptr_t(subsize) - drop_count_));
+                return RAH2_STD::max(base_size_t(0), base_size_t(subsize - drop_count_));
             }
 
             auto begin()
@@ -2070,16 +2070,17 @@ namespace RAH2_NAMESPACE
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
             using base_cat = range_iter_categ_t<R>;
+            using reference = decltype(RAH2_STD::get<N>(RAH2_STD::declval<range_reference_t<R>>()));
 
         public:
+            using difference_type = range_difference_t<R>;
+
             elements_view() = default;
 
             explicit elements_view(R base)
                 : base_(RAH2_STD::move(base))
             {
             }
-
-            using reference = decltype(RAH2_STD::get<N>(RAH2_STD::declval<range_reference_t<R>>()));
 
             struct sentinel
             {
@@ -2154,7 +2155,7 @@ namespace RAH2_NAMESPACE
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<
                         RAH2_NAMESPACE::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                iterator& operator+=(intptr_t value)
+                iterator& operator+=(difference_type value)
                 {
                     iter_ += value;
                     return *this;
@@ -2341,7 +2342,7 @@ namespace RAH2_NAMESPACE
             auto end()
             {
                 return iterator(
-                    RAH2_NAMESPACE::end(base_), range_difference_t<U>(RAH2_NAMESPACE::size(base_)));
+                    RAH2_NAMESPACE::end(base_), range_difference_t<U>(RAH2_NAMESPACE::ssize(base_)));
             }
 
             template <
@@ -2806,14 +2807,14 @@ namespace RAH2_NAMESPACE
             }
 
             template <bool AllSized = all_const_sized, RAH2_STD::enable_if_t<AllSized>* = nullptr>
-            auto size() const
+            size_t size() const
             {
                 auto sizes = details::transform_each(
                     bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
                 return details::apply(compute_min_size(), sizes);
             }
             template <bool IsSized = all_sized, RAH2_STD::enable_if_t<IsSized>* = nullptr>
-            auto size()
+            size_t size()
             {
                 auto sizes = details::transform_each(
                     bases_, [](auto&& r) { return RAH2_NAMESPACE::size(r); });
@@ -3162,12 +3163,12 @@ namespace RAH2_NAMESPACE
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return RAH2_NAMESPACE::size(input_view_) - (N - 1);
+                return range_size_t<R>(RAH2_NAMESPACE::size(input_view_) - (N - 1));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH2_NAMESPACE::size(input_view_) - (N - 1);
+                return range_size_t<R>(RAH2_NAMESPACE::size(input_view_) - (N - 1));
             }
         };
 
@@ -3710,7 +3711,7 @@ namespace RAH2_NAMESPACE
             template <typename Base = R, RAH2_STD::enable_if_t<sized_range<Base>>* = nullptr>
             auto size()
             {
-                return RAH2_NAMESPACE::size(base_) / stride_;
+                return range_size_t<R>(RAH2_NAMESPACE::size(base_) / stride_);
             }
         };
 
@@ -4271,7 +4272,7 @@ namespace RAH2_NAMESPACE
             auto begin()
             {
                 auto iter = RAH2_NAMESPACE::begin(base_);
-                iter += RAH2_STD::min(begin_idx_, intptr_t(RAH2_NAMESPACE::size(base_)));
+                iter += RAH2_STD::min(begin_idx_, RAH2_NAMESPACE::ssize(base_));
                 return iter;
             }
 
@@ -4287,7 +4288,7 @@ namespace RAH2_NAMESPACE
             auto end()
             {
                 auto iter = RAH2_NAMESPACE::begin(base_);
-                iter += RAH2_STD::min(end_idx_, intptr_t(RAH2_NAMESPACE::size(base_)));
+                iter += RAH2_STD::min(end_idx_, RAH2_NAMESPACE::ssize(base_));
                 return iter;
             }
 
@@ -4300,18 +4301,16 @@ namespace RAH2_NAMESPACE
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                auto const base_size = RAH2_NAMESPACE::size(base_);
-                return size_t(
-                    RAH2_STD::min<intptr_t>(end_idx_, base_size)
-                    - RAH2_STD::min<intptr_t>(begin_idx_, base_size));
+                auto const base_size = RAH2_NAMESPACE::ssize(base_);
+                return range_size_t<R>(
+                    RAH2_STD::min(end_idx_, base_size) - RAH2_STD::min(begin_idx_, base_size));
             }
             template <bool IsSized = RAH2_NAMESPACE::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                auto const base_size = RAH2_NAMESPACE::size(base_);
-                return size_t(
-                    RAH2_STD::min<intptr_t>(end_idx_, base_size)
-                    - RAH2_STD::min<intptr_t>(begin_idx_, base_size));
+                auto const base_size = RAH2_NAMESPACE::ssize(base_);
+                return range_size_t<R>(
+                    RAH2_STD::min(end_idx_, base_size) - RAH2_STD::min(begin_idx_, base_size));
             }
         };
 
