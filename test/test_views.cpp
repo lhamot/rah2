@@ -1,10 +1,10 @@
 #include <rah2/ranges.hpp>
 
+#include "test_helpers.hpp"
+
 #include <sstream>
 #include <array>
 #include <algorithm>
-
-#include "test_helpers.hpp"
 
 auto inputSentView = make_test_view<Sentinel, std::input_iterator_tag, false>();
 auto fwdSentView = make_test_view<Sentinel, std::forward_iterator_tag, false>();
@@ -717,8 +717,7 @@ void test_enumerate_view()
         /// [enumerate]
         std::vector<int> input{4, 5, 6, 7};
         std::vector<std::tuple<intptr_t, int>> result;
-        auto toto = rah2::views::enumerate(input);
-        auto prout = toto.end();
+        rah2::views::enumerate(input);
         for (auto i_value : rah2::views::enumerate(input))
             result.emplace_back(i_value);
         assert(result == (std::vector<std::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));

@@ -2,7 +2,7 @@
 
 #include "concepts.hpp"
 
-#include <assert.h>
+#include <cassert>
 #include <iterator>
 
 #define RAH2_ITC_NS RAH2_NAMESPACE
@@ -29,18 +29,6 @@
 #define RAH2_CPP17 0
 #endif
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201400L) || __cplusplus >= 201400L)
-#define RAH2_CPP14 1
-#else
-#define RAH2_CPP14 0
-#endif
-
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201100L) || __cplusplus >= 201100L)
-#define RAH2_CPP11 1
-#else
-#define RAH2_CPP11 0
-#endif
-
 // Functions that became constexpr in C++20
 #if RAH2_CPP20
 #define RAH2_CONSTEXPR20 constexpr
@@ -56,55 +44,6 @@
 
 namespace RAH2_NAMESPACE
 {
-    // TODO : Remove this class
-    template <typename T>
-    struct DeleteCheck
-    {
-        enum class State
-        {
-            VALID = 0x91AC1F0,
-            DELETED = 0xCCDA459
-        } state_ = State::VALID;
-
-        DeleteCheck() = default;
-        DeleteCheck(DeleteCheck const& rhs)
-        {
-            (void)rhs;
-            assert(state_ == State::VALID);
-            assert(rhs.state_ == State::VALID);
-        }
-        DeleteCheck& operator=(DeleteCheck const& rhs)
-        {
-            (void)rhs;
-            assert(state_ == State::VALID);
-            assert(rhs.state_ == State::VALID);
-            return *this;
-        }
-        DeleteCheck(DeleteCheck&& rhs)
-        {
-            (void)rhs;
-            assert(state_ == State::VALID);
-            assert(rhs.state_ == State::VALID);
-        }
-        DeleteCheck& operator=(DeleteCheck&& rhs)
-        {
-            (void)rhs;
-            assert(state_ == State::VALID);
-            assert(rhs.state_ == State::VALID);
-            return *this;
-        }
-
-        ~DeleteCheck()
-        {
-            assert(state_ == State::VALID);
-            state_ = State::DELETED;
-        }
-
-        void check() const
-        {
-            assert(state_ == State::VALID);
-        }
-    };
 
 #define MAKE_CONCEPT(NAME, CHECK, REQUIRE)                                                         \
     template <typename T, typename = int>                                                          \
@@ -1601,8 +1540,6 @@ namespace RAH2_NAMESPACE
     template <typename T>
     struct view_interface : view_base
     {
-        DeleteCheck<view_interface<T>> deleteCheck;
-
         auto empty()
         {
             return RAH2_SELF.begin() == RAH2_SELF.end();

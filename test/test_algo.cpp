@@ -1,12 +1,11 @@
 #include <rah2/ranges.hpp>
 #include <rah2/algorithm.hpp>
 
+#include "test_helpers.hpp"
+
 #include <array>
 #include <complex>
 #include <list>
-
-#include "test_helpers.hpp"
-
 #include <algorithm>
 #include <numeric>
 #include <forward_list>
@@ -1004,7 +1003,7 @@ void test_shift_left()
     assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     auto b0 = RAH2_NAMESPACE::shift_left(b, 0); // has no effect: n == 0
-    assert(rah2::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(rah2::equal(b0, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
     assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     std::vector<int> ref{4, 5, 6, 7};
@@ -1026,7 +1025,7 @@ void test_shift_right()
     assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     auto b0 = RAH2_NAMESPACE::shift_right(b, 0); // has no effect: n == 0
-    assert(rah2::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(rah2::equal(b0, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
     assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     std::vector<int> ref{1, 2, 3, 4};

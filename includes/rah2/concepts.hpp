@@ -8,6 +8,10 @@
 #define RAH2_NAMESPACE rah2
 #endif
 
+
+#include <utility>
+#include <type_traits>
+
 namespace RAH2_NAMESPACE
 {
 

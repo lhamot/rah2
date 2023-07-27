@@ -6,9 +6,9 @@
 //
 #pragma once
 
-#include <tuple>
-
 #include "range_bases.hpp"
+
+#include <tuple>
 
 #ifdef _MSC_VER
 #define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
@@ -176,8 +176,6 @@ namespace RAH2_NAMESPACE
     template <typename I, typename S, typename R>
     struct iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>> deleteCheck;
-
         using iterator_category = RAH2_STD::input_iterator_tag;
         using value_type = RAH2_NAMESPACE::remove_cvref_t<R>;
         using difference_type = intptr_t;
@@ -230,8 +228,6 @@ namespace RAH2_NAMESPACE
     template <typename I, typename S, typename R>
     struct iterator_facade<I, S, R, RAH2_STD::output_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH2_STD::output_iterator_tag>> deleteCheck;
-
         using iterator_category = RAH2_STD::output_iterator_tag;
         using value_type = RAH2_STD::remove_reference_t<R>;
         using difference_type = intptr_t;
@@ -282,7 +278,6 @@ namespace RAH2_NAMESPACE
     struct iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>
         : iterator_facade<I, S, R, RAH2_STD::bidirectional_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>> deleteCheck;
         using iterator_category = RAH2_STD::random_access_iterator_tag;
 
         friend bool operator<=(I const& it1, I const& it2)
@@ -338,7 +333,6 @@ namespace RAH2_NAMESPACE
     struct iterator_facade<I, S, R, RAH2_NAMESPACE::contiguous_iterator_tag>
         : iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>
     {
-        DeleteCheck<iterator_facade<I, S, R, RAH2_NAMESPACE::contiguous_iterator_tag>> deleteCheck;
         using iterator_category = RAH2_NAMESPACE::contiguous_iterator_tag;
     };
 
@@ -1507,7 +1501,6 @@ namespace RAH2_NAMESPACE
 
             void next_valid()
             {
-                view_interface<join_view<R>>::deleteCheck.check();
                 while (sub_range_iter_ == sub_range_end_)
                 {
                     ++range_iter_;
@@ -2769,14 +2762,12 @@ namespace RAH2_NAMESPACE
 
             iterator begin()
             {
-                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return iterator(details::transform_each(bases_, details::range_begin()));
             }
 
             template <bool C = common_one_range, RAH2_STD::enable_if_t<C>* = nullptr>
             iterator end()
             {
-                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return iterator(details::transform_each(bases_, details::range_end()));
             }
 
@@ -2802,7 +2793,6 @@ namespace RAH2_NAMESPACE
                 RAH2_STD::enable_if_t<!A && !B>* = nullptr>
             sentinel end()
             {
-                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return sentinel{details::transform_each(bases_, details::range_end())};
             }
 
@@ -2967,14 +2957,12 @@ namespace RAH2_NAMESPACE
 
             iterator begin()
             {
-                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return iterator(this, details::transform_each(bases_, details::range_begin()));
             }
 
             template <bool C = common_one_range, RAH2_STD::enable_if_t<C>* = nullptr>
             iterator end()
             {
-                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return iterator(this, details::transform_each(bases_, details::range_end()));
             }
 
@@ -3003,7 +2991,6 @@ namespace RAH2_NAMESPACE
                 RAH2_STD::enable_if_t<!A && !B>* = nullptr>
             sentinel end()
             {
-                view_interface<zip_view<RangeTuple>>::deleteCheck.check();
                 return sentinel{details::transform_each(bases_, details::range_end())};
             }
         };
@@ -3180,9 +3167,8 @@ namespace RAH2_NAMESPACE
         }
 
         template <size_t N, typename R, RAH2_STD::enable_if_t<N == 0>* = nullptr>
-        auto adjacent(R&& range)
+        auto adjacent(R&&)
         {
-            auto range_view = all(range);
             return views::empty<RAH2_STD::tuple<>>();
         }
 
