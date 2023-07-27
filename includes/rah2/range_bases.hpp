@@ -5,12 +5,9 @@
 #include <assert.h>
 #include <iterator>
 
-#define RAH2_CONSTEXPR constexpr
-#define RAH2_CONSTEXPR_FN constexpr
 #define RAH2_ITC_NS RAH2_NAMESPACE
-#define RAH2_CPP14_CONSTEXPR constexpr
 #define RAHAllocatorType RAH2_STD::allocator
-#define RAH2_ASSERT(expression)
+#define RAH2_ASSERT(expression) assert(expression)
 
 #define RAH2_VALIDATE_COMPARE(CHECK)
 
@@ -42,22 +39,6 @@
 #define RAH2_CPP11 1
 #else
 #define RAH2_CPP11 0
-#endif
-
-#if !defined(RAH2_CONSTEXPR)
-#if defined(RAH2_CPP11)
-#define RAH2_CONSTEXPR
-#else
-#define RAH2_CONSTEXPR constexpr
-#endif
-#endif
-
-#if !defined(RAH2_CONSTEXPR_OR_CONST)
-#if defined(RAH2_CPP11)
-#define RAH2_CONSTEXPR_OR_CONST const
-#else
-#define RAH2_CONSTEXPR_OR_CONST constexpr
-#endif
 #endif
 
 // Functions that became constexpr in C++20

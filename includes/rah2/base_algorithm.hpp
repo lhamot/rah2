@@ -1339,7 +1339,7 @@ namespace RAH2_NAMESPACE
             input_iterator<InputIterator1> && input_iterator<InputIterator2>
             && sentinel_for<InputSentinel1, InputIterator1>
             && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
-    RAH2_CPP14_CONSTEXPR inline bool
+    constexpr inline bool
     equal(InputIterator1 first1, InputSentinel1 last1, InputIterator2 first2, InputSentinel2 last2)
     {
         for (; first1 != last1; ++first1, ++first2)
@@ -1354,7 +1354,7 @@ namespace RAH2_NAMESPACE
         typename InputRange1,
         typename InputRange2,
         RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-    RAH2_CPP14_CONSTEXPR inline bool equal(InputRange1&& range1, InputRange2&& range2)
+    constexpr inline bool equal(InputRange1&& range1, InputRange2&& range2)
     {
         return RAH2_NAMESPACE::equal(
             RAH2_NAMESPACE::begin(range1),
@@ -1392,8 +1392,7 @@ namespace RAH2_NAMESPACE
         typename InputRange2,
         typename BinaryPredicate,
         RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-    RAH2_CPP14_CONSTEXPR inline bool
-    equal(InputRange1&& range1, InputRange2 range2, BinaryPredicate&& predicate)
+    constexpr inline bool equal(InputRange1&& range1, InputRange2 range2, BinaryPredicate&& predicate)
     {
         return RAH2_NAMESPACE::equal(
             RAH2_NAMESPACE::begin(range1),

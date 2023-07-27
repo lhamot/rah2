@@ -1811,8 +1811,8 @@ namespace RAH2_NAMESPACE
             IntegerType)
         {
             RandomAccessIterator srcFirst = first;
-            RAH2_CONSTEXPR_OR_CONST size_t numBuckets = 1 << DigitBits;
-            RAH2_CONSTEXPR_OR_CONST IntegerType bucketMask = numBuckets - 1;
+            constexpr size_t numBuckets = 1 << DigitBits;
+            constexpr IntegerType bucketMask = numBuckets - 1;
 
             // The alignment of this variable isn't required; it merely allows the code below to be faster on some platforms.
             uint32_t bucketSize[numBuckets];
