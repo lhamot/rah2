@@ -44,35 +44,6 @@
 
 namespace RAH2_NAMESPACE
 {
-
-#define MAKE_CONCEPT(NAME, CHECK, REQUIRE)                                                         \
-    template <typename T, typename = int>                                                          \
-    struct NAME##_impl                                                                             \
-    {                                                                                              \
-        static constexpr bool value = false;                                                       \
-    };                                                                                             \
-    template <typename T>                                                                          \
-    struct NAME##_impl<T, decltype(RAH2_STD::enable_if_t<CHECK, int>{}, REQUIRE, 0)>               \
-    {                                                                                              \
-        static constexpr bool value = true;                                                        \
-    };                                                                                             \
-    template <typename T>                                                                          \
-    constexpr bool NAME = NAME##_impl<T>::value;
-
-#define MAKE_CONCEPT_2(NAME, CHECK, REQUIRE)                                                       \
-    template <typename U, typename V, bool check, typename = int>                                  \
-    struct NAME##_impl                                                                             \
-    {                                                                                              \
-        static constexpr bool value = false;                                                       \
-    };                                                                                             \
-    template <typename U, typename V>                                                              \
-    struct NAME##_impl<U, V, true, decltype(REQUIRE, 0)>                                           \
-    {                                                                                              \
-        static constexpr bool value = true;                                                        \
-    };                                                                                             \
-    template <typename U, typename V>                                                              \
-    constexpr bool NAME = NAME##_impl<U, V, CHECK>::value;
-
     // **************************** standard traits ***********************************************
 
     template <class Base, class Derived>
@@ -552,31 +523,21 @@ namespace RAH2_NAMESPACE
     template <typename T>
     constexpr bool input_iterator = input_iterator_impl<T>::value;
 
-    template <class T, class U, typename>
-    struct __WeaklyEqualityComparableWith
-    {
-        constexpr static bool value = false;
-    };
-
     template <class T, class U>
-    struct __WeaklyEqualityComparableWith<
-        T,
-        U,
-        decltype(RAH2_STD::declval<T>() == RAH2_STD::declval<U>(), RAH2_STD::declval<T>() != RAH2_STD::declval<U>(), RAH2_STD::declval<U>() == RAH2_STD::declval<T>(), RAH2_STD::declval<U>() != RAH2_STD::declval<T>())>
+    struct WeaklyEqualityComparableWithImpl
     {
-        constexpr static bool value = true;
+        template <class T2>
+        using check =
+            decltype(!(RAH2_STD::declval<T2>() == RAH2_STD::declval<U>()), !(RAH2_STD::declval<T2>() != RAH2_STD::declval<U>()), !(RAH2_STD::declval<U>() == RAH2_STD::declval<T2>()), !(RAH2_STD::declval<U>() != RAH2_STD::declval<T2>()));
+
+        constexpr static bool value = compiles<false, T, check>;
     };
-
-#define VAL_V RAH2_STD::declval<V&>()
-#define VAL_U RAH2_STD::declval<U&>()
-
-    MAKE_CONCEPT_2(
-        WeaklyEqualityComparableWith,
-        true,
-        VAL_V == VAL_U || VAL_V != VAL_U || VAL_U == VAL_V || VAL_U != VAL_V);
+    template <class T, class U>
+    constexpr static bool __WeaklyEqualityComparableWith =
+        WeaklyEqualityComparableWithImpl<T, U>::value;
 
     template <class T>
-    constexpr bool equality_comparable = WeaklyEqualityComparableWith<T, T>;
+    constexpr bool equality_comparable = __WeaklyEqualityComparableWith<T, T>;
 
     template <class T>
     constexpr bool destructible = RAH2_NAMESPACE::is_nothrow_destructible_v<T>;
@@ -595,7 +556,17 @@ namespace RAH2_NAMESPACE
         && RAH2_NAMESPACE::assignable_from<T&, T&> && RAH2_NAMESPACE::assignable_from<T&, const T&>
         && RAH2_NAMESPACE::assignable_from<T&, const T>;
 
-    MAKE_CONCEPT(default_initializable, RAH2_NAMESPACE::constructible_from<T>, T{});
+    template <typename T>
+    struct default_initializable_impl
+    {
+        template <typename T2>
+        using default_ctor = decltype(T2{});
+
+        constexpr static bool value =
+            RAH2_NAMESPACE::constructible_from<T> && compiles<false, T, default_ctor>;
+    };
+    template <typename T>
+    constexpr bool default_initializable = default_initializable_impl<T>::value;
 
     template <class T>
     constexpr bool semiregular =
@@ -607,7 +578,7 @@ namespace RAH2_NAMESPACE
         static constexpr bool value =
             is_true_v<Diagnostic, RAH2_NAMESPACE::semiregular<S>>
             && is_true_v<Diagnostic, RAH2_NAMESPACE::input_or_output_iterator<I>>
-            && is_true_v<Diagnostic, WeaklyEqualityComparableWith<I, S>>;
+            && is_true_v<Diagnostic, __WeaklyEqualityComparableWith<I, S>>;
     };
 
     template <class S, class I>
@@ -632,12 +603,19 @@ namespace RAH2_NAMESPACE
     template <class S, class I>
     static constexpr bool disable_sized_sentinel_for = false;
 
-    MAKE_CONCEPT_2(
-        sized_sentinel_for,
-        (RAH2_NAMESPACE::sentinel_for<U, V>
-         && !RAH2_NAMESPACE::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<U>, RAH2_STD::remove_cv_t<V>>),
-        (RAH2_STD::declval<U>() - RAH2_STD::declval<V>(),
-         RAH2_STD::declval<V>() - RAH2_STD::declval<U>()));
+    template <class S, class I>
+    struct sized_sentinel_for_impl
+    {
+        template <class S2>
+        using less_s_i =
+            decltype(RAH2_STD::declval<S2>() - RAH2_STD::declval<I>(), RAH2_STD::declval<I>() - RAH2_STD::declval<S2>());
+        static constexpr bool value =
+            RAH2_NAMESPACE::sentinel_for<S, I>
+            && !RAH2_NAMESPACE::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<S>, RAH2_STD::remove_cv_t<I>>
+            && compiles<false, S, less_s_i>;
+    };
+    template <class S, class I>
+    static constexpr bool sized_sentinel_for = sized_sentinel_for_impl<S, I>::value;
 
     namespace details
     {
@@ -830,7 +808,7 @@ namespace RAH2_NAMESPACE
         typename S,
         RAH2_STD::enable_if_t<
             !RAH2_NAMESPACE::sized_sentinel_for<S, I>
-            && RAH2_NAMESPACE::WeaklyEqualityComparableWith<S, I>>* = nullptr>
+            && RAH2_NAMESPACE::__WeaklyEqualityComparableWith<S, I>>* = nullptr>
     RAH2_NAMESPACE::iter_difference_t<I> distance(I first, S last)
     {
         iter_difference_t<I> len = 0;
@@ -1650,7 +1628,7 @@ namespace RAH2_NAMESPACE
         static_assert(
             RAH2_NAMESPACE::input_or_output_iterator<I>,
             "RAH2_NAMESPACE::input_or_output_iterator<I>");
-        static_assert(WeaklyEqualityComparableWith<I, S>, "WeaklyEqualityComparableWith<I, S>");
+        static_assert(__WeaklyEqualityComparableWith<I, S>, "__WeaklyEqualityComparableWith<I, S>");
         RAH2_NAMESPACE::advance(i, bound);
         return i;
     }

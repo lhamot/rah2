@@ -742,7 +742,7 @@ struct PairEqualImpl
     {
         static_assert(
             RAH2_NAMESPACE::
-                WeaklyEqualityComparableWith<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
+                __WeaklyEqualityComparableWith<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
             "second not assignable to first");
         return std::get<0>(ab) == std::get<1>(ab);
     }
@@ -789,7 +789,7 @@ void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
     ++testSuite.test_count;
 
     static_assert(
-        RAH2_NAMESPACE::WeaklyEqualityComparableWith<
+        RAH2_NAMESPACE::__WeaklyEqualityComparableWith<
             rah2::range_reference_t<decltype(RANGE)>,
             rah2::range_reference_t<decltype(IL)>>,
         "Can't compare");

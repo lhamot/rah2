@@ -8,7 +8,6 @@
 #define RAH2_NAMESPACE rah2
 #endif
 
-
 #include <utility>
 #include <type_traits>
 
@@ -154,4 +153,16 @@ namespace RAH2_NAMESPACE
     template <bool Diagnostic, bool Val>
     static constexpr bool is_true_v = is_true_v_impl<Diagnostic, Val>::value;
 
+#define MAKE_CONCEPT(NAME, IS_TRUE, NEED_COMPILE)                                                  \
+    template <typename T2>                                                                         \
+    struct NAME##_impl                                                                             \
+    {                                                                                              \
+        template <typename T>                                                                      \
+        using require = decltype(NEED_COMPILE);                                                    \
+        template <typename T>                                                                      \
+        static constexpr bool check = IS_TRUE;                                                     \
+        static constexpr bool value = check<T2> && ::RAH2_NAMESPACE::compiles<false, T2, require>; \
+    };                                                                                             \
+    template <typename T>                                                                          \
+    constexpr bool NAME = NAME##_impl<T>::value;
 } // namespace RAH2_NAMESPACE
