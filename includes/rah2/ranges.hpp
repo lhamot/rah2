@@ -9,7 +9,18 @@
 #include <tuple>
 
 #include "range_bases.hpp"
+
+#ifdef _MSC_VER
+#define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
+#define RAH2_EXT_WARNING_POP __pragma(warning(pop))
+#else
+#define RAH2_EXT_WARNING_PUSH
+#define RAH2_EXT_WARNING_POP
+#endif
+
+RAH2_EXT_WARNING_PUSH
 #include "mpark/variant.hpp"
+RAH2_EXT_WARNING_POP
 
 namespace RAH2_NAMESPACE
 {

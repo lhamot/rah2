@@ -124,7 +124,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <AdditionalIncludeDirectories>C:\C\rah4\includes</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4514;4583;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4514;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,7 +143,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <AdditionalIncludeDirectories>C:\C\rah4\includes</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4514;4583;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4514;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -163,7 +163,7 @@
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <AdditionalIncludeDirectories>C:\C\rah4\includes</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4514;4583;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4514;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -182,7 +182,7 @@
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <AdditionalIncludeDirectories>C:\C\rah4\includes</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4514;4583;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4514;5026;5045;4868;4711;4710;4623;4626;5027;4820;4625</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
