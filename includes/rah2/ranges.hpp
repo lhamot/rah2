@@ -340,7 +340,7 @@ namespace RAH2_NAMESPACE
     class counted_iterator : public iterator_facade<
                                  counted_iterator<I>,
                                  default_sentinel,
-                                 decltype(*details::declval<I>()),
+                                 decltype(*RAH2_STD::declval<I>()),
                                  typename RAH2_STD::iterator_traits<I>::iterator_category>
     {
         I iter_;
@@ -1083,7 +1083,7 @@ namespace RAH2_NAMESPACE
             };
 
             using reference =
-                decltype(details::declval<F>()(details::declval<range_reference_t<R>>()));
+                decltype(RAH2_STD::declval<F>()(RAH2_STD::declval<range_reference_t<R>>()));
             class iterator : public iterator_facade<iterator, sentinel, reference, category>
             {
                 iterator_t<R> iter_;
@@ -1092,7 +1092,7 @@ namespace RAH2_NAMESPACE
             public:
                 using difference_type = intptr_t;
                 using reference =
-                    decltype(details::declval<F>()(details::declval<range_reference_t<R>>()));
+                    decltype(RAH2_STD::declval<F>()(RAH2_STD::declval<range_reference_t<R>>()));
                 using pointer = typename details::pointer_type<reference>::type;
                 using value_type = RAH2_STD::remove_reference_t<reference>;
                 using iterator_category = range_iter_categ_t<R>;
@@ -2677,12 +2677,11 @@ namespace RAH2_NAMESPACE
                 SentinelTuple sentinels;
             };
 
-            class iterator
-                : public iterator_facade<
-                      iterator,
-                      sentinel,
-                      decltype(details::deref(RAH2_NAMESPACE::details::declval<IterTuple>())),
-                      base_cat>
+            class iterator : public iterator_facade<
+                                 iterator,
+                                 sentinel,
+                                 decltype(details::deref(RAH2_STD::declval<IterTuple&>())),
+                                 base_cat>
             {
                 IterTuple iters_;
 
@@ -2867,12 +2866,11 @@ namespace RAH2_NAMESPACE
                 SentinelTuple sentinels;
             };
 
-            class iterator
-                : public iterator_facade<
-                      iterator,
-                      sentinel,
-                      decltype(details::deref(RAH2_NAMESPACE::details::declval<IterTuple>())),
-                      base_cat>
+            class iterator : public iterator_facade<
+                                 iterator,
+                                 sentinel,
+                                 decltype(details::deref(RAH2_STD::declval<IterTuple&>())),
+                                 base_cat>
             {
                 IterTuple iters_;
                 zip_transform_view* parent_ = nullptr;
@@ -4044,8 +4042,7 @@ namespace RAH2_NAMESPACE
         template <typename F>
         class generate_view : public view_interface<generate_view<F>>
         {
-            using value =
-                RAH2_NAMESPACE::remove_cvref_t<decltype(RAH2_NAMESPACE::details::declval<F>()())>;
+            using value = RAH2_NAMESPACE::remove_cvref_t<decltype(RAH2_STD::declval<F>()())>;
             F func_;
             using base_cat = RAH2_STD::input_iterator_tag;
 

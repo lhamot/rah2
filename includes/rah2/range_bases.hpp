@@ -136,11 +136,6 @@ namespace RAH2_NAMESPACE
 
     namespace details
     {
-        // TODO : Replace by RAH2_STD::declval
-        /// Used in decltype to get an instance of a type
-        template <typename T>
-        T& declval();
-
         template <typename I>
         using iterator_category = std::conditional_t<
             RAH2_NAMESPACE::is_pointer_v<I>,
@@ -156,18 +151,18 @@ namespace RAH2_NAMESPACE
     // **************************** range access **************************************************
     namespace details
     {
-        MAKE_CONCEPT(has_begin_member, (details::declval<T>().begin()));
-        MAKE_CONCEPT(has_begin_ADL, (begin(details::declval<T>())));
-        MAKE_CONCEPT(has_end_member, (details::declval<T>().end()));
-        MAKE_CONCEPT(has_end_ADL, (end(details::declval<T>())));
-        MAKE_CONCEPT(has_rbegin_member, details::declval<RAH2_STD::remove_reference_t<T>>().rbegin())
-        MAKE_CONCEPT(has_rbegin_ADL, rbegin(details::declval<RAH2_STD::remove_reference_t<T>>()))
-        MAKE_CONCEPT(has_rend_member, details::declval<RAH2_STD::remove_reference_t<T>>().rend())
-        MAKE_CONCEPT(has_rend_ADL, rend(details::declval<RAH2_STD::remove_reference_t<T>>()))
-        MAKE_CONCEPT(has_size_member, details::declval<RAH2_STD::remove_reference_t<T>>().size())
-        MAKE_CONCEPT(has_size_ADL, size(details::declval<RAH2_STD::remove_reference_t<T>>()))
-        MAKE_CONCEPT(has_data_member, details::declval<RAH2_STD::remove_reference_t<T>>().data())
-        MAKE_CONCEPT(has_data_ADL, data(details::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_begin_member, (RAH2_STD::declval<T>().begin()));
+        MAKE_CONCEPT(has_begin_ADL, (begin(RAH2_STD::declval<T>())));
+        MAKE_CONCEPT(has_end_member, (RAH2_STD::declval<T>().end()));
+        MAKE_CONCEPT(has_end_ADL, (end(RAH2_STD::declval<T>())));
+        MAKE_CONCEPT(has_rbegin_member, RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>().rbegin())
+        MAKE_CONCEPT(has_rbegin_ADL, rbegin(RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_rend_member, RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>().rend())
+        MAKE_CONCEPT(has_rend_ADL, rend(RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_size_member, RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>().size())
+        MAKE_CONCEPT(has_size_ADL, size(RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>()))
+        MAKE_CONCEPT(has_data_member, RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>().data())
+        MAKE_CONCEPT(has_data_ADL, data(RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>()))
 
         struct begin_impl
         {
@@ -376,7 +371,7 @@ namespace RAH2_NAMESPACE
     template <class LHS, class RHS>
     constexpr bool assignable_from = assignable_from_impl<LHS, RHS>::value;
 
-    MAKE_CONCEPT(swappable, RAH2_STD::swap(details::declval<T>(), details::declval<T>()));
+    MAKE_CONCEPT(swappable, RAH2_STD::swap(RAH2_STD::declval<T&>(), RAH2_STD::declval<T&>()));
 
     template <class T>
     constexpr bool is_object_v = RAH2_STD::is_object<T>::value;
@@ -981,13 +976,13 @@ namespace RAH2_NAMESPACE
     using cap_iterator_tag = max_iterator_tag<common_iterator_tag<Cat, MaxCat>, MinCat>;
 
     //template <typename T>
-    //using iterator_t = decltype(RAH2_NAMESPACE::begin(details::declval<T>()));
+    //using iterator_t = decltype(RAH2_NAMESPACE::begin(RAH2_STD::declval<T>()));
 
     template <typename T>
-    using const_iterator_t = decltype(RAH2_NAMESPACE::cbegin(details::declval<T>()));
+    using const_iterator_t = decltype(RAH2_NAMESPACE::cbegin(RAH2_STD::declval<T>()));
 
     template <typename T>
-    using const_sentinel_t = decltype(RAH2_NAMESPACE::cend(details::declval<T>()));
+    using const_sentinel_t = decltype(RAH2_NAMESPACE::cend(RAH2_STD::declval<T>()));
 
     template <typename R>
     using range_size_t = decltype(RAH2_NAMESPACE::size(RAH2_STD::declval<R&>()));
@@ -1028,7 +1023,7 @@ namespace RAH2_NAMESPACE
     {
         template <typename T2>
         using has_ranges_size =
-            decltype(RAH2_NAMESPACE::size(details::declval<RAH2_STD::remove_reference_t<T2>>()));
+            decltype(RAH2_NAMESPACE::size(RAH2_STD::declval<RAH2_STD::remove_reference_t<T2>>()));
 
         constexpr static bool value = range_impl<T, Diagnostic>::value
                                       && compiles<Diagnostic, T, has_ranges_size>
@@ -1124,7 +1119,7 @@ namespace RAH2_NAMESPACE
     };
 
     template <typename R>
-    struct has_ranges_data<R, decltype(RAH2_NAMESPACE::data(details::declval<R>()), 0)>
+    struct has_ranges_data<R, decltype(RAH2_NAMESPACE::data(RAH2_STD::declval<R>()), 0)>
     {
         static constexpr bool value = true;
     };
