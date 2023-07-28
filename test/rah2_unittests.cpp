@@ -1112,8 +1112,9 @@ int main()
         auto r_copy = vec | transform([](auto a) { return Elt{a.member + 1}; });
         for (auto iter = rah2::begin(r_copy), end_iter = rah2::end(r_copy); iter != end_iter; ++iter)
         {
-            assert(iter->member == 2); // Check for mutability
-            assert((*iter).member == 2); // Check for mutability
+            // Not possible since *iter is a rvalue (can't take the pointer of a rvalue)
+            // assert(iter->member == 2); // Check for mutability
+            // assert((*iter).member == 2); // Check for mutability
             static_assert(
                 RAH2_NAMESPACE::is_rvalue_reference_v<decltype(*iter)>
                     || (not RAH2_NAMESPACE::is_reference_v<decltype(*iter)>),

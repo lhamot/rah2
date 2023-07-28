@@ -179,7 +179,7 @@ namespace RAH2_NAMESPACE
         using iterator_category = RAH2_STD::input_iterator_tag;
         using value_type = RAH2_NAMESPACE::remove_cvref_t<R>;
         using difference_type = intptr_t;
-        using pointer = typename details::pointer_type<R>::type;
+        using pointer = RAH2_STD::remove_reference_t<R>*;
         using reference = R;
 
         static_assert(not RAH2_STD::is_reference<value_type>::value, "value_type can't be a reference");
@@ -207,9 +207,10 @@ namespace RAH2_NAMESPACE
         //{
         //    return !(RAH2_SELF_CONST == rho);
         //}
-        auto operator->()
+        template <typename Ref = reference, std::enable_if_t<RAH2_NAMESPACE::is_reference_v<Ref>>* = nullptr>
+        pointer operator->()
         {
-            return RAH2_NAMESPACE::details::pointer_type<reference>::to_pointer(*RAH2_SELF);
+            return &(*RAH2_SELF);
         }
     };
 
@@ -917,13 +918,37 @@ namespace RAH2_NAMESPACE
         template <typename R, typename P>
         class filter_view : public view_interface<filter_view<R, P>>
         {
-            R range_;
+            R base_;
             P pred_;
             using inner_iterator = RAH2_NAMESPACE::iterator_t<R>;
             using inner_sentinel = RAH2_NAMESPACE::sentinel_t<R>;
             constexpr static bool is_common_range = RAH2_NAMESPACE::common_range<R>;
             using base_cat =
                 RAH2_NAMESPACE::common_iterator_tag<range_iter_categ_t<R>, bidirectional_iterator_tag>;
+
+            // Get a pointer to the pointed value,
+            //   OR a pointer to a copy of the pointed value (when not a reference iterator)
+            template <class Ref>
+            struct get_pointer
+            {
+                template <typename It>
+                static auto get(It&& iter)
+                {
+                    return RAH2_NAMESPACE::details::optional<Ref>(*iter);
+                }
+                using type = RAH2_NAMESPACE::details::optional<Ref>;
+            };
+
+            template <class Ref>
+            struct get_pointer<Ref&>
+            {
+                template <typename It>
+                static auto get(It&& iter)
+                {
+                    return &(*iter);
+                }
+                using type = Ref*;
+            };
 
         public:
             struct sentinel
@@ -940,34 +965,16 @@ namespace RAH2_NAMESPACE
                 filter_view* view_ = nullptr;
                 inner_iterator iter_;
 
-                typename RAH2_STD::iterator_traits<inner_iterator>::pointer value_pointer_;
-
-                // Get a pointer to the pointed value,
-                //   OR a pointer to a copy of the pointed value (when not a reference iterator)
-                template <class It>
-                struct get_pointer
-                {
-                    static auto get(It& iter)
-                    {
-                        return iter.operator->();
-                    }
-                };
-                template <class V>
-                struct get_pointer<V*>
-                {
-                    static auto get(V* ptr)
-                    {
-                        return ptr;
-                    }
-                };
+                typename get_pointer<iter_reference_t<inner_iterator>>::type value_pointer_;
 
                 void next_value()
                 {
-                    while (iter_ != RAH2_NAMESPACE::end(view_->range_)
+                    while (iter_ != RAH2_NAMESPACE::end(view_->base_)
                            && not(view_->pred_)(
-                               *(value_pointer_ = get_pointer<inner_iterator>::get(iter_))))
+                               *(value_pointer_ =
+                                     get_pointer<iter_reference_t<inner_iterator>>::get(iter_))))
                     {
-                        assert(iter_ != RAH2_NAMESPACE::end(view_->range_));
+                        assert(iter_ != RAH2_NAMESPACE::end(view_->base_));
                         ++iter_;
                     }
                 }
@@ -996,7 +1003,7 @@ namespace RAH2_NAMESPACE
                     {
                         --iter_;
                     } while (not(view_->pred_)(*iter_)
-                             && iter_ != RAH2_NAMESPACE::begin(view_->range_));
+                             && iter_ != RAH2_NAMESPACE::begin(view_->base_));
                     return *this;
                 }
                 template <typename U = R, RAH2_STD::enable_if_t<bidirectional_range<U>>* = nullptr>
@@ -1017,14 +1024,14 @@ namespace RAH2_NAMESPACE
             };
 
             filter_view(R rng, P pred)
-                : range_(RAH2_STD::move(rng))
+                : base_(RAH2_STD::move(rng))
                 , pred_(RAH2_STD::move(pred))
             {
             }
 
             R base() const
             {
-                return range_;
+                return base_;
             }
 
             P const& pred() const
@@ -1034,18 +1041,18 @@ namespace RAH2_NAMESPACE
 
             iterator begin()
             {
-                return iterator(this, RAH2_NAMESPACE::begin(range_));
+                return iterator(this, RAH2_NAMESPACE::begin(base_));
             }
 
             template <typename U = R, RAH2_STD::enable_if_t<common_range<U>>* = nullptr>
             iterator end()
             {
-                return iterator{this, RAH2_NAMESPACE::end(range_)};
+                return iterator{this, RAH2_NAMESPACE::end(base_)};
             }
             template <typename U = R, RAH2_STD::enable_if_t<not common_range<U>>* = nullptr>
             sentinel end()
             {
-                return sentinel{RAH2_NAMESPACE::end(range_)};
+                return sentinel{RAH2_NAMESPACE::end(base_)};
             }
         };
 
