@@ -16,15 +16,13 @@ auto rdmCommonView = make_test_view<Common, std::random_access_iterator_tag, tru
 auto contiSentView = make_test_view<Sentinel, rah2::contiguous_iterator_tag, true>();
 auto contiCommonView = make_test_view<Common, rah2::contiguous_iterator_tag, true>();
 
-extern TestSuite testSuite;
-
 void test_counted_iterator()
 {
     testSuite.test_case("sample", "");
     {
-        auto iter = rah2::make_counted_iterator(begin(inputSentView), 10);
-        STATIC_ASSERT(rah2::input_iterator<decltype(iter)>);
-        STATIC_ASSERT(not rah2::forward_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(inputSentView), 10));
+        STATIC_ASSERT(rah2::input_iterator<Iter>);
+        STATIC_ASSERT(not rah2::forward_iterator<Iter>);
     }
     {
         auto iter = rah2::make_counted_iterator(begin(fwdSentView), 10);
@@ -76,9 +74,9 @@ void test_empty_view()
     testSuite.test_case("sample");
     /// [empty]
     std::vector<int> result;
-    for (int i : rah2::views::empty<int>())
+    for (int const i : rah2::views::empty<int>())
         result.push_back(i);
-    assert(result == std::vector<int>());
+    assert(result.empty());
     /// [empty]
 
     testSuite.test_case("concept");
@@ -90,7 +88,7 @@ void test_single_view()
     testSuite.test_case("sample");
     /// [single]
     std::vector<int> result;
-    for (int i : rah2::views::single(20))
+    for (int const i : rah2::views::single(20))
         result.push_back(i);
     assert(result == std::vector<int>({20}));
     /// [single]
@@ -105,7 +103,7 @@ void test_iota_view()
         testSuite.test_case("sample");
         /// [iota]
         std::vector<int> result;
-        for (int i : rah2::views::iota(10, 15))
+        for (int const i : rah2::views::iota(10, 15))
             result.push_back(i);
         assert(result == std::vector<int>({10, 11, 12, 13, 14}));
         /// [iota]
@@ -114,14 +112,14 @@ void test_iota_view()
 
     {
         std::vector<int> result;
-        for (int i : rah2::views::iota(10) | rah2::views::slice(2, 5))
+        for (int const i : rah2::views::iota(10) | rah2::views::slice(2, 5))
             result.push_back(i);
         assert(result == std::vector<int>({12, 13, 14}));
     }
 
     {
         std::vector<size_t> result;
-        for (size_t i : rah2::views::iota() | rah2::views::slice(2, 5))
+        for (size_t const i : rah2::views::iota() | rah2::views::slice(2, 5))
             result.push_back(i);
         assert(result == std::vector<size_t>({2, 3, 4}));
     }
@@ -205,7 +203,7 @@ void test_all_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_filter_view
 {
-    auto make() const
+    [[nodiscard]] auto make() const
     {
         return rah2::views::filter(
             make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
@@ -221,7 +219,7 @@ void test_filter_view()
     /// [filter]
     std::vector<int> vec_01234{0, 1, 2, 3, 4, 5};
     std::vector<int> result;
-    for (int i : rah2::views::filter(vec_01234, [](auto a) { return a % 2 == 0; }))
+    for (int const i : rah2::views::filter(vec_01234, [](auto a) { return a % 2 == 0; }))
         result.push_back(i);
     assert(result == std::vector<int>({0, 2, 4}));
     /// [filter]
@@ -254,7 +252,7 @@ void test_transform_view()
         /// [rah2::views::transform]
         std::vector<int> vec{0, 1, 2, 3};
         std::vector<int> result;
-        for (int i : rah2::views::transform(vec, [](auto a) { return a * 2; }))
+        for (int const i : rah2::views::transform(vec, [](auto a) { return a * 2; }))
             result.push_back(i);
         assert(result == std::vector<int>({0, 2, 4, 6}));
         /// [rah2::views::transform]
@@ -262,7 +260,6 @@ void test_transform_view()
     testSuite.test_case("various");
     {
         std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
         auto valueSelector = [](auto a)
         {
             return a * 2;
@@ -279,7 +276,7 @@ void test_transform_view()
         /// [rah2::views::transform_pipeable]
         std::vector<int> vec{0, 1, 2, 3};
         std::vector<int> result;
-        for (int i : vec | rah2::views::transform([](auto a) { return a * 2; }))
+        for (int const i : vec | rah2::views::transform([](auto a) { return a * 2; }))
             result.push_back(i);
         assert(result == std::vector<int>({0, 2, 4, 6}));
         /// [rah2::views::transform_pipeable]
@@ -504,7 +501,7 @@ void test_split_view()
     testSuite.test_case("sample");
     /// [views::split]
     std::string sentence{"Keep..moving..forward.."};
-    std::string delim{".."};
+    std::string const delim{".."};
     auto words =
         rah2::views::split(sentence, delim)
         | rah2::views::transform([](auto word) { return std::string(word.begin(), word.end()); });
@@ -598,7 +595,7 @@ void test_reverse_view()
         /// [reverse]
         std::vector<int> vec{0, 1, 2, 3};
         std::vector<int> result;
-        for (int i : rah2::views::reverse(vec))
+        for (int const i : rah2::views::reverse(vec))
             result.push_back(i);
         assert(result == std::vector<int>({3, 2, 1, 0}));
         /// [reverse]
@@ -608,7 +605,7 @@ void test_reverse_view()
         /// [reverse_pipeable]
         std::vector<int> vec{0, 1, 2, 3};
         std::vector<int> result;
-        for (int i : vec | rah2::views::reverse())
+        for (int const i : vec | rah2::views::reverse())
             result.push_back(i);
         assert(result == std::vector<int>({3, 2, 1, 0}));
         /// [reverse_pipeable]
@@ -794,7 +791,7 @@ void test_zip_view()
         std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
         std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
         std::vector<std::tuple<int, double, char>> result;
-        for (auto a_b_c : rah2::views::zip(inputA, inputB, inputC) | rah2::views::common())
+        for (auto const& a_b_c : rah2::views::zip(inputA, inputB, inputC) | rah2::views::common())
             result.emplace_back(a_b_c);
         assert(
             result
@@ -865,7 +862,7 @@ void test_adjacent_view()
         {
             out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
         }
-        assert(out == (std::vector<std::vector<int>>{}));
+        assert(out.empty());
     }
     {
         testSuite.test_case("N == 0");
@@ -954,7 +951,7 @@ void test_adjacent_transform()
         {
             out.push_back(abc);
         }
-        assert(out == (std::vector<int>{}));
+        assert(out.empty());
     }
     {
         testSuite.test_case("N == 0");
@@ -966,9 +963,9 @@ void test_adjacent_transform()
             static_assert(
                 RAH2_NAMESPACE::tuple_size_v<std::remove_reference_t<decltype(abc)>> == 0,
                 "tuple should be empty");
-            out.push_back({});
+            out.emplace_back();
         }
-        assert(out == (std::vector<std::vector<int>>{}));
+        assert(out.empty());
     }
 }
 
@@ -1058,7 +1055,7 @@ void test_slide_view()
             out.emplace_back();
             std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{}));
+        assert(out.empty());
     }
 
     {
@@ -1146,7 +1143,7 @@ void test_stride_view()
         /// [stride]
         std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
         std::vector<int> result;
-        for (int i : rah2::views::stride(vec, 2))
+        for (int const i : rah2::views::stride(vec, 2))
             result.push_back(i);
         assert(result == std::vector<int>({0, 2, 4, 6}));
         /// [stride]
@@ -1156,7 +1153,7 @@ void test_stride_view()
         /// [stride_pipeable]
         std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
         std::vector<int> result;
-        for (int i : vec | rah2::views::stride(2))
+        for (int const i : vec | rah2::views::stride(2))
             result.push_back(i);
         assert(result == std::vector<int>({0, 2, 4, 6}));
         /// [stride_pipeable]

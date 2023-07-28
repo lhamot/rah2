@@ -526,7 +526,7 @@ void test_search()
     // print(2, haystack, needle, found2);
 
     // 'needle' range is empty:
-    std::string none{""};
+    std::string none;
     auto found3 = RAH2_NAMESPACE::search(haystack, none);
     assert(found3.begin() - haystack.begin() == 0);
     assert(found3.end() - haystack.begin() == 0);
@@ -579,7 +579,7 @@ void test_search_n()
     assert( // not found
         result4.size() == 0 && result4.begin() == result4.end() && result4.end() == nums.begin());
 
-    char symbol{'B'};
+    char const symbol{'B'};
     auto to_ascii = [](const int z) -> char
     {
         return char('A' + z - 1);
@@ -764,6 +764,7 @@ void test_move()
         NonCopyable& operator=(NonCopyable const&) = delete;
         NonCopyable(NonCopyable&&) = default;
         NonCopyable& operator=(NonCopyable&&) = default;
+        ~NonCopyable() = default;
     };
     std::vector<NonCopyable> v;
     v.emplace_back();
@@ -828,7 +829,7 @@ void test_transform()
     {
         /// [rah2::transform2]
         std::vector<int> vecIn1{0, 1, 2, 3};
-        std::vector<int> vecIn2{4, 3, 2, 1};
+        std::vector<int> const vecIn2{4, 3, 2, 1};
         std::vector<int> vecOut;
         rah2::transform(
             vecIn1, vecIn2, std::back_inserter(vecOut), [](int a, int b) { return a + b; });
@@ -981,7 +982,8 @@ void test_reverse_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::reverse_copy]
-    std::string x{"12345"}, y(x.size(), ' ');
+    std::string x{"12345"};
+    std::string y(x.size(), ' ');
     rah2::reverse_copy(x.begin(), x.end(), y.begin());
     assert(x == (std::string{"12345"}));
     assert(y == (std::string{"54321"}));
@@ -1177,7 +1179,8 @@ void test_partition_copy()
     /// [rah2::partition_copy]
     const std::vector<char> in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
 
-    std::vector<int> o1(in.size()), o2(in.size());
+    std::vector<int> o1(in.size());
+    std::vector<int> o2(in.size());
 
     auto pred = [](char c)
     {
@@ -1361,7 +1364,7 @@ void test_nth_element()
     assert(v[4] == 5);
     assert(out_last == v.end());
 
-    out_last = RAH2_NAMESPACE::nth_element(v, v.begin() + 1, std::greater<int>());
+    out_last = RAH2_NAMESPACE::nth_element(v, v.begin() + 1, std::greater<>());
     assert(v[1] == 7);
     assert(out_last == v.end());
 
@@ -1418,19 +1421,19 @@ void test_equal_range()
         std::vector<int> vecIn1{1, 2, 2, 3, 4};
         {
             std::vector<int> out;
-            for (int i : rah2::equal_range(vecIn1, 0))
+            for (int const i : rah2::equal_range(vecIn1, 0))
                 out.push_back(i);
             assert(out == std::vector<int>({}));
         }
         {
             std::vector<int> out;
-            for (int i : rah2::equal_range(vecIn1, 1))
+            for (int const i : rah2::equal_range(vecIn1, 1))
                 out.push_back(i);
             assert(out == std::vector<int>({1}));
         }
         {
             std::vector<int> out;
-            for (int i : rah2::equal_range(vecIn1, 2))
+            for (int const i : rah2::equal_range(vecIn1, 2))
                 out.push_back(i);
             assert(out == std::vector<int>({2, 2}));
         }
@@ -1464,19 +1467,19 @@ void test_equal_range()
             std::vector<S> vecIn1{{1, 'a'}, {2, 'b'}, {2, 'c'}, {3, 'd'}, {4, 'd'}};
             {
                 std::vector<S> out;
-                for (S i : rah2::equal_range(vecIn1, 0, FindS{}))
+                for (S const i : rah2::equal_range(vecIn1, 0, FindS{}))
                     out.push_back(i);
                 assert(out == std::vector<S>({}));
             }
             {
                 std::vector<S> out;
-                for (S i : rah2::equal_range(vecIn1, 1, FindS{}))
+                for (S const i : rah2::equal_range(vecIn1, 1, FindS{}))
                     out.push_back(i);
                 assert(out == std::vector<S>({{1, 'a'}}));
             }
             {
                 std::vector<S> out;
-                for (S i : rah2::equal_range(vecIn1, 2, FindS{}))
+                for (S const i : rah2::equal_range(vecIn1, 2, FindS{}))
                     out.push_back(i);
                 assert(out == std::vector<S>({{2, 'b'}, {2, 'c'}}));
             }
@@ -1489,7 +1492,8 @@ void test_merge()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::merge]
-    std::vector<int> in1 = {1, 2, 3, 4, 5}, in2 = {3, 4, 5, 6, 7};
+    std::vector<int> in1 = {1, 2, 3, 4, 5};
+    std::vector<int> in2 = {3, 4, 5, 6, 7};
     std::vector<int> out(in1.size() + in2.size());
 
     auto ret = RAH2_NAMESPACE::merge(in1, in2, out.begin());
@@ -1957,10 +1961,10 @@ void test_fold_left_first()
     /// [rah2::fold_left_first]
     std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
-    auto sum = rah2::fold_left_first(v.begin(), v.end(), std::plus<int>()); // (1)
+    auto sum = rah2::fold_left_first(v.begin(), v.end(), std::plus<>()); // (1)
     assert(sum.value() == 36);
 
-    auto mul = rah2::fold_left_first(v, std::multiplies<int>()); // (2)
+    auto mul = rah2::fold_left_first(v, std::multiplies<>()); // (2)
     assert(mul.value() == 40320);
 
     // get the product of the std::pair::second of all pairs in the vector:
@@ -1988,13 +1992,13 @@ void test_fold_right()
     assert(r2 == std::string("ABCD!"));
 
     // Use a program defined function object (lambda-expression):
-    std::string r3 =
-        rah2::fold_right(v, "A", [](int x, std::string s) { return s + ':' + std::to_string(x); });
+    std::string const r3 =
+        rah2::fold_right(v, "A", [](int x, std::string const& s) { return s + ':' + std::to_string(x); });
     assert(r3 == std::string("A:8:7:6:5:4:3:2:1"));
 
     // Get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
-    float r4 = rah2::fold_right(data | rah2::views::values(), 2.0f, std::multiplies<>());
+    float const r4 = rah2::fold_right(data | rah2::views::values(), 2.0f, std::multiplies<>());
     assert(r4 == 42);
     /// [rah2::fold_right]
 }
@@ -2029,11 +2033,11 @@ void test_fold_left_with_iter()
     /// [rah2::fold_left_with_iter]
     std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
-    auto sum = rah2::fold_left_with_iter(v.begin(), v.end(), 6, std::plus<int>());
+    auto sum = rah2::fold_left_with_iter(v.begin(), v.end(), 6, std::plus<>());
     assert(sum.value == 42);
     assert(sum.in == v.end());
 
-    auto mul = rah2::fold_left_with_iter(v, 0X69, std::multiplies<int>());
+    auto mul = rah2::fold_left_with_iter(v, 0X69, std::multiplies<>());
     assert(mul.value == 4233600);
     assert(mul.in == v.end());
 
@@ -2060,11 +2064,11 @@ void test_fold_left_first_with_iter()
 
     std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
-    auto sum = rah2::fold_left_first_with_iter(v.begin(), v.end(), std::plus<int>());
+    auto sum = rah2::fold_left_first_with_iter(v.begin(), v.end(), std::plus<>());
     assert(sum.value.value() == 36);
     assert(sum.in == v.end());
 
-    auto mul = rah2::fold_left_first_with_iter(v, std::multiplies<int>());
+    auto mul = rah2::fold_left_first_with_iter(v, std::multiplies<>());
     assert(mul.value.value() == 40320);
     assert(mul.in == v.end());
 

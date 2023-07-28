@@ -600,7 +600,7 @@ namespace RAH2_NAMESPACE
                 return {RAH2_STD::move(first), RAH2_STD::move(last)};
             }
             auto result = RAH2_NAMESPACE::move_backward(
-                RAH2_STD::move(first), RAH2_STD::move(mid), RAH2_STD::move(last));
+                RAH2_STD::move(first), RAH2_STD::move(mid), last);
             return {RAH2_STD::move(result.out), RAH2_STD::move(last)};
         }
 

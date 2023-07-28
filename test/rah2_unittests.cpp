@@ -231,49 +231,50 @@ void test_concepts()
 
     struct TestOk
     {
-        auto a() const
+        [[nodiscard]] auto a() const
         {
             return 0;
         }
-        auto b() const
+        [[nodiscard]] auto b() const
         {
             return 0;
         }
     };
     struct CheckBuildFail
     {
-        auto b() const
+        [[nodiscard]] auto b() const
         {
             return 0;
         }
     };
     struct CheckTrueNoBuild
     {
-        auto a() const
+        [[nodiscard]] auto a() const
         {
             return 0;
         }
     };
     struct CheckTrueIsFalse
     {
-        auto a() const
+        [[nodiscard]] auto a() const
         {
             return 0;
         }
-        auto b() const
+        [[nodiscard]] auto b() const
         {
             return false;
         }
     };
     struct CheckTraitsIsFalse
     {
+        CheckTraitsIsFalse() = default;
         virtual ~CheckTraitsIsFalse() = default;
 
-        auto a() const
+        [[nodiscard]] auto a() const
         {
             return 0;
         }
-        auto b() const
+        [[nodiscard]] auto b() const
         {
             return 0;
         }
@@ -311,6 +312,7 @@ void test_range_traits()
 }
 
 int main()
+try
 {
     // std::cout.imbue(std::locale("en_EN"));
 
@@ -635,12 +637,11 @@ int main()
         std::copy_n(begin(gen), 4, std::back_inserter(gen_copy));
         assert(gen_copy == std::vector<int>({1, 2, 4, 8}));
         /// [generate]
-        static_assert(rah2::input_range<decltype(gen)>, "");
-        static_assert(
-            RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>,
-            "");
-        static_assert(not rah2::forward_range<decltype(gen)>, "");
-        static_assert(not rah2::common_range<decltype(gen)>, "");
+        STATIC_ASSERT(rah2::input_range<decltype(gen)>);
+        STATIC_ASSERT(
+            ((RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
+        STATIC_ASSERT(not rah2::forward_range<decltype(gen)>);
+        STATIC_ASSERT(not rah2::common_range<decltype(gen)>);
     }
     {
         /// [generate_n]
@@ -660,12 +661,11 @@ int main()
             result.push_back(*i);
         assert(result == std::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
-        static_assert(rah2::input_range<decltype(gen)>, "");
-        static_assert(
-            RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>,
-            "");
-        static_assert(not rah2::forward_range<decltype(gen)>, "");
-        static_assert(not rah2::common_range<decltype(gen)>, "");
+        STATIC_ASSERT(rah2::input_range<decltype(gen)>);
+        STATIC_ASSERT(
+            (RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
+        STATIC_ASSERT(not rah2::forward_range<decltype(gen)>);
+        STATIC_ASSERT(not rah2::common_range<decltype(gen)>);
     }
 
     {
@@ -988,7 +988,7 @@ int main()
                                       std::vector<int> const& expected)
         {
             std::vector<int> out;
-            for (int val : rah2::views::set_difference(in1, in2))
+            for (int const val : rah2::views::set_difference(in1, in2))
                 out.push_back(val);
             assert(out == expected);
         };
@@ -1004,8 +1004,8 @@ int main()
         {
             std::vector<int> in1;
             std::vector<int> in2;
-            size_t const size1 = size_t(rand() % 100);
-            size_t const size2 = size_t(rand() % 100);
+            auto const size1 = size_t(rand() % 100);
+            auto const size2 = size_t(rand() % 100);
             for (size_t i = 0; i < size1; ++i)
                 in1.push_back(rand() % 100);
             for (size_t i = 0; i < size2; ++i)
@@ -1244,7 +1244,7 @@ int main()
                 return std::make_tuple(y, views::iota(0, width));
         };
 
-        std::vector<std::atomic<int>> test_(width * height);
+        std::vector<std::atomic<int>> test_(int(width * height));
 
         auto updateRaw = [&](auto&& y_xRange)
         {
@@ -1252,7 +1252,7 @@ int main()
             auto xRange = std::get<1>(y_xRange);
 
             for (auto x : xRange)
-                ++test_[size_t(x + y * width)];
+                ++test_[x + y * width];
         };
 
         for (auto ySelector : rah2::views::iota(0, 3))
@@ -1268,4 +1268,8 @@ int main()
 
     testSuite.report();
     return EXIT_SUCCESS;
+}
+catch(...)
+{
+    return EXIT_FAILURE;
 }
