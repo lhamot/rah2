@@ -243,7 +243,7 @@ namespace RAH2_NAMESPACE
         return first;
     }
 
-    template <typename ForwardRange, typename Compare>
+    template <typename ForwardRange, typename Compare, std::enable_if_t<forward_range<ForwardRange>>* = nullptr>
     auto min_element(ForwardRange&& range, Compare compare)
     {
         return RAH2_NAMESPACE::min_element(
@@ -807,7 +807,7 @@ namespace RAH2_NAMESPACE
         constexpr RAH2_NAMESPACE::range_difference_t<R> operator()(R&& r, const T& value, Proj proj) const
         {
             return (*this)(
-                RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value, RAH2_STD::ref(proj));
+                RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value, RAH2_STD::move(proj));
         }
 
         template <
@@ -1159,13 +1159,7 @@ namespace RAH2_NAMESPACE
     ///
     struct generate_fn
     {
-        template <
-            typename O,
-            typename S,
-            typename F,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<O> && RAH2_NAMESPACE::sentinel_for<S, O>
-                && RAH2_NAMESPACE::copy_constructible<F>>* = nullptr>
+        template <typename O, typename S, typename F>
         constexpr O operator()(O first, S last, F gen) const
         {
             for (; first != last; *first = RAH2_INVOKE_0(gen), ++first)
@@ -1174,13 +1168,7 @@ namespace RAH2_NAMESPACE
             return first;
         }
 
-        template <
-            typename R,
-            typename F,
-            RAH2_STD::enable_if_t<true
-                                  // RAH2_NAMESPACE::copy_constructible<F>
-                                  //&& RAH2_NAMESPACE::output_range<R, decltype(RAH2_STD::declval<F&>())>
-                                  >* = nullptr>
+        template <typename R, typename F>
         constexpr RAH2_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, F gen) const
         {
             return (*this)(RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), RAH2_STD::move(gen));
@@ -1392,7 +1380,7 @@ namespace RAH2_NAMESPACE
         typename InputRange2,
         typename BinaryPredicate,
         RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-    constexpr inline bool equal(InputRange1&& range1, InputRange2 range2, BinaryPredicate&& predicate)
+    constexpr inline bool equal(InputRange1&& range1, InputRange2&& range2, BinaryPredicate&& predicate)
     {
         return RAH2_NAMESPACE::equal(
             RAH2_NAMESPACE::begin(range1),
@@ -1429,7 +1417,10 @@ namespace RAH2_NAMESPACE
             typename S2,
             class Proj1 = RAH2_NAMESPACE::identity,
             class Proj2 = RAH2_NAMESPACE::identity,
-            typename Comp = RAH2_NAMESPACE::less>
+            typename Comp = RAH2_NAMESPACE::less,
+            std::enable_if_t<
+                input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
+                && sentinel_for<S2, I2>>* = nullptr>
         constexpr bool operator()(
             I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
@@ -1505,7 +1496,8 @@ namespace RAH2_NAMESPACE
             typename R2,
             class Proj1 = RAH2_NAMESPACE::identity,
             class Proj2 = RAH2_NAMESPACE::identity,
-            typename Comp = RAH2_NAMESPACE::less>
+            typename Comp = RAH2_NAMESPACE::less,
+            std::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
         constexpr bool
         operator()(R1&& r1, R2&& r2, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
@@ -1548,7 +1540,10 @@ namespace RAH2_NAMESPACE
             typename S2,
             class Pred = RAH2_NAMESPACE::equal_to,
             class Proj1 = RAH2_NAMESPACE::identity,
-            class Proj2 = RAH2_NAMESPACE::identity>
+            class Proj2 = RAH2_NAMESPACE::identity,
+            std::enable_if_t<
+                input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
+                && sentinel_for<S2, I2>>* = nullptr>
         constexpr RAH2_NAMESPACE::mismatch_result<I1, I2> operator()(
             I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {
@@ -1564,7 +1559,8 @@ namespace RAH2_NAMESPACE
             typename R2,
             class Pred = RAH2_NAMESPACE::equal_to,
             class Proj1 = RAH2_NAMESPACE::identity,
-            class Proj2 = RAH2_NAMESPACE::identity>
+            class Proj2 = RAH2_NAMESPACE::identity,
+            std::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
         constexpr RAH2_NAMESPACE::mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
         operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
         {

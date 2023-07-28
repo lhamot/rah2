@@ -450,7 +450,8 @@ namespace RAH2_NAMESPACE
             typename R2, // ranges::input_range
             class Pred = RAH2_NAMESPACE::equal_to,
             class Proj1 = RAH2_NAMESPACE::identity,
-            class Proj2 = RAH2_NAMESPACE::identity>
+            class Proj2 = RAH2_NAMESPACE::identity,
+            std::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
         // requires RAH2_STD::indirectly_comparable<ranges::iterator_t<R1>, ranges::iterator_t<R2>, Pred, Proj1, Proj2>
         constexpr bool
         operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -776,12 +777,8 @@ namespace RAH2_NAMESPACE
             typename I, // RAH2_STD::input_iterator
             typename S, // RAH2_STD::sentinel_for<I>
             typename O, // RAH2_STD::weakly_incrementable
-            typename C = RAH2_NAMESPACE::equal_to, // RAH2_STD::indirect_equivalence_relation<RAH2_STD::projected<I, Proj>>
+            typename C = RAH2_NAMESPACE::equal_to,
             RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-        //requires RAH2_STD::indirectly_copyable<I, O> &&(
-        //    RAH2_STD::forward_iterator<
-        //        I> or (RAH2_STD::input_iterator<O> && RAH2_STD::same_as<RAH2_STD::iter_value_t<I>, RAH2_STD::iter_value_t<O>>)
-        //    or RAH2_STD::indirectly_copyable_storable<I, O>)
         constexpr RAH2_NAMESPACE::unique_copy_result<I, O>
         operator()(I first, S last, O result, C comp = {}) const
         {
@@ -808,13 +805,8 @@ namespace RAH2_NAMESPACE
         template <
             typename R, // ranges::input_range
             typename O, // RAH2_STD::weakly_incrementable
-            typename C = RAH2_NAMESPACE::equal_to, // RAH2_STD::indirect_equivalence_relation<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
+            typename C = RAH2_NAMESPACE::equal_to,
             RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
-        //requires RAH2_STD::indirectly_copyable<ranges::iterator_t<R>, O>
-        //         && (RAH2_STD::forward_iterator<ranges::iterator_t<R>>
-        //             or (RAH2_STD::input_iterator<O>
-        //                 && RAH2_STD::same_as<ranges::range_value_t<R>, RAH2_STD::iter_value_t<O>>)
-        //             || RAH2_STD::indirectly_copyable_storable<ranges::iterator_t<R>, O>)
         constexpr RAH2_NAMESPACE::unique_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<R>, O>
         operator()(R&& r, O result, C comp = {}) const
         {
@@ -950,8 +942,6 @@ namespace RAH2_NAMESPACE
             typename I2, // RAH2_STD::random_access_iterator
             typename S2, // RAH2_STD::sentinel_for<I2>
             class Comp = RAH2_NAMESPACE::less>
-        //requires RAH2_STD::indirectly_copyable<I1, I2> && RAH2_STD::sortable<I2, Comp, Proj2> && RAH2_STD::
-        //    indirect_strict_weak_order<Comp, RAH2_STD::projected<I1, Proj1>, RAH2_STD::projected<I2, Proj2>>
         constexpr RAH2_NAMESPACE::partial_sort_copy_result<I1, I2>
         operator()(I1 first, S1 last, I2 result_first, S2 result_last, Comp comp = {}) const
         {
@@ -991,12 +981,6 @@ namespace RAH2_NAMESPACE
             typename R1, // ranges::input_range
             typename R2, // ranges::random_access_range
             class Comp = RAH2_NAMESPACE::less>
-        //requires RAH2_STD::indirectly_copyable<ranges::iterator_t<R1>, ranges::iterator_t<R2>>
-        //         && RAH2_STD::sortable<ranges::iterator_t<R2>, Comp, Proj2>
-        //         && RAH2_STD::indirect_strict_weak_order<
-        //             Comp,
-        //             RAH2_STD::projected<ranges::iterator_t<R1>, Proj1>,
-        //             RAH2_STD::projected<ranges::iterator_t<R2>, Proj2>>
         constexpr RAH2_NAMESPACE::partial_sort_copy_result<
             RAH2_NAMESPACE::borrowed_iterator_t<R1>,
             RAH2_NAMESPACE::borrowed_iterator_t<R2>>

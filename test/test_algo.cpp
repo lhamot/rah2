@@ -17,38 +17,54 @@
 void test_all_of()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     testSuite.test_case("yes");
     /// [rah2::all_of]
     assert(rah2::all_of(std::initializer_list<int>{4, 4, 4, 4}, [](auto a) { return a == 4; }));
     /// [rah2::all_of]
     testSuite.test_case("no");
-    assert(
-        rah2::all_of(std::initializer_list<int>{4, 4, 3, 4}, [](auto a) { return a == 4; }) == false);
+    std::vector<int> vec = {4, 4, 3, 4};
+    testSuite.test_case("iter");
+    assert(rah2::all_of(vec.begin(), vec.end(), [](auto a) { return a == 4; }) == false);
 }
 void test_any_of()
 {
     testSuite.test_case("sample");
     testSuite.test_case("yes");
+    testSuite.test_case("range");
     /// [rah2::any_of]
     assert(rah2::any_of(std::initializer_list<int>{3, 0, 1, 3, 4, 6}, [](auto a) { return a == 3; }));
     /// [rah2::any_of]
+    testSuite.test_case("no");
+    testSuite.test_case("iter");
+    std::vector<int> vec = {3, 0, 1, 3, 4, 6};
+    assert(rah2::any_of(vec.begin(), vec.end(), [](auto a) { return a == 5; }) == false);
 }
 void test_none_of()
 {
     testSuite.test_case("sample");
     testSuite.test_case("yes");
+    testSuite.test_case("range");
     /// [rah2::none_of]
     assert((rah2::none_of(std::initializer_list<int>{7, 8, 9, 10}, [](auto a) { return a == 11; })));
     /// [rah2::none_of]
+    testSuite.test_case("no");
+    testSuite.test_case("iter");
+    std::vector<int> vec = {7, 8, 9, 10};
+    assert(rah2::none_of(vec.begin(), vec.end(), [](auto a) { return a == 9; }) == false);
 }
 void test_for_each()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     /// [rah2::for_each]
     std::vector<int> testFE{4, 4, 4, 4};
     rah2::for_each(testFE, [](auto& value) { return ++value; });
-    EQUAL_RANGE(testFE, std::initializer_list<int>({5, 5, 5, 5}));
+    assert(rah2::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
     /// [rah2::for_each]
+    testSuite.test_case("iter");
+    rah2::for_each(testFE.begin(), testFE.end(), [](auto& value) { return ++value; });
+    assert(rah2::equal(testFE, std::initializer_list<int>({6, 6, 6, 6})));
 }
 void test_for_each_n()
 {
@@ -57,7 +73,7 @@ void test_for_each_n()
     std::vector<int> testFE{4, 4, 4, 4};
     auto res = rah2::for_each_n(
         testFE.begin(), intptr_t(testFE.size()), [](auto& value) { return ++value; });
-    EQUAL_RANGE(testFE, std::initializer_list<int>({5, 5, 5, 5}));
+    assert(rah2::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
     assert(res.in == testFE.end());
     /// [rah2::for_each_n]
 }
@@ -67,6 +83,7 @@ void test_algo_count()
     testSuite.test_case("sample");
     testSuite.test_case("noproj");
     testSuite.test_case("proj");
+    testSuite.test_case("range");
     {
         /// [rah2::count]
         assert(rah2::count(std::initializer_list<int>{4, 4, 4, 3}, 3) == 1);
@@ -76,8 +93,11 @@ void test_algo_count()
             int y;
         };
         static auto coords = {Coord{1, 1}, {1, 2}, {2, 1}, {2, 3}, {3, 1}};
-        assert(rah2::count(coords, 1, &Coord::x) == 2);
+        assert(rah2::count(coords, 1, RAH2_STD::mem_fn(&Coord::x)) == 2);
         /// [rah2::count]
+
+        testSuite.test_case("iter");
+        assert(rah2::count(coords.begin(), coords.end(), 1, RAH2_STD::mem_fn(&Coord::x)) == 2);
     }
 
     {
@@ -184,9 +204,14 @@ void test_algo_count()
 void test_count_if()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     /// [rah2::count_if]
-    assert(rah2::count_if(std::initializer_list<int>{4, 4, 4, 3}, [](auto a) { return a == 4; }) == 3);
+    std::vector<int> vec = {4, 4, 4, 3};
+    assert(rah2::count_if(vec, [](auto a) { return a == 4; }) == 3);
     /// [rah2::count_if]
+
+    testSuite.test_case("iter");
+    assert(rah2::count_if(vec.begin(), vec.end(), [](auto a) { return a == 4; }) == 3);
 
     {
         testSuite.test_case("perf");
@@ -243,6 +268,7 @@ void test_count_if()
 void test_mismatch()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     /// [rah2::mismatch]
     std::vector<int> in1 = {1, 2, 3, 4};
     std::vector<int> in2 = {1, 2, 42, 43};
@@ -250,10 +276,16 @@ void test_mismatch()
     assert(*r1_r2.in1 == 3);
     assert(*r1_r2.in2 == 42);
     /// [rah2::mismatch]
+
+    testSuite.test_case("iter");
+    r1_r2 = rah2::mismatch(in1.begin(), in1.end(), in2.begin(), in2.end());
+    assert(*r1_r2.in1 == 3);
+    assert(*r1_r2.in2 == 42);
 }
 void test_equal()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     /// [rah2::equal]
     std::vector<int> in1{1, 2, 3};
     std::vector<int> in2{1, 2, 3};
@@ -261,10 +293,15 @@ void test_equal()
     assert(rah2::equal(in1, in2));
     assert(rah2::equal(in1, in3) == false);
     /// [rah2::equal]
+
+    testSuite.test_case("iter");
+    assert(rah2::equal(in1.begin(), in1.end(), in2.begin(), in2.end()));
+    assert(rah2::equal(in1.begin(), in1.end(), in3.begin(), in3.end()) == false);
 }
 void test_lexicographical_compare()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     /// [rah2::lexicographical_compare]
     std::vector<char> v1{'a', 'b', 'c', 'd'};
     std::vector<char> v2{'a', 'x', 'y', 'z'};
@@ -272,6 +309,11 @@ void test_lexicographical_compare()
     assert(rah2::lexicographical_compare(v1, v2) == true);
     assert(rah2::lexicographical_compare(v2, v1) == false);
     /// [rah2::lexicographical_compare]
+
+    testSuite.test_case("iter");
+    assert(rah2::lexicographical_compare(v1.begin(), v1.end(), v1.begin(), v1.end()) == false);
+    assert(rah2::lexicographical_compare(v1.begin(), v1.end(), v2.begin(), v2.end()) == true);
+    assert(rah2::lexicographical_compare(v2.begin(), v2.end(), v1.begin(), v1.end()) == false);
 }
 void test_find()
 {
@@ -593,6 +635,7 @@ void test_contains_subrange()
 void test_starts_with()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
     /// [rah2::starts_with]
     using namespace std::literals;
 
@@ -612,9 +655,9 @@ void test_starts_with()
 
     assert(rah2::starts_with(
         "Constantinopolis", std::string("constant"), {}, ascii_upper, ascii_upper));
-    assert(not rah2::starts_with(u8"Istanbul", std::string("constant"), {}, ascii_upper, ascii_upper));
-    assert(rah2::starts_with(u8"Metropolis", std::string("metro"), cmp_ignore_case));
-    assert(not rah2::starts_with(u8"Acropolis", std::string("metro"), cmp_ignore_case));
+    assert(not rah2::starts_with("Istanbul", std::string("constant"), {}, ascii_upper, ascii_upper));
+    assert(rah2::starts_with("Metropolis", std::string("metro"), cmp_ignore_case));
+    assert(not rah2::starts_with("Acropolis", std::string("metro"), cmp_ignore_case));
 
     auto v = {1, 3, 5, 7, 9};
     auto odd = [](int x)
@@ -624,6 +667,12 @@ void test_starts_with()
     assert(rah2::starts_with(
         v, rah2::views::iota(1) | rah2::views::filter(odd) | rah2::views::take(3)));
     /// [rah2::starts_with]
+
+    testSuite.test_case("iter");
+    std::string acropolis = "Acropolis";
+    std::string metro = "metro";
+    assert(not rah2::starts_with(
+        acropolis.begin(), acropolis.end(), metro.begin(), metro.end(), cmp_ignore_case));
 }
 void test_ends_with()
 {
@@ -1697,15 +1746,22 @@ void test_min()
 void test_min_element()
 {
     testSuite.test_case("sample");
+    testSuite.test_case("range");
+    testSuite.test_case("nopred");
     {
         /// [rah2::min_element]
         std::vector<int> in{1, -5, 3, 4};
         auto iter = rah2::min_element(in);
         assert(*iter == -5);
         /// [rah2::min_element]
+
+        testSuite.test_case("iter");
+        iter = rah2::min_element(in.begin(), in.end());
+        assert(*iter == -5);
     }
 
     {
+        testSuite.test_case("pred");
         /// [rah2::min_element_pred]
         std::vector<std::pair<int, int>> in{{-100, 3}, {0, -5}, {0, 1}, {0, 4}};
         auto iter = rah2::min_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
