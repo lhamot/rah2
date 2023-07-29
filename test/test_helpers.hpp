@@ -38,7 +38,7 @@ struct TestSuite
 
     void report() const
     {
-        for (auto name_test : testMap)
+        for (const auto& name_test : testMap)
         {
             auto& name = name_test.first;
             std::cout << name_test.first << " : ";
@@ -69,7 +69,7 @@ struct TestSuite
 
     void run()
     {
-        for (auto name_test : testMap)
+        for (const auto& name_test : testMap)
         {
             auto& name = name_test.first;
             currentTest = name.c_str();

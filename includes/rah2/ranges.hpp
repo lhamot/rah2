@@ -242,7 +242,7 @@ namespace RAH2_NAMESPACE
         {
             return RAH2_SELF;
         }
-        I operator++(int)
+        const I operator++(int)
         {
             auto it = *this;
             ++(*this);
@@ -2255,7 +2255,7 @@ namespace RAH2_NAMESPACE
             class iterator : public iterator_facade<iterator, sentinel, value_type, base_cat>
             {
                 inner_iterator current_;
-                base_diff_type pos_;
+                base_diff_type pos_{};
 
             public:
                 iterator() = default;

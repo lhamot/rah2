@@ -1701,20 +1701,20 @@ namespace RAH2_NAMESPACE
                 return *this;
             }
             optional(T const& other)
+                : is_allocated_(true)
             {
                 new (get_ptr()) T(other);
-                is_allocated_ = true;
             }
             optional(T&& other)
+                : is_allocated_(true)
             {
                 new (get_ptr()) T(RAH2_STD::move(other));
-                is_allocated_ = true;
             }
             template <typename... Args>
             explicit optional(RAH2_NAMESPACE::in_place_t, Args&&... args)
+                : is_allocated_(true)
             {
                 new (get_ptr()) T(RAH2_STD::forward<Args>(args)...);
-                is_allocated_ = true;
             }
             optional& operator=(T const& other)
             {
@@ -1793,7 +1793,7 @@ namespace RAH2_NAMESPACE
             {
                 value().~T();
             }
-            RAH2_STD::aligned_storage_t<sizeof(T), RAH2_NAMESPACE::alignment_of_v<T>> value_;
+            RAH2_STD::aligned_storage_t<sizeof(T), RAH2_NAMESPACE::alignment_of_v<T>> value_{};
             bool is_allocated_ = false;
         };
     } // namespace details
