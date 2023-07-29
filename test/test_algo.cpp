@@ -2103,9 +2103,8 @@ void test_uninitialized_copy()
     };
 
     auto const sz{rah2::size(v)};
-    void* pbuf = std::malloc(sizeof(std::string) * sz); // NOLINT(cppcoreguidelines-no-malloc)
-    assert(pbuf != nullptr);
-    auto const first{static_cast<std::string*>(pbuf)};
+    alignas(alignof(std::string)) char pbuf[sz * sizeof(std::string)];
+    auto const first{reinterpret_cast<std::string*>(pbuf)};
     auto const last{first + sz};
     rah2::uninitialized_copy(std::begin(v), std::end(v), first, last);
 
@@ -2113,7 +2112,6 @@ void test_uninitialized_copy()
         assert(v[i] == first[i]);
 
     rah2::destroy(first, last); // NOLINT(cppcoreguidelines-no-malloc)
-    std::free(pbuf);
 
     /// [rah2::uninitialized_copy]
 }

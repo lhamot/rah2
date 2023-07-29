@@ -145,14 +145,15 @@ namespace RAH2_NAMESPACE
         template <class O, class I, class S, class T, class F>
         constexpr auto impl(I&& first, S&& last, T&& init, F f) const
         {
-            using U = RAH2_STD::decay_t<decltype(RAH2_INVOKE_2(f, RAH2_STD::move(init), *first))>;
+            using U =
+                RAH2_STD::decay_t<decltype(RAH2_INVOKE_2(f, RAH2_STD::forward<T>(init), *first))>;
             using Ret = RAH2_NAMESPACE::fold_left_with_iter_result<O, U>;
             if (first == last)
-                return Ret{RAH2_STD::move(first), U(RAH2_STD::move(init))};
-            U accum = RAH2_INVOKE_2(f, RAH2_STD::move(init), *first);
+                return Ret{RAH2_STD::forward<I>(first), U(RAH2_STD::forward<T>(init))};
+            U accum = RAH2_INVOKE_2(f, RAH2_STD::forward<T>(init), *first);
             for (++first; first != last; ++first)
                 accum = RAH2_INVOKE_2(f, RAH2_STD::move(accum), *first);
-            return Ret{RAH2_STD::move(first), RAH2_STD::move(accum)};
+            return Ret{RAH2_STD::forward<I>(first), RAH2_STD::move(accum)};
         }
 
     public:
@@ -194,15 +195,15 @@ namespace RAH2_NAMESPACE
         constexpr auto impl(I&& first, S&& last, F f) const
         {
             using U = decltype(RAH2_NAMESPACE::fold_left(
-                RAH2_STD::move(first), last, RAH2_NAMESPACE::iter_value_t<I>(*first), f));
+                RAH2_STD::forward<I>(first), last, RAH2_NAMESPACE::iter_value_t<I>(*first), f));
             using Ret =
                 RAH2_NAMESPACE::fold_left_first_with_iter_result<O, RAH2_NAMESPACE::details::optional<U>>;
             if (first == last)
-                return Ret{RAH2_STD::move(first), RAH2_NAMESPACE::details::optional<U>()};
+                return Ret{RAH2_STD::forward<I>(first), RAH2_NAMESPACE::details::optional<U>()};
             RAH2_NAMESPACE::details::optional<U> init(RAH2_NAMESPACE::in_place, *first);
             for (++first; first != last; ++first)
                 *init = RAH2_INVOKE_2(f, RAH2_STD::move(*init), *first);
-            return Ret{RAH2_STD::move(first), RAH2_STD::move(init)};
+            return Ret{RAH2_STD::forward<I>(first), RAH2_STD::move(init)};
         }
 
     public:

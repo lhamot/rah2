@@ -1198,7 +1198,7 @@ namespace RAH2_NAMESPACE
                 RAH2_NAMESPACE::insertion_sort<RandomAccessIterator, Compare>(first, last, compare);
         }
     }
-    
+
     /// sort
     ///
     /// We use quick_sort by default. See quick_sort for details.
