@@ -4,22 +4,6 @@
 #include "base_algorithm.hpp"
 #include "algo_heap.hpp"
 
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
-#endif
-
-// EASTL_PLATFORM_PREFERRED_ALIGNMENT
-//
-// Allows for slightly faster buffers in some cases.
-//
-#if !defined(EASTL_PLATFORM_PREFERRED_ALIGNMENT)
-#if defined(EA_PROCESSOR_ARM)
-#define EASTL_PLATFORM_PREFERRED_ALIGNMENT 8
-#else
-#define EASTL_PLATFORM_PREFERRED_ALIGNMENT 16
-#endif
-#endif
-
 namespace RAH2_NAMESPACE
 {
     /// is_sorted_until
@@ -605,9 +589,6 @@ namespace RAH2_NAMESPACE
 
         const auto requested_size = RAH2_NAMESPACE::distance(first, last);
 
-        //auto allocator = *get_default_allocator(0);
-        //value_type* const buffer = (value_type*)allocate_memory(
-        //    allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
         auto allocator = RAH2_STD::allocator<value_type>();
         value_type* const buffer = allocator.allocate(size_t(requested_size));
         RAH2_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
@@ -660,13 +641,8 @@ namespace RAH2_NAMESPACE
     // a simple insertion sort.
     /////////////////////////////////////////////////////////////////////
 
-#if (defined(EA_PROCESSOR_X86) || defined(EA_PROCESSOR_X86_64))
-    static const int kQuickSortLimit =
+    static int const kQuickSortLimit =
         28; // For sorts of random arrays over 100 items, 28 - 32 have been found to be good numbers on x86.
-#else
-    static const int kQuickSortLimit =
-        16; // It seems that on other processors lower limits are more beneficial, as they result in fewer compares.
-#endif
 
     namespace Internal
     {
@@ -678,20 +654,6 @@ namespace RAH2_NAMESPACE
                 n >>= 1;
             return i - 1;
         }
-
-        // To do: Investigate the speed of this bit-trick version of Log2.
-        //        It may work better on some platforms but not others.
-        //
-        // union FloatUnion {
-        //     float    f;
-        //     uint32_t i;
-        // };
-        //
-        // inline uint32_t Log2(uint32_t x)
-        // {
-        //     const FloatInt32Union u = { x };
-        //     return (u.i >> 23) - 127;
-        // }
     } // namespace Internal
 
     template <typename RandomAccessIterator, typename Sentinel, typename T>
@@ -1006,7 +968,6 @@ namespace RAH2_NAMESPACE
 
     namespace Internal
     {
-        // EA_DISABLE_VC_WARNING(4702) // unreachable code
         template <typename RandomAccessIterator, typename Sentinel, typename Size, typename PivotValueType>
         inline void
         quick_sort_impl_helper(RandomAccessIterator first, Sentinel last, Size kRecursionCount)
@@ -1062,7 +1023,6 @@ namespace RAH2_NAMESPACE
                 RAH2_NAMESPACE::partial_sort<RandomAccessIterator, Compare>(
                     first, last, last, compare);
         }
-        // EA_RESTORE_VC_WARNING()
 
         template <typename RandomAccessIterator, typename Sentinel, typename Size>
         inline void quick_sort_impl(
@@ -1203,17 +1163,6 @@ namespace RAH2_NAMESPACE
     ///
     /// We use quick_sort by default. See quick_sort for details.
     ///
-    /// EASTL_DEFAULT_SORT_FUNCTION
-    /// If a default sort function is specified then call it, otherwise use EASTL's default quick_sort.
-    /// EASTL_DEFAULT_SORT_FUNCTION must be namespace-qualified and include any necessary template
-    /// parameters (e.g. RAH2_NAMESPACE::comb_sort instead of just comb_sort), and it must be visible to this code.
-    /// The EASTL_DEFAULT_SORT_FUNCTION must be provided in two versions:
-    ///     template <typename RandomAccessIterator>
-    ///     void EASTL_DEFAULT_SORT_FUNCTION(RandomAccessIterator first, RandomAccessIterator last);
-    ///
-    ///     template <typename RandomAccessIterator, typename Compare>
-    ///     void EASTL_DEFAULT_SORT_FUNCTION(RandomAccessIterator first, RandomAccessIterator last, Compare compare)
-    ///
     template <
         typename RandomAccessIterator,
         typename Sentinel,
@@ -1222,11 +1171,7 @@ namespace RAH2_NAMESPACE
             && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
     inline void sort(RandomAccessIterator first, Sentinel last)
     {
-#if defined(EASTL_DEFAULT_SORT_FUNCTION)
-        EASTL_DEFAULT_SORT_FUNCTION(first, last);
-#else
         RAH2_NAMESPACE::quick_sort(first, last);
-#endif
     }
     template <typename RandomAccessRange>
     inline void sort(RandomAccessRange&& range)
@@ -1237,11 +1182,7 @@ namespace RAH2_NAMESPACE
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
     inline void sort(RandomAccessIterator first, Sentinel last, Compare compare)
     {
-#if defined(EASTL_DEFAULT_SORT_FUNCTION)
-        EASTL_DEFAULT_SORT_FUNCTION(first, last, compare);
-#else
         RAH2_NAMESPACE::quick_sort<RandomAccessIterator, Compare>(first, last, compare);
-#endif
     }
 
     template <
@@ -1260,28 +1201,9 @@ namespace RAH2_NAMESPACE
     /// memory during execution. Try using merge_sort_buffer if you want
     /// to avoid memory allocation.
     ///
-    /// EASTL_DEFAULT_STABLE_SORT_FUNCTION
-    /// If a default sort function is specified then call it, otherwise use EASTL's default merge_sort.
-    /// EASTL_DEFAULT_STABLE_SORT_FUNCTION must be namespace-qualified and include any necessary template
-    /// parameters (e.g. eastl::tim_sort instead of just tim_sort), and it must be visible to this code.
-    /// The EASTL_DEFAULT_STABLE_SORT_FUNCTION must be provided in three versions, though the third
-    /// allocation implementation may choose to ignore the allocator parameter:
-    ///     template <typename RandomAccessIterator, typename StrictWeakOrdering>
-    ///     void EASTL_DEFAULT_STABLE_SORT_FUNCTION(RandomAccessIterator first, RandomAccessIterator last, StrictWeakOrdering compare);
-    ///
-    ///     template <typename RandomAccessIterator>
-    ///     void EASTL_DEFAULT_STABLE_SORT_FUNCTION(RandomAccessIterator first, RandomAccessIterator last);
-    ///
-    ///     template <typename RandomAccessIterator, typename Allocator, typename StrictWeakOrdering>
-    ///     void EASTL_DEFAULT_STABLE_SORT_FUNCTION(RandomAccessIterator first, RandomAccessIterator last, Allocator& allocator, StrictWeakOrdering compare);
-    ///
     template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
     void stable_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
     {
-#if defined(EASTL_DEFAULT_STABLE_SORT_FUNCTION)
-        EASTL_DEFAULT_STABLE_SORT_FUNCTION(first, last, *get_default_allocator(0), compare);
-#else
-
 #ifdef RAH2_EASTL
         RAH2_NAMESPACE::merge_sort<RandomAccessIterator, RAHAllocatorType, StrictWeakOrdering>(
             first, last, *get_default_allocator(0), compare);
@@ -1291,7 +1213,6 @@ namespace RAH2_NAMESPACE
         Allocator allocator;
         RAH2_NAMESPACE::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
             first, last, allocator, compare);
-#endif
 #endif
     }
 
@@ -1313,10 +1234,6 @@ namespace RAH2_NAMESPACE
             && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
     void stable_sort(RandomAccessIterator first, Sentinel last)
     {
-#if defined(EASTL_DEFAULT_STABLE_SORT_FUNCTION)
-        EASTL_DEFAULT_STABLE_SORT_FUNCTION(first, last, *get_default_allocator(0));
-#else
-
 #ifdef RAH2_EASTL
         RAH2_NAMESPACE::merge_sort<RandomAccessIterator, EASTLAllocatorType>(
             first, last, *get_default_allocator(0));
@@ -1324,7 +1241,6 @@ namespace RAH2_NAMESPACE
         using Allocator =
             RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
         RAH2_NAMESPACE::merge_sort<RandomAccessIterator, Allocator>(first, last, Allocator());
-#endif
 #endif
     }
 
@@ -1338,48 +1254,7 @@ namespace RAH2_NAMESPACE
     void stable_sort(
         RandomAccessIterator first, Sentinel last, Allocator& allocator, StrictWeakOrdering compare)
     {
-#if defined(EASTL_DEFAULT_STABLE_SORT_FUNCTION)
-        EASTL_DEFAULT_STABLE_SORT_FUNCTION(first, last, allocator, compare);
-#else
         RAH2_NAMESPACE::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
             first, last, allocator, compare);
-#endif
     }
-
-    // This is not defined because it would cause compiler errors due to conflicts with a version above.
-    //template <typename RandomAccessIterator, typename Allocator>
-    //void stable_sort(RandomAccessIterator first, RandomAccessIterator last, Allocator& allocator)
-    //{
-    //    #if defined(EASTL_DEFAULT_STABLE_SORT_FUNCTION)
-    //        EASTL_DEFAULT_STABLE_SORT_FUNCTION<RandomAccessIterator, Allocator>(first, last, allocator);
-    //    #else
-    //        eastl::merge_sort<RandomAccessIterator, Allocator>(first, last, allocator);
-    //    #endif
-    //}
-
-    /* 
-	// Something to consider adding: An eastl sort which uses qsort underneath. 
-	// The primary purpose of this is to have an eastl interface for sorting which
-	// results in very little code generation, since all instances map to the 
-	// C qsort function.
-
-	template <typename T>
-	int small_footprint_sort_func(const void* a, const void* b)
-	{
-		if(*(const T*)a < *(const T*)b)
-			return -1;
-		if(*(const T*)a > *(const T*)b)
-			return +1;
-		return 0;
-	}
-
-	template <typename ContiguousIterator>
-	void small_footprint_sort(ContiguousIterator first, ContiguousIterator last)
-	{
-		typedef typename RAH2_STD::iterator_traits<ContiguousIterator>::value_type value_type;
-
-		qsort(first, (size_t)RAH2_STD::distance(first, last), sizeof(value_type), small_footprint_sort_func<value_type>);
-	}
-	*/
-
 } // namespace RAH2_NAMESPACE
