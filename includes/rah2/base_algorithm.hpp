@@ -1444,7 +1444,7 @@ namespace RAH2_NAMESPACE
         }
 
         inline bool // Specialization for char*.
-        operator()(char* first1, char* last1, char* first2, char* last2)
+        operator()(char* first1, const char* last1, char* first2, const char* last2)
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
@@ -1464,7 +1464,11 @@ namespace RAH2_NAMESPACE
         }
 
         inline bool // Specialization for unsigned char*.
-        operator()(unsigned char* first1, unsigned char* last1, unsigned char* first2, unsigned char* last2)
+        operator()(
+            unsigned char* first1,
+            const unsigned char* last1,
+            unsigned char* first2,
+            const unsigned char* last2)
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
@@ -1484,7 +1488,8 @@ namespace RAH2_NAMESPACE
         }
 
         inline bool // Specialization for signed char*.
-        operator()(signed char* first1, signed char* last1, signed char* first2, signed char* last2)
+        operator()(
+            signed char* first1, const signed char* last1, signed char* first2, const signed char* last2)
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
