@@ -319,7 +319,7 @@ try
     testSuite.addTest("Range_concepts", "*", test_range_traits);
 
     // Range_factories
-    char const* range_factories = "Range_factories";
+    auto range_factories = "Range_factories";
     testSuite.addTest(range_factories, "ranges::empty_view", test_empty_view);
     testSuite.addTest(range_factories, "ranges::single_view", test_single_view);
     testSuite.addTest(range_factories, "ranges::iota_view", test_iota_view);
@@ -328,7 +328,7 @@ try
     // testSuite.addTest("ranges::cartesian_product_view", test_cartesian_product_view);
 
     // Range_Adaptors
-    char const* range_adaptors = "Range_Adaptors";
+    auto range_adaptors = "Range_Adaptors";
     testSuite.addTest(range_adaptors, "views::counted", test_counted_view);
     testSuite.addTest(range_adaptors, "ranges::owning_view", test_owning_view);
     testSuite.addTest(range_adaptors, "views::all", test_all_view);
@@ -353,7 +353,7 @@ try
     testSuite.addTest(range_adaptors, "ranges::stride_view", test_stride_view);
     testSuite.addTest(range_adaptors, "ranges::ref_view", test_ref_view);
 
-    char const* algorithms = "Algorithms";
+    auto algorithms = "Algorithms";
     testSuite.addTest(algorithms, "ranges::all_of", test_all_of);
     testSuite.addTest(algorithms, "ranges::any_of", test_any_of);
     testSuite.addTest(algorithms, "ranges::none_of", test_none_of);
@@ -521,7 +521,7 @@ try
         /// [for_each]
         auto createRange = [](size_t i)
         {
-            return rah2::views::repeat(char('a' + i)) | rah2::views::take(i);
+            return rah2::views::repeat(static_cast<char>('a' + i)) | rah2::views::take(i);
         };
         auto range = rah2::views::for_each(rah2::views::iota<size_t>(0, 5), createRange);
         std::string result;
@@ -587,7 +587,7 @@ try
         size_t ySize = 3;
         auto xyIndexes = [=](size_t y)
         {
-            return rah2::views::zip(rah2::views::repeat(y), rah2::views::iota<size_t>(0, xSize));
+            return zip(rah2::views::repeat(y), rah2::views::iota<size_t>(0, xSize));
         };
         auto range = rah2::views::iota<size_t>(0, ySize) | rah2::views::for_each(xyIndexes);
         std::vector<std::tuple<size_t, size_t>> result;
@@ -600,7 +600,7 @@ try
         size_t zSize = 4;
         auto xyzIndexes = [=](size_t z)
         {
-            return rah2::views::zip(
+            return zip(
                 rah2::views::repeat(z),
                 rah2::views::iota<size_t>(0, ySize) | rah2::views::for_each(xyIndexes));
         };
@@ -629,7 +629,7 @@ try
         auto gen = rah2::views::generate(
             [&y]() mutable
             {
-                auto prev = y;
+                auto const prev = y;
                 y *= 2;
                 return prev;
             });
@@ -651,7 +651,7 @@ try
             4,
             [&y]() mutable
             {
-                auto prev = y;
+                auto const prev = y;
                 y *= 2;
                 return prev;
             });
@@ -772,8 +772,8 @@ try
 
     {
         int in[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range =
-            rah2::views::unbounded((int const* const)std::begin(in)) | rah2::views::slice(0, 5);
+        auto range = rah2::views::unbounded(static_cast<int const* const>(std::begin(in)))
+                     | rah2::views::slice(0, 5);
         std::vector<int> out;
         rah2::copy(range, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
@@ -1004,8 +1004,8 @@ try
         {
             std::vector<int> in1;
             std::vector<int> in2;
-            auto const size1 = size_t(rand() % 100);
-            auto const size2 = size_t(rand() % 100);
+            auto const size1 = static_cast<size_t>(rand() % 100);
+            auto const size2 = static_cast<size_t>(rand() % 100);
             for (size_t i = 0; i < size1; ++i)
                 in1.push_back(rand() % 100);
             for (size_t i = 0; i < size2; ++i)
@@ -1038,11 +1038,11 @@ try
     {
         /// [rah2::to]
         std::vector<std::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
-        std::map<int, char> map_4a_5b_6c_7d = rah2::to<std::map<int, char>>(in1);
+        auto map_4a_5b_6c_7d = rah2::to<std::map<int, char>>(in1);
         assert(map_4a_5b_6c_7d == (std::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
 
         std::list<int> in2{4, 5, 6, 7};
-        std::vector<int> out = rah2::to<std::vector<int>>(in2);
+        auto out = rah2::to<std::vector<int>>(in2);
         assert(out == (std::vector<int>{4, 5, 6, 7}));
         /// [rah2::to]
     }
@@ -1062,7 +1062,7 @@ try
     // ********************************* test return ref and non-ref ******************************
 
     using namespace rah2;
-    using namespace rah2::views;
+    using namespace views;
     using namespace std;
 
     struct Elt
@@ -1098,7 +1098,7 @@ try
     }
     {
         std::vector<int> vec(5);
-        for (int& i : vec | rah2::views::transform([](int& i) -> int& { return i; }))
+        for (int& i : vec | views::transform([](int& i) -> int& { return i; }))
             i = 42; // Check for mutability
         EQUAL_RANGE(vec, (il<int>({42, 42, 42, 42, 42})));
     }
@@ -1152,10 +1152,9 @@ try
     {
         auto genRange = [](size_t i)
         {
-            return rah2::views::zip(rah2::views::repeat(i), rah2::views::iota<size_t>(0, 3));
+            return zip(repeat(i), rah2::views::iota<size_t>(0, 3));
         };
-        auto globalRange = rah2::views::iota<size_t>(0, 4) | rah2::views::transform(genRange)
-                           | rah2::views::join();
+        auto globalRange = rah2::views::iota<size_t>(0, 4) | views::transform(genRange) | join();
 
         EQUAL_RANGE(
             globalRange,
@@ -1180,7 +1179,7 @@ try
 
     std::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
     EQUAL_RANGE(
-        (vec_abcd | transform([](char i) { return char(i + 1); }) | enumerate()),
+        (vec_abcd | transform([](char i) { return static_cast<char>(i + 1); }) | enumerate()),
         (il<std::pair<intptr_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
 
     // TODO : Make Zip bidirectional when possible
@@ -1225,7 +1224,7 @@ try
 
     {
         using namespace rah2;
-        using namespace rah2::views;
+        using namespace views;
         int const width = 5;
         int const height = 6;
         int const start = 8;
@@ -1244,7 +1243,7 @@ try
                 return std::make_tuple(y, views::iota(0, width));
         };
 
-        std::vector<std::atomic<int>> test_(int(width * height));
+        std::vector<std::atomic<int>> test_(static_cast<int>(width * height));
 
         auto updateRaw = [&](auto&& y_xRange)
         {
@@ -1255,9 +1254,9 @@ try
                 ++test_[x + y * width];
         };
 
-        for (auto ySelector : rah2::views::iota(0, 3))
+        for (auto ySelector : views::iota(0, 3))
         {
-            auto rng = rah2::views::irange(startY + ySelector, endY + 1, 3) | transform(getRangeX);
+            auto rng = irange(startY + ySelector, endY + 1, 3) | transform(getRangeX);
             rah2::for_each(rng, updateRaw);
         }
 

@@ -412,7 +412,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename T>
-    inline T&& median_impl(T&& a, T&& b, T&& c)
+    T&& median_impl(T&& a, T&& b, T&& c)
     {
         if (RAH2_STD::less<T>()(a, b))
         {
@@ -439,7 +439,7 @@ namespace RAH2_NAMESPACE
     /// on the values.
     ///
     template <typename T>
-    inline T const& median(T const& a, T const& b, T const& c)
+    T const& median(T const& a, T const& b, T const& c)
     {
         return median_impl(a, b, c);
     }
@@ -453,14 +453,14 @@ namespace RAH2_NAMESPACE
     /// on the values.
     ///
     template <typename T>
-    inline T&& median(T&& a, T&& b, T&& c)
+    T&& median(T&& a, T&& b, T&& c)
     {
         return RAH2_STD::forward<T>(
             median_impl(RAH2_STD::forward<T>(a), RAH2_STD::forward<T>(b), RAH2_STD::forward<T>(c)));
     }
 
     template <typename T, typename Compare>
-    inline T&& median_impl(T&& a, T&& b, T&& c, Compare compare)
+    T&& median_impl(T&& a, T&& b, T&& c, Compare compare)
     {
         if (compare(a, b))
         {
@@ -487,7 +487,7 @@ namespace RAH2_NAMESPACE
     /// on the values.
     ///
     template <typename T, typename Compare>
-    inline T const& median(T const& a, T const& b, T const& c, Compare compare)
+    T const& median(T const& a, T const& b, T const& c, Compare compare)
     {
         return RAH2_NAMESPACE::median_impl<T const&, Compare>(a, b, c, compare);
     }
@@ -501,7 +501,7 @@ namespace RAH2_NAMESPACE
     /// on the values.
     ///
     template <typename T, typename Compare>
-    inline T&& median(T&& a, T&& b, T&& c, Compare compare)
+    T&& median(T&& a, T&& b, T&& c, Compare compare)
     {
         return RAH2_STD::forward<T>(median_impl<T&&, Compare>(
             RAH2_STD::forward<T>(a), RAH2_STD::forward<T>(b), RAH2_STD::forward<T>(c), compare));
@@ -512,7 +512,7 @@ namespace RAH2_NAMESPACE
     /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
     ///
     template <typename InputIterator, typename InputSentinel, typename Predicate>
-    inline bool all_of(InputIterator first, InputSentinel last, Predicate p)
+    bool all_of(InputIterator first, InputSentinel last, Predicate p)
     {
         for (; first != last; ++first)
         {
@@ -523,7 +523,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename InputRange, typename Predicate>
-    inline bool all_of(InputRange&& range, Predicate p)
+    bool all_of(InputRange&& range, Predicate p)
     {
         return RAH2_NAMESPACE::all_of(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), RAH2_STD::move(p));
@@ -534,7 +534,7 @@ namespace RAH2_NAMESPACE
     /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
     ///
     template <typename InputIterator, typename InputSentinel, typename Predicate>
-    inline bool any_of(InputIterator first, InputSentinel last, Predicate p)
+    bool any_of(InputIterator first, InputSentinel last, Predicate p)
     {
         for (; first != last; ++first)
         {
@@ -545,7 +545,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename InputRange, typename Predicate>
-    inline bool any_of(InputRange&& range, Predicate p)
+    bool any_of(InputRange&& range, Predicate p)
     {
         return RAH2_NAMESPACE::any_of(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), RAH2_STD::move(p));
@@ -556,7 +556,7 @@ namespace RAH2_NAMESPACE
     /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
     ///
     template <typename InputIterator, typename InputSentinel, typename Predicate>
-    inline bool none_of(InputIterator first, InputSentinel last, Predicate p)
+    bool none_of(InputIterator first, InputSentinel last, Predicate p)
     {
         for (; first != last; ++first)
         {
@@ -567,7 +567,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename InputRange, typename Predicate>
-    inline bool none_of(InputRange&& range, Predicate&& p)
+    bool none_of(InputRange&& range, Predicate&& p)
     {
         return none_of(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), RAH2_STD::forward<Predicate>(p));
@@ -1102,7 +1102,7 @@ namespace RAH2_NAMESPACE
     /// Note: If function returns a result, the result is ignored.
     ///
     template <typename InputIterator, typename InputSentinel, typename Function>
-    inline Function for_each(InputIterator first, InputSentinel last, Function function)
+    Function for_each(InputIterator first, InputSentinel last, Function function)
     {
         for (; first != last; ++first)
             function(*first);
@@ -1110,7 +1110,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename InputRange, typename Function>
-    inline auto for_each(InputRange&& range, Function function)
+    auto for_each(InputRange&& range, Function function)
     {
         return RAH2_NAMESPACE::for_each(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), RAH2_STD::move(function));
@@ -1231,7 +1231,7 @@ namespace RAH2_NAMESPACE
         typename OutputIterator,
         typename UnaryOperation,
         RAH2_STD::enable_if_t<sentinel_for<InputSentinel, InputIterator>>* = nullptr>
-    inline unary_transform_result<InputIterator, OutputIterator> transform(
+    unary_transform_result<InputIterator, OutputIterator> transform(
         InputIterator first, InputSentinel last, OutputIterator result, UnaryOperation unaryOperation)
     {
         for (; first != last; ++first, ++result)
@@ -1239,7 +1239,7 @@ namespace RAH2_NAMESPACE
         return {first, result};
     }
     template <typename Range, typename OutputIterator, typename UnaryOperation>
-    inline unary_transform_result<iterator_t<Range>, OutputIterator>
+    unary_transform_result<iterator_t<Range>, OutputIterator>
     transform(Range&& range, OutputIterator result, UnaryOperation unaryOperation)
     {
         return RAH2_NAMESPACE::transform(
@@ -1275,7 +1275,7 @@ namespace RAH2_NAMESPACE
         RAH2_STD::enable_if_t<
             sentinel_for<InputSentinel1, InputIterator1>
             && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
-    inline OutputIterator transform(
+    OutputIterator transform(
         InputIterator1 first1,
         InputSentinel1 last1,
         InputIterator2 first2,
@@ -1294,7 +1294,7 @@ namespace RAH2_NAMESPACE
         typename OutputIterator,
         typename BinaryOperation,
         RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-    inline OutputIterator transform(
+    OutputIterator transform(
         InputRange1&& range1, InputRange2 range2, OutputIterator result, BinaryOperation binaryOperation)
     {
         return transform(
@@ -1327,7 +1327,7 @@ namespace RAH2_NAMESPACE
             input_iterator<InputIterator1> && input_iterator<InputIterator2>
             && sentinel_for<InputSentinel1, InputIterator1>
             && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
-    constexpr inline bool
+    constexpr bool
     equal(InputIterator1 first1, InputSentinel1 last1, InputIterator2 first2, InputSentinel2 last2)
     {
         for (; first1 != last1; ++first1, ++first2)
@@ -1342,7 +1342,7 @@ namespace RAH2_NAMESPACE
         typename InputRange1,
         typename InputRange2,
         RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-    constexpr inline bool equal(InputRange1&& range1, InputRange2&& range2)
+    constexpr bool equal(InputRange1&& range1, InputRange2&& range2)
     {
         return RAH2_NAMESPACE::equal(
             RAH2_NAMESPACE::begin(range1),
@@ -1360,7 +1360,7 @@ namespace RAH2_NAMESPACE
     /// Complexity: At most last1 first1 applications of the corresponding predicate.
     ///
     template <typename InputIterator1, typename InputSentinel1, typename InputIterator2, typename InputSentinel2, typename BinaryPredicate>
-    inline bool equal(
+    bool equal(
         InputIterator1 first1,
         InputSentinel1 last1,
         InputIterator2 first2,
@@ -1380,7 +1380,7 @@ namespace RAH2_NAMESPACE
         typename InputRange2,
         typename BinaryPredicate,
         RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-    constexpr inline bool equal(InputRange1&& range1, InputRange2&& range2, BinaryPredicate&& predicate)
+    constexpr bool equal(InputRange1&& range1, InputRange2&& range2, BinaryPredicate&& predicate)
     {
         return RAH2_NAMESPACE::equal(
             RAH2_NAMESPACE::begin(range1),
@@ -1435,64 +1435,67 @@ namespace RAH2_NAMESPACE
             return (first1 == last1) && (first2 != last2);
         }
 
-        inline bool // Specialization for const char*.
-        operator()(char const* first1, char const* last1, char const* first2, char const* last2)
+        bool // Specialization for const char*.
+        operator()(char const* first1, char const* last1, char const* first2, char const* last2) const
         {
             ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
-        inline bool // Specialization for char*.
-        operator()(char* first1, char const* last1, char* first2, char const* last2)
+        bool // Specialization for char*.
+        operator()(char* first1, char const* last1, char* first2, char const* last2) const
         {
             ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
-        inline bool // Specialization for const unsigned char*.
+        bool // Specialization for const unsigned char*.
         operator()(
             unsigned char const* first1,
             unsigned char const* last1,
             unsigned char const* first2,
-            unsigned char const* last2)
+            unsigned char const* last2) const
         {
             ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
-        inline bool // Specialization for unsigned char*.
+        bool // Specialization for unsigned char*.
         operator()(
             unsigned char* first1,
             unsigned char const* last1,
             unsigned char* first2,
-            unsigned char const* last2)
+            unsigned char const* last2) const
         {
             ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
-        inline bool // Specialization for const signed char*.
+        bool // Specialization for const signed char*.
         operator()(
             signed char const* first1,
             signed char const* last1,
             signed char const* first2,
-            signed char const* last2)
+            signed char const* last2) const
         {
             ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
-        inline bool // Specialization for signed char*.
+        bool // Specialization for signed char*.
         operator()(
-            signed char* first1, signed char const* last1, signed char* first2, signed char const* last2)
+            signed char* first1,
+            signed char const* last1,
+            signed char* first2,
+            signed char const* last2) const
         {
             ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
@@ -2212,7 +2215,7 @@ namespace RAH2_NAMESPACE
     /// This is because both versions would have the same parameter count and there could be ambiguity.
     ///
     template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename T>
-    inline replace_copy_result<InputIterator, OutputIterator> replace_copy(
+    replace_copy_result<InputIterator, OutputIterator> replace_copy(
         InputIterator first,
         InputSentinel last,
         OutputIterator result,
@@ -2225,7 +2228,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename InputRange, typename OutputIterator, typename T>
-    inline replace_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
+    replace_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
     replace_copy(InputRange&& range, OutputIterator result, T const& old_value, T const& new_value)
     {
         return RAH2_NAMESPACE::replace_copy(
@@ -2255,7 +2258,7 @@ namespace RAH2_NAMESPACE
     /// This is because both versions would have the same parameter count and there could be ambiguity.
     ///
     template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename Predicate, typename T>
-    inline replace_copy_if_result<InputIterator, OutputIterator> replace_copy_if(
+    replace_copy_if_result<InputIterator, OutputIterator> replace_copy_if(
         InputIterator first,
         InputSentinel last,
         OutputIterator result,
@@ -2268,7 +2271,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename InputRange, typename OutputIterator, typename Predicate, typename T>
-    inline replace_copy_if_result<RAH2_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
+    replace_copy_if_result<RAH2_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
     replace_copy_if(InputRange&& range, OutputIterator result, Predicate predicate, T const& new_value)
     {
         return RAH2_NAMESPACE::replace_copy_if(
@@ -2285,7 +2288,7 @@ namespace RAH2_NAMESPACE
     // efficiently for some types of iterators and types.
     //
     template <typename BidirectionalIterator, typename Sentinel>
-    inline BidirectionalIterator
+    BidirectionalIterator
     reverse_impl(BidirectionalIterator first, Sentinel last, RAH2_ITC_NS::bidirectional_iterator_tag)
     {
         for (; (first != last) && (first != --last);
@@ -2295,7 +2298,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessIterator, typename Sentinel>
-    inline RandomAccessIterator
+    RandomAccessIterator
     reverse_impl(RandomAccessIterator first, Sentinel last, RAH2_ITC_NS::random_access_iterator_tag)
     {
         if (first != last)
@@ -2319,14 +2322,14 @@ namespace RAH2_NAMESPACE
     /// Complexity: Exactly '(last - first) / 2' swaps.
     ///
     template <typename BidirectionalIterator, typename Sentinel>
-    inline BidirectionalIterator reverse(BidirectionalIterator first, Sentinel last)
+    BidirectionalIterator reverse(BidirectionalIterator first, Sentinel last)
     {
         using IC = typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category;
         return reverse_impl(first, last, IC());
     }
 
     template <typename BidirectionalRange>
-    inline borrowed_iterator_t<BidirectionalRange> reverse(BidirectionalRange&& range)
+    borrowed_iterator_t<BidirectionalRange> reverse(BidirectionalRange&& range)
     {
         using IC = range_iter_categ_t<BidirectionalRange>;
         return RAH2_NAMESPACE::reverse_impl(
@@ -2353,7 +2356,7 @@ namespace RAH2_NAMESPACE
     /// Complexity: Exactly 'last - first' assignments.
     ///
     template <typename BidirectionalIterator, typename Sentinel, typename OutputIterator>
-    inline reverse_copy_result<BidirectionalIterator, OutputIterator>
+    reverse_copy_result<BidirectionalIterator, OutputIterator>
     reverse_copy(BidirectionalIterator first, Sentinel last, OutputIterator result)
     {
         auto ret = RAH2_NAMESPACE::next(first, last);
@@ -2363,7 +2366,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename BidirectionalRange, typename OutputIterator>
-    inline reverse_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<BidirectionalRange>, OutputIterator>
+    reverse_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<BidirectionalRange>, OutputIterator>
     reverse_copy(BidirectionalRange&& range, OutputIterator result)
     {
         return RAH2_NAMESPACE::reverse_copy(
@@ -2537,7 +2540,7 @@ namespace RAH2_NAMESPACE
         typename T,
         RAH2_STD::enable_if_t<
             forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-    inline bool binary_search(ForwardIterator first, Sentinel last, T const& value)
+    bool binary_search(ForwardIterator first, Sentinel last, T const& value)
     {
         // To do: This can be made slightly faster by not using lower_bound.
         ForwardIterator i(
@@ -2548,7 +2551,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename Range, typename T>
-    inline bool binary_search(Range&& range, T const& value)
+    bool binary_search(Range&& range, T const& value)
     {
         return RAH2_NAMESPACE::binary_search(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value);
@@ -2570,7 +2573,7 @@ namespace RAH2_NAMESPACE
         typename T,
         typename Compare,
         RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-    inline bool binary_search(ForwardIterator first, Sentinel last, T const& value, Compare compare)
+    bool binary_search(ForwardIterator first, Sentinel last, T const& value, Compare compare)
     {
         // To do: This can be made slightly faster by not using lower_bound.
         ForwardIterator i(
@@ -2579,7 +2582,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename Range, typename T, typename Compare, RAH2_STD::enable_if_t<forward_range<Range>>* = nullptr>
-    inline bool binary_search(Range&& range, T const& value, Compare compare)
+    bool binary_search(Range&& range, T const& value, Compare compare)
     {
         return binary_search(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value, RAH2_STD::move(compare));
@@ -3510,7 +3513,7 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename Integer>
-        inline Integer greatest_common_divisor(Integer x, Integer y)
+        Integer greatest_common_divisor(Integer x, Integer y)
         {
             do
             {

@@ -20,51 +20,51 @@ void test_counted_iterator()
 {
     testSuite.test_case("sample", "");
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(inputSentView), 10));
+        using Iter = decltype(make_counted_iterator(begin(inputSentView), 10));
         STATIC_ASSERT(rah2::input_iterator<Iter>);
         STATIC_ASSERT(not rah2::forward_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(fwdSentView), 10));
+        using Iter = decltype(make_counted_iterator(begin(fwdSentView), 10));
         STATIC_ASSERT(rah2::forward_iterator<Iter>);
         STATIC_ASSERT(not rah2::bidirectional_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(fwdCommonView), 10));
+        using Iter = decltype(make_counted_iterator(begin(fwdCommonView), 10));
         STATIC_ASSERT(rah2::forward_iterator<Iter>);
         STATIC_ASSERT(not rah2::bidirectional_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(bidirSentView), 10));
+        using Iter = decltype(make_counted_iterator(begin(bidirSentView), 10));
         STATIC_ASSERT((rah2::bidirectional_iterator_impl<Iter, true>::value));
         STATIC_ASSERT(not rah2::random_access_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(bidirCommonView), 10));
+        using Iter = decltype(make_counted_iterator(begin(bidirCommonView), 10));
         constexpr auto fsdkjfgqs = rah2::bidirectional_iterator_impl<Iter, true>::value;
         STATIC_ASSERT(fsdkjfgqs);
         STATIC_ASSERT(rah2::bidirectional_iterator<Iter>);
         STATIC_ASSERT(not rah2::random_access_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(rdmSentView), 10));
+        using Iter = decltype(make_counted_iterator(begin(rdmSentView), 10));
         // STATIC_ASSERT(rah2::totally_ordered<Iter>);
         STATIC_ASSERT((rah2::random_access_iterator_impl<Iter, true>::value));
         STATIC_ASSERT(rah2::random_access_iterator<Iter>);
         STATIC_ASSERT(not rah2::contiguous_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(rdmCommonView), 10));
+        using Iter = decltype(make_counted_iterator(begin(rdmCommonView), 10));
         STATIC_ASSERT(rah2::random_access_iterator<Iter>);
         STATIC_ASSERT(not rah2::contiguous_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(contiSentView), 10));
+        using Iter = decltype(make_counted_iterator(begin(contiSentView), 10));
         STATIC_ASSERT((rah2::contiguous_iterator_impl<Iter, true>::value));
         STATIC_ASSERT(rah2::contiguous_iterator<Iter>);
     }
     {
-        using Iter = decltype(rah2::make_counted_iterator(begin(contiCommonView), 10));
+        using Iter = decltype(make_counted_iterator(begin(contiCommonView), 10));
         STATIC_ASSERT(rah2::contiguous_iterator<Iter>);
     }
 }
@@ -267,9 +267,9 @@ void test_transform_view()
         auto selectedValuesRange = rah2::views::transform(vec, valueSelector);
         auto bounds =
             std::minmax_element(rah2::begin(selectedValuesRange), rah2::end(selectedValuesRange));
-        auto min = *bounds.first;
+        auto const min = *bounds.first;
         assert(min == 0);
-        auto max = *bounds.second;
+        auto const max = *bounds.second;
         assert(max == 6); // 3 * 2
     }
     {
@@ -1115,7 +1115,7 @@ void test_chunk_view()
         /// Chunk with non-common_view
         auto vec_01234 = rah2::views::iota(0) | rah2::views::take(5);
         std::vector<std::vector<int>> result;
-        for (auto elts : rah2::views::chunk(vec_01234, 2))
+        for (auto elts : chunk(vec_01234, 2))
             result.emplace_back(rah2::begin(elts), rah2::end(elts));
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
@@ -1184,7 +1184,7 @@ void test_ref_view()
         /// [ref]
         std::vector<int> vec{0, 1, 2, 2, 3};
         std::vector<int> out;
-        auto ref = rah2::views::ref(vec);
+        auto const ref = rah2::views::ref(vec);
         for (auto&& val : ref)
         {
             out.push_back(val);

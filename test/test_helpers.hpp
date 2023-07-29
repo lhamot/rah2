@@ -124,7 +124,7 @@ public:
     class iterator : public rah2::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
         int val_ = int();
-        int step_ = int(1);
+        int step_ = static_cast<int>(1);
 
     public:
         iterator() = default;
@@ -145,7 +145,7 @@ public:
             std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
         iterator& operator+=(intptr_t value)
         {
-            val_ += int(step_ * value);
+            val_ += static_cast<int>(step_ * value);
             return *this;
         }
 
@@ -173,7 +173,7 @@ public:
             std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
         iterator& operator-=(intptr_t value)
         {
-            val_ -= int(step_ * value);
+            val_ -= static_cast<int>(step_ * value);
             return *this;
         }
         auto& operator*() const
@@ -826,7 +826,7 @@ std::ostream& operator<<(std::ostream& os, std::tuple<Args...> tup)
         (std::cout << std::forward<decltype(elt)>(elt)) << " ";
     };
 
-    ::rah2::views::details::for_each(tup, print_elt);
+    rah2::views::details::for_each(tup, print_elt);
     return os;
 }
 

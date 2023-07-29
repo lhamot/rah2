@@ -1765,7 +1765,7 @@ namespace RAH2_NAMESPACE
                 typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
             using unsigned_difference_type = typename RAH2_STD::make_unsigned<difference_type>::type;
             using uniform_int_distribution =
-                typename RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
             using uniform_int_distribution_param_type = typename uniform_int_distribution::param_type;
 
             uniform_int_distribution uid;
@@ -1774,7 +1774,7 @@ namespace RAH2_NAMESPACE
                 RAH2_NAMESPACE::iter_swap(
                     i,
                     first
-                        + iter_difference_t<RandomAccessIterator>(
+                        + static_cast<iter_difference_t<RandomAccessIterator>>(
                             uid(urng, uniform_int_distribution_param_type(0u, size_t(i - first)))));
         }
     }

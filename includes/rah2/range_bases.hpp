@@ -920,7 +920,7 @@ namespace RAH2_NAMESPACE
             template <typename R>
             std::ptrdiff_t operator()(R const& range) const
             {
-                return std::ptrdiff_t(size_impl{}(range));
+                return static_cast<std::ptrdiff_t>(size_impl{}(range));
             }
         };
 

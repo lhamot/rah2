@@ -71,8 +71,8 @@ void test_for_each_n()
     testSuite.test_case("sample");
     /// [rah2::for_each_n]
     std::vector<int> testFE{4, 4, 4, 4};
-    auto res = rah2::for_each_n(
-        testFE.begin(), intptr_t(testFE.size()), [](auto& value) { return ++value; });
+    auto const res = rah2::for_each_n(
+        testFE.begin(), static_cast<intptr_t>(testFE.size()), [](auto& value) { return ++value; });
     assert(rah2::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
     assert(res.in == testFE.end());
     /// [rah2::for_each_n]
@@ -116,7 +116,7 @@ void test_algo_count()
         intsVec.insert(intsVec.end(), 79, 2);
         intsVec.insert(intsVec.end(), 10000000, 3);
 
-        auto value = 2;
+        auto const value = 2;
         auto getter_lbd = [](Coord const& c)
         {
             return c.x;
@@ -154,7 +154,7 @@ void test_algo_count()
         assert(count_rah_noproj < count_std_noproj * 1.2);
 #if RAH2_CPP20
         const auto count_rng_noproj = COMPUTE_DURATION(
-            count_rng_noproj,
+            "count_rng_noproj",
             [&]
             {
                 const size_t count = rah2::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
@@ -254,7 +254,7 @@ void test_count_if()
             });
         assert(count_if_rah_pred < count_if_raw_pred * 1.2);
 
-        auto count_if_std_pred = COMPUTE_DURATION(
+        auto const count_if_std_pred = COMPUTE_DURATION(
             "count_if_std_pred",
             [&]
             {
@@ -320,7 +320,7 @@ void test_find()
     testSuite.test_case("sample");
     /// [rah2::find]
     std::vector<int> in{1, 2, 3, 4};
-    auto iter = rah2::find(in, 3);
+    auto const iter = rah2::find(in, 3);
     assert(rah2::equal(rah2::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::find]
 }
@@ -329,7 +329,7 @@ void test_find_if()
     testSuite.test_case("sample");
     /// [rah2::find_if]
     std::vector<int> in{1, 2, 3, 4};
-    auto iter = rah2::find_if(in, [](int i) { return i == 3; });
+    auto const iter = rah2::find_if(in, [](int i) { return i == 3; });
     assert(rah2::equal(rah2::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::find_if]
 }
@@ -338,7 +338,7 @@ void test_find_if_not()
     testSuite.test_case("sample");
     /// [rah2::find_if_not]
     std::vector<int> in{1, 2, 3, 4};
-    auto iter = rah2::find_if_not(in, [](int i) { return i < 3; });
+    auto const iter = rah2::find_if_not(in, [](int i) { return i < 3; });
     assert(rah2::equal(rah2::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::find_if_not]
 }
@@ -348,14 +348,14 @@ void test_find_last()
     /// [rah2::find_last]
     static auto v = {1, 2, 3, 1, 2, 3, 1, 2};
     {
-        auto i1 = rah2::find_last(v.begin(), v.end(), 3);
-        auto i2 = rah2::find_last(v, 3);
+        auto const i1 = rah2::find_last(v.begin(), v.end(), 3);
+        auto const i2 = rah2::find_last(v, 3);
         assert(rah2::distance(v.begin(), i1.begin()) == 5);
         assert(rah2::distance(v.begin(), i2.begin()) == 5);
     }
     {
-        auto i1 = rah2::find_last(v.begin(), v.end(), -3);
-        auto i2 = rah2::find_last(v, -3);
+        auto const i1 = rah2::find_last(v.begin(), v.end(), -3);
+        auto const i2 = rah2::find_last(v, -3);
         assert(i1.begin() == v.end());
         assert(i2.begin() == v.end());
     }
@@ -375,8 +375,8 @@ void test_find_last_if()
         {
             return x == 3;
         };
-        auto i1 = RAH2_NAMESPACE::find_last_if(v.begin(), v.end(), pred, abs);
-        auto i2 = RAH2_NAMESPACE::find_last_if(v, pred, abs);
+        auto const i1 = RAH2_NAMESPACE::find_last_if(v.begin(), v.end(), pred, abs);
+        auto const i2 = RAH2_NAMESPACE::find_last_if(v, pred, abs);
         assert(RAH2_NAMESPACE::distance(v.begin(), i1.begin()) == 5);
         assert(RAH2_NAMESPACE::distance(v.begin(), i2.begin()) == 5);
     }
@@ -385,8 +385,8 @@ void test_find_last_if()
         {
             return x == -3;
         };
-        auto i1 = RAH2_NAMESPACE::find_last_if(v.begin(), v.end(), pred, abs);
-        auto i2 = RAH2_NAMESPACE::find_last_if(v, pred, abs);
+        auto const i1 = RAH2_NAMESPACE::find_last_if(v.begin(), v.end(), pred, abs);
+        auto const i2 = RAH2_NAMESPACE::find_last_if(v, pred, abs);
         assert(i1.begin() == v.end());
         assert(i2.begin() == v.end());
     }
@@ -406,8 +406,8 @@ void test_find_last_if_not()
         {
             return x == 1 or x == 2;
         };
-        auto i1 = RAH2_NAMESPACE::find_last_if_not(v.begin(), v.end(), pred, abs);
-        auto i2 = RAH2_NAMESPACE::find_last_if_not(v, pred, abs);
+        auto const i1 = RAH2_NAMESPACE::find_last_if_not(v.begin(), v.end(), pred, abs);
+        auto const i2 = RAH2_NAMESPACE::find_last_if_not(v, pred, abs);
         assert(RAH2_NAMESPACE::distance(v.begin(), i1.begin()) == 5);
         assert(RAH2_NAMESPACE::distance(v.begin(), i2.begin()) == 5);
     }
@@ -416,8 +416,8 @@ void test_find_last_if_not()
         {
             return x == 1 or x == 2 or x == 3;
         };
-        auto i1 = RAH2_NAMESPACE::find_last_if_not(v.begin(), v.end(), pred, abs);
-        auto i2 = RAH2_NAMESPACE::find_last_if_not(v, pred, abs);
+        auto const i1 = RAH2_NAMESPACE::find_last_if_not(v.begin(), v.end(), pred, abs);
+        auto const i2 = RAH2_NAMESPACE::find_last_if_not(v, pred, abs);
         assert(i1.begin() == v.end());
         assert(i2.begin() == v.end());
     }
@@ -431,26 +431,26 @@ void test_find_end()
     std::string secret{"password password word..."};
     std::string wanted{"password"};
 
-    auto found1 =
+    auto const found1 =
         RAH2_NAMESPACE::find_end(secret.begin(), secret.end(), wanted.begin(), wanted.end());
-    assert(found1.begin() == secret.begin() + intptr_t(strlen("password ")));
-    assert(found1.end() == secret.begin() + intptr_t(strlen("password password")));
+    assert(found1.begin() == secret.begin() + static_cast<intptr_t>(strlen("password ")));
+    assert(found1.end() == secret.begin() + static_cast<intptr_t>(strlen("password password")));
 
-    auto found2 = RAH2_NAMESPACE::find_end(secret, std::string("word"));
-    assert(found2.begin() == secret.begin() + intptr_t(strlen("password password ")));
-    assert(found2.end() == secret.begin() + intptr_t(strlen("password password word")));
+    auto const found2 = RAH2_NAMESPACE::find_end(secret, std::string("word"));
+    assert(found2.begin() == secret.begin() + static_cast<intptr_t>(strlen("password password ")));
+    assert(found2.end() == secret.begin() + static_cast<intptr_t>(strlen("password password word")));
 
-    auto found3 = RAH2_NAMESPACE::find_end(
+    auto const found3 = RAH2_NAMESPACE::find_end(
         secret, std::string("ORD"), [](char const x, char const y) { // uses a binary predicate
             return std::tolower(x) == std::tolower(y);
         });
-    assert(found3.begin() == secret.begin() + intptr_t(strlen("password password w")));
-    assert(found3.end() == secret.begin() + intptr_t(strlen("password password word")));
+    assert(found3.begin() == secret.begin() + static_cast<intptr_t>(strlen("password password w")));
+    assert(found3.end() == secret.begin() + static_cast<intptr_t>(strlen("password password word")));
 
-    auto found4 = RAH2_NAMESPACE::find_end(
+    auto const found4 = RAH2_NAMESPACE::find_end(
         secret, std::string("SWORD"), {}, {}, [](char c) { return std::tolower(c); }); // projects the 2nd range
-    assert(found4.begin() == secret.begin() + intptr_t(strlen("password pas")));
-    assert(found4.end() == secret.begin() + intptr_t(strlen("password password")));
+    assert(found4.begin() == secret.begin() + static_cast<intptr_t>(strlen("password pas")));
+    assert(found4.end() == secret.begin() + static_cast<intptr_t>(strlen("password password")));
 
     assert(RAH2_NAMESPACE::find_end(secret, std::string("PASS")).empty()); // => not found
     /// [rah2::find_end]
@@ -462,18 +462,18 @@ void test_find_first_of()
     static auto haystack = {1, 2, 3, 4};
     static auto needles = {0, 3, 4, 3};
 
-    auto found1 =
+    auto const found1 =
         rah2::find_first_of(haystack.begin(), haystack.end(), needles.begin(), needles.end());
     assert(std::distance(haystack.begin(), found1) == 2);
 
-    auto found2 = rah2::find_first_of(haystack, needles);
+    auto const found2 = rah2::find_first_of(haystack, needles);
     assert(std::distance(haystack.begin(), found2) == 2);
 
     static auto negatives = {-6, -3, -4, -3};
-    auto not_found = rah2::find_first_of(haystack, negatives);
+    auto const not_found = rah2::find_first_of(haystack, negatives);
     assert(not_found == haystack.end());
 
-    auto found3 = rah2::find_first_of(
+    auto const found3 = rah2::find_first_of(
         haystack, negatives, [](int x, int y) { return x == -y; }); // uses a binary comparator
     assert(std::distance(haystack.begin(), found3) == 2);
 
@@ -496,12 +496,12 @@ void test_adjacent_find()
     auto const v = {0, 1, 2, 3, 40, 40, 41, 41, 5}; /*
                                                 ^^          ^^       */
     {
-        auto it = rah2::adjacent_find(v.begin(), v.end());
+        auto const it = rah2::adjacent_find(v.begin(), v.end());
         assert(rah2::distance(v.begin(), it) == 4);
     }
 
     {
-        auto it = rah2::adjacent_find(v, rah2::greater());
+        auto const it = rah2::adjacent_find(v, rah2::greater());
         assert(rah2::distance(v.begin(), it) == 7);
     }
     /// [rah2::adjacent_find]
@@ -514,34 +514,34 @@ void test_search()
     std::string needle{"bcd"};
 
     // the search uses iterator pairs begin()/end():
-    auto found1 =
+    auto const found1 =
         RAH2_NAMESPACE::search(haystack.begin(), haystack.end(), needle.begin(), needle.end());
     assert(found1.begin() - haystack.begin() == 1);
     assert(found1.end() - haystack.begin() == 4);
 
     // the search uses ranges r1, r2:
-    auto found2 = RAH2_NAMESPACE::search(haystack, needle);
+    auto const found2 = RAH2_NAMESPACE::search(haystack, needle);
     assert(found2.begin() - haystack.begin() == 1);
     assert(found2.end() - haystack.begin() == 4);
     // print(2, haystack, needle, found2);
 
     // 'needle' range is empty:
     std::string none;
-    auto found3 = RAH2_NAMESPACE::search(haystack, none);
+    auto const found3 = RAH2_NAMESPACE::search(haystack, none);
     assert(found3.begin() - haystack.begin() == 0);
     assert(found3.end() - haystack.begin() == 0);
     // print(3, haystack, none, found3);
 
     // 'needle' will not be found:
     std::string awl{"efg"};
-    auto found4 = RAH2_NAMESPACE::search(haystack, awl);
+    auto const found4 = RAH2_NAMESPACE::search(haystack, awl);
     assert(found4.begin() - haystack.begin() == 9);
     assert(found4.end() - haystack.begin() == 9);
     // print(4, haystack, awl, found4);
 
     // the search uses custom comparator and projections:
     std::string bodkin{"234"};
-    auto found5 = RAH2_NAMESPACE::search(
+    auto const found5 = RAH2_NAMESPACE::search(
         haystack,
         bodkin,
         [](int const x, int const y) { return x == y; }, // pred
@@ -583,14 +583,14 @@ void test_search_n()
     char const symbol{'B'};
     auto to_ascii = [](int const z) -> char
     {
-        return char('A' + z - 1);
+        return static_cast<char>('A' + z - 1);
     };
     auto is_equ = [](char const x, char const y)
     {
         return x == y;
     };
 
-    auto result5 = RAH2_NAMESPACE::search_n(nums, count, symbol, is_equ, to_ascii);
+    auto const result5 = RAH2_NAMESPACE::search_n(nums, count, symbol, is_equ, to_ascii);
     assert(result5.begin() - nums.begin() == 6);
     /// [rah2::search_n]
 }
@@ -852,7 +852,7 @@ void test_generate_n()
     testSuite.test_case("sample");
     /// [rah2::generate_n]
     std::array<int, 8> v = {};
-    rah2::generate_n(v.begin(), intptr_t(v.size()), [n{0}]() mutable { return n++; });
+    rah2::generate_n(v.begin(), static_cast<intptr_t>(v.size()), [n{0}]() mutable { return n++; });
     assert(v == (std::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::generate_n]
 }
@@ -862,7 +862,7 @@ void test_remove()
     testSuite.test_case("return");
     /// [rah2::remove]
     std::vector<int> in{1, 2, 1, 3, 1};
-    auto to_erase = rah2::remove(in, 1);
+    auto const to_erase = rah2::remove(in, 1);
     in.erase(to_erase.begin(), to_erase.end());
     std::sort(in.begin(), in.end());
     assert(in == std::vector<int>({2, 3}));
@@ -873,7 +873,7 @@ void test_remove_if()
     testSuite.test_case("sample");
     /// [rah2::remove_if]
     std::vector<int> in{1, 2, 3, 4, 5};
-    auto to_erase = rah2::remove_if(in, [](auto a) { return a < 4; });
+    auto const to_erase = rah2::remove_if(in, [](auto a) { return a < 4; });
     in.erase(to_erase.begin(), to_erase.end());
     std::sort(in.begin(), in.end());
     assert(in == std::vector<int>({4, 5}));
@@ -1094,16 +1094,16 @@ void test_sample()
     auto const in = {1, 2, 3, 4, 5, 6};
 
     std::vector<int> out(in.size() + 2);
-    auto const max = intptr_t(in.size() + 2);
+    auto const max = static_cast<intptr_t>(in.size() + 2);
     auto gen = std::mt19937{std::random_device{}()};
 
     for (intptr_t n{}; n != max; ++n)
     {
         auto o = RAH2_NAMESPACE::sample(in, out.begin(), n, gen);
-        assert((o - out.begin()) == std::min(n, intptr_t(in.size())));
+        assert((o - out.begin()) == std::min(n, static_cast<intptr_t>(in.size())));
     }
 
-    auto o = RAH2_NAMESPACE::sample(in, out.begin(), intptr_t(in.size()), gen);
+    auto const o = RAH2_NAMESPACE::sample(in, out.begin(), static_cast<intptr_t>(in.size()), gen);
     assert(rah2::equal(in.begin(), in.end(), out.begin(), o));
 
     /// [rah2::sample]
@@ -1167,7 +1167,7 @@ void test_partition()
     testSuite.test_case("sample");
     /// [rah2::partition]
     std::vector<int> in{1, 2, 3, 4, 5};
-    auto boundary = rah2::partition(in, [](auto a) { return a >= 4; });
+    auto const boundary = rah2::partition(in, [](auto a) { return a >= 4; });
     assert(boundary.begin() == in.begin() + 2);
     std::sort(in.begin(), boundary.begin());
     std::sort(boundary.begin(), in.end());
@@ -1188,7 +1188,7 @@ void test_partition_copy()
         return std::isalpha(c);
     };
 
-    auto ret = RAH2_NAMESPACE::partition_copy(in, o1.begin(), o2.begin(), pred);
+    auto const ret = RAH2_NAMESPACE::partition_copy(in, o1.begin(), o2.begin(), pred);
 
     assert(in == (std::vector<char>{'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'}));
     std::vector<int> o1_expected{'N', 'U', 'M', 'B', 'E', 'R'};
@@ -1202,7 +1202,7 @@ void test_stable_partition()
     testSuite.test_case("sample");
     /// [rah2::stable_partition]
     std::vector<int> in{1, 2, 3, 4, 5};
-    auto boundary = rah2::stable_partition(in, [](auto a) { return a >= 4; });
+    auto const boundary = rah2::stable_partition(in, [](auto a) { return a >= 4; });
     assert(boundary.begin() == in.begin() + 2);
     assert(in == std::vector<int>({4, 5, 1, 2, 3}));
     /// [rah2::stable_partition]
@@ -1379,7 +1379,7 @@ void test_nth_element()
         "Korben",
         "Bender",
         "Leeloo"};
-    auto out_last2 = RAH2_NAMESPACE::nth_element(names, names.begin() + 4);
+    auto const out_last2 = RAH2_NAMESPACE::nth_element(names, names.begin() + 4);
     assert(names[4] == "Leeloo");
     assert(out_last2 == names.end());
     /// [rah2::nth_element]
@@ -1497,7 +1497,7 @@ void test_merge()
     std::vector<int> in2 = {3, 4, 5, 6, 7};
     std::vector<int> out(in1.size() + in2.size());
 
-    auto ret = RAH2_NAMESPACE::merge(in1, in2, out.begin());
+    auto const ret = RAH2_NAMESPACE::merge(in1, in2, out.begin());
     assert((rah2::equal(
         rah2::make_subrange(out.begin(), ret.out), std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 6, 7})));
 
@@ -1514,7 +1514,7 @@ void test_inplace_merge()
     testSuite.test_case("return");
     /// [rah2::inplace_merge]
     std::vector<int> v{1, 4, 8, 9, 10, 45, 2, 3, 4, 9, 11};
-    auto last = rah2::inplace_merge(v, v.begin() + 6);
+    auto const last = rah2::inplace_merge(v, v.begin() + 6);
     assert(last == v.end());
     assert(rah2::is_sorted(v));
     /// [rah2::inplace_merge]
@@ -1575,7 +1575,7 @@ void test_set_symmetric_difference()
 
     std::vector<int> out(5);
 
-    auto res = rah2::set_symmetric_difference(in1, in2, out.begin());
+    auto const res = rah2::set_symmetric_difference(in1, in2, out.begin());
     assert(out == (std::vector<int>{3, 5, 7, 0, 0}));
     assert(res.in1 == in1.end());
     assert(res.in2 == in2.end());
@@ -1641,12 +1641,12 @@ void test_make_heap()
     /// [rah2::make_heap]
     std::vector<int> h{1, 6, 1, 8, 0, 3, 3, 9, 8, 8, 7, 4, 9, 8, 9};
     assert(!std::is_heap(h.begin(), h.end()));
-    auto last = rah2::make_heap(h);
+    auto const last = rah2::make_heap(h);
     assert(last == h.end());
     assert(std::is_heap(h.begin(), h.end()));
 
     assert(!std::is_heap(h.begin(), h.end(), rah2::greater{}));
-    auto last2 = rah2::make_heap(h, rah2::greater{});
+    auto const last2 = rah2::make_heap(h, rah2::greater{});
     assert(last2 == h.end());
     assert(std::is_heap(h.begin(), h.end(), rah2::greater{}));
     /// [rah2::make_heap]
@@ -1661,7 +1661,7 @@ void test_push_heap()
     rah2::make_heap(v);
 
     v.push_back(9);
-    auto last = rah2::push_heap(v);
+    auto const last = rah2::push_heap(v);
     assert(last == v.end());
 
     assert(std::is_heap(v.begin(), v.end()));
@@ -1676,7 +1676,7 @@ void test_pop_heap()
     std::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
 
     std::make_heap(v.begin(), v.end());
-    auto last = rah2::pop_heap(v);
+    auto const last = rah2::pop_heap(v);
     assert(last == v.end());
     assert(v.back() == 9);
     v.pop_back();
@@ -1720,14 +1720,15 @@ void test_max_element()
     {
         /// [rah2::max_element]
         std::vector<int> in{1, 5, 3, 4};
-        auto iter = rah2::max_element(in);
+        auto const iter = rah2::max_element(in);
         assert(*iter == 5);
         /// [rah2::max_element]
     }
     {
         /// [rah2::max_element_pred]
         std::vector<std::pair<int, int>> in{{100, 3}, {0, 5}, {0, 1}, {0, 4}};
-        auto iter = rah2::max_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
+        auto const iter =
+            rah2::max_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
         assert(*iter == (std::pair<int, int>{0, 5}));
         /// [rah2::max_element_pred]
     }
@@ -1769,7 +1770,8 @@ void test_min_element()
         testSuite.test_case("pred");
         /// [rah2::min_element_pred]
         std::vector<std::pair<int, int>> in{{-100, 3}, {0, -5}, {0, 1}, {0, 4}};
-        auto iter = rah2::min_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
+        auto const iter =
+            rah2::min_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
         assert(*iter == (std::pair<int, int>{0, -5}));
         /// [rah2::min_element_pred]
     }
@@ -1779,25 +1781,25 @@ void test_minmax()
     testSuite.test_case("sample");
     /// [rah2::minmax]
 
-    auto res1 = rah2::minmax(1, 3);
+    auto const res1 = rah2::minmax(1, 3);
     assert(res1.min == 1);
     assert(res1.max == 3);
-    auto res2 = rah2::minmax(1, 3, rah2::greater{});
+    auto const res2 = rah2::minmax(1, 3, rah2::greater{});
     assert(res2.min == 3);
     assert(res2.max == 1);
 
-    auto res3 = rah2::minmax({1, 7, 5});
+    auto const res3 = rah2::minmax({1, 7, 5});
     assert(res3.min == 1);
     assert(res3.max == 7);
-    auto res4 = rah2::minmax({1, 7, 5}, rah2::greater{});
+    auto const res4 = rah2::minmax({1, 7, 5}, rah2::greater{});
     assert(res4.min == 7);
     assert(res4.max == 1);
 
     std::vector<int> v{1, 7, 5};
-    auto res5 = rah2::minmax(v);
+    auto const res5 = rah2::minmax(v);
     assert(res5.min == 1);
     assert(res5.max == 7);
-    auto res6 = rah2::minmax(v, rah2::greater{});
+    auto const res6 = rah2::minmax(v, rah2::greater{});
     assert(res6.min == 7);
     assert(res6.max == 1);
     /// [rah2::minmax]
@@ -1807,10 +1809,10 @@ void test_minmax_element()
     testSuite.test_case("sample");
     /// [rah2::minmax_element]
     std::vector<int> v{1, 7, 5};
-    auto res5 = rah2::minmax_element(v);
+    auto const res5 = rah2::minmax_element(v);
     assert(*res5.min == 1);
     assert(*res5.max == 7);
-    auto res6 = rah2::minmax_element(v, rah2::greater{});
+    auto const res6 = rah2::minmax_element(v, rah2::greater{});
     assert(*res6.min == 7);
     assert(*res6.max == 1);
     /// [rah2::minmax_element]
@@ -1986,10 +1988,10 @@ void test_fold_right()
     auto v = {1, 2, 3, 4, 5, 6, 7, 8};
     std::vector<std::string> vs{"A", "B", "C", "D"};
 
-    auto r1 = rah2::fold_right(v.begin(), v.end(), 6, std::plus<>()); // (1)
+    auto const r1 = rah2::fold_right(v.begin(), v.end(), 6, std::plus<>()); // (1)
     assert(r1 == 42);
 
-    auto r2 = rah2::fold_right(vs, std::string("!"), std::plus<>()); // (2)
+    auto const r2 = rah2::fold_right(vs, std::string("!"), std::plus<>()); // (2)
     assert(r2 == std::string("ABCD!"));
 
     // Use a program defined function object (lambda-expression):
@@ -2034,17 +2036,18 @@ void test_fold_left_with_iter()
     /// [rah2::fold_left_with_iter]
     std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
-    auto sum = rah2::fold_left_with_iter(v.begin(), v.end(), 6, std::plus<>());
+    auto const sum = rah2::fold_left_with_iter(v.begin(), v.end(), 6, std::plus<>());
     assert(sum.value == 42);
     assert(sum.in == v.end());
 
-    auto mul = rah2::fold_left_with_iter(v, 0X69, std::multiplies<>());
+    auto const mul = rah2::fold_left_with_iter(v, 0X69, std::multiplies<>());
     assert(mul.value == 4233600);
     assert(mul.in == v.end());
 
     // get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
-    auto sec = rah2::fold_left_with_iter(data | rah2::views::values(), 2.0f, std::multiplies<>());
+    auto const sec =
+        rah2::fold_left_with_iter(data | rah2::views::values(), 2.0f, std::multiplies<>());
     assert(sec.value == 42);
 
     // use a program defined function object (lambda-expression):
@@ -2052,7 +2055,7 @@ void test_fold_left_with_iter()
     {
         return x + 0B110 + y;
     };
-    auto val = rah2::fold_left_with_iter(v, -42, lambda);
+    auto const val = rah2::fold_left_with_iter(v, -42, lambda);
     assert(val.value == 42);
     assert(val.in == v.end());
     /// [rah2::fold_left_with_iter]
@@ -2125,9 +2128,9 @@ void test_uninitialized_copy_n()
     constexpr int n{4};
     alignas(alignof(std::string)) char out[n * sizeof(std::string)];
 
-    auto first{reinterpret_cast<std::string*>(out)};
-    auto last{first + n};
-    auto ret = rah2::uninitialized_copy_n(std::begin(stars), n, first, last);
+    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const last{first + n};
+    auto const ret = rah2::uninitialized_copy_n(std::begin(stars), n, first, last);
     assert(ret.in == stars + n);
     assert(ret.out == last);
 
@@ -2146,8 +2149,8 @@ void test_uninitialized_fill()
     constexpr int n{4};
     alignas(alignof(std::string)) char out[n * sizeof(std::string)];
 
-    auto first{reinterpret_cast<std::string*>(out)};
-    auto last{first + n};
+    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const last{first + n};
     rah2::uninitialized_fill(first, last, "▄▀▄▀▄▀▄▀");
 
     assert(rah2::all_of(first, last, ([](auto& x) { return x == "▄▀▄▀▄▀▄▀"; })));
@@ -2165,8 +2168,8 @@ void test_uninitialized_fill_n()
     constexpr int n{3};
     alignas(alignof(std::string)) char out[n * sizeof(std::string)];
 
-    auto first{reinterpret_cast<std::string*>(out)};
-    auto last = rah2::uninitialized_fill_n(first, n, "cppreference");
+    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const last = rah2::uninitialized_fill_n(first, n, "cppreference");
 
     assert(rah2::all_of(first, last, ([](auto& x) { return x == "cppreference"; })));
 
@@ -2202,8 +2205,8 @@ void test_uninitialized_move_n()
 
     constexpr auto sz = rah2::size(in);
     alignas(alignof(std::string)) char out[sz * sizeof(std::string)];
-    auto first{reinterpret_cast<std::string*>(out)};
-    auto last{first + sz};
+    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const last{first + sz};
     rah2::uninitialized_move_n(std::begin(in), sz, first, last);
     rah2::equal(
         rah2::make_subrange(first, last),
@@ -2227,8 +2230,8 @@ void test_uninitialized_default_construct()
     constexpr int n{4};
     alignas(alignof(S)) char out[n * sizeof(S)];
 
-    auto first{reinterpret_cast<S*>(out)};
-    auto last{first + n};
+    auto const first{reinterpret_cast<S*>(out)};
+    auto const last{first + n};
 
     rah2::uninitialized_default_construct(first, last);
 
@@ -2268,7 +2271,7 @@ void test_uninitialized_default_construct_n()
     // generally does not zero-fill the given uninitialized memory area.
     constexpr int etalon[]{1, 2, 3, 4, 5, 6};
     int v[]{1, 2, 3, 4, 5, 6};
-    rah2::uninitialized_default_construct_n(std::begin(v), intptr_t(rah2::size(v)));
+    rah2::uninitialized_default_construct_n(std::begin(v), static_cast<intptr_t>(rah2::size(v)));
     assert(std::memcmp(v, etalon, sizeof(v)) == 0);
     /// [rah2::uninitialized_default_construct_n]
 }
@@ -2323,7 +2326,7 @@ void test_uninitialized_value_construct_n()
     // Notice that for "trivial types" the uninitialized_value_construct_n
     // zero-initializes the given uninitialized memory area.
     int v[]{1, 2, 3, 4, 5, 6, 7, 8};
-    rah2::uninitialized_value_construct_n(std::begin(v), intptr_t(rah2::size(v)));
+    rah2::uninitialized_value_construct_n(std::begin(v), static_cast<intptr_t>(rah2::size(v)));
     assert(rah2::all_of(v, [](int i) { return i == 0; }));
 
     /// [rah2::uninitialized_value_construct_n]

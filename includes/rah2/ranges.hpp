@@ -636,7 +636,7 @@ namespace RAH2_NAMESPACE
                 return iterator(this);
             }
 
-            auto end()
+            auto end() const
             {
                 return sentinel{};
             }
@@ -1315,7 +1315,7 @@ namespace RAH2_NAMESPACE
                 {
                     return take(
                         RAH2_STD::forward<decltype(range)>(range),
-                        range_difference_t<decltype(range)>(count));
+                        static_cast<range_difference_t<decltype(range)>>(count));
                 });
         }
     } // namespace views
@@ -1399,7 +1399,7 @@ namespace RAH2_NAMESPACE
                 {
                     return drop(
                         RAH2_STD::forward<decltype(range)>(range),
-                        range_difference_t<decltype(range)>(count));
+                        static_cast<range_difference_t<decltype(range)>>(count));
                 });
         }
     } // namespace views
@@ -2343,7 +2343,8 @@ namespace RAH2_NAMESPACE
             auto end()
             {
                 return iterator(
-                    RAH2_NAMESPACE::end(base_), range_difference_t<U>(RAH2_NAMESPACE::ssize(base_)));
+                    RAH2_NAMESPACE::end(base_),
+                    static_cast<range_difference_t<U>>(RAH2_NAMESPACE::ssize(base_)));
             }
 
             template <
@@ -2790,7 +2791,8 @@ namespace RAH2_NAMESPACE
                 return iterator(details::transform_each(
                     bases_,
                     [min_size](auto&& r) {
-                        return RAH2_NAMESPACE::begin(r) + range_difference_t<decltype(r)>(min_size);
+                        return RAH2_NAMESPACE::begin(r)
+                               + static_cast<range_difference_t<decltype(r)>>(min_size);
                     }));
             }
 
@@ -2987,7 +2989,7 @@ namespace RAH2_NAMESPACE
                         bases_,
                         [min_size](auto&& r) {
                             return RAH2_NAMESPACE::begin(r)
-                                   + range_difference_t<decltype(r)>(min_size);
+                                   + static_cast<range_difference_t<decltype(r)>>(min_size);
                         }));
             }
 
@@ -3449,7 +3451,7 @@ namespace RAH2_NAMESPACE
                 {
                     return slide(
                         RAH2_STD::forward<decltype(range)>(range),
-                        range_difference_t<decltype(range)>(n));
+                        static_cast<range_difference_t<decltype(range)>>(n));
                 });
         }
 
@@ -3577,7 +3579,7 @@ namespace RAH2_NAMESPACE
                 {
                     return chunk(
                         RAH2_STD::forward<decltype(range)>(range),
-                        range_difference_t<decltype(range)>(step));
+                        static_cast<range_difference_t<decltype(range)>>(step));
                 });
         }
 
@@ -3721,7 +3723,7 @@ namespace RAH2_NAMESPACE
                 {
                     return stride(
                         RAH2_STD::forward<decltype(range)>(range),
-                        range_difference_t<decltype(range)>(step));
+                        static_cast<range_difference_t<decltype(range)>>(step));
                 });
         }
 
@@ -4228,7 +4230,7 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename F>
-        inline auto for_each(F&& func)
+        auto for_each(F&& func)
         {
             return make_pipeable(
                 [=](auto&& range) {
@@ -4319,8 +4321,8 @@ namespace RAH2_NAMESPACE
                 {
                     return slice(
                         RAH2_STD::forward<decltype(range)>(range),
-                        range_difference_t<decltype(range)>(beg),
-                        range_difference_t<decltype(range)>(sent));
+                        static_cast<range_difference_t<decltype(range)>>(beg),
+                        static_cast<range_difference_t<decltype(range)>>(sent));
                 });
         }
 

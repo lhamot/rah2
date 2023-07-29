@@ -370,7 +370,7 @@ namespace RAH2_NAMESPACE
                             sort_impl(first, first + nMid, pBuffer, lastSortedEnd, compare);
                     }
 
-                    ResultLocation secondHalfLocation =
+                    ResultLocation const secondHalfLocation =
                         sort_impl(first + nMid, last, pBuffer + nMid, lastSortedEnd - nMid, compare);
 
                     return MergeSorter::merge_halves(
@@ -465,9 +465,10 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T>
-    inline void merge_sort_buffer(RandomAccessIterator first, Sentinel last, T* pBuffer)
+    void merge_sort_buffer(RandomAccessIterator first, Sentinel last, T* pBuffer)
     {
-        typedef RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type> Less;
+        using Less =
+            RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
 
         RAH2_NAMESPACE::merge_sort_buffer<RandomAccessIterator, T, Less>(
             first, last, pBuffer, Less());
@@ -498,7 +499,7 @@ namespace RAH2_NAMESPACE
             value_type* const pBuffer = (value_type*)allocate_memory(
                 allocator, nCount * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
 #else
-            value_type* const pBuffer = allocator.allocate(size_t(nCount));
+            value_type* const pBuffer = allocator.allocate(static_cast<size_t>(nCount));
 #endif
 
             RAH2_STD::uninitialized_fill(pBuffer, pBuffer + nCount, value_type());
@@ -510,15 +511,16 @@ namespace RAH2_NAMESPACE
 #ifdef RAH2_EASTL
             EASTLFree(allocator, pBuffer, nCount * sizeof(value_type));
 #else
-            allocator.deallocate(pBuffer, size_t(nCount));
+            allocator.deallocate(pBuffer, static_cast<size_t>(nCount));
 #endif
         }
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Allocator>
-    inline void merge_sort(RandomAccessIterator first, Sentinel last, Allocator& allocator)
+    void merge_sort(RandomAccessIterator first, Sentinel last, Allocator& allocator)
     {
-        typedef RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type> Less;
+        using Less =
+            RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
 
         RAH2_NAMESPACE::merge_sort<RandomAccessIterator, Allocator, Less>(
             first, last, allocator, Less());
@@ -590,7 +592,7 @@ namespace RAH2_NAMESPACE
         auto const requested_size = RAH2_NAMESPACE::distance(first, last);
 
         auto allocator = RAH2_STD::allocator<value_type>();
-        value_type* const buffer = allocator.allocate(size_t(requested_size));
+        value_type* const buffer = allocator.allocate(static_cast<size_t>(requested_size));
         RAH2_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
 
         ForwardIterator result1 = first;
@@ -647,7 +649,7 @@ namespace RAH2_NAMESPACE
     namespace Internal
     {
         template <typename Size>
-        inline Size Log2(Size n)
+        Size Log2(Size n)
         {
             int i;
             for (i = 0; n; ++i)
@@ -657,8 +659,7 @@ namespace RAH2_NAMESPACE
     } // namespace Internal
 
     template <typename RandomAccessIterator, typename Sentinel, typename T>
-    inline RandomAccessIterator
-    get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue)
+    RandomAccessIterator get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue)
     {
         using PureT = RAH2_STD::decay_t<T>;
 
@@ -693,8 +694,7 @@ namespace RAH2_NAMESPACE
     /// for function arguments.
     ///
     template <typename RandomAccessIterator, typename Sentinel, typename T>
-    inline RandomAccessIterator
-    get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue)
+    RandomAccessIterator get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue)
     {
         // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
         T const pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
@@ -702,14 +702,14 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T>
-    inline RandomAccessIterator get_partition(RandomAccessIterator first, Sentinel last, T&& pivotValue)
+    RandomAccessIterator get_partition(RandomAccessIterator first, Sentinel last, T&& pivotValue)
     {
         // Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
         return get_partition_impl<RandomAccessIterator, T&&>(first, last, RAH2_STD::move(pivotValue));
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
-    inline RandomAccessIterator
+    RandomAccessIterator
     get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue, Compare compare)
     {
         for (;; ++first)
@@ -737,7 +737,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
-    inline RandomAccessIterator
+    RandomAccessIterator
     get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue, Compare compare)
     {
         T const pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
@@ -746,7 +746,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
-    inline RandomAccessIterator
+    RandomAccessIterator
     get_partition(RandomAccessIterator first, Sentinel last, T&& pivotValue, Compare compare)
     {
         // Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
@@ -761,12 +761,12 @@ namespace RAH2_NAMESPACE
         // data that quick_sort satisfies but arbitrary data may not.
         // There is a standalone insertion_sort function.
         template <typename RandomAccessIterator, typename Sentinel>
-        inline void insertion_sort_simple(RandomAccessIterator first, Sentinel last)
+        void insertion_sort_simple(RandomAccessIterator first, Sentinel last)
         {
             for (RandomAccessIterator current = first; current != last; ++current)
             {
-                typedef
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+                using value_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
                 RandomAccessIterator end(current), prev(current);
                 value_type value(RAH2_STD::forward<value_type>(*current));
@@ -789,12 +789,12 @@ namespace RAH2_NAMESPACE
         // data that quick_sort satisfies but arbitrary data may not.
         // There is a standalone insertion_sort function.
         template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-        inline void insertion_sort_simple(RandomAccessIterator first, Sentinel last, Compare compare)
+        void insertion_sort_simple(RandomAccessIterator first, Sentinel last, Compare compare)
         {
             for (RandomAccessIterator current = first; current != last; ++current)
             {
-                typedef
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+                using value_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
                 RandomAccessIterator end(current), prev(current);
                 value_type value(RAH2_STD::forward<value_type>(*current));
@@ -814,7 +814,7 @@ namespace RAH2_NAMESPACE
     } // namespace Internal
 
     template <typename RandomAccessIterator, typename Sentinel>
-    inline void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
+    void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
     {
         using difference_type =
             typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
@@ -843,14 +843,14 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessRange, typename RandomAccessIterator>
-    inline void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle)
+    void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle)
     {
         return RAH2_NAMESPACE::partial_sort(
             RAH2_NAMESPACE::begin(range), middle, RAH2_NAMESPACE::end(range));
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-    inline void partial_sort(
+    void partial_sort(
         RandomAccessIterator first, RandomAccessIterator middle, Sentinel last, Compare compare)
     {
         using difference_type =
@@ -882,7 +882,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>
-    inline void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle, Compare compare)
+    void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle, Compare compare)
     {
         return RAH2_NAMESPACE::partial_sort(
             RAH2_NAMESPACE::begin(range), middle, RAH2_NAMESPACE::end(range), RAH2_STD::move(compare));
@@ -894,8 +894,7 @@ namespace RAH2_NAMESPACE
         RAH2_STD::enable_if_t<
             random_access_iterator<RandomAccessIterator>
             && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-    inline RandomAccessIterator
-    nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last)
+    RandomAccessIterator nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last)
     {
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
         auto result = RAH2_NAMESPACE::next(first, last);
@@ -919,7 +918,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessRange>
-    inline iterator_t<RandomAccessRange>
+    iterator_t<RandomAccessRange>
     nth_element(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth)
     {
         return RAH2_NAMESPACE::nth_element(
@@ -927,7 +926,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-    inline RandomAccessIterator
+    RandomAccessIterator
     nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last, Compare compare)
     {
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
@@ -956,7 +955,7 @@ namespace RAH2_NAMESPACE
         typename RandomAccessRange,
         typename Compare,
         RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-    inline iterator_t<RandomAccessRange>
+    iterator_t<RandomAccessRange>
     nth_element(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth, Compare compare)
     {
         return RAH2_NAMESPACE::nth_element(
@@ -969,10 +968,9 @@ namespace RAH2_NAMESPACE
     namespace Internal
     {
         template <typename RandomAccessIterator, typename Sentinel, typename Size, typename PivotValueType>
-        inline void
-        quick_sort_impl_helper(RandomAccessIterator first, Sentinel last, Size kRecursionCount)
+        void quick_sort_impl_helper(RandomAccessIterator first, Sentinel last, Size kRecursionCount)
         {
-            typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
             while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
             {
@@ -996,10 +994,10 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare, typename PivotValueType>
-        inline void quick_sort_impl_helper(
+        void quick_sort_impl_helper(
             RandomAccessIterator first, Sentinel last, Size kRecursionCount, Compare compare)
         {
-            typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
             while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
             {
@@ -1025,14 +1023,15 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename RandomAccessIterator, typename Sentinel, typename Size>
-        inline void quick_sort_impl(
+        void quick_sort_impl(
             RandomAccessIterator first,
             Sentinel last,
             Size kRecursionCount,
             typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
+                typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                nullptr)
         {
-            typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
             // copy constructors require const value_type
             quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, value_type const>(
@@ -1040,7 +1039,7 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename RandomAccessIterator, typename Sentinel, typename Size>
-        inline void quick_sort_impl(
+        void quick_sort_impl(
             RandomAccessIterator first,
             Sentinel last,
             Size kRecursionCount,
@@ -1048,9 +1047,9 @@ namespace RAH2_NAMESPACE
                 RAH2_STD::is_move_constructible<
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
                 && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
-                    RandomAccessIterator>::value_type>::value>::type* = 0)
+                    RandomAccessIterator>::value_type>::value>::type* = nullptr)
         {
-            typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
             // move constructors require non-const value_type
             quick_sort_impl_helper<RandomAccessIterator, Size, value_type>(
@@ -1058,15 +1057,16 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare>
-        inline void quick_sort_impl(
+        void quick_sort_impl(
             RandomAccessIterator first,
             Sentinel last,
             Size kRecursionCount,
             Compare compare,
             typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* = 0)
+                typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                nullptr)
         {
-            typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
             // copy constructors require const value_type
             quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type const>(
@@ -1074,7 +1074,7 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare>
-        inline void quick_sort_impl(
+        void quick_sort_impl(
             RandomAccessIterator first,
             Sentinel last,
             Size kRecursionCount,
@@ -1083,9 +1083,9 @@ namespace RAH2_NAMESPACE
                 RAH2_STD::is_move_constructible<
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
                 && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
-                    RandomAccessIterator>::value_type>::value>::type* = 0)
+                    RandomAccessIterator>::value_type>::value>::type* = nullptr)
         {
-            typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
             // move constructors require non-const value_type
             quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type>(
@@ -1116,15 +1116,15 @@ namespace RAH2_NAMESPACE
             && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
     void quick_sort(RandomAccessIterator first, Sentinel last)
     {
-        typedef
-            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        using difference_type =
+            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
 
         if (first != last)
         {
             RAH2_NAMESPACE::Internal::quick_sort_impl<RandomAccessIterator, Sentinel, difference_type>(
                 first, last, 2 * Internal::Log2(last - first));
 
-            if ((last - first) > (difference_type)kQuickSortLimit)
+            if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
             {
                 RAH2_NAMESPACE::insertion_sort<RandomAccessIterator, RandomAccessIterator>(
                     first, first + kQuickSortLimit);
@@ -1139,15 +1139,15 @@ namespace RAH2_NAMESPACE
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
     void quick_sort(RandomAccessIterator first, Sentinel last, Compare compare)
     {
-        typedef
-            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        using difference_type =
+            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
 
         if (first != last)
         {
             RAH2_NAMESPACE::Internal::quick_sort_impl<RandomAccessIterator, difference_type, Compare>(
                 first, last, 2 * Internal::Log2(last - first), compare);
 
-            if ((last - first) > (difference_type)kQuickSortLimit)
+            if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
             {
                 RAH2_NAMESPACE::insertion_sort<RandomAccessIterator, Compare>(
                     first, first + kQuickSortLimit, compare);
@@ -1169,18 +1169,18 @@ namespace RAH2_NAMESPACE
         RAH2_STD::enable_if_t<
             random_access_iterator<RandomAccessIterator>
             && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-    inline void sort(RandomAccessIterator first, Sentinel last)
+    void sort(RandomAccessIterator first, Sentinel last)
     {
         RAH2_NAMESPACE::quick_sort(first, last);
     }
     template <typename RandomAccessRange>
-    inline void sort(RandomAccessRange&& range)
+    void sort(RandomAccessRange&& range)
     {
         sort(RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range));
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-    inline void sort(RandomAccessIterator first, Sentinel last, Compare compare)
+    void sort(RandomAccessIterator first, Sentinel last, Compare compare)
     {
         RAH2_NAMESPACE::quick_sort<RandomAccessIterator, Compare>(first, last, compare);
     }
@@ -1189,7 +1189,7 @@ namespace RAH2_NAMESPACE
         typename RandomAccessRange,
         typename Compare,
         RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-    inline void sort(RandomAccessRange&& range, Compare compare)
+    void sort(RandomAccessRange&& range, Compare compare)
     {
         sort(RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), RAH2_STD::move(compare));
     }
