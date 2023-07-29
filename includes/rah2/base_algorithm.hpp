@@ -1440,7 +1440,7 @@ namespace RAH2_NAMESPACE
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
-            return result ? (result < 0) : (n1 < n2);
+            return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for char*.
@@ -1448,7 +1448,7 @@ namespace RAH2_NAMESPACE
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
-            return result ? (result < 0) : (n1 < n2);
+            return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for const unsigned char*.
@@ -1460,7 +1460,7 @@ namespace RAH2_NAMESPACE
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
-            return result ? (result < 0) : (n1 < n2);
+            return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for unsigned char*.
@@ -1468,7 +1468,7 @@ namespace RAH2_NAMESPACE
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
-            return result ? (result < 0) : (n1 < n2);
+            return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for const signed char*.
@@ -1480,7 +1480,7 @@ namespace RAH2_NAMESPACE
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
-            return result ? (result < 0) : (n1 < n2);
+            return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for signed char*.
@@ -1488,7 +1488,7 @@ namespace RAH2_NAMESPACE
         {
             const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
             const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
-            return result ? (result < 0) : (n1 < n2);
+            return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         template <

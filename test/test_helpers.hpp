@@ -56,7 +56,7 @@ struct TestSuite
             else
                 std::cout << "MISSING";
 
-            if (testCases.count(name))
+            if (testCases.count(name) != 0u)
             {
                 for (auto& caseName_extra : testCases.at(name))
                 {
