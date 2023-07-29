@@ -123,13 +123,14 @@ void test_algo_count()
         };
 
         const auto count_rah_noproj = COMPUTE_DURATION(
+            "count_rah_noproj",
             [&]
             {
                 const auto count = rah2::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
-        std::cout << "count_rah_noproj : " << count_rah_noproj.count() << std::endl;
         const auto count_raw_noproj = COMPUTE_DURATION(
+            "count_raw_noproj",
             [&]
             {
                 size_t count = 0;
@@ -142,35 +143,35 @@ void test_algo_count()
                 }
                 assert(count == 79);
             });
-        std::cout << "count_raw_noproj : " << count_raw_noproj.count() << std::endl;
         assert(count_rah_noproj < count_raw_noproj * 1.2);
         const auto count_std_noproj = COMPUTE_DURATION(
+            "count_std_noproj",
             [&]
             {
                 const auto count = std::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
-        std::cout << "count_std_noproj : " << count_std_noproj.count() << std::endl;
         assert(count_rah_noproj < count_std_noproj * 1.2);
 #if RAH2_CPP20
         const auto count_rng_noproj = COMPUTE_DURATION(
+            count_rng_noproj,
             [&]
             {
                 const size_t count = rah2::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
-        std::cout << "count_rng_noproj : " << count_rng_noproj.count() << std::endl;
         assert(count_rah_noproj < count_rng_noproj * 1.2);
 #endif
         const auto count_rah_proj = COMPUTE_DURATION(
+            "count_rah_proj",
             [&]
             {
                 const auto count = rah2::count(
                     coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, getter_lbd);
                 assert(count == 79);
             });
-        std::cout << "count_rah_proj : " << count_rah_proj.count() << std::endl;
         const auto count_raw_proj = COMPUTE_DURATION(
+            "count_raw_proj",
             [&]
             {
                 size_t count = 0;
@@ -184,10 +185,10 @@ void test_algo_count()
                 }
                 assert(count == 79);
             });
-        std::cout << "count_raw_proj : " << count_raw_proj.count() << std::endl;
         assert(count_rah_proj < count_raw_proj * 1.2);
 
         const auto count_rgn_proj = COMPUTE_DURATION(
+            "count_rgn_proj",
             [&]
             {
                 const auto count = rah2::count(
@@ -197,7 +198,6 @@ void test_algo_count()
                     [](Coord const& c) { return c.x; });
                 assert(count == 79);
             });
-        std::cout << "count_rgn_proj : " << count_rgn_proj.count() << std::endl;
         assert(count_rah_proj < count_rgn_proj * 1.2);
     }
 }
@@ -229,16 +229,17 @@ void test_count_if()
             return c.x == 2;
         };
 
-        const auto count_if_rah_pred = COMPUTE_DURATION(
+        auto const count_if_rah_pred = COMPUTE_DURATION(
+            "count_if_rah_pred",
             [&]
             {
                 const auto count =
                     rah2::count_if(coordsVec.data(), coordsVec.data() + coordsVec.size(), pred);
                 assert(count == 79);
             });
-        std::cout << "count_if_rah_pred : " << count_if_rah_pred.count() << std::endl;
 
         const auto count_if_raw_pred = COMPUTE_DURATION(
+            "count_if_raw_pred",
             [&]
             {
                 size_t count = 0;
@@ -251,17 +252,16 @@ void test_count_if()
                 }
                 assert(count == 79);
             });
-        std::cout << "count_if_raw_pred : " << count_if_raw_pred.count() << std::endl;
         assert(count_if_rah_pred < count_if_raw_pred * 1.2);
 
         auto count_if_std_pred = COMPUTE_DURATION(
+            "count_if_std_pred",
             [&]
             {
                 const auto count =
                     std::count_if(coordsVec.data(), coordsVec.data() + coordsVec.size(), pred);
                 assert(count == 79);
             });
-        std::cout << "count_if_std_pred : " << count_if_std_pred.count() << std::endl;
         assert(count_if_rah_pred < count_if_std_pred * 1.2);
     }
 }

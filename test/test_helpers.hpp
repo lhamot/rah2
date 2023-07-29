@@ -847,7 +847,7 @@ struct WhatIs;
 #define PERF_TEST 0
 
 template <typename F>
-auto compute_duration(F&& func, char const* file, int line)
+auto compute_duration(F&& func, char const* name, char const* file, int line)
 {
 #if PERF_TEST
     size_t count = 0;
@@ -872,8 +872,10 @@ auto compute_duration(F&& func, char const* file, int line)
         ++count;
         end = std::chrono::high_resolution_clock::now();
     }
+    std::cout << name << " : " << ((end - start) / count).count() << std::endl;
     return (end - start) / count;
 #else
+    (void)name;
     (void)func;
     (void)file;
     (void)line;
@@ -881,6 +883,6 @@ auto compute_duration(F&& func, char const* file, int line)
 #endif
 }
 
-#define COMPUTE_DURATION(F) compute_duration(F, __FILE__, __LINE__)
+#define COMPUTE_DURATION(N, F) compute_duration((F), N, __FILE__, __LINE__)
 
 #define CHECK_EQUAL(A, B) assert((A) == (B))
