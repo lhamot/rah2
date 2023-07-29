@@ -1342,7 +1342,7 @@ namespace RAH2_NAMESPACE
             using iterator = RAH2_NAMESPACE::iterator_t<R>;
 
             drop_view() = default;
-            drop_view(R v, const base_diff_t drop_count)
+            drop_view(R v, base_diff_t const drop_count)
                 : base_(RAH2_STD::move(v))
                 , drop_count_(drop_count)
             {
@@ -2433,7 +2433,7 @@ namespace RAH2_NAMESPACE
 
             template <class F, typename... Args, size_t... Is>
             auto transform_each_impl(
-                const RAH2_STD::tuple<Args...>& t, F&& f, RAH2_STD::index_sequence<Is...>)
+                RAH2_STD::tuple<Args...> const& t, F&& f, RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::make_tuple(f(RAH2_STD::get<Is>(t))...);
             }
@@ -2445,7 +2445,7 @@ namespace RAH2_NAMESPACE
             }
 
             template <class F, typename... Args>
-            auto transform_each(const RAH2_STD::tuple<Args...>& t, F&& f)
+            auto transform_each(RAH2_STD::tuple<Args...> const& t, F&& f)
             {
                 return transform_each_impl(
                     t, RAH2_STD::forward<F>(f), RAH2_STD::make_index_sequence<sizeof...(Args)>{});
@@ -2459,14 +2459,14 @@ namespace RAH2_NAMESPACE
             }
 
             template <typename... Args, size_t... Is>
-            auto deref_impl(const RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
+            auto deref_impl(RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::reference...>(
                     (*RAH2_STD::get<Is>(t))...);
             }
 
             template <typename... Args>
-            auto deref(const RAH2_STD::tuple<Args...>& t)
+            auto deref(RAH2_STD::tuple<Args...> const& t)
             {
                 return deref_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
@@ -2554,7 +2554,7 @@ namespace RAH2_NAMESPACE
             }
 
             template <typename... Args, size_t... Is>
-            auto get_begin_tuple_impl(const RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
+            auto get_begin_tuple_impl(RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::make_tuple((RAH2_NAMESPACE::begin(RAH2_STD::get<Is>(t)))...);
             }
@@ -2566,7 +2566,7 @@ namespace RAH2_NAMESPACE
             }
 
             template <typename... Args, size_t... Is>
-            auto get_end_tuple_impl(const RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
+            auto get_end_tuple_impl(RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::make_tuple((RAH2_NAMESPACE::end(RAH2_STD::get<Is>(t)))...);
             }
@@ -3386,7 +3386,7 @@ namespace RAH2_NAMESPACE
                 }
             };
 
-            slide_view(R input_view, const intptr_t count_)
+            slide_view(R input_view, intptr_t const count_)
                 : input_view(RAH2_STD::move(input_view))
                 , count_(count_)
             {
@@ -3517,7 +3517,7 @@ namespace RAH2_NAMESPACE
                 }
             };
 
-            chunk_view(R base, const base_diff_type step)
+            chunk_view(R base, base_diff_type const step)
                 : base_(RAH2_STD::move(base))
                 , step_(step)
             {
@@ -4110,7 +4110,7 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename F>
-        auto generate_n(const size_t count, F&& func)
+        auto generate_n(size_t const count, F&& func)
         {
             return generate(RAH2_STD::forward<F>(func)) | take(count);
         }
@@ -4252,7 +4252,7 @@ namespace RAH2_NAMESPACE
 
         public:
             slice_view() = default;
-            slice_view(R v, const intptr_t begin_idx, const intptr_t end_idx)
+            slice_view(R v, intptr_t const begin_idx, intptr_t const end_idx)
                 : base_(RAH2_STD::move(v))
                 , begin_idx_(begin_idx)
                 , end_idx_(end_idx)

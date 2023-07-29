@@ -25,7 +25,7 @@ struct TestSuite
     bool current_test_status = true;
     size_t test_count = 0;
 
-    void addTest(const std::string& group, const std::string& name, std::function<void()> test)
+    void addTest(std::string const& group, std::string const& name, std::function<void()> test)
     {
         testMap.emplace(group + " - " + name, std::move(test));
     }
@@ -38,7 +38,7 @@ struct TestSuite
 
     void report() const
     {
-        for (const auto& name_test : testMap)
+        for (auto const& name_test : testMap)
         {
             auto& name = name_test.first;
             std::cout << name_test.first << " : ";
@@ -69,7 +69,7 @@ struct TestSuite
 
     void run()
     {
-        for (const auto& name_test : testMap)
+        for (auto const& name_test : testMap)
         {
             auto& name = name_test.first;
             currentTest = name.c_str();

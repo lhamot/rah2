@@ -122,14 +122,14 @@ void test_algo_count()
             return c.x;
         };
 
-        const auto count_rah_noproj = COMPUTE_DURATION(
+        auto const count_rah_noproj = COMPUTE_DURATION(
             "count_rah_noproj",
             [&]
             {
                 const auto count = rah2::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
-        const auto count_raw_noproj = COMPUTE_DURATION(
+        auto const count_raw_noproj = COMPUTE_DURATION(
             "count_raw_noproj",
             [&]
             {
@@ -144,7 +144,7 @@ void test_algo_count()
                 assert(count == 79);
             });
         assert(count_rah_noproj < count_raw_noproj * 1.2);
-        const auto count_std_noproj = COMPUTE_DURATION(
+        auto const count_std_noproj = COMPUTE_DURATION(
             "count_std_noproj",
             [&]
             {
@@ -162,7 +162,7 @@ void test_algo_count()
             });
         assert(count_rah_noproj < count_rng_noproj * 1.2);
 #endif
-        const auto count_rah_proj = COMPUTE_DURATION(
+        auto const count_rah_proj = COMPUTE_DURATION(
             "count_rah_proj",
             [&]
             {
@@ -170,7 +170,7 @@ void test_algo_count()
                     coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, getter_lbd);
                 assert(count == 79);
             });
-        const auto count_raw_proj = COMPUTE_DURATION(
+        auto const count_raw_proj = COMPUTE_DURATION(
             "count_raw_proj",
             [&]
             {
@@ -187,7 +187,7 @@ void test_algo_count()
             });
         assert(count_rah_proj < count_raw_proj * 1.2);
 
-        const auto count_rgn_proj = COMPUTE_DURATION(
+        auto const count_rgn_proj = COMPUTE_DURATION(
             "count_rgn_proj",
             [&]
             {
@@ -238,7 +238,7 @@ void test_count_if()
                 assert(count == 79);
             });
 
-        const auto count_if_raw_pred = COMPUTE_DURATION(
+        auto const count_if_raw_pred = COMPUTE_DURATION(
             "count_if_raw_pred",
             [&]
             {
@@ -441,7 +441,7 @@ void test_find_end()
     assert(found2.end() == secret.begin() + intptr_t(strlen("password password word")));
 
     auto found3 = RAH2_NAMESPACE::find_end(
-        secret, std::string("ORD"), [](const char x, const char y) { // uses a binary predicate
+        secret, std::string("ORD"), [](char const x, char const y) { // uses a binary predicate
             return std::tolower(x) == std::tolower(y);
         });
     assert(found3.begin() == secret.begin() + intptr_t(strlen("password password w")));
@@ -485,7 +485,7 @@ void test_find_first_of()
     static auto p2 = {P{5, -5}, P{6, -3}, P{7, -5}, P{8, -3}};
 
     // Compare only P::y data members by projecting them:
-    const auto found4 = rah2::find_first_of(p1, p2, [](auto a, auto b) { return a.y == b.y; });
+    auto const found4 = rah2::find_first_of(p1, p2, [](auto a, auto b) { return a.y == b.y; });
     assert(std::distance(p1.begin(), found4) == 2); // {3, -3}
     /// [rah2::find_first_of]
 }
@@ -493,7 +493,7 @@ void test_adjacent_find()
 {
     testSuite.test_case("sample");
     /// [rah2::adjacent_find]
-    const auto v = {0, 1, 2, 3, 40, 40, 41, 41, 5}; /*
+    auto const v = {0, 1, 2, 3, 40, 40, 41, 41, 5}; /*
                                                 ^^          ^^       */
     {
         auto it = rah2::adjacent_find(v.begin(), v.end());
@@ -544,9 +544,9 @@ void test_search()
     auto found5 = RAH2_NAMESPACE::search(
         haystack,
         bodkin,
-        [](const int x, const int y) { return x == y; }, // pred
-        [](const int x) { return std::toupper(x); }, // proj1
-        [](const int y) { return y + 'A' - '1'; }); // proj2
+        [](int const x, int const y) { return x == y; }, // pred
+        [](int const x) { return std::toupper(x); }, // proj1
+        [](int const y) { return y + 'A' - '1'; }); // proj2
     assert(found5.begin() - haystack.begin() == 1);
     assert(found5.end() - haystack.begin() == 4);
     // print(5, haystack, bodkin, found5);
@@ -581,11 +581,11 @@ void test_search_n()
         result4.size() == 0 && result4.begin() == result4.end() && result4.end() == nums.begin());
 
     char const symbol{'B'};
-    auto to_ascii = [](const int z) -> char
+    auto to_ascii = [](int const z) -> char
     {
         return char('A' + z - 1);
     };
-    auto is_equ = [](const char x, const char y)
+    auto is_equ = [](char const x, char const y)
     {
         return x == y;
     };
@@ -722,14 +722,14 @@ void test_copy_n()
 {
     testSuite.test_case("sample");
     /// [rah2::copy_n]
-    const std::string in{"ABCDEFGH"};
+    std::string const in{"ABCDEFGH"};
     std::string out;
 
     rah2::copy_n(in.begin(), 4, std::back_inserter(out));
     assert(out == "ABCD");
 
     out = "abcdefgh";
-    const auto res = rah2::copy_n(in.begin(), 5, out.begin());
+    auto const res = rah2::copy_n(in.begin(), 5, out.begin());
     assert(*(res.in) == 'F');
     assert(*(res.out) == 'f');
     assert(std::distance(std::begin(in), res.in) == 5);
@@ -740,14 +740,14 @@ void test_copy_backward()
 {
     testSuite.test_case("sample");
     /// [rah2::copy_backward]
-    const auto src = {1, 2, 3, 4};
+    auto const src = {1, 2, 3, 4};
 
     std::vector<int> dst(src.size() + 2);
     rah2::copy_backward(src, dst.end());
     assert(dst == (std::vector<int>{0, 0, 1, 2, 3, 4}));
 
     rah2::fill(dst, 0);
-    const auto in_out = rah2::copy_backward(src.begin(), src.end() - 2, dst.end());
+    auto const in_out = rah2::copy_backward(src.begin(), src.end() - 2, dst.end());
     assert(dst == (std::vector<int>{0, 0, 0, 0, 1, 2}));
 
     assert(rah2::distance(src.begin(), in_out.in) == 2);
@@ -884,7 +884,7 @@ void test_remove_copy()
     testSuite.test_case("sample");
     /// [rah2::remove_copy]
     // Filter out the hash symbol from the given string.
-    const std::string str{"#Small #Buffer #Optimization"};
+    std::string const str{"#Small #Buffer #Optimization"};
 
     std::string out;
     rah2::remove_copy(str.begin(), str.end(), std::back_inserter(out), '#');
@@ -1091,10 +1091,10 @@ void test_sample()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::sample]
-    const auto in = {1, 2, 3, 4, 5, 6};
+    auto const in = {1, 2, 3, 4, 5, 6};
 
     std::vector<int> out(in.size() + 2);
-    const auto max = intptr_t(in.size() + 2);
+    auto const max = intptr_t(in.size() + 2);
     auto gen = std::mt19937{std::random_device{}()};
 
     for (intptr_t n{}; n != max; ++n)
@@ -1178,7 +1178,7 @@ void test_partition_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::partition_copy]
-    const std::vector<char> in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
+    std::vector<char> const in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
 
     std::vector<int> o1(in.size());
     std::vector<int> o2(in.size());
@@ -1220,8 +1220,8 @@ void test_partition_point()
 
     RAH2_NAMESPACE::partition(v, is_even);
 
-    const auto pp = rah2::partition_point(v, is_even);
-    const auto i = rah2::distance(v.cbegin(), pp);
+    auto const pp = rah2::partition_point(v, is_even);
+    auto const i = rah2::distance(v.cbegin(), pp);
     assert(i == 4); // 4 even number in v
     /// [rah2::partition_point]
 }
@@ -1250,19 +1250,19 @@ void test_is_sorted_until()
     testSuite.test_case("empty");
     /// [rah2::is_sorted_until]
     std::array<int, 0> a0 = {};
-    const auto sorted_end0 = RAH2_NAMESPACE::is_sorted_until(a0);
+    auto const sorted_end0 = RAH2_NAMESPACE::is_sorted_until(a0);
     assert(rah2::distance(a0.begin(), sorted_end0) == 0);
 
     std::array<int, 6> a1{3, 1, 4, 1, 5, 9};
-    const auto sorted_end = RAH2_NAMESPACE::is_sorted_until(a1);
+    auto const sorted_end = RAH2_NAMESPACE::is_sorted_until(a1);
     assert(rah2::distance(a1.begin(), sorted_end) == 1);
 
     std::array<int, 6> a3{3, 6, 18, 1, 5, 9};
-    const auto sorted_end3 = RAH2_NAMESPACE::is_sorted_until(a3);
+    auto const sorted_end3 = RAH2_NAMESPACE::is_sorted_until(a3);
     assert(rah2::distance(a3.begin(), sorted_end3) == 3);
 
     std::array<int, 6> a6{3, 6, 18, 19, 20, 78};
-    const auto sorted_end6 = RAH2_NAMESPACE::is_sorted_until(a6);
+    auto const sorted_end6 = RAH2_NAMESPACE::is_sorted_until(a6);
     assert(rah2::distance(a6.begin(), sorted_end6) == 6);
     /// [rah2::is_sorted_until]
 }
@@ -1291,7 +1291,7 @@ void test_partial_sort()
     /// [rah2::partial_sort]
     std::vector<char> v{'x', 'P', 'y', 'C', 'z', 'w', 'P', 'o'};
 
-    const int m{3};
+    int const m{3};
     RAH2_NAMESPACE::partial_sort(v, v.begin() + m);
     assert((rah2::equal(v | rah2::views::take(3), std::string("CPP"))));
 
@@ -1305,7 +1305,7 @@ void test_partial_sort_copy()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::partial_sort_copy]
-    const std::forward_list<int> source{4, 2, 5, 1, 3};
+    std::forward_list<int> const source{4, 2, 5, 1, 3};
 
     std::vector<int> dest1{10, 11, 12};
     auto lastI_lastO = RAH2_NAMESPACE::partial_sort_copy(source, dest1);
@@ -1530,7 +1530,7 @@ void test_includes()
         return std::tolower(a) < std::tolower(b);
     };
 
-    const auto a = {'a', 'b', 'c'}, b = {'a', 'c'}, c = {'a', 'a', 'b'}, d = {'g'},
+    auto const a = {'a', 'b', 'c'}, b = {'a', 'c'}, c = {'a', 'a', 'b'}, d = {'g'},
                e = {'a', 'c', 'g'}, f = {'A', 'B', 'C'}, g = {'e'},
                z = {'a', 'b', 'c', 'f', 'h', 'x'};
 
@@ -1570,8 +1570,8 @@ void test_set_symmetric_difference()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::set_symmetric_difference]
-    const auto in1 = {1, 3, 4, 6, 7, 9};
-    const auto in2 = {1, 4, 5, 6, 9};
+    auto const in1 = {1, 3, 4, 6, 7, 9};
+    auto const in2 = {1, 4, 5, 6, 9};
 
     std::vector<int> out(5);
 
@@ -1590,7 +1590,7 @@ void test_set_union()
     std::vector<int> in1 = {1, 2, 3, 4, 5};
     std::vector<int> in2 = {3, 4, 5, 6, 7};
     std::vector<int> out(in1.size() + in2.size());
-    const auto ret = rah2::set_union(in1, in2, out.begin());
+    auto const ret = rah2::set_union(in1, in2, out.begin());
     assert(out == (std::vector<int>{1, 2, 3, 4, 5, 6, 7, 0, 0, 0}));
     assert(ret.in1 == in1.end());
     assert(ret.in2 == in2.end());
@@ -1600,7 +1600,7 @@ void test_set_union()
     in2 = {3, 4, 5, 6, 7};
     out.clear();
     out.reserve(in1.size() + in2.size());
-    const auto ret2 = rah2::set_union(in1, in2, std::back_inserter(out));
+    auto const ret2 = rah2::set_union(in1, in2, std::back_inserter(out));
     assert(out == (std::vector<int>{1, 2, 3, 4, 5, 5, 5, 6, 7}));
     assert(ret2.in1 == in1.end());
     assert(ret2.in2 == in2.end());
@@ -1630,7 +1630,7 @@ void test_is_heap_until()
     v.push_back(10);
     v.push_back(20);
 
-    const auto heap_end = rah2::is_heap_until(v);
+    auto const heap_end = rah2::is_heap_until(v);
     assert(v.begin() + 6 == heap_end);
     /// [rah2::is_heap_until]
 }
@@ -2120,7 +2120,7 @@ void test_uninitialized_copy_n()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::uninitialized_copy_n]
-    const char* stars[] = {"Procyon", "Spica", "Pollux", "Deneb", "Polaris"};
+    char const* stars[] = {"Procyon", "Spica", "Pollux", "Deneb", "Polaris"};
 
     constexpr int n{4};
     alignas(alignof(std::string)) char out[n * sizeof(std::string)];

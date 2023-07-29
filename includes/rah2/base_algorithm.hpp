@@ -439,7 +439,7 @@ namespace RAH2_NAMESPACE
     /// on the values.
     ///
     template <typename T>
-    inline const T& median(const T& a, const T& b, const T& c)
+    inline T const& median(T const& a, T const& b, T const& c)
     {
         return median_impl(a, b, c);
     }
@@ -487,9 +487,9 @@ namespace RAH2_NAMESPACE
     /// on the values.
     ///
     template <typename T, typename Compare>
-    inline const T& median(const T& a, const T& b, const T& c, Compare compare)
+    inline T const& median(T const& a, T const& b, T const& c, Compare compare)
     {
-        return RAH2_NAMESPACE::median_impl<const T&, Compare>(a, b, c, compare);
+        return RAH2_NAMESPACE::median_impl<T const&, Compare>(a, b, c, compare);
     }
 
     /// median
@@ -788,7 +788,7 @@ namespace RAH2_NAMESPACE
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
         constexpr RAH2_NAMESPACE::iter_difference_t<I>
-        operator()(I first, S last, const T& value, Proj proj) const
+        operator()(I first, S last, T const& value, Proj proj) const
         {
             RAH2_NAMESPACE::iter_difference_t<I> counter = 0;
             for (; first != last; ++first)
@@ -804,7 +804,7 @@ namespace RAH2_NAMESPACE
             class T,
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
-        constexpr RAH2_NAMESPACE::range_difference_t<R> operator()(R&& r, const T& value, Proj proj) const
+        constexpr RAH2_NAMESPACE::range_difference_t<R> operator()(R&& r, T const& value, Proj proj) const
         {
             return (*this)(
                 RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value, RAH2_STD::move(proj));
@@ -815,7 +815,7 @@ namespace RAH2_NAMESPACE
             typename S,
             class T,
             RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-        constexpr RAH2_NAMESPACE::iter_difference_t<I> operator()(I first, S last, const T& value) const
+        constexpr RAH2_NAMESPACE::iter_difference_t<I> operator()(I first, S last, T const& value) const
         {
             RAH2_NAMESPACE::iter_difference_t<I> counter = 0;
             for (; first != last; ++first)
@@ -825,7 +825,7 @@ namespace RAH2_NAMESPACE
         }
 
         template <typename R, class T, RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
-        constexpr RAH2_NAMESPACE::range_difference_t<R> operator()(R&& r, const T& value) const
+        constexpr RAH2_NAMESPACE::range_difference_t<R> operator()(R&& r, T const& value) const
         {
             return (*this)(RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value);
         }
@@ -912,7 +912,7 @@ namespace RAH2_NAMESPACE
             class T,
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-        constexpr I operator()(I first, S last, const T& value, Proj proj = {}) const
+        constexpr I operator()(I first, S last, T const& value, Proj proj = {}) const
         {
             for (; first != last; ++first)
                 if (proj(*first) == value)
@@ -926,7 +926,7 @@ namespace RAH2_NAMESPACE
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
         constexpr RAH2_NAMESPACE::borrowed_iterator_t<R>
-        operator()(R&& r, const T& value, Proj proj = {}) const
+        operator()(R&& r, T const& value, Proj proj = {}) const
         {
             return (*this)(
                 RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value, RAH2_STD::ref(proj));
@@ -1436,63 +1436,63 @@ namespace RAH2_NAMESPACE
         }
 
         inline bool // Specialization for const char*.
-        operator()(const char* first1, const char* last1, const char* first2, const char* last2)
+        operator()(char const* first1, char const* last1, char const* first2, char const* last2)
         {
-            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-            const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
+            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for char*.
-        operator()(char* first1, const char* last1, char* first2, const char* last2)
+        operator()(char* first1, char const* last1, char* first2, char const* last2)
         {
-            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-            const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
+            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for const unsigned char*.
         operator()(
-            const unsigned char* first1,
-            const unsigned char* last1,
-            const unsigned char* first2,
-            const unsigned char* last2)
+            unsigned char const* first1,
+            unsigned char const* last1,
+            unsigned char const* first2,
+            unsigned char const* last2)
         {
-            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-            const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
+            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for unsigned char*.
         operator()(
             unsigned char* first1,
-            const unsigned char* last1,
+            unsigned char const* last1,
             unsigned char* first2,
-            const unsigned char* last2)
+            unsigned char const* last2)
         {
-            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-            const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
+            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for const signed char*.
         operator()(
-            const signed char* first1,
-            const signed char* last1,
-            const signed char* first2,
-            const signed char* last2)
+            signed char const* first1,
+            signed char const* last1,
+            signed char const* first2,
+            signed char const* last2)
         {
-            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-            const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
+            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
         inline bool // Specialization for signed char*.
         operator()(
-            signed char* first1, const signed char* last1, signed char* first2, const signed char* last2)
+            signed char* first1, signed char const* last1, signed char* first2, signed char const* last2)
         {
-            const ptrdiff_t n1(last1 - first1), n2(last2 - first2);
-            const int result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
+            ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
+            int const result = memcmp(first1, first2, (size_t)RAH2_STD::min(n1, n2));
             return result != 0 ? (result < 0) : (n1 < n2);
         }
 
@@ -1601,7 +1601,7 @@ namespace RAH2_NAMESPACE
     /// take advantage of them.
     ///
     template <typename ForwardIterator, typename Sentinel, typename T>
-    ForwardIterator lower_bound(ForwardIterator first, Sentinel last, const T& value)
+    ForwardIterator lower_bound(ForwardIterator first, Sentinel last, T const& value)
     {
         using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -1630,7 +1630,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename ForwardRange, typename T>
-    iterator_t<ForwardRange> lower_bound(ForwardRange&& range, const T& value)
+    iterator_t<ForwardRange> lower_bound(ForwardRange&& range, T const& value)
     {
         return RAH2_NAMESPACE::lower_bound(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value);
@@ -1658,7 +1658,7 @@ namespace RAH2_NAMESPACE
     ///
     template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
     ForwardIterator
-    lower_bound(ForwardIterator first, ForwardSentinel last, const T& value, Compare compare)
+    lower_bound(ForwardIterator first, ForwardSentinel last, T const& value, Compare compare)
     {
         using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -1687,7 +1687,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename ForwardRange, typename T, typename Compare>
-    iterator_t<ForwardRange> lower_bound(ForwardRange&& range, const T& value, Compare compare)
+    iterator_t<ForwardRange> lower_bound(ForwardRange&& range, T const& value, Compare compare)
     {
         return RAH2_NAMESPACE::lower_bound(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value, RAH2_STD::move(compare));
@@ -1708,7 +1708,7 @@ namespace RAH2_NAMESPACE
     /// Complexity: At most 'log(last - first) + 1' comparisons.
     ///
     template <typename ForwardIterator, typename Sentinel, typename T>
-    ForwardIterator upper_bound(ForwardIterator first, Sentinel last, const T& value)
+    ForwardIterator upper_bound(ForwardIterator first, Sentinel last, T const& value)
     {
         using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -1737,7 +1737,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename ForwardRange, typename T>
-    iterator_t<ForwardRange> upper_bound(ForwardRange&& range, const T& value)
+    iterator_t<ForwardRange> upper_bound(ForwardRange&& range, T const& value)
     {
         return RAH2_NAMESPACE::upper_bound(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value);
@@ -1761,7 +1761,7 @@ namespace RAH2_NAMESPACE
     ///
     template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
     ForwardIterator
-    upper_bound(ForwardIterator first, ForwardSentinel last, const T& value, Compare compare)
+    upper_bound(ForwardIterator first, ForwardSentinel last, T const& value, Compare compare)
     {
         using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -1790,7 +1790,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename ForwardRange, typename T, typename Compare>
-    iterator_t<ForwardRange> upper_bound(ForwardRange&& range, const T& value, Compare compare)
+    iterator_t<ForwardRange> upper_bound(ForwardRange&& range, T const& value, Compare compare)
     {
         return RAH2_NAMESPACE::upper_bound(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value, RAH2_STD::move(compare));
@@ -1810,7 +1810,7 @@ namespace RAH2_NAMESPACE
         typename T,
         RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
     RAH2_NAMESPACE::subrange<ForwardIterator>
-    equal_range(ForwardIterator first, Sentinel last, const T& value)
+    equal_range(ForwardIterator first, Sentinel last, T const& value)
     {
         using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -1849,7 +1849,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename ForwardRange, typename T>
-    RAH2_NAMESPACE::borrowed_subrange_t<ForwardRange> equal_range(ForwardRange&& range, const T& value)
+    RAH2_NAMESPACE::borrowed_subrange_t<ForwardRange> equal_range(ForwardRange&& range, T const& value)
     {
         return RAH2_NAMESPACE::equal_range(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value);
@@ -1870,7 +1870,7 @@ namespace RAH2_NAMESPACE
         typename Compare,
         RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
     RAH2_NAMESPACE::subrange<ForwardIterator, ForwardIterator>
-    equal_range(ForwardIterator first, Sentinel last, const T& value, Compare compare)
+    equal_range(ForwardIterator first, Sentinel last, T const& value, Compare compare)
     {
         using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -1910,7 +1910,7 @@ namespace RAH2_NAMESPACE
 
     template <typename ForwardRange, typename T, typename Compare>
     RAH2_NAMESPACE::subrange<iterator_t<ForwardRange>, sentinel_t<ForwardRange>>
-    equal_range(ForwardRange&& range, const T& value, Compare compare)
+    equal_range(ForwardRange&& range, T const& value, Compare compare)
     {
         return RAH2_NAMESPACE::equal_range(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value, RAH2_STD::move(compare));
@@ -1924,8 +1924,8 @@ namespace RAH2_NAMESPACE
             class T1,
             class T2,
             RAH2_STD::enable_if_t<
-                input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, const T2&>>* = nullptr>
-        constexpr I operator()(I first, S last, const T1& old_value, const T2& new_value) const
+                input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, T2 const&>>* = nullptr>
+        constexpr I operator()(I first, S last, T1 const& old_value, T2 const& new_value) const
         {
             for (; first != last; ++first)
                 if (old_value == *first)
@@ -1937,8 +1937,8 @@ namespace RAH2_NAMESPACE
             typename R, // input_range
             class T1,
             class T2,
-            RAH2_STD::enable_if_t<input_range<R> && indirectly_writable<iterator_t<R>, const T2&>>* = nullptr>
-        constexpr borrowed_iterator_t<R> operator()(R&& r, const T1& old_value, const T2& new_value) const
+            RAH2_STD::enable_if_t<input_range<R> && indirectly_writable<iterator_t<R>, T2 const&>>* = nullptr>
+        constexpr borrowed_iterator_t<R> operator()(R&& r, T1 const& old_value, T2 const& new_value) const
         {
             return (*this)(RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), old_value, new_value);
         }
@@ -1964,8 +1964,8 @@ namespace RAH2_NAMESPACE
             class T,
             typename Pred, // indirect_unary_predicate<I>
             RAH2_STD::enable_if_t<
-                input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, const T&>>* = nullptr>
-        constexpr I operator()(I first, S last, Pred pred, const T& new_value) const
+                input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, T const&>>* = nullptr>
+        constexpr I operator()(I first, S last, Pred pred, T const& new_value) const
         {
             for (; first != last; ++first)
                 if (pred(*first))
@@ -1978,7 +1978,7 @@ namespace RAH2_NAMESPACE
             class T,
             typename Pred, // indirect_unary_predicate<iterator_t<R>>>
             RAH2_STD::enable_if_t<input_range<R> && output_range<R, T>>* = nullptr>
-        constexpr borrowed_iterator_t<R> operator()(R&& r, Pred pred, const T& new_value) const
+        constexpr borrowed_iterator_t<R> operator()(R&& r, Pred pred, T const& new_value) const
         {
             return (*this)(
                 RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), RAH2_STD::move(pred), new_value);
@@ -2011,7 +2011,7 @@ namespace RAH2_NAMESPACE
                 && RAH2_NAMESPACE::weakly_incrementable<O>
                 && RAH2_NAMESPACE::indirectly_copyable<I, O>>* = nullptr>
         constexpr RAH2_NAMESPACE::remove_copy_result<I, O>
-        operator()(I first, S last, O result, const T& value) const
+        operator()(I first, S last, O result, T const& value) const
         {
             for (; !(first == last); ++first)
             {
@@ -2032,7 +2032,7 @@ namespace RAH2_NAMESPACE
                 RAH2_NAMESPACE::input_range<R> && RAH2_NAMESPACE::weakly_incrementable<O>
                 && RAH2_NAMESPACE::indirectly_copyable<RAH2_NAMESPACE::iterator_t<R>, O>>* = nullptr>
         constexpr RAH2_NAMESPACE::remove_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<R>, O>
-        operator()(R&& r, O result, const T& value) const
+        operator()(R&& r, O result, T const& value) const
         {
             return (*this)(
                 RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), RAH2_STD::move(result), value);
@@ -2133,7 +2133,7 @@ namespace RAH2_NAMESPACE
     ///    intArray.erase(remove(intArray.begin(), intArray.end(), 4), intArray.end()); // Erase all elements of value 4.
     ///
     template <typename ForwardIterator, typename ForwardSentinel, typename T>
-    subrange<ForwardIterator> remove(ForwardIterator first, ForwardSentinel last, const T& value)
+    subrange<ForwardIterator> remove(ForwardIterator first, ForwardSentinel last, T const& value)
     {
         first = RAH2_NAMESPACE::find(first, last, value);
         if (first != last)
@@ -2145,7 +2145,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename ForwardRange, typename T>
-    borrowed_subrange_t<ForwardRange> remove(ForwardRange&& range, const T& value)
+    borrowed_subrange_t<ForwardRange> remove(ForwardRange&& range, T const& value)
     {
         return RAH2_NAMESPACE::remove(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value);
@@ -2216,8 +2216,8 @@ namespace RAH2_NAMESPACE
         InputIterator first,
         InputSentinel last,
         OutputIterator result,
-        const T& old_value,
-        const T& new_value)
+        T const& old_value,
+        T const& new_value)
     {
         for (; first != last; ++first, ++result)
             *result = (*first == old_value) ? new_value : *first;
@@ -2226,7 +2226,7 @@ namespace RAH2_NAMESPACE
 
     template <typename InputRange, typename OutputIterator, typename T>
     inline replace_copy_result<RAH2_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
-    replace_copy(InputRange&& range, OutputIterator result, const T& old_value, const T& new_value)
+    replace_copy(InputRange&& range, OutputIterator result, T const& old_value, T const& new_value)
     {
         return RAH2_NAMESPACE::replace_copy(
             RAH2_NAMESPACE::begin(range),
@@ -2260,7 +2260,7 @@ namespace RAH2_NAMESPACE
         InputSentinel last,
         OutputIterator result,
         Predicate predicate,
-        const T& new_value)
+        T const& new_value)
     {
         for (; first != last; ++first, ++result)
             *result = predicate(*first) ? new_value : *first;
@@ -2269,7 +2269,7 @@ namespace RAH2_NAMESPACE
 
     template <typename InputRange, typename OutputIterator, typename Predicate, typename T>
     inline replace_copy_if_result<RAH2_NAMESPACE::borrowed_iterator_t<InputRange>, OutputIterator>
-    replace_copy_if(InputRange&& range, OutputIterator result, Predicate predicate, const T& new_value)
+    replace_copy_if(InputRange&& range, OutputIterator result, Predicate predicate, T const& new_value)
     {
         return RAH2_NAMESPACE::replace_copy_if(
             RAH2_NAMESPACE::begin(range),
@@ -2459,7 +2459,7 @@ namespace RAH2_NAMESPACE
             I first,
             S last,
             RAH2_NAMESPACE::iter_difference_t<I> count,
-            const T& value,
+            T const& value,
             Pred pred = {},
             Proj proj = {}) const
         {
@@ -2494,7 +2494,7 @@ namespace RAH2_NAMESPACE
         constexpr RAH2_NAMESPACE::borrowed_subrange_t<R> operator()(
             R&& r,
             RAH2_NAMESPACE::range_difference_t<R> count,
-            const T& value,
+            T const& value,
             Pred pred = {},
             Proj proj = {}) const
         {
@@ -2537,7 +2537,7 @@ namespace RAH2_NAMESPACE
         typename T,
         RAH2_STD::enable_if_t<
             forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-    inline bool binary_search(ForwardIterator first, Sentinel last, const T& value)
+    inline bool binary_search(ForwardIterator first, Sentinel last, T const& value)
     {
         // To do: This can be made slightly faster by not using lower_bound.
         ForwardIterator i(
@@ -2548,7 +2548,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename Range, typename T>
-    inline bool binary_search(Range&& range, const T& value)
+    inline bool binary_search(Range&& range, T const& value)
     {
         return RAH2_NAMESPACE::binary_search(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value);
@@ -2570,7 +2570,7 @@ namespace RAH2_NAMESPACE
         typename T,
         typename Compare,
         RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-    inline bool binary_search(ForwardIterator first, Sentinel last, const T& value, Compare compare)
+    inline bool binary_search(ForwardIterator first, Sentinel last, T const& value, Compare compare)
     {
         // To do: This can be made slightly faster by not using lower_bound.
         ForwardIterator i(
@@ -2579,7 +2579,7 @@ namespace RAH2_NAMESPACE
     }
 
     template <typename Range, typename T, typename Compare, RAH2_STD::enable_if_t<forward_range<Range>>* = nullptr>
-    inline bool binary_search(Range&& range, const T& value, Compare compare)
+    inline bool binary_search(Range&& range, T const& value, Compare compare)
     {
         return binary_search(
             RAH2_NAMESPACE::begin(range), RAH2_NAMESPACE::end(range), value, RAH2_STD::move(compare));
@@ -3228,7 +3228,7 @@ namespace RAH2_NAMESPACE
             // from [first1, last1) appears in [first2, last2)
             for (auto i{first1}; i != last1; ++i)
             {
-                const auto i_proj{proj1(*i)};
+                auto const i_proj{proj1(*i)};
                 auto i_cmp = [&](auto&& t)
                 {
                     return pred(i_proj, RAH2_STD::forward<decltype(t)>(t));
@@ -3237,7 +3237,7 @@ namespace RAH2_NAMESPACE
                 if (i != RAH2_NAMESPACE::find_if(first1, i, i_cmp, proj1))
                     continue; // this *i has been checked
 
-                const auto m{RAH2_NAMESPACE::count_if(first2, last2, i_cmp, proj2)};
+                auto const m{RAH2_NAMESPACE::count_if(first2, last2, i_cmp, proj2)};
                 if (m == 0 or m != RAH2_NAMESPACE::count_if(i, last1, i_cmp, proj1))
                     return false;
             }
@@ -3537,9 +3537,9 @@ namespace RAH2_NAMESPACE
                 using value_type =
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                const difference_type m1 = (middle - first);
-                const difference_type m2 = (last - middle);
-                const difference_type g = Internal::greatest_common_divisor(m1, m2);
+                difference_type const m1 = (middle - first);
+                difference_type const m2 = (last - middle);
+                difference_type const g = Internal::greatest_common_divisor(m1, m2);
                 value_type temp;
 
                 for (RandomAccessIterator p = first + g; p != first;)
@@ -3551,7 +3551,7 @@ namespace RAH2_NAMESPACE
                     {
                         *p1 = RAH2_STD::move(*p2);
                         p1 = p2;
-                        const difference_type d = (last - p2);
+                        difference_type const d = (last - p2);
 
                         if (m1 < d)
                             p2 += m1;
@@ -3684,8 +3684,8 @@ namespace RAH2_NAMESPACE
     struct clamp_fn
     {
         template <class T, class Proj = RAH2_NAMESPACE::identity, typename Comp = RAH2_STD::less<>>
-        constexpr const T&
-        operator()(const T& v, const T& lo, const T& hi, Comp comp = {}, Proj proj = {}) const
+        constexpr T const&
+        operator()(T const& v, T const& lo, T const& hi, Comp comp = {}, Proj proj = {}) const
         {
             RAH2_ASSERT(!comp(hi, lo));
             auto&& pv = proj(v);
@@ -3707,7 +3707,7 @@ namespace RAH2_NAMESPACE
             class O,
             class S,
             RAH2_STD::enable_if_t<output_iterator<O, T> && sentinel_for<S, O>>* = nullptr>
-        constexpr O operator()(O first, S last, const T& value) const
+        constexpr O operator()(O first, S last, T const& value) const
         {
             while (first != last)
                 *first++ = value;
@@ -3716,7 +3716,7 @@ namespace RAH2_NAMESPACE
         }
 
         template <class T, class R, RAH2_STD::enable_if_t<output_range<R, T>>* = nullptr>
-        constexpr RAH2_NAMESPACE::iterator_t<R> operator()(R&& r, const T& value) const
+        constexpr RAH2_NAMESPACE::iterator_t<R> operator()(R&& r, T const& value) const
         {
             return (*this)(RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value);
         }
@@ -3726,8 +3726,8 @@ namespace RAH2_NAMESPACE
 
     struct fill_n_fn
     {
-        template <typename T, typename O, RAH2_STD::enable_if_t<output_iterator<O, const T&>>* = nullptr>
-        constexpr O operator()(O first, RAH2_NAMESPACE::iter_difference_t<O> n, const T& value) const
+        template <typename T, typename O, RAH2_STD::enable_if_t<output_iterator<O, T const&>>* = nullptr>
+        constexpr O operator()(O first, RAH2_NAMESPACE::iter_difference_t<O> n, T const& value) const
         {
             for (RAH2_NAMESPACE::iter_difference_t<O> i{}; i != n; ++first, ++i)
                 *first = value;

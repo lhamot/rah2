@@ -40,10 +40,10 @@ namespace RAH2_NAMESPACE
     ///
     template <typename RandomAccessIterator, typename Distance, typename T>
     inline void
-    promote_heap(RandomAccessIterator first, Distance topPosition, Distance position, const T& value)
+    promote_heap(RandomAccessIterator first, Distance topPosition, Distance position, T const& value)
     {
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-        promote_heap_impl<RandomAccessIterator, Distance, const T&, const value_type>(
+        promote_heap_impl<RandomAccessIterator, Distance, T const&, value_type const>(
             first, topPosition, position, value);
     }
 
@@ -98,10 +98,10 @@ namespace RAH2_NAMESPACE
     ///
     template <typename RandomAccessIterator, typename Distance, typename T, typename Compare>
     inline void promote_heap(
-        RandomAccessIterator first, Distance topPosition, Distance position, const T& value, Compare compare)
+        RandomAccessIterator first, Distance topPosition, Distance position, T const& value, Compare compare)
     {
         typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-        promote_heap_impl<RandomAccessIterator, Distance, const T&, Compare, const value_type>(
+        promote_heap_impl<RandomAccessIterator, Distance, T const&, Compare, value_type const>(
             first, topPosition, position, value, compare);
     }
 
@@ -174,11 +174,11 @@ namespace RAH2_NAMESPACE
         Distance topPosition,
         Distance heapSize,
         Distance position,
-        const T& value)
+        T const& value)
     {
         typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-        adjust_heap_impl<RandomAccessIterator, Distance, const T&, const value_type>(
-            first, topPosition, heapSize, position, RAH2_STD::forward<const T&>(value));
+        adjust_heap_impl<RandomAccessIterator, Distance, T const&, value_type const>(
+            first, topPosition, heapSize, position, RAH2_STD::forward<T const&>(value));
     }
 
     /// adjust_heap
@@ -248,12 +248,12 @@ namespace RAH2_NAMESPACE
         Distance topPosition,
         Distance heapSize,
         Distance position,
-        const T& value,
+        T const& value,
         Compare compare)
     {
         typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
-        adjust_heap_impl<RandomAccessIterator, Distance, const T&, Compare, const value_type>(
-            first, topPosition, heapSize, position, RAH2_STD::forward<const T&>(value), compare);
+        adjust_heap_impl<RandomAccessIterator, Distance, T const&, Compare, value_type const>(
+            first, topPosition, heapSize, position, RAH2_STD::forward<T const&>(value), compare);
     }
 
     /// adjust_heap
@@ -306,13 +306,13 @@ namespace RAH2_NAMESPACE
             typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
         auto lasti = RAH2_NAMESPACE::next(first, last);
-        const value_type tempBottom(RAH2_STD::forward<value_type>(*(lasti - 1)));
+        value_type const tempBottom(RAH2_STD::forward<value_type>(*(lasti - 1)));
 
         RAH2_NAMESPACE::promote_heap<RandomAccessIterator, difference_type, value_type>(
             first,
             (difference_type)0,
             (difference_type)(lasti - first - 1),
-            RAH2_STD::forward<const value_type>(tempBottom));
+            RAH2_STD::forward<value_type const>(tempBottom));
         return lasti;
     }
 
@@ -339,7 +339,7 @@ namespace RAH2_NAMESPACE
             typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
         typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
         auto lasti = RAH2_NAMESPACE::next(first, last);
-        const value_type tempBottom(*(lasti - 1));
+        value_type const tempBottom(*(lasti - 1));
 
         RAH2_NAMESPACE::promote_heap<RandomAccessIterator, difference_type, value_type, Compare>(
             first, (difference_type)0, (difference_type)(lasti - first - 1), tempBottom, compare);
@@ -467,7 +467,7 @@ namespace RAH2_NAMESPACE
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
         auto lasti = next(first, last);
-        const difference_type heapSize = lasti - first;
+        difference_type const heapSize = lasti - first;
 
         if (heapSize
             >= 2) // If there is anything to do... (we need this check because otherwise the math fails below).
@@ -505,7 +505,7 @@ namespace RAH2_NAMESPACE
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
         auto lasti = next(first, last);
-        const difference_type heapSize = lasti - first;
+        difference_type const heapSize = lasti - first;
 
         if (heapSize
             >= 2) // If there is anything to do... (we need this check because otherwise the math fails below).

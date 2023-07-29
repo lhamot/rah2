@@ -255,7 +255,7 @@ namespace RAH2_NAMESPACE
 
                 for (++iSorted; iSorted != last; ++iSorted)
                 {
-                    const value_type temp(*iSorted);
+                    value_type const temp(*iSorted);
 
                     iNext = iCurrent = iSorted;
 
@@ -303,7 +303,7 @@ namespace RAH2_NAMESPACE
         {
             if (sort_impl(first, last, pBuffer, difference_type(0), compare) == RL_Buffer)
             {
-                const difference_type nCount = last - first;
+                difference_type const nCount = last - first;
                 RAH2_NAMESPACE::copy(pBuffer, pBuffer + nCount, first);
             }
             RAH2_DEV_ASSERT((
@@ -337,7 +337,7 @@ namespace RAH2_NAMESPACE
             difference_type lastSortedEnd,
             StrictWeakOrdering compare)
         {
-            const difference_type nCount = last - first;
+            difference_type const nCount = last - first;
 
             if (lastSortedEnd < 1)
             {
@@ -360,7 +360,7 @@ namespace RAH2_NAMESPACE
                 }
                 else
                 {
-                    const difference_type nMid = nCount / 2;
+                    difference_type const nMid = nCount / 2;
 
                     ResultLocation firstHalfLocation = RL_SourceRange;
                     // Don't sort the first half if it is already sorted.
@@ -401,7 +401,7 @@ namespace RAH2_NAMESPACE
             ResultLocation secondHalfLocation,
             StrictWeakOrdering compare)
         {
-            const difference_type nCount = last - first;
+            difference_type const nCount = last - first;
             if (firstHalfLocation == RL_SourceRange)
             {
                 if (secondHalfLocation == RL_SourceRange)
@@ -489,7 +489,7 @@ namespace RAH2_NAMESPACE
             typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
         using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-        const difference_type nCount = last - first;
+        difference_type const nCount = last - first;
 
         if (nCount > 1)
         {
@@ -587,7 +587,7 @@ namespace RAH2_NAMESPACE
 
         using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
-        const auto requested_size = RAH2_NAMESPACE::distance(first, last);
+        auto const requested_size = RAH2_NAMESPACE::distance(first, last);
 
         auto allocator = RAH2_STD::allocator<value_type>();
         value_type* const buffer = allocator.allocate(size_t(requested_size));
@@ -694,11 +694,11 @@ namespace RAH2_NAMESPACE
     ///
     template <typename RandomAccessIterator, typename Sentinel, typename T>
     inline RandomAccessIterator
-    get_partition(RandomAccessIterator first, Sentinel last, const T& pivotValue)
+    get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue)
     {
         // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
-        const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
-        return get_partition_impl<RandomAccessIterator, Sentinel, const T&>(first, last, pivotCopy);
+        T const pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
+        return get_partition_impl<RandomAccessIterator, Sentinel, T const&>(first, last, pivotCopy);
     }
 
     template <typename RandomAccessIterator, typename Sentinel, typename T>
@@ -738,10 +738,10 @@ namespace RAH2_NAMESPACE
 
     template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
     inline RandomAccessIterator
-    get_partition(RandomAccessIterator first, Sentinel last, const T& pivotValue, Compare compare)
+    get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue, Compare compare)
     {
-        const T pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
-        return get_partition_impl<RandomAccessIterator, Sentinel, const T&, Compare>(
+        T const pivotCopy(pivotValue); // Need to make a temporary because the sequence below is mutating.
+        return get_partition_impl<RandomAccessIterator, Sentinel, T const&, Compare>(
             first, last, pivotCopy, compare);
     }
 
@@ -902,9 +902,9 @@ namespace RAH2_NAMESPACE
         auto lasti = result;
         while ((lasti - first) > 5)
         {
-            const value_type midValue(RAH2_NAMESPACE::median<value_type>(
+            value_type const midValue(RAH2_NAMESPACE::median<value_type>(
                 *first, *(first + (lasti - first) / 2), *(lasti - 1)));
-            const RandomAccessIterator midPos(
+            RandomAccessIterator const midPos(
                 RAH2_NAMESPACE::get_partition<RandomAccessIterator, Sentinel, value_type>(
                     first, lasti, midValue));
 
@@ -935,9 +935,9 @@ namespace RAH2_NAMESPACE
         auto lasti = result;
         while ((lasti - first) > 5)
         {
-            const value_type midValue(RAH2_NAMESPACE::median<value_type, Compare>(
+            value_type const midValue(RAH2_NAMESPACE::median<value_type, Compare>(
                 *first, *(first + (lasti - first) / 2), *(lasti - 1), compare));
-            const RandomAccessIterator midPos(
+            RandomAccessIterator const midPos(
                 RAH2_NAMESPACE::get_partition<RandomAccessIterator, Sentinel, value_type, Compare>(
                     first, lasti, midValue, compare));
 
@@ -976,7 +976,7 @@ namespace RAH2_NAMESPACE
 
             while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
             {
-                const RandomAccessIterator position(
+                RandomAccessIterator const position(
                     RAH2_NAMESPACE::get_partition<RandomAccessIterator, Sentinel, value_type>(
                         first,
                         last,
@@ -1003,7 +1003,7 @@ namespace RAH2_NAMESPACE
 
             while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
             {
-                const RandomAccessIterator position(
+                RandomAccessIterator const position(
                     RAH2_NAMESPACE::get_partition<RandomAccessIterator, value_type, Compare>(
                         first,
                         last,
@@ -1035,7 +1035,7 @@ namespace RAH2_NAMESPACE
             typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
             // copy constructors require const value_type
-            quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, const value_type>(
+            quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, value_type const>(
                 first, last, kRecursionCount);
         }
 
@@ -1069,7 +1069,7 @@ namespace RAH2_NAMESPACE
             typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
 
             // copy constructors require const value_type
-            quick_sort_impl_helper<RandomAccessIterator, Size, Compare, const value_type>(
+            quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type const>(
                 first, last, kRecursionCount, compare);
         }
 

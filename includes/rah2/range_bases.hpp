@@ -132,7 +132,7 @@ namespace RAH2_NAMESPACE
     template <class Derived, class Base>
     constexpr bool derived_from =
         RAH2_NAMESPACE::is_base_of_v<Base, Derived>
-        && RAH2_NAMESPACE::is_convertible_v<const volatile Derived*, const volatile Base*>;
+        && RAH2_NAMESPACE::is_convertible_v<Derived const volatile*, Base const volatile*>;
 
     namespace details
     {
@@ -514,16 +514,16 @@ namespace RAH2_NAMESPACE
     template <class T>
     constexpr bool copy_constructible =
         RAH2_NAMESPACE::move_constructible<T> && RAH2_NAMESPACE::constructible_from<T, T&>
-        && RAH2_NAMESPACE::convertible_to<T&, T> && RAH2_NAMESPACE::constructible_from<T, const T&>
-        && RAH2_NAMESPACE::convertible_to<const T&, T>
-        && RAH2_NAMESPACE::constructible_from<T, const T>
-        && RAH2_NAMESPACE::convertible_to<const T, T>;
+        && RAH2_NAMESPACE::convertible_to<T&, T> && RAH2_NAMESPACE::constructible_from<T, T const&>
+        && RAH2_NAMESPACE::convertible_to<T const&, T>
+        && RAH2_NAMESPACE::constructible_from<T, T const>
+        && RAH2_NAMESPACE::convertible_to<T const, T>;
 
     template <class T>
     constexpr bool copyable =
         RAH2_NAMESPACE::copy_constructible<T> && RAH2_NAMESPACE::movable<T>
-        && RAH2_NAMESPACE::assignable_from<T&, T&> && RAH2_NAMESPACE::assignable_from<T&, const T&>
-        && RAH2_NAMESPACE::assignable_from<T&, const T>;
+        && RAH2_NAMESPACE::assignable_from<T&, T&> && RAH2_NAMESPACE::assignable_from<T&, T const&>
+        && RAH2_NAMESPACE::assignable_from<T&, T const>;
 
     template <typename T, bool Diagnostic = false>
     struct default_initializable_impl

@@ -786,7 +786,7 @@ try
         std::vector<int> out;
         auto a = rah2::begin(range);
         auto b = rah2::end(range);
-        volatile auto dist = std::distance(a, b);
+        auto volatile dist = std::distance(a, b);
         (void)dist;
         std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4, 5}));

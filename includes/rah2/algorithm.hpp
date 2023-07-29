@@ -241,7 +241,7 @@ namespace RAH2_NAMESPACE
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
         constexpr RAH2_NAMESPACE::subrange<I>
-        operator()(I first, S last, const T& value, Proj proj = {}) const
+        operator()(I first, S last, T const& value, Proj proj = {}) const
         {
             // Note: if I is mere forward_iterator, we may only go from begin to end.
             I found{};
@@ -261,7 +261,7 @@ namespace RAH2_NAMESPACE
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
         constexpr RAH2_NAMESPACE::borrowed_subrange_t<R>
-        operator()(R&& r, const T& value, Proj proj = {}) const
+        operator()(R&& r, T const& value, Proj proj = {}) const
         {
             return this->operator()(
                 RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), value, RAH2_STD::ref(proj));
@@ -356,7 +356,7 @@ namespace RAH2_NAMESPACE
             class T,
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-        constexpr bool operator()(I first, S last, const T& value, Proj proj = {}) const
+        constexpr bool operator()(I first, S last, T const& value, Proj proj = {}) const
         {
             return RAH2_NAMESPACE::find(RAH2_STD::move(first), last, value, proj) != last;
         }
@@ -366,7 +366,7 @@ namespace RAH2_NAMESPACE
             class T,
             class Proj = RAH2_NAMESPACE::identity,
             RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
-        constexpr bool operator()(R&& r, const T& value, Proj proj = {}) const
+        constexpr bool operator()(R&& r, T const& value, Proj proj = {}) const
         {
             return (*this)(
                 RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), RAH2_STD::move(value), proj);
@@ -483,8 +483,8 @@ namespace RAH2_NAMESPACE
                     RAH2_NAMESPACE::forward_iterator<I2> || RAH2_NAMESPACE::sized_sentinel_for<S2, I2>)>* = nullptr>
         constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}) const
         {
-            const auto n1 = RAH2_NAMESPACE::distance(first1, last1);
-            const auto n2 = RAH2_NAMESPACE::distance(first2, last2);
+            auto const n1 = RAH2_NAMESPACE::distance(first1, last1);
+            auto const n2 = RAH2_NAMESPACE::distance(first2, last2);
             if (n1 < n2)
                 return false;
             RAH2_NAMESPACE::advance(first1, n1 - n2);
@@ -722,7 +722,7 @@ namespace RAH2_NAMESPACE
             // overwrite some of the copied elements with randomly selected ones
             for (auto pop_size{sample_size}; first != last; ++first, ++pop_size)
             {
-                const auto i{D(gen, param_t{0, pop_size})};
+                auto const i{D(gen, param_t{0, pop_size})};
                 if (i < n)
                     out[i] = *first;
             }
@@ -1124,7 +1124,7 @@ namespace RAH2_NAMESPACE
             class T,
             typename Comp = RAH2_NAMESPACE::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
             >
-        constexpr const T& operator()(const T& a, const T& b, Comp comp = {}) const
+        constexpr T const& operator()(T const& a, T const& b, Comp comp = {}) const
         {
             return RAH2_INVOKE_2(comp, a, b) ? b : a;
         }
@@ -1133,7 +1133,7 @@ namespace RAH2_NAMESPACE
             typename T, // RAH2_STD::copyable
             typename Comp = RAH2_NAMESPACE::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
             >
-        constexpr const T operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
+        constexpr T const operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
         {
             return *RAH2_NAMESPACE::max_element(r, RAH2_STD::ref(comp));
         }
@@ -1163,13 +1163,13 @@ namespace RAH2_NAMESPACE
     struct min_fn
     {
         template <class T, typename Comp = RAH2_NAMESPACE::less>
-        constexpr const T& operator()(const T& a, const T& b, Comp comp = {}) const
+        constexpr T const& operator()(T const& a, T const& b, Comp comp = {}) const
         {
             return RAH2_INVOKE_2(comp, b, a) ? b : a;
         }
 
         template <typename T, typename Comp = RAH2_NAMESPACE::less>
-        constexpr const T operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
+        constexpr T const operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
         {
             return *RAH2_NAMESPACE::min_element(r, RAH2_STD::ref(comp));
         }
@@ -1202,8 +1202,8 @@ namespace RAH2_NAMESPACE
     struct minmax_fn
     {
         template <class T, typename Comp = RAH2_NAMESPACE::less>
-        constexpr RAH2_NAMESPACE::minmax_result<const T&>
-        operator()(const T& a, const T& b, Comp comp = {}) const
+        constexpr RAH2_NAMESPACE::minmax_result<T const&>
+        operator()(T const& a, T const& b, Comp comp = {}) const
         {
             if (RAH2_INVOKE_2(comp, b, a))
                 return {b, a};
@@ -1418,7 +1418,7 @@ namespace RAH2_NAMESPACE
             typename S, // no-throw-sentinel-for<I>
             class T>
         // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<I>, const T&>
-        I operator()(I first, S last, const T& x) const
+        I operator()(I first, S last, T const& x) const
         {
             I rollback{first};
             try
@@ -1440,7 +1440,7 @@ namespace RAH2_NAMESPACE
             typename R, // no-throw-forward-range
             class T>
         // requires RAH2_STD::constructible_from<ranges::range_value_t<R>, const T&>
-        RAH2_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, const T& x) const
+        RAH2_NAMESPACE::borrowed_iterator_t<R> operator()(R&& r, T const& x) const
         {
             return (*this)(RAH2_NAMESPACE::begin(r), RAH2_NAMESPACE::end(r), x);
         }
@@ -1454,7 +1454,7 @@ namespace RAH2_NAMESPACE
             typename I, // no-throw-forward-range
             class T>
         // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<I>, const T&>
-        I operator()(I first, RAH2_NAMESPACE::iter_difference_t<I> n, const T& x) const
+        I operator()(I first, RAH2_NAMESPACE::iter_difference_t<I> n, T const& x) const
         {
             I rollback{first};
             try
@@ -1494,7 +1494,7 @@ namespace RAH2_NAMESPACE
             {
                 for (; !(ifirst == ilast or current == olast); ++ifirst, ++current)
                     ::new (const_cast<void*>(
-                        static_cast<const volatile void*>(RAH2_STD::addressof(*current))))
+                        static_cast<void const volatile*>(RAH2_STD::addressof(*current))))
                         RAH2_STD::remove_reference_t<RAH2_NAMESPACE::iter_reference_t<O>>(
                             RAH2_NAMESPACE::iter_move(ifirst));
                 return {RAH2_STD::move(ifirst), RAH2_STD::move(current)};
@@ -1546,7 +1546,7 @@ namespace RAH2_NAMESPACE
             {
                 for (; n-- > 0 && current != olast; ++ifirst, ++current)
                     ::new (const_cast<void*>(
-                        static_cast<const volatile void*>(RAH2_STD::addressof(*current))))
+                        static_cast<void const volatile*>(RAH2_STD::addressof(*current))))
                         RAH2_STD::remove_reference_t<RAH2_NAMESPACE::iter_reference_t<O>>(
                             RAH2_NAMESPACE::iter_move(ifirst));
                 return {RAH2_STD::move(ifirst), RAH2_STD::move(current)};
@@ -1588,7 +1588,7 @@ namespace RAH2_NAMESPACE
             {
                 for (; !(first == last); ++first)
                     ::new (const_cast<void*>(
-                        static_cast<const volatile void*>(RAH2_STD::addressof(*first)))) ValueType;
+                        static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) ValueType;
                 return first;
             }
             catch (...) // rollback: destroy constructed elements
@@ -1635,7 +1635,7 @@ namespace RAH2_NAMESPACE
             {
                 for (; n-- > 0; ++first)
                     ::new (const_cast<void*>(
-                        static_cast<const volatile void*>(RAH2_STD::addressof(*first)))) ValueType;
+                        static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) ValueType;
                 return first;
             }
             catch (...) // rollback: destroy constructed elements
@@ -1677,7 +1677,7 @@ namespace RAH2_NAMESPACE
             {
                 for (; !(first == last); ++first)
                     ::new (const_cast<void*>(
-                        static_cast<const volatile void*>(RAH2_STD::addressof(*first)))) T();
+                        static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) T();
                 return first;
             }
             catch (...) // rollback: destroy constructed elements
@@ -1723,7 +1723,7 @@ namespace RAH2_NAMESPACE
             {
                 for (; n-- > 0; ++first)
                     ::new (const_cast<void*>(
-                        static_cast<const volatile void*>(RAH2_STD::addressof(*first)))) T();
+                        static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) T();
                 return first;
             }
             catch (...) // rollback: destroy constructed elements
