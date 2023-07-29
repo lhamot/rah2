@@ -1993,8 +1993,8 @@ void test_fold_right()
     assert(r2 == std::string("ABCD!"));
 
     // Use a program defined function object (lambda-expression):
-    std::string const r3 =
-        rah2::fold_right(v, "A", [](int x, std::string const& s) { return s + ':' + std::to_string(x); });
+    std::string const r3 = rah2::fold_right(
+        v, "A", [](int x, std::string const& s) { return s + ':' + std::to_string(x); });
     assert(r3 == std::string("A:8:7:6:5:4:3:2:1"));
 
     // Get the product of the std::pair::second of all pairs in the vector:
@@ -2191,7 +2191,7 @@ void test_uninitialized_move()
     rah2::uninitialized_move(std::begin(in), std::end(in), first, last);
     assert(*first == "Home");
     assert(*rah2::next(first) == "World");
-    rah2::destroy(first, last); 
+    rah2::destroy(first, last);
     /// [rah2::uninitialized_move]
 }
 void test_uninitialized_move_n()
@@ -2211,7 +2211,7 @@ void test_uninitialized_move_n()
         rah2::make_subrange(first, last),
         std::initializer_list<std::string>{"No", "Diagnostic", "Required"});
 
-    rah2::destroy(first, last); 
+    rah2::destroy(first, last);
 
     /// [rah2::uninitialized_move_n]
 }
@@ -2335,7 +2335,7 @@ void test_destroy()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::destroy]
-    struct tracer  // NOLINT(cppcoreguidelines-special-member-functions)
+    struct tracer // NOLINT(cppcoreguidelines-special-member-functions)
     {
         int value;
         ~tracer()
@@ -2359,7 +2359,7 @@ void test_destroy_n()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::destroy_n]
-    struct tracer  // NOLINT(cppcoreguidelines-special-member-functions)
+    struct tracer // NOLINT(cppcoreguidelines-special-member-functions)
     {
         int value;
         ~tracer()
@@ -2384,7 +2384,7 @@ void test_destroy_at()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::destroy_at]
-    struct tracer  // NOLINT(cppcoreguidelines-special-member-functions)
+    struct tracer // NOLINT(cppcoreguidelines-special-member-functions)
     {
         int value;
         ~tracer()

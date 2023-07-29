@@ -599,8 +599,8 @@ namespace RAH2_NAMESPACE
             {
                 return {RAH2_STD::move(first), RAH2_STD::move(last)};
             }
-            auto result = RAH2_NAMESPACE::move_backward(
-                RAH2_STD::move(first), RAH2_STD::move(mid), last);
+            auto result =
+                RAH2_NAMESPACE::move_backward(RAH2_STD::move(first), RAH2_STD::move(mid), last);
             return {RAH2_STD::move(result.out), RAH2_STD::move(last)};
         }
 
@@ -1760,12 +1760,12 @@ namespace RAH2_NAMESPACE
     {
         if (first != last)
         {
-            typedef
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-            typedef typename RAH2_STD::make_unsigned<difference_type>::type unsigned_difference_type;
-            typedef typename RAH2_STD::uniform_int_distribution<unsigned_difference_type>
-                uniform_int_distribution;
-            typedef typename uniform_int_distribution::param_type uniform_int_distribution_param_type;
+            using difference_type =
+                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+            using unsigned_difference_type = typename RAH2_STD::make_unsigned<difference_type>::type;
+            using uniform_int_distribution =
+                typename RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+            using uniform_int_distribution_param_type = typename uniform_int_distribution::param_type;
 
             uniform_int_distribution uid;
 

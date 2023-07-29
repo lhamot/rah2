@@ -1598,7 +1598,7 @@ namespace RAH2_NAMESPACE
     template <typename ForwardIterator, typename Sentinel, typename T>
     ForwardIterator lower_bound(ForwardIterator first, Sentinel last, const T& value)
     {
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
+        using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
         DifferenceType d = RAH2_NAMESPACE::distance(
             first, last); // This will be efficient for a random access iterator such as an array.
@@ -1655,7 +1655,7 @@ namespace RAH2_NAMESPACE
     ForwardIterator
     lower_bound(ForwardIterator first, ForwardSentinel last, const T& value, Compare compare)
     {
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
+        using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
         DifferenceType d = RAH2_NAMESPACE::distance(
             first, last); // This will be efficient for a random access iterator such as an array.
@@ -1705,7 +1705,7 @@ namespace RAH2_NAMESPACE
     template <typename ForwardIterator, typename Sentinel, typename T>
     ForwardIterator upper_bound(ForwardIterator first, Sentinel last, const T& value)
     {
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
+        using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
         DifferenceType len = RAH2_NAMESPACE::distance(first, last);
 
@@ -1758,7 +1758,7 @@ namespace RAH2_NAMESPACE
     ForwardIterator
     upper_bound(ForwardIterator first, ForwardSentinel last, const T& value, Compare compare)
     {
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
+        using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
         DifferenceType len = RAH2_NAMESPACE::distance(first, last);
 
@@ -1807,7 +1807,7 @@ namespace RAH2_NAMESPACE
     RAH2_NAMESPACE::subrange<ForwardIterator>
     equal_range(ForwardIterator first, Sentinel last, const T& value)
     {
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
+        using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
         DifferenceType d = RAH2_NAMESPACE::distance(first, last);
 
@@ -1867,7 +1867,7 @@ namespace RAH2_NAMESPACE
     RAH2_NAMESPACE::subrange<ForwardIterator, ForwardIterator>
     equal_range(ForwardIterator first, Sentinel last, const T& value, Compare compare)
     {
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type DifferenceType;
+        using DifferenceType = typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
         DifferenceType d = RAH2_NAMESPACE::distance(first, last);
 
@@ -2316,7 +2316,7 @@ namespace RAH2_NAMESPACE
     template <typename BidirectionalIterator, typename Sentinel>
     inline BidirectionalIterator reverse(BidirectionalIterator first, Sentinel last)
     {
-        typedef typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category IC;
+        using IC = typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category;
         return reverse_impl(first, last, IC());
     }
 
@@ -3419,7 +3419,7 @@ namespace RAH2_NAMESPACE
         template <typename ForwardIterator, typename ForwardSentinel>
         subrange<ForwardIterator> move_rotate_left_by_one(ForwardIterator first, ForwardSentinel last)
         {
-            typedef typename RAH2_STD::iterator_traits<ForwardIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
             value_type temp(RAH2_STD::move(*first));
             ForwardIterator result = RAH2_STD::move(
@@ -3438,7 +3438,7 @@ namespace RAH2_NAMESPACE
         subrange<BidirectionalIterator>
         move_rotate_right_by_one(BidirectionalIterator first, Sentinel last)
         {
-            typedef typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type;
 
             auto last2 = RAH2_NAMESPACE::next(first, last);
             BidirectionalIterator beforeLast = RAH2_STD::prev(last2);
@@ -3527,10 +3527,10 @@ namespace RAH2_NAMESPACE
             static subrange<RandomAccessIterator>
             rotate_impl(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
             {
-                typedef
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-                typedef
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+                using difference_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+                using value_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
                 const difference_type m1 = (middle - first);
                 const difference_type m2 = (last - middle);
@@ -3595,8 +3595,8 @@ namespace RAH2_NAMESPACE
         {
             if (middle != last)
             {
-                typedef typename RAH2_STD::iterator_traits<ForwardIterator>::iterator_category IC;
-                typedef typename RAH2_STD::iterator_traits<ForwardIterator>::value_type value_type;
+                using IC = typename RAH2_STD::iterator_traits<ForwardIterator>::iterator_category;
+                using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
                 return Internal::rotate_helper < IC,
                        RAH2_STD::is_trivially_move_assignable<value_type>::value

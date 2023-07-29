@@ -216,7 +216,7 @@ namespace RAH2_NAMESPACE
     template <typename BidirectionalIterator, typename Sentinel, typename StrictWeakOrdering>
     void insertion_sort(BidirectionalIterator first, Sentinel last, StrictWeakOrdering compare)
     {
-        typedef typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type value_type;
+        using value_type = typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type;
 
         if (first != last)
         {
@@ -243,7 +243,8 @@ namespace RAH2_NAMESPACE
     template <typename BidirectionalIterator, typename Sentinel>
     void insertion_sort(BidirectionalIterator first, Sentinel last)
     {
-        typedef RAH2_STD::less<typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type> Less;
+        using Less =
+            RAH2_STD::less<typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type>;
 
         insertion_sort<BidirectionalIterator>(first, last, Less());
 
@@ -262,7 +263,7 @@ namespace RAH2_NAMESPACE
             BidirectionalIterator start,
             StrictWeakOrdering compare)
         {
-            typedef typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type value_type;
+            using value_type = typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type;
 
             if (first != last) // if the range is non-empty...
             {
@@ -473,8 +474,8 @@ namespace RAH2_NAMESPACE
     void merge_sort_buffer(
         RandomAccessIterator first, Sentinel last, T* pBuffer, StrictWeakOrdering compare)
     {
-        typedef
-            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
+        using difference_type =
+            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
         MergeSorter<RandomAccessIterator, Sentinel, T, StrictWeakOrdering, difference_type, 16>::sort(
             first, last, pBuffer, compare);
     }
@@ -500,9 +501,9 @@ namespace RAH2_NAMESPACE
     void merge_sort(
         RandomAccessIterator first, Sentinel last, Allocator& allocator, StrictWeakOrdering compare)
     {
-        typedef
-            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+        using difference_type =
+            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+        using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
         const difference_type nCount = last - first;
 
@@ -600,7 +601,7 @@ namespace RAH2_NAMESPACE
         if (first == last)
             return {first, last};
 
-        typedef typename RAH2_STD::iterator_traits<ForwardIterator>::value_type value_type;
+        using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
         const auto requested_size = RAH2_NAMESPACE::distance(first, last);
 
@@ -852,9 +853,9 @@ namespace RAH2_NAMESPACE
     template <typename RandomAccessIterator, typename Sentinel>
     inline void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
     {
-        typedef
-            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+        using difference_type =
+            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+        using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
         RAH2_NAMESPACE::make_heap<RandomAccessIterator, RandomAccessIterator>(first, middle);
 
@@ -889,9 +890,9 @@ namespace RAH2_NAMESPACE
     inline void partial_sort(
         RandomAccessIterator first, RandomAccessIterator middle, Sentinel last, Compare compare)
     {
-        typedef
-            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-        typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+        using difference_type =
+            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+        using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
         RAH2_NAMESPACE::make_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
             first, middle, compare);
@@ -933,7 +934,7 @@ namespace RAH2_NAMESPACE
     inline RandomAccessIterator
     nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last)
     {
-        typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+        using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
         auto result = RAH2_NAMESPACE::next(first, last);
         auto lasti = result;
         while ((lasti - first) > 5)
@@ -966,7 +967,7 @@ namespace RAH2_NAMESPACE
     inline RandomAccessIterator
     nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last, Compare compare)
     {
-        typedef typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type value_type;
+        using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
         auto result = RAH2_NAMESPACE::next(first, last);
         auto lasti = result;
         while ((lasti - first) > 5)
@@ -1787,7 +1788,7 @@ namespace RAH2_NAMESPACE
         template <typename Node>
         struct extract_radix_key
         {
-            typedef typename Node::radix_type radix_type;
+            using radix_type = typename Node::radix_type;
 
             const radix_type operator()(const Node& x) const
             {

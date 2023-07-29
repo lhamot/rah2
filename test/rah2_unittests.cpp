@@ -265,7 +265,7 @@ void test_concepts()
             return false;
         }
     };
-    struct check_traits_is_false  // NOLINT(cppcoreguidelines-special-member-functions)
+    struct check_traits_is_false // NOLINT(cppcoreguidelines-special-member-functions)
     {
         check_traits_is_false() = default;
         virtual ~check_traits_is_false() = default;
@@ -638,8 +638,8 @@ try
         assert(gen_copy == std::vector<int>({1, 2, 4, 8}));
         /// [generate]
         STATIC_ASSERT(rah2::input_range<decltype(gen)>);
-        STATIC_ASSERT(
-            ((RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
+        STATIC_ASSERT(((
+            RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
         STATIC_ASSERT(not rah2::forward_range<decltype(gen)>);
         STATIC_ASSERT(not rah2::common_range<decltype(gen)>);
     }
@@ -662,8 +662,8 @@ try
         assert(result == std::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
         STATIC_ASSERT(rah2::input_range<decltype(gen)>);
-        STATIC_ASSERT(
-            (RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
+        STATIC_ASSERT((
+            RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
         STATIC_ASSERT(not rah2::forward_range<decltype(gen)>);
         STATIC_ASSERT(not rah2::common_range<decltype(gen)>);
     }
@@ -1269,7 +1269,7 @@ try
     testSuite.report();
     return EXIT_SUCCESS;
 }
-catch(...)
+catch (...)
 {
     return EXIT_FAILURE;
 }

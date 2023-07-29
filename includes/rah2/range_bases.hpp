@@ -124,7 +124,7 @@ namespace RAH2_NAMESPACE
     template <class T>
     struct remove_cvref
     {
-        typedef RAH2_STD::remove_cv_t<RAH2_STD::remove_reference_t<T>> type;
+        using type = RAH2_STD::remove_cv_t<RAH2_STD::remove_reference_t<T>>;
     };
     template <class T>
     using remove_cvref_t = typename remove_cvref<T>::type;
