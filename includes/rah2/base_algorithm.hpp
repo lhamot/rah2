@@ -2064,7 +2064,7 @@ namespace RAH2_NAMESPACE
         {
             for (; first != last; ++first)
             {
-                if (false == pred(*first))
+                if (!pred(*first))
                 {
                     *result = *first;
                     ++result;
@@ -2496,7 +2496,7 @@ namespace RAH2_NAMESPACE
             return (*this)(
                 RAH2_NAMESPACE::begin(r),
                 RAH2_NAMESPACE::end(r),
-                RAH2_STD::move(count),
+                count,
                 value,
                 RAH2_STD::move(pred),
                 RAH2_STD::move(proj));

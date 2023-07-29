@@ -87,7 +87,7 @@ namespace RAH2_NAMESPACE
         {
         }
         pipeable(pipeable const&) = delete;
-        pipeable(pipeable&&) = default;
+        pipeable(pipeable&&) noexcept = default;
         pipeable& operator=(pipeable const&) = delete;
         pipeable& operator=(pipeable&&) = delete;
     };
@@ -819,8 +819,8 @@ namespace RAH2_NAMESPACE
             }
             owning_view(owning_view const&) = delete;
             owning_view& operator=(owning_view const&) = delete;
-            owning_view(owning_view&&) = default;
-            owning_view& operator=(owning_view&&) = default;
+            owning_view(owning_view&&) noexcept = default;
+            owning_view& operator=(owning_view&&) noexcept = default;
             ~owning_view() = default;
             R& base()
             {

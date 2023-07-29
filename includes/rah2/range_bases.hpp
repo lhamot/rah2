@@ -597,15 +597,15 @@ namespace RAH2_NAMESPACE
             using NoRefT = RAH2_STD::remove_reference_t<T>;
             using NoRefU = RAH2_STD::remove_reference_t<U>;
             template <typename X, typename Y>
-            using t_lesser_u = decltype((RAH2_STD::declval<X>() < RAH2_STD::declval<Y>()) == true);
+            using t_lesser_u = decltype(static_cast<bool>(RAH2_STD::declval<X>() < RAH2_STD::declval<Y>()));
             template <typename X, typename Y>
-            using t_greater_u = decltype((RAH2_STD::declval<X>() > RAH2_STD::declval<Y>()) == true);
+            using t_greater_u = decltype(static_cast<bool>(RAH2_STD::declval<X>() > RAH2_STD::declval<Y>()));
             template <typename X, typename Y>
             using t_lesserequal_u =
-                decltype((RAH2_STD::declval<X>() <= RAH2_STD::declval<Y>()) == true);
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() <= RAH2_STD::declval<Y>()));
             template <typename X, typename Y>
             using t_greaterequal_u =
-                decltype((RAH2_STD::declval<X>() >= RAH2_STD::declval<Y>()) == true);
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() >= RAH2_STD::declval<Y>()));
 
             static constexpr bool value = compiles2<Diagnostic, NoRefT, NoRefU, t_lesser_u>
                                           && compiles2<Diagnostic, NoRefT, NoRefU, t_greater_u>
@@ -1648,7 +1648,7 @@ namespace RAH2_NAMESPACE
                     is_allocated_ = true;
                 }
             }
-            optional(optional&& other)
+            optional(optional&& other) noexcept
             {
                 (*this) = RAH2_STD::move(other);
             }
@@ -1676,7 +1676,7 @@ namespace RAH2_NAMESPACE
                 }
                 return *this;
             }
-            optional& operator=(optional&& other)
+            optional& operator=(optional&& other) noexcept
             {
                 if (has_value())
                 {
