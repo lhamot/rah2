@@ -559,7 +559,8 @@ void test_search_n()
     auto nums = {1, 2, 2, 3, 4, 1, 2, 2, 2, 1};
     constexpr int count{3};
     constexpr int value{2};
-    typedef int count_t, value_t;
+    using count_t = int;
+    using value_t = int;
 
     auto result1 = RAH2_NAMESPACE::search_n(nums.begin(), nums.end(), count, value);
     assert( // found
@@ -2094,24 +2095,24 @@ void test_uninitialized_copy()
     // testSuite.test_case("return");
     /// [rah2::uninitialized_copy]
 
-    const char* v[]{
+    char const* v[]{
         "This",
         "is",
         "an",
         "example",
     };
 
-    const auto sz{rah2::size(v)};
-    void* pbuf = std::malloc(sizeof(std::string) * sz);
+    auto const sz{rah2::size(v)};
+    void* pbuf = std::malloc(sizeof(std::string) * sz); // NOLINT(cppcoreguidelines-no-malloc)
     assert(pbuf != nullptr);
-    auto first{static_cast<std::string*>(pbuf)};
-    auto last{first + sz};
+    auto const first{static_cast<std::string*>(pbuf)};
+    auto const last{first + sz};
     rah2::uninitialized_copy(std::begin(v), std::end(v), first, last);
 
     for (size_t i = 0; i < 4; ++i)
         assert(v[i] == first[i]);
 
-    rah2::destroy(first, last);
+    rah2::destroy(first, last); // NOLINT(cppcoreguidelines-no-malloc)
     std::free(pbuf);
 
     /// [rah2::uninitialized_copy]
@@ -2184,14 +2185,13 @@ void test_uninitialized_move()
     std::string in[]{"Home", "World"};
 
     constexpr auto sz = rah2::size(in);
-    void* out = std::malloc(sizeof(std::string) * sz);
-    auto first{static_cast<std::string*>(out)};
-    auto last{first + sz};
+    alignas(alignof(std::string)) char out[sz * sizeof(std::string)];
+    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const last{first + sz};
     rah2::uninitialized_move(std::begin(in), std::end(in), first, last);
     assert(*first == "Home");
     assert(*rah2::next(first) == "World");
-    rah2::destroy(first, last);
-    std::free(out);
+    rah2::destroy(first, last); 
     /// [rah2::uninitialized_move]
 }
 void test_uninitialized_move_n()
@@ -2203,16 +2203,15 @@ void test_uninitialized_move_n()
     std::string in[] = {"No", "Diagnostic", "Required"};
 
     constexpr auto sz = rah2::size(in);
-    void* out = std::malloc(sizeof(std::string) * sz);
-    auto first{static_cast<std::string*>(out)};
+    alignas(alignof(std::string)) char out[sz * sizeof(std::string)];
+    auto first{reinterpret_cast<std::string*>(out)};
     auto last{first + sz};
     rah2::uninitialized_move_n(std::begin(in), sz, first, last);
     rah2::equal(
         rah2::make_subrange(first, last),
         std::initializer_list<std::string>{"No", "Diagnostic", "Required"});
 
-    rah2::destroy(first, last);
-    std::free(out);
+    rah2::destroy(first, last); 
 
     /// [rah2::uninitialized_move_n]
 }
@@ -2237,7 +2236,7 @@ void test_uninitialized_default_construct()
 
     assert(rah2::all_of(first, last, [](S& s) { return s.m == "▄▀▄▀▄▀▄▀"; }));
 
-    rah2::destroy(first, last);
+    rah2::destroy(first, last); // NOLINT(cppcoreguidelines-no-malloc)
 
     // Notice that for "trivial types" the uninitialized_default_construct
     // generally does not zero-fill the given uninitialized memory area.
@@ -2261,8 +2260,8 @@ void test_uninitialized_default_construct_n()
     constexpr int n{4};
     alignas(alignof(S)) char out[n * sizeof(S)];
 
-    auto first{reinterpret_cast<S*>(out)};
-    auto last = rah2::uninitialized_default_construct_n(first, n);
+    auto const first{reinterpret_cast<S*>(out)};
+    auto const last = rah2::uninitialized_default_construct_n(first, n);
     assert(rah2::all_of(first, last, [](S& s) { return s.m == "█▓▒░ █▓▒░ "; }));
 
     rah2::destroy(first, last);
@@ -2279,6 +2278,7 @@ void test_uninitialized_value_construct()
 {
     testSuite.test_case("sample");
     // testSuite.test_case("return");
+    // ReSharper disable once CppInconsistentNaming
     /// [rah2::uninitialized_value_construct]
     struct S
     {
@@ -2288,8 +2288,8 @@ void test_uninitialized_value_construct()
     constexpr int n{4};
     alignas(alignof(S)) char out[n * sizeof(S)];
 
-    auto first{reinterpret_cast<S*>(out)};
-    auto last{first + n};
+    auto const first{reinterpret_cast<S*>(out)};
+    auto const last{first + n};
 
     rah2::uninitialized_value_construct(first, last);
     assert(rah2::all_of(first, last, [](S& s) { return s.m == "▄▀▄▀▄▀▄▀"; }));
@@ -2306,6 +2306,7 @@ void test_uninitialized_value_construct_n()
 {
     testSuite.test_case("sample");
     testSuite.test_case("return");
+    // ReSharper disable once CppInconsistentNaming
     /// [rah2::uninitialized_value_construct_n]
     struct S
     {
@@ -2315,8 +2316,8 @@ void test_uninitialized_value_construct_n()
     constexpr int n{4};
     alignas(alignof(S)) char out[n * sizeof(S)];
 
-    auto first{reinterpret_cast<S*>(out)};
-    auto last = rah2::uninitialized_value_construct_n(first, n);
+    auto const first{reinterpret_cast<S*>(out)};
+    auto const last = rah2::uninitialized_value_construct_n(first, n);
     assert(rah2::all_of(first, last, [](S& s) { return s.m == "█▓▒░ █▓▒░ █▓▒░ "; }));
 
     rah2::destroy(first, last);
@@ -2334,23 +2335,23 @@ void test_destroy()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::destroy]
-    struct Tracer
+    struct tracer  // NOLINT(cppcoreguidelines-special-member-functions)
     {
         int value;
-        ~Tracer()
+        ~tracer()
         {
             value = 42;
         }
     };
-    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+    alignas(tracer) unsigned char buffer[sizeof(tracer) * 8];
 
     for (int i = 0; i < 8; ++i)
-        new (buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+        new (buffer + sizeof(tracer) * i) tracer{i}; //manually construct objects
 
-    auto ptr = reinterpret_cast<Tracer*>(buffer);
+    auto const ptr = reinterpret_cast<tracer*>(buffer);
 
     rah2::destroy(ptr, ptr + 8);
-    assert(rah2::all_of(ptr, ptr + 8, [](Tracer& t) { return t.value == 42; }));
+    assert(rah2::all_of(ptr, ptr + 8, [](tracer const& t) { return t.value == 42; }));
     /// [rah2::destroy]
 }
 void test_destroy_n()
@@ -2358,24 +2359,24 @@ void test_destroy_n()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::destroy_n]
-    struct Tracer
+    struct tracer  // NOLINT(cppcoreguidelines-special-member-functions)
     {
         int value;
-        ~Tracer()
+        ~tracer()
         {
             value = 42;
         }
     };
 
-    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+    alignas(tracer) unsigned char buffer[sizeof(tracer) * 8];
 
     for (int i = 0; i < 8; ++i)
-        new (buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+        new (buffer + sizeof(tracer) * i) tracer{i}; //manually construct objects
 
-    auto ptr = reinterpret_cast<Tracer*>(buffer);
+    auto const ptr = reinterpret_cast<tracer*>(buffer);
 
     rah2::destroy_n(ptr, 8);
-    assert(rah2::all_of(ptr, ptr + 8, [](Tracer& t) { return t.value == 42; }));
+    assert(rah2::all_of(ptr, ptr + 8, [](tracer& t) { return t.value == 42; }));
     /// [rah2::destroy_n]
 }
 void test_destroy_at()
@@ -2383,25 +2384,25 @@ void test_destroy_at()
     testSuite.test_case("sample");
     // testSuite.test_case("return");
     /// [rah2::destroy_at]
-    struct Tracer
+    struct tracer  // NOLINT(cppcoreguidelines-special-member-functions)
     {
         int value;
-        ~Tracer()
+        ~tracer()
         {
             value = 42;
         }
     };
 
-    alignas(Tracer) unsigned char buffer[sizeof(Tracer) * 8];
+    alignas(tracer) unsigned char buffer[sizeof(tracer) * 8];
 
     for (int i = 0; i < 8; ++i)
-        new (buffer + sizeof(Tracer) * i) Tracer{i}; //manually construct objects
+        new (buffer + sizeof(tracer) * i) tracer{i}; //manually construct objects
 
-    auto ptr = reinterpret_cast<Tracer*>(buffer);
+    auto const ptr = reinterpret_cast<tracer*>(buffer);
 
     for (int i = 0; i < 8; ++i)
         rah2::destroy_at(ptr + i);
-    assert(rah2::all_of(ptr, ptr + 8, [](Tracer& t) { return t.value == 42; }));
+    assert(rah2::all_of(ptr, ptr + 8, [](tracer& t) { return t.value == 42; }));
     /// [rah2::destroy_at]
 }
 void test_construct_at()
@@ -2409,13 +2410,14 @@ void test_construct_at()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::construct_at]
+    // ReSharper disable once CppInconsistentNaming
     struct S
     {
         int x;
         float y;
         double z;
 
-        S(int x, float y, double z)
+        S(int const x, float const y, double const z)
             : x{x}
             , y{y}
             , z{z}

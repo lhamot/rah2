@@ -25,47 +25,47 @@ void test_counted_iterator()
         STATIC_ASSERT(not rah2::forward_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(fwdSentView), 10);
-        STATIC_ASSERT(rah2::forward_iterator<decltype(iter)>);
-        STATIC_ASSERT(not rah2::bidirectional_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(fwdSentView), 10));
+        STATIC_ASSERT(rah2::forward_iterator<Iter>);
+        STATIC_ASSERT(not rah2::bidirectional_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(fwdCommonView), 10);
-        STATIC_ASSERT(rah2::forward_iterator<decltype(iter)>);
-        STATIC_ASSERT(not rah2::bidirectional_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(fwdCommonView), 10));
+        STATIC_ASSERT(rah2::forward_iterator<Iter>);
+        STATIC_ASSERT(not rah2::bidirectional_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(bidirSentView), 10);
-        STATIC_ASSERT((rah2::bidirectional_iterator_impl<decltype(iter), true>::value));
-        STATIC_ASSERT(not rah2::random_access_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(bidirSentView), 10));
+        STATIC_ASSERT((rah2::bidirectional_iterator_impl<Iter, true>::value));
+        STATIC_ASSERT(not rah2::random_access_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(bidirCommonView), 10);
-        constexpr auto fsdkjfgqs = rah2::bidirectional_iterator_impl<decltype(iter), true>::value;
+        using Iter = decltype(rah2::make_counted_iterator(begin(bidirCommonView), 10));
+        constexpr auto fsdkjfgqs = rah2::bidirectional_iterator_impl<Iter, true>::value;
         STATIC_ASSERT(fsdkjfgqs);
-        STATIC_ASSERT(rah2::bidirectional_iterator<decltype(iter)>);
-        STATIC_ASSERT(not rah2::random_access_iterator<decltype(iter)>);
+        STATIC_ASSERT(rah2::bidirectional_iterator<Iter>);
+        STATIC_ASSERT(not rah2::random_access_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(rdmSentView), 10);
-        // STATIC_ASSERT(rah2::totally_ordered<decltype(iter)>);
-        STATIC_ASSERT((rah2::random_access_iterator_impl<decltype(iter), true>::value));
-        STATIC_ASSERT(rah2::random_access_iterator<decltype(iter)>);
-        STATIC_ASSERT(not rah2::contiguous_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(rdmSentView), 10));
+        // STATIC_ASSERT(rah2::totally_ordered<Iter>);
+        STATIC_ASSERT((rah2::random_access_iterator_impl<Iter, true>::value));
+        STATIC_ASSERT(rah2::random_access_iterator<Iter>);
+        STATIC_ASSERT(not rah2::contiguous_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(rdmCommonView), 10);
-        STATIC_ASSERT(rah2::random_access_iterator<decltype(iter)>);
-        STATIC_ASSERT(not rah2::contiguous_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(rdmCommonView), 10));
+        STATIC_ASSERT(rah2::random_access_iterator<Iter>);
+        STATIC_ASSERT(not rah2::contiguous_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(contiSentView), 10);
-        STATIC_ASSERT((rah2::contiguous_iterator_impl<decltype(iter), true>::value));
-        STATIC_ASSERT(rah2::contiguous_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(contiSentView), 10));
+        STATIC_ASSERT((rah2::contiguous_iterator_impl<Iter, true>::value));
+        STATIC_ASSERT(rah2::contiguous_iterator<Iter>);
     }
     {
-        auto iter = rah2::make_counted_iterator(begin(contiCommonView), 10);
-        STATIC_ASSERT(rah2::contiguous_iterator<decltype(iter)>);
+        using Iter = decltype(rah2::make_counted_iterator(begin(contiCommonView), 10));
+        STATIC_ASSERT(rah2::contiguous_iterator<Iter>);
     }
 }
 
@@ -203,7 +203,7 @@ void test_all_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_filter_view
 {
-    [[nodiscard]] auto make() const
+    RAH2_NODISCARD auto make() const
     {
         return rah2::views::filter(
             make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });

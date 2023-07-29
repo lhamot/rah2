@@ -229,62 +229,62 @@ void test_concepts()
     // Check a criteria have to be true (And in Diagnostic mode we have to wee where)
     // Check a criteria have to be true AND build (And in Diagnostic mode we have to wee where)
 
-    struct TestOk
+    struct test_ok
     {
-        [[nodiscard]] auto a() const
+        RAH2_NODISCARD auto a() const
         {
             return 0;
         }
-        [[nodiscard]] auto b() const
+        RAH2_NODISCARD auto b() const
         {
             return 0;
         }
     };
-    struct CheckBuildFail
+    struct check_build_fail
     {
-        [[nodiscard]] auto b() const
+        RAH2_NODISCARD auto b() const
         {
             return 0;
         }
     };
-    struct CheckTrueNoBuild
+    struct check_true_no_build
     {
-        [[nodiscard]] auto a() const
+        RAH2_NODISCARD auto a() const
         {
             return 0;
         }
     };
-    struct CheckTrueIsFalse
+    struct check_true_is_false
     {
-        [[nodiscard]] auto a() const
+        RAH2_NODISCARD auto a() const
         {
             return 0;
         }
-        [[nodiscard]] auto b() const
+        RAH2_NODISCARD auto b() const
         {
             return false;
         }
     };
-    struct CheckTraitsIsFalse
+    struct check_traits_is_false  // NOLINT(cppcoreguidelines-special-member-functions)
     {
-        CheckTraitsIsFalse() = default;
-        virtual ~CheckTraitsIsFalse() = default;
+        check_traits_is_false() = default;
+        virtual ~check_traits_is_false() = default;
 
-        [[nodiscard]] auto a() const
+        RAH2_NODISCARD auto a() const
         {
             return 0;
         }
-        [[nodiscard]] auto b() const
+        RAH2_NODISCARD auto b() const
         {
             return 0;
         }
     };
 
-    STATIC_ASSERT(concept_test<TestOk>);
-    STATIC_ASSERT(!concept_test<CheckBuildFail>);
-    STATIC_ASSERT(!concept_test<CheckTrueNoBuild>);
-    STATIC_ASSERT(!concept_test<CheckTrueIsFalse>);
-    STATIC_ASSERT(!concept_test<CheckTraitsIsFalse>);
+    STATIC_ASSERT(concept_test<test_ok>);
+    STATIC_ASSERT(!concept_test<check_build_fail>);
+    STATIC_ASSERT(!concept_test<check_true_no_build>);
+    STATIC_ASSERT(!concept_test<check_true_is_false>);
+    STATIC_ASSERT(!concept_test<check_traits_is_false>);
 
     // To check error messages
     // STATIC_ASSERT((concept_test_impl<CheckBuildFail, true>::value)); // Ok with compiles + decltype
