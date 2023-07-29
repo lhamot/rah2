@@ -25,7 +25,7 @@ struct TestSuite
     bool current_test_status = true;
     size_t test_count = 0;
 
-    void addTest(std::string group, std::string name, std::function<void()> test)
+    void addTest(const std::string& group, const std::string& name, std::function<void()> test)
     {
         testMap.emplace(group + " - " + name, std::move(test));
     }
@@ -267,7 +267,7 @@ public:
 
     public:
         iterator() = default;
-        iterator(base_iterator it)
+        explicit iterator(base_iterator it)
             : iter_(it)
         {
         }
@@ -345,7 +345,7 @@ public:
     };
 
     test_view_adapter() = default;
-    test_view_adapter(Range r)
+    explicit test_view_adapter(Range r)
         : base_(std::move(r))
     {
     }

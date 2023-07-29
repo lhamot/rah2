@@ -9,6 +9,7 @@
 #include "range_bases.hpp"
 
 #include <tuple>
+#include <utility>
 
 #ifdef _MSC_VER
 #define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
@@ -81,7 +82,7 @@ namespace RAH2_NAMESPACE
     {
         Func func;
 
-        pipeable(Func f)
+        explicit pipeable(Func f)
             : func(RAH2_STD::move(f))
         {
         }
@@ -115,7 +116,7 @@ namespace RAH2_NAMESPACE
             template <typename Ref>
             static type to_pointer(Ref&& ref)
             {
-                return RAH2_STD::forward<Ref>(ref);
+                return type(RAH2_STD::forward<Ref>(ref));
             }
         };
 
@@ -724,7 +725,7 @@ namespace RAH2_NAMESPACE
                 }
             };
 
-            repeat_view(V value)
+            explicit repeat_view(V value)
                 : value_(RAH2_STD::move(value))
             {
             }
@@ -2886,7 +2887,7 @@ namespace RAH2_NAMESPACE
             public:
                 iterator() = default;
                 iterator(zip_transform_view* parent, IterTuple iterators)
-                    : iters_(iterators)
+                    : iters_(std::move(iterators))
                     , parent_(parent)
                 {
                 }

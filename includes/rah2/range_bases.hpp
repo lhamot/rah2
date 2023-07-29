@@ -1614,7 +1614,7 @@ namespace RAH2_NAMESPACE
     {
         constexpr dangling() noexcept = default;
         template <class... Args>
-        constexpr dangling(Args&&...) noexcept
+        constexpr explicit dangling(Args&&...) noexcept
         {
         }
     };
@@ -1711,7 +1711,7 @@ namespace RAH2_NAMESPACE
                 is_allocated_ = true;
             }
             template <typename... Args>
-            optional(RAH2_NAMESPACE::in_place_t, Args&&... args)
+            explicit optional(RAH2_NAMESPACE::in_place_t, Args&&... args)
             {
                 new (get_ptr()) T(RAH2_STD::forward<Args>(args)...);
                 is_allocated_ = true;
