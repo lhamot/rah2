@@ -883,4 +883,4 @@ auto compute_duration(F&& func, char const* file, int line)
 
 #define COMPUTE_DURATION(F) compute_duration(F, __FILE__, __LINE__)
 
-#define CHECK_EQUAL(A, B) assert(A == B)
+#define CHECK_EQUAL(A, B) assert((A) == (B))

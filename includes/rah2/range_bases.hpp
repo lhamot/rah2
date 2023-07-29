@@ -597,9 +597,11 @@ namespace RAH2_NAMESPACE
             using NoRefT = RAH2_STD::remove_reference_t<T>;
             using NoRefU = RAH2_STD::remove_reference_t<U>;
             template <typename X, typename Y>
-            using t_lesser_u = decltype(static_cast<bool>(RAH2_STD::declval<X>() < RAH2_STD::declval<Y>()));
+            using t_lesser_u =
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() < RAH2_STD::declval<Y>()));
             template <typename X, typename Y>
-            using t_greater_u = decltype(static_cast<bool>(RAH2_STD::declval<X>() > RAH2_STD::declval<Y>()));
+            using t_greater_u =
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() > RAH2_STD::declval<Y>()));
             template <typename X, typename Y>
             using t_lesserequal_u =
                 decltype(static_cast<bool>(RAH2_STD::declval<X>() <= RAH2_STD::declval<Y>()));

@@ -242,7 +242,7 @@ namespace RAH2_NAMESPACE
         {
             return RAH2_SELF;
         }
-        const I operator++(int)
+        I operator++(int)
         {
             auto it = *this;
             ++(*this);
