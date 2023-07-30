@@ -342,7 +342,7 @@ namespace RAH2_NAMESPACE
         template <typename I>
         class counted_iterator : public iterator_facade<
                                      counted_iterator<I>,
-                                     default_sentinel,
+                                     RAH2_NAMESPACE::default_sentinel_t,
                                      decltype(*RAH2_STD::declval<I>()),
                                      typename RAH2_STD::iterator_traits<I>::iterator_category>
         {
@@ -392,11 +392,11 @@ namespace RAH2_NAMESPACE
             {
                 return it1.count_ == it2.count_;
             }
-            friend bool operator==(counted_iterator const& it, default_sentinel const&)
+            friend bool operator==(counted_iterator const& it, default_sentinel_t const&)
             {
                 return it.count_ == 0;
             }
-            friend bool operator==(default_sentinel const&, counted_iterator const& it)
+            friend bool operator==(default_sentinel_t const&, counted_iterator const& it)
             {
                 return it.count_ == 0;
             }
@@ -501,7 +501,7 @@ namespace RAH2_NAMESPACE
             /// @see RAH2_NAMESPACE::iota
             template <typename W>
             class iota_iterator
-                : public iterator_facade<iota_iterator<W>, default_sentinel, W, RAH2_STD::random_access_iterator_tag>
+                : public iterator_facade<iota_iterator<W>, default_sentinel_t, W, RAH2_STD::random_access_iterator_tag>
             {
                 W val_ = {};
 
@@ -546,11 +546,11 @@ namespace RAH2_NAMESPACE
                 {
                     return it.val_ == it2.val_;
                 }
-                friend bool operator==(iota_iterator const&, default_sentinel)
+                friend bool operator==(iota_iterator const&, default_sentinel_t)
                 {
                     return false;
                 }
-                friend bool operator==(default_sentinel, iota_iterator const&)
+                friend bool operator==(default_sentinel_t, iota_iterator const&)
                 {
                     return false;
                 }
@@ -570,7 +570,7 @@ namespace RAH2_NAMESPACE
             template <typename W = size_t>
             constexpr auto iota(W start = 0)
             {
-                return make_subrange(iota_iterator<W>(start), default_sentinel{});
+                return make_subrange(iota_iterator<W>(start), default_sentinel_t{});
             }
 
             // ******************************* istream_view ******************************************************
@@ -666,7 +666,7 @@ namespace RAH2_NAMESPACE
 
             public:
                 class iterator
-                    : public iterator_facade<iterator, default_sentinel, V, RAH2_STD::random_access_iterator_tag>
+                    : public iterator_facade<iterator, default_sentinel_t, V, RAH2_STD::random_access_iterator_tag>
                 {
                     V val_ = V();
                     size_t current_ = 0;
@@ -709,11 +709,11 @@ namespace RAH2_NAMESPACE
                     {
                         return it1.current_ == it2.current_;
                     }
-                    friend bool operator==(iterator, default_sentinel)
+                    friend bool operator==(iterator, default_sentinel_t)
                     {
                         return false;
                     }
-                    friend bool operator==(default_sentinel, iterator)
+                    friend bool operator==(default_sentinel_t, iterator)
                     {
                         return false;
                     }
@@ -737,7 +737,7 @@ namespace RAH2_NAMESPACE
                     return iterator{value_};
                 }
 
-                default_sentinel end() const
+                default_sentinel_t end() const
                 {
                     return {};
                 }
@@ -1311,14 +1311,15 @@ namespace RAH2_NAMESPACE
                 auto end()
                 {
                     auto iter = RAH2_NAMESPACE::ranges::begin(input_view_);
-                    RAH2_NAMESPACE::advance(iter, count_, RAH2_NAMESPACE::ranges::end(input_view_));
+                    RAH2_NAMESPACE::ranges::advance(
+                        iter, count_, RAH2_NAMESPACE::ranges::end(input_view_));
                     return iter;
                 }
 
                 template <bool C = IsCommon, RAH2_STD::enable_if_t<not C>* = nullptr>
-                default_sentinel end()
+                default_sentinel_t end()
                 {
-                    return default_sentinel{};
+                    return default_sentinel_t{};
                 }
             };
 
@@ -1391,7 +1392,8 @@ namespace RAH2_NAMESPACE
                 auto begin()
                 {
                     auto iter = RAH2_NAMESPACE::ranges::begin(base_);
-                    RAH2_NAMESPACE::advance(iter, drop_count_, RAH2_NAMESPACE::ranges::end(base_));
+                    RAH2_NAMESPACE::ranges::advance(
+                        iter, drop_count_, RAH2_NAMESPACE::ranges::end(base_));
                     return iter;
                 }
 
@@ -1550,8 +1552,11 @@ namespace RAH2_NAMESPACE
                 }
 
             public:
-                class iterator
-                    : public iterator_facade<iterator, default_sentinel, range_reference_t<range_reference_t<R>>, base_cat>
+                class iterator : public iterator_facade<
+                                     iterator,
+                                     default_sentinel_t,
+                                     range_reference_t<range_reference_t<R>>,
+                                     base_cat>
                 {
                     join_view* view_ = nullptr;
 
@@ -1577,11 +1582,11 @@ namespace RAH2_NAMESPACE
                     {
                         return *view_->sub_range_iter_;
                     }
-                    bool operator==(default_sentinel) const
+                    bool operator==(default_sentinel_t) const
                     {
                         return view_->range_iter_ == view_->range_end_;
                     }
-                    friend bool operator==(default_sentinel sent, iterator const& it)
+                    friend bool operator==(default_sentinel_t sent, iterator const& it)
                     {
                         return it == sent;
                     }
@@ -1618,7 +1623,7 @@ namespace RAH2_NAMESPACE
 
                 auto end()
                 {
-                    return default_sentinel();
+                    return default_sentinel_t();
                 }
             };
 
@@ -1792,7 +1797,7 @@ namespace RAH2_NAMESPACE
             auto counted(I&& it, iter_difference_t<I> n)
             {
                 using iterator = counted_iterator<RAH2_STD::remove_reference_t<I>>;
-                return make_subrange(iterator(it, n), default_sentinel{});
+                return make_subrange(iterator(it, n), default_sentinel_t{});
             }
 
             // ******************************************* common_view ********************************
@@ -3207,7 +3212,7 @@ namespace RAH2_NAMESPACE
                 {
                     auto const range_end = RAH2_NAMESPACE::ranges::end(input_view_);
                     auto sub_range_begin = RAH2_NAMESPACE::ranges::begin(input_view_);
-                    RAH2_NAMESPACE::advance(sub_range_begin, N + 1, range_end);
+                    RAH2_NAMESPACE::ranges::advance(sub_range_begin, N + 1, range_end);
                     return iterator{RAH2_STD::move(sub_range_begin), RAH2_STD::move(range_end)};
                 }
                 template <typename R2 = R, RAH2_STD::enable_if_t<!common_range<R2>>* = nullptr>
@@ -3472,7 +3477,8 @@ namespace RAH2_NAMESPACE
                     {
                         return iterator(sub_range_last, sub_range_last);
                     }
-                    auto const left = RAH2_NAMESPACE::advance(sub_range_last, count_ - 1, range_end);
+                    auto const left =
+                        RAH2_NAMESPACE::ranges::advance(sub_range_last, count_ - 1, range_end);
                     if (left != 0)
                     {
                         return iterator(sub_range_last, sub_range_last);
@@ -3491,7 +3497,7 @@ namespace RAH2_NAMESPACE
                     auto const sub_range_begin = RAH2_NAMESPACE::ranges::begin(input_view);
                     auto sub_range_first = range_end;
                     auto const left =
-                        RAH2_NAMESPACE::advance(sub_range_first, -count_, sub_range_begin);
+                        RAH2_NAMESPACE::ranges::advance(sub_range_first, -count_, sub_range_begin);
                     if (left != 0)
                     {
                         return iterator(range_end, range_end);
@@ -3569,7 +3575,7 @@ namespace RAH2_NAMESPACE
                     iterator& operator++()
                     {
                         iter_ = iter2_;
-                        RAH2_NAMESPACE::advance(iter2_, step_, end_);
+                        RAH2_NAMESPACE::ranges::advance(iter2_, step_, end_);
                         return *this;
                     }
                     RAH2_POST_INCR(base_cat)
@@ -3669,7 +3675,7 @@ namespace RAH2_NAMESPACE
             public:
                 // TODO : Make a version non-bidirectional without "missing_" for perf
                 class iterator
-                    : public iterator_facade<iterator, default_sentinel, range_reference_t<R>, iter_cat>
+                    : public iterator_facade<iterator, default_sentinel_t, range_reference_t<R>, iter_cat>
                 {
                     base_iterator current_;
                     base_sentinel end_;
@@ -3693,7 +3699,7 @@ namespace RAH2_NAMESPACE
                     iterator& operator++()
                     {
                         assert(missing_ == 0);
-                        missing_ = RAH2_NAMESPACE::advance(current_, stride_, end_);
+                        missing_ = RAH2_NAMESPACE::ranges::advance(current_, stride_, end_);
                         return *this;
                     }
                     RAH2_POST_INCR(iter_cat)
@@ -3702,7 +3708,7 @@ namespace RAH2_NAMESPACE
                         RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
                     iterator& operator--()
                     {
-                        RAH2_NAMESPACE::advance(current_, missing_ - stride_);
+                        RAH2_NAMESPACE::ranges::advance(current_, missing_ - stride_);
                         missing_ = 0;
                         return *this;
                     }
@@ -3788,7 +3794,7 @@ namespace RAH2_NAMESPACE
                         !common_range<Base> || (!sized_range<Base> && bidirectional_range<Base>)>* = nullptr>
                 auto end()
                 {
-                    return default_sentinel();
+                    return default_sentinel_t();
                 }
                 template <typename Base = R, RAH2_STD::enable_if_t<sized_range<Base>>* = nullptr>
                 auto size()
@@ -3838,7 +3844,7 @@ namespace RAH2_NAMESPACE
                 {
                 }
                 class iterator
-                    : public iterator_facade<iterator, default_sentinel, iter_reference_t<I>, base_cat>
+                    : public iterator_facade<iterator, default_sentinel_t, iter_reference_t<I>, base_cat>
                 {
                     I iter_;
 
@@ -3878,11 +3884,11 @@ namespace RAH2_NAMESPACE
                     {
                         return it1.iter_ == it2.iter_;
                     }
-                    friend bool operator==(iterator const&, default_sentinel const&)
+                    friend bool operator==(iterator const&, default_sentinel_t const&)
                     {
                         return false;
                     }
-                    friend bool operator==(default_sentinel const&, iterator const&)
+                    friend bool operator==(default_sentinel_t const&, iterator const&)
                     {
                         return false;
                     }
@@ -3894,7 +3900,7 @@ namespace RAH2_NAMESPACE
                 }
                 auto end()
                 {
-                    return default_sentinel();
+                    return default_sentinel_t();
                 }
                 static bool empty()
                 {
@@ -3965,11 +3971,11 @@ namespace RAH2_NAMESPACE
                     {
                         return it1.val_ < it2.val_;
                     }
-                    friend constexpr bool operator==(default_sentinel const&, iterator const&)
+                    friend constexpr bool operator==(default_sentinel_t const&, iterator const&)
                     {
                         return false;
                     }
-                    friend constexpr bool operator==(iterator const&, default_sentinel const&)
+                    friend constexpr bool operator==(iterator const&, default_sentinel_t const&)
                     {
                         return false;
                     }
@@ -3989,7 +3995,7 @@ namespace RAH2_NAMESPACE
                 template <bool I = Infinite, RAH2_STD::enable_if_t<I>* = nullptr>
                 auto end()
                 {
-                    return default_sentinel{};
+                    return default_sentinel_t{};
                 }
                 template <bool Inf = Infinite, RAH2_STD::enable_if_t<not Inf>* = nullptr>
                 auto end()
@@ -4026,7 +4032,7 @@ namespace RAH2_NAMESPACE
                 class iterator
                     : public iterator_facade<
                           iterator,
-                          default_sentinel,
+                          default_sentinel_t,
                           RAH2_NAMESPACE::ranges::range_reference_t<R>,
                           common_iterator_tag<RAH2_STD::bidirectional_iterator_tag, base_cat>>
                 {
@@ -4088,11 +4094,11 @@ namespace RAH2_NAMESPACE
                     {
                         return it.iter_ == it2.iter_;
                     }
-                    friend bool operator==(iterator const&, default_sentinel const&)
+                    friend bool operator==(iterator const&, default_sentinel_t const&)
                     {
                         return false;
                     }
-                    friend bool operator==(default_sentinel const&, iterator const&)
+                    friend bool operator==(default_sentinel_t const&, iterator const&)
                     {
                         return false;
                     }
@@ -4114,7 +4120,7 @@ namespace RAH2_NAMESPACE
                     return iterator(this);
                 }
 
-                default_sentinel end()
+                default_sentinel_t end()
                 {
                     return {};
                 }
@@ -4147,7 +4153,7 @@ namespace RAH2_NAMESPACE
                 using base_cat = RAH2_STD::input_iterator_tag;
 
             public:
-                class iterator : public iterator_facade<iterator, default_sentinel, value, base_cat>
+                class iterator : public iterator_facade<iterator, default_sentinel_t, value, base_cat>
                 {
                     generate_view* parent_ = nullptr;
                     RAH2_NAMESPACE::details::optional<value> value_;
@@ -4169,11 +4175,11 @@ namespace RAH2_NAMESPACE
                     {
                         return *value_;
                     }
-                    friend bool operator==(iterator const&, default_sentinel const&)
+                    friend bool operator==(iterator const&, default_sentinel_t const&)
                     {
                         return false;
                     }
-                    friend bool operator==(default_sentinel const&, iterator const&)
+                    friend bool operator==(default_sentinel_t const&, iterator const&)
                     {
                         return false;
                     }
@@ -4188,7 +4194,7 @@ namespace RAH2_NAMESPACE
                 {
                     return iterator(this);
                 }
-                default_sentinel end()
+                default_sentinel_t end()
                 {
                     return {};
                 }
@@ -4224,7 +4230,7 @@ namespace RAH2_NAMESPACE
 
             public:
                 class iterator
-                    : public iterator_facade<iterator, default_sentinel, reference, base_cat>
+                    : public iterator_facade<iterator, default_sentinel_t, reference, base_cat>
                 {
                     inner_iterator1 first1_;
                     inner_sentinel1 last1_;
@@ -4272,7 +4278,7 @@ namespace RAH2_NAMESPACE
                     {
                         return *first1_;
                     }
-                    friend bool operator==(iterator const& it, default_sentinel)
+                    friend bool operator==(iterator const& it, default_sentinel_t)
                     {
                         return it.first1_ == it.last1_;
                     }
@@ -4290,7 +4296,7 @@ namespace RAH2_NAMESPACE
                         RAH2_NAMESPACE::ranges::begin(base2_),
                         RAH2_NAMESPACE::ranges::end(base2_));
                 }
-                default_sentinel end()
+                default_sentinel_t end()
                 {
                     return {};
                 }
@@ -4364,7 +4370,8 @@ namespace RAH2_NAMESPACE
                 auto begin()
                 {
                     auto iter = RAH2_NAMESPACE::ranges::begin(base_);
-                    RAH2_NAMESPACE::advance(iter, begin_idx_, RAH2_NAMESPACE::ranges::end(base_));
+                    RAH2_NAMESPACE::ranges::advance(
+                        iter, begin_idx_, RAH2_NAMESPACE::ranges::end(base_));
                     return counted_iterator<iterator_t<R>>(iter, end_idx_ - begin_idx_);
                 }
 
@@ -4377,9 +4384,9 @@ namespace RAH2_NAMESPACE
                 }
 
                 template <bool IsSized = base_is_sized_random_access, RAH2_STD::enable_if_t<!IsSized>* = nullptr>
-                default_sentinel end()
+                default_sentinel_t end()
                 {
-                    return default_sentinel{};
+                    return default_sentinel_t{};
                 }
 
                 template <
@@ -4441,7 +4448,7 @@ namespace RAH2_NAMESPACE
                 using reference = range_reference_t<R1>;
 
                 class iterator
-                    : public iterator_facade<iterator, default_sentinel, reference, base_cat>
+                    : public iterator_facade<iterator, default_sentinel_t, reference, base_cat>
                 {
                     r1_iterator iter1_;
                     r1_sentinel sent1_;
@@ -4492,14 +4499,14 @@ namespace RAH2_NAMESPACE
                         else
                             return it1.iter2_ == it2.iter2_;
                     }
-                    friend bool operator==(iterator const& it, default_sentinel const&)
+                    friend bool operator==(iterator const& it, default_sentinel_t const&)
                     {
                         if (it.range_index_ == 0)
                             return it.iter1_ == it.sent1_;
                         else
                             return it.iter2_ == it.sent2_;
                     }
-                    friend bool operator==(default_sentinel const&, iterator const& it)
+                    friend bool operator==(default_sentinel_t const&, iterator const& it)
                     {
                         if (it.range_index_ == 0)
                             return it.iter1_ == it.sent1_;
@@ -4523,7 +4530,7 @@ namespace RAH2_NAMESPACE
                         RAH2_NAMESPACE::ranges::end(base2_));
                 }
 
-                default_sentinel end()
+                default_sentinel_t end()
                 {
                     return {};
                 }

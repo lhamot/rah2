@@ -36,7 +36,7 @@ auto test_count(int i)
 
 // Test creation of a custom iterator
 struct CustomGenerator
-    : rah2::ranges::iterator_facade<CustomGenerator, rah2::ranges::default_sentinel, int, RAH2_STD::forward_iterator_tag>
+    : rah2::ranges::iterator_facade<CustomGenerator, rah2::default_sentinel_t, int, RAH2_STD::forward_iterator_tag>
 {
     int y = 1;
 

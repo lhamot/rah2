@@ -1686,7 +1686,7 @@ namespace RAH2_NAMESPACE
                 DifferenceType d2 =
                     d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NAMESPACE::advance(
+                RAH2_NAMESPACE::ranges::advance(
                     i, d2); // This will be efficient for a random access iterator such as an array.
 
                 if (*i < value)
@@ -1744,7 +1744,7 @@ namespace RAH2_NAMESPACE
                 DifferenceType d2 =
                     d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NAMESPACE::advance(
+                RAH2_NAMESPACE::ranges::advance(
                     i, d2); // This will be efficient for a random access iterator such as an array.
 
                 if (compare(*i, value))
@@ -1797,7 +1797,7 @@ namespace RAH2_NAMESPACE
                 DifferenceType len2 =
                     len >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NAMESPACE::advance(i, len2);
+                RAH2_NAMESPACE::ranges::advance(i, len2);
 
                 if (!(value < *i)) // Note that we always express value comparisons in terms of < or ==.
                 {
@@ -1851,7 +1851,7 @@ namespace RAH2_NAMESPACE
                 DifferenceType len2 =
                     len >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NAMESPACE::advance(i, len2);
+                RAH2_NAMESPACE::ranges::advance(i, len2);
 
                 if (!compare(value, *i))
                 {
@@ -1903,7 +1903,7 @@ namespace RAH2_NAMESPACE
                 DifferenceType d2 =
                     d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NAMESPACE::advance(i, d2);
+                RAH2_NAMESPACE::ranges::advance(i, d2);
 
                 if (*i < value)
                 {
@@ -1964,7 +1964,7 @@ namespace RAH2_NAMESPACE
                 DifferenceType d2 =
                     d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NAMESPACE::advance(i, d2);
+                RAH2_NAMESPACE::ranges::advance(i, d2);
 
                 if (compare(*i, value))
                 {

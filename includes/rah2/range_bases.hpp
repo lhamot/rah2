@@ -44,7 +44,7 @@
 
 namespace RAH2_NAMESPACE
 {
-    // ***************************** standard traits **********************************************
+    // ***************************** <type_traits> traits *****************************************
 
     template <class Base, class Derived>
     constexpr bool is_base_of_v = RAH2_STD::is_base_of<Base, Derived>::value;
@@ -133,7 +133,80 @@ namespace RAH2_NAMESPACE
     template <typename T>
     constexpr bool is_initializer_list = is_initializer_list_impl<remove_cvref_t<T>>::value;
 
-    // ***************************** standard concept *********************************************
+    // ****************************** <utility> helpers *******************************************
+    struct in_place_t
+    {
+        explicit in_place_t() = default;
+    };
+    constexpr in_place_t in_place{};
+
+    template <class T>
+    struct in_place_type_t
+    {
+        explicit in_place_type_t() = default;
+    };
+
+    template <class T>
+    constexpr in_place_type_t<T> in_place_type{};
+
+    template <RAH2_STD::size_t I>
+    struct in_place_index_t
+    {
+        explicit in_place_index_t() = default;
+    };
+
+    template <RAH2_STD::size_t I>
+    constexpr in_place_index_t<I> in_place_index{};
+
+    // ****************************** <utility> functions *****************************************
+
+    template <class T>
+    constexpr RAH2_STD::add_const_t<T>& as_const(T& t) noexcept
+    {
+        return t;
+    }
+    template <class T>
+    void as_const(T const&&) = delete;
+
+    // **************************** <functional> Classes ******************************************
+    struct less
+    {
+        template <class T, class U>
+        constexpr bool operator()(T&& t, U&& u) const
+        {
+            return t < u;
+        }
+    };
+
+    struct greater
+    {
+        template <class T, class U>
+        constexpr bool operator()(T&& t, U&& u) const
+        {
+            return t > u;
+        }
+    };
+
+    struct equal_to
+    {
+        template <class T, class U>
+        constexpr bool operator()(T&& t, U&& u) const
+        {
+            return t == u;
+        }
+    };
+
+    struct identity
+    {
+        template <class T>
+        constexpr T&& operator()(T&& t) const noexcept
+        {
+            // Faster than forward in debug mode
+            return static_cast<T&&>(t);
+        }
+    };
+
+    // ***************************** <concepts> concept *******************************************
     template <class Derived, class Base>
     constexpr bool derived_from =
         RAH2_NAMESPACE::is_base_of_v<Base, Derived>
@@ -241,7 +314,55 @@ namespace RAH2_NAMESPACE
     template <class T>
     constexpr bool regular = semiregular<T> && equality_comparable<T>;
 
-    // **************************** iterator traits ***********************************************
+    template <class T>
+    constexpr bool destructible = RAH2_NAMESPACE::is_nothrow_destructible_v<T>;
+
+    namespace details
+    {
+        template <typename T, typename U, bool Diagnostic = false>
+        struct partially_ordered_with_impl
+        {
+            using NoRefT = RAH2_STD::remove_reference_t<T>;
+            using NoRefU = RAH2_STD::remove_reference_t<U>;
+            template <typename X, typename Y>
+            using t_lesser_u =
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() < RAH2_STD::declval<Y>()));
+            template <typename X, typename Y>
+            using t_greater_u =
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() > RAH2_STD::declval<Y>()));
+            template <typename X, typename Y>
+            using t_lesserequal_u =
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() <= RAH2_STD::declval<Y>()));
+            template <typename X, typename Y>
+            using t_greaterequal_u =
+                decltype(static_cast<bool>(RAH2_STD::declval<X>() >= RAH2_STD::declval<Y>()));
+
+            static constexpr bool value = compiles2<Diagnostic, NoRefT, NoRefU, t_lesser_u>
+                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_greater_u>
+                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_lesserequal_u>
+                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_greaterequal_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_lesser_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_greater_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_lesserequal_u>
+                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_greaterequal_u>;
+        };
+        template <typename T, typename U>
+        constexpr bool partially_ordered_with = partially_ordered_with_impl<T, U>::value;
+
+    } // namespace details
+
+    template <class T, bool Diagnostic = false>
+    struct totally_ordered_impl
+    {
+        static constexpr bool value =
+            is_true_v<Diagnostic, RAH2_NAMESPACE::equality_comparable<T>>
+            && details::partially_ordered_with_impl<T, T, Diagnostic>::value;
+    };
+
+    template <class T>
+    constexpr bool totally_ordered = totally_ordered_impl<T>::value;
+
+    // **************************** <iterator> traits *********************************************
 
     using RAH2_STD::bidirectional_iterator_tag;
     using RAH2_STD::forward_iterator_tag;
@@ -256,7 +377,7 @@ namespace RAH2_NAMESPACE
     };
 #endif
 
-    // TODO : Implemente this
+    // TODO : Implement iter_difference_t
     template <typename I>
     using iter_difference_t = ptrdiff_t;
 
@@ -272,7 +393,7 @@ namespace RAH2_NAMESPACE
     template <class T>
     using iter_const_reference_t = decltype(*RAH2_STD::declval<T const&>());
 
-    // **************************** iterator Customization Point Object ***************************
+    // **************************** <iterator> Customization Point Object *************************
 
     namespace ranges
     {
@@ -289,7 +410,7 @@ namespace RAH2_NAMESPACE
         }
     } // namespace ranges
 
-    // **************************** iterator concept **********************************************
+    // **************************** <iterator> concepts *******************************************
 
     namespace details
     {
@@ -329,7 +450,7 @@ namespace RAH2_NAMESPACE
         using deref = RAH2_STD::enable_if_t<
             RAH2_NAMESPACE::is_same_v<decltype(*RAH2_STD::declval<T>()), iter_reference_t<T>>>;
         template <class T>
-        using iter_move = RAH2_STD::enable_if_t<
+        using itermove = RAH2_STD::enable_if_t<
             RAH2_NAMESPACE::is_same_v<decltype(iter_move(RAH2_STD::declval<T>())), iter_rvalue_reference_t<T>>>;
 
         // TODO re-add checks
@@ -338,7 +459,7 @@ namespace RAH2_NAMESPACE
             // compiles<In, has_ref> &&
             // compiles<In, has_rval_ref> &&
             compiles<Diagnostic, In, deref>
-            // && compiles<In, iter_move>
+            // && compiles<In, itermove>
             ;
     };
 
@@ -526,7 +647,118 @@ namespace RAH2_NAMESPACE
         RAH2_NAMESPACE::forward_iterator<I> && RAH2_NAMESPACE::indirectly_movable_storable<I, I>
         && RAH2_NAMESPACE::indirectly_swappable<I, I>;
 
-    // **************************** range access **************************************************
+    template <class S, class I, bool Diagnostic = false>
+    static constexpr bool disable_sized_sentinel_for = false;
+
+    template <class S, class I, bool Diagnostic = false>
+    struct sized_sentinel_for_impl
+    {
+        template <class S2>
+        using less_s_i =
+            decltype(RAH2_STD::declval<S2>() - RAH2_STD::declval<I>(), RAH2_STD::declval<I>() - RAH2_STD::declval<S2>());
+        static constexpr bool value =
+            RAH2_NAMESPACE::sentinel_for_impl<S, I, Diagnostic>::value
+            && is_true_v<
+                Diagnostic,
+                !RAH2_NAMESPACE::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<S>, RAH2_STD::remove_cv_t<I>>>
+            && compiles<Diagnostic, S, less_s_i>;
+    };
+    template <class S, class I>
+    static constexpr bool sized_sentinel_for = sized_sentinel_for_impl<S, I>::value;
+
+    template <typename I, bool Diagnostic = false>
+    struct bidirectional_iterator_impl
+    {
+        template <typename U>
+        using can_pre_decr =
+            std::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(--RAH2_STD::declval<U&>()), U&>>;
+        template <typename U>
+        using can_post_decr =
+            std::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
+        template <typename U>
+        using has_bidir_cat = RAH2_STD::enable_if_t<
+            derived_from<details::iterator_category<U>, RAH2_STD::bidirectional_iterator_tag>>;
+
+        static constexpr bool value =
+            forward_iterator_impl<I, Diagnostic>::value && compiles<Diagnostic, I, has_bidir_cat>
+            && compiles<Diagnostic, I, can_pre_decr> && compiles<Diagnostic, I, can_post_decr>;
+    };
+    template <typename I>
+    constexpr bool bidirectional_iterator = bidirectional_iterator_impl<remove_cvref_t<I>>::value;
+
+    template <typename I, bool Diagnostic = false>
+    struct random_access_iterator_impl
+    {
+        template <typename U>
+        using addEqual = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            decltype(RAH2_STD::declval<U&>() += RAH2_NAMESPACE::iter_difference_t<U>()),
+            U&>>;
+
+        template <typename U>
+        using add = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            decltype(RAH2_STD::declval<U>() + RAH2_NAMESPACE::iter_difference_t<U>()),
+            U>>;
+
+        template <typename U>
+        using add2 = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            decltype(RAH2_NAMESPACE::iter_difference_t<U>() + RAH2_STD::declval<U>()),
+            U>>;
+
+        template <typename U>
+        using subEqual = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            decltype(RAH2_STD::declval<U&>() -= RAH2_NAMESPACE::iter_difference_t<U>()),
+            U&>>;
+
+        template <typename U>
+        using sub = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            decltype(RAH2_STD::declval<U>() - RAH2_NAMESPACE::iter_difference_t<U>()),
+            U>>;
+
+        template <typename U>
+        using arr = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            decltype(RAH2_STD::declval<U>()[RAH2_NAMESPACE::iter_difference_t<U>()]),
+            RAH2_NAMESPACE::iter_reference_t<U>>>;
+
+        template <typename U>
+        using has_random_access_cat = RAH2_STD::enable_if_t<
+            RAH2_NAMESPACE::derived_from<details::iterator_category<U>, RAH2_STD::random_access_iterator_tag>>;
+
+        static constexpr bool value =
+            RAH2_NAMESPACE::bidirectional_iterator_impl<I, Diagnostic>::value
+            && compiles<Diagnostic, I, has_random_access_cat>
+            && RAH2_NAMESPACE::totally_ordered_impl<I, Diagnostic>::value
+            && RAH2_NAMESPACE::sized_sentinel_for_impl<I, I, Diagnostic>::value
+            && compiles<Diagnostic, I, addEqual> && compiles<Diagnostic, I, add>
+            && compiles<Diagnostic, I, add2> && compiles<Diagnostic, I, subEqual>
+            && compiles<Diagnostic, I, sub> && compiles<Diagnostic, I, arr>;
+    };
+    template <typename I>
+    constexpr bool random_access_iterator = random_access_iterator_impl<remove_cvref_t<I>>::value;
+
+    template <typename I, bool Diagnostic = false>
+    struct contiguous_iterator_impl
+    {
+        static constexpr bool value =
+            RAH2_NAMESPACE::random_access_iterator_impl<I, Diagnostic>::value
+            && is_true_v<
+                Diagnostic,
+                RAH2_NAMESPACE::derived_from<details::iterator_category<I>, RAH2_NAMESPACE::contiguous_iterator_tag>>
+            && is_true_v<Diagnostic, RAH2_NAMESPACE::is_lvalue_reference_v<RAH2_NAMESPACE::iter_reference_t<I>>>
+            && is_true_v<
+                Diagnostic,
+                RAH2_NAMESPACE::same_as<
+                    RAH2_NAMESPACE::iter_value_t<I>,
+                    RAH2_NAMESPACE::remove_cvref_t<RAH2_NAMESPACE::iter_reference_t<I>>>>;
+    };
+    template <typename I>
+    static constexpr bool contiguous_iterator = contiguous_iterator_impl<I>::value;
+
+    template <class In, class Out>
+    constexpr bool indirectly_copyable =
+        RAH2_NAMESPACE::indirectly_readable<In>
+        && RAH2_NAMESPACE::indirectly_writable<Out, RAH2_NAMESPACE::iter_reference_t<In>>;
+
+    // **************************** <ranges> access ***********************************************
     namespace ranges
     {
         namespace details
@@ -639,6 +871,21 @@ namespace RAH2_NAMESPACE
 
         } // namespace customization_point_objects
 
+    } // namespace ranges
+
+    // **************************** <ranges> traits ***********************************************
+    namespace ranges
+    {
+
+        template <typename T>
+        using iterator_t = decltype(begin(RAH2_STD::declval<T>()));
+
+        template <typename T>
+        using sentinel_t = decltype(end(RAH2_STD::declval<T&>()));
+    } // namespace ranges
+    // **************************** <ranges> concepts *********************************************
+    namespace ranges
+    {
         template <typename R, bool Diagnostic = false>
         struct range_impl
         {
@@ -654,219 +901,6 @@ namespace RAH2_NAMESPACE
         template <typename R>
         constexpr bool range = range_impl<R>::value;
 
-    } // namespace ranges
-    // *************************** iterator concepts **********************************************
-
-    template <typename I, typename C = void>
-    struct iter_difference;
-
-    template <class I>
-    struct incrementable_traits
-    {
-    };
-
-    template <class T>
-    constexpr bool destructible = RAH2_NAMESPACE::is_nothrow_destructible_v<T>;
-
-    template <class S, class I, bool Diagnostic = false>
-    static constexpr bool disable_sized_sentinel_for = false;
-
-    template <class S, class I, bool Diagnostic = false>
-    struct sized_sentinel_for_impl
-    {
-        template <class S2>
-        using less_s_i =
-            decltype(RAH2_STD::declval<S2>() - RAH2_STD::declval<I>(), RAH2_STD::declval<I>() - RAH2_STD::declval<S2>());
-        static constexpr bool value =
-            RAH2_NAMESPACE::sentinel_for_impl<S, I, Diagnostic>::value
-            && is_true_v<
-                Diagnostic,
-                !RAH2_NAMESPACE::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<S>, RAH2_STD::remove_cv_t<I>>>
-            && compiles<Diagnostic, S, less_s_i>;
-    };
-    template <class S, class I>
-    static constexpr bool sized_sentinel_for = sized_sentinel_for_impl<S, I>::value;
-
-    namespace details
-    {
-        template <typename T, typename U, bool Diagnostic = false>
-        struct partially_ordered_with_impl
-        {
-            using NoRefT = RAH2_STD::remove_reference_t<T>;
-            using NoRefU = RAH2_STD::remove_reference_t<U>;
-            template <typename X, typename Y>
-            using t_lesser_u =
-                decltype(static_cast<bool>(RAH2_STD::declval<X>() < RAH2_STD::declval<Y>()));
-            template <typename X, typename Y>
-            using t_greater_u =
-                decltype(static_cast<bool>(RAH2_STD::declval<X>() > RAH2_STD::declval<Y>()));
-            template <typename X, typename Y>
-            using t_lesserequal_u =
-                decltype(static_cast<bool>(RAH2_STD::declval<X>() <= RAH2_STD::declval<Y>()));
-            template <typename X, typename Y>
-            using t_greaterequal_u =
-                decltype(static_cast<bool>(RAH2_STD::declval<X>() >= RAH2_STD::declval<Y>()));
-
-            static constexpr bool value = compiles2<Diagnostic, NoRefT, NoRefU, t_lesser_u>
-                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_greater_u>
-                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_lesserequal_u>
-                                          && compiles2<Diagnostic, NoRefT, NoRefU, t_greaterequal_u>
-                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_lesser_u>
-                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_greater_u>
-                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_lesserequal_u>
-                                          && compiles2<Diagnostic, NoRefU, NoRefT, t_greaterequal_u>;
-        };
-        template <typename T, typename U>
-        constexpr bool partially_ordered_with = partially_ordered_with_impl<T, U>::value;
-
-    } // namespace details
-
-    template <class T, bool Diagnostic = false>
-    struct totally_ordered_impl
-    {
-        static constexpr bool value =
-            is_true_v<Diagnostic, RAH2_NAMESPACE::equality_comparable<T>>
-            && details::partially_ordered_with_impl<T, T, Diagnostic>::value;
-    };
-
-    template <class T>
-    constexpr bool totally_ordered = totally_ordered_impl<T>::value;
-
-    template <typename I, bool Diagnostic = false>
-    struct bidirectional_iterator_impl
-    {
-        template <typename U>
-        using can_pre_decr =
-            std::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(--RAH2_STD::declval<U&>()), U&>>;
-        template <typename U>
-        using can_post_decr =
-            std::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
-        template <typename U>
-        using has_bidir_cat = RAH2_STD::enable_if_t<
-            derived_from<details::iterator_category<U>, RAH2_STD::bidirectional_iterator_tag>>;
-
-        static constexpr bool value =
-            forward_iterator_impl<I, Diagnostic>::value && compiles<Diagnostic, I, has_bidir_cat>
-            && compiles<Diagnostic, I, can_pre_decr> && compiles<Diagnostic, I, can_post_decr>;
-    };
-    template <typename I>
-    constexpr bool bidirectional_iterator = bidirectional_iterator_impl<remove_cvref_t<I>>::value;
-
-    template <typename I, bool Diagnostic = false>
-    struct random_access_iterator_impl
-    {
-        template <typename U>
-        using addEqual = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U&>() += RAH2_NAMESPACE::iter_difference_t<U>()),
-            U&>>;
-
-        template <typename U>
-        using add = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U>() + RAH2_NAMESPACE::iter_difference_t<U>()),
-            U>>;
-
-        template <typename U>
-        using add2 = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_NAMESPACE::iter_difference_t<U>() + RAH2_STD::declval<U>()),
-            U>>;
-
-        template <typename U>
-        using subEqual = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U&>() -= RAH2_NAMESPACE::iter_difference_t<U>()),
-            U&>>;
-
-        template <typename U>
-        using sub = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U>() - RAH2_NAMESPACE::iter_difference_t<U>()),
-            U>>;
-
-        template <typename U>
-        using arr = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U>()[RAH2_NAMESPACE::iter_difference_t<U>()]),
-            RAH2_NAMESPACE::iter_reference_t<U>>>;
-
-        template <typename U>
-        using has_random_access_cat = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::derived_from<details::iterator_category<U>, RAH2_STD::random_access_iterator_tag>>;
-
-        static constexpr bool value =
-            RAH2_NAMESPACE::bidirectional_iterator_impl<I, Diagnostic>::value
-            && compiles<Diagnostic, I, has_random_access_cat>
-            && RAH2_NAMESPACE::totally_ordered_impl<I, Diagnostic>::value
-            && RAH2_NAMESPACE::sized_sentinel_for_impl<I, I, Diagnostic>::value
-            && compiles<Diagnostic, I, addEqual> && compiles<Diagnostic, I, add>
-            && compiles<Diagnostic, I, add2> && compiles<Diagnostic, I, subEqual>
-            && compiles<Diagnostic, I, sub> && compiles<Diagnostic, I, arr>;
-    };
-    template <typename I>
-    constexpr bool random_access_iterator = random_access_iterator_impl<remove_cvref_t<I>>::value;
-
-    template <typename I, bool Diagnostic = false>
-    struct contiguous_iterator_impl
-    {
-        static constexpr bool value =
-            RAH2_NAMESPACE::random_access_iterator_impl<I, Diagnostic>::value
-            && is_true_v<
-                Diagnostic,
-                RAH2_NAMESPACE::derived_from<details::iterator_category<I>, RAH2_NAMESPACE::contiguous_iterator_tag>>
-            && is_true_v<Diagnostic, RAH2_NAMESPACE::is_lvalue_reference_v<RAH2_NAMESPACE::iter_reference_t<I>>>
-            && is_true_v<
-                Diagnostic,
-                RAH2_NAMESPACE::same_as<
-                    RAH2_NAMESPACE::iter_value_t<I>,
-                    RAH2_NAMESPACE::remove_cvref_t<RAH2_NAMESPACE::iter_reference_t<I>>>>;
-    };
-    template <typename I>
-    static constexpr bool contiguous_iterator = contiguous_iterator_impl<I>::value;
-
-    template <class In, class Out>
-    constexpr bool indirectly_copyable =
-        RAH2_NAMESPACE::indirectly_readable<In>
-        && RAH2_NAMESPACE::indirectly_writable<Out, RAH2_NAMESPACE::iter_reference_t<In>>;
-
-    // **************************************** iterator operations *******************************
-    namespace ranges
-    {
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<
-                !RAH2_NAMESPACE::sized_sentinel_for<S, I>
-                && RAH2_NAMESPACE::details::weakly_equality_comparable_with<S, I>>* = nullptr>
-        RAH2_NAMESPACE::iter_difference_t<I> distance(I first, S last)
-        {
-            iter_difference_t<I> len = 0;
-            for (; first != last; ++first, ++len)
-            {
-            }
-            return len;
-        }
-
-        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
-        auto distance(I first, S last)
-        {
-            return last - first;
-        }
-        template <typename R>
-        auto distance(R&& r)
-        {
-            return RAH2_NAMESPACE::ranges::distance(begin(r), end(r));
-        }
-    } // namespace ranges
-
-    // **************************** range primitives **********************************************
-    namespace ranges
-    {
-
-        template <typename T>
-        using iterator_t = decltype(begin(RAH2_STD::declval<T>()));
-
-        template <typename T>
-        using sentinel_t = decltype(end(RAH2_STD::declval<T&>()));
-    } // namespace ranges
-    // **************************** range concepts ************************************************
-    namespace ranges
-    {
         template <class T, bool Diagnostic = false>
         struct common_range_impl
         {
@@ -881,7 +915,7 @@ namespace RAH2_NAMESPACE
         template <class T>
         constexpr bool common_range = common_range_impl<T>::value;
     } // namespace ranges
-    // **************************** More Range access *********************************************
+    // **************************** <ranges> access ************************************************
     namespace ranges
     {
         template <class>
@@ -1067,7 +1101,7 @@ namespace RAH2_NAMESPACE
             constexpr auto cdata = details::cdata_impl();
         } // namespace customization_point_objects
     } // namespace ranges
-    // **************************** range traits **************************************************
+    // **************************** <ranges> traits ***********************************************
     namespace ranges
     {
         template <typename A, typename B>
@@ -1111,7 +1145,7 @@ namespace RAH2_NAMESPACE
         using range_iter_categ_t =
             typename RAH2_STD::iterator_traits<iterator_t<R>>::iterator_category;
     } // namespace ranges
-    // ******************************** ranges concepts *******************************************
+    // ******************************** <ranges> concepts *****************************************
     namespace ranges
     {
         template <class R>
@@ -1275,228 +1309,10 @@ namespace RAH2_NAMESPACE
                             && !is_initializer_list<T>))));
 
     } // namespace ranges
-    // ****************************** utility functions *******************************************
 
-    struct in_place_t
-    {
-
-        explicit in_place_t() = default;
-    };
-    constexpr in_place_t in_place{};
-
-    template <class T>
-    struct in_place_type_t
-    {
-        explicit in_place_type_t() = default;
-    };
-
-    template <class T>
-    constexpr in_place_type_t<T> in_place_type{};
-
-    template <RAH2_STD::size_t I>
-    struct in_place_index_t
-    {
-        explicit in_place_index_t() = default;
-    };
-
-    template <RAH2_STD::size_t I>
-    constexpr in_place_index_t<I> in_place_index{};
-
-    struct less
-    {
-        template <class T, class U>
-        constexpr bool operator()(T&& t, U&& u) const
-        {
-            return t < u;
-        }
-    };
-
-    struct greater
-    {
-        template <class T, class U>
-        constexpr bool operator()(T&& t, U&& u) const
-        {
-            return t > u;
-        }
-    };
-
-    struct equal_to
-    {
-        template <class T, class U>
-        constexpr bool operator()(T&& t, U&& u) const
-        {
-            return t == u;
-        }
-    };
-
-    template <typename I, typename S, typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>>
-    constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
-    {
-        // RAH2_STD::abs is not constexpr until C++23
-        auto abs = [](intptr_t const x)
-        {
-            return x < 0 ? -x : x;
-        };
-
-        auto const distToBound = bound - i;
-        if (distToBound == 0)
-        {
-            return n;
-        }
-
-        if ((n * distToBound) > 0) // Same side
-        {
-            auto const dist = abs(n) - abs(distToBound);
-            if (dist > 0) // bound is lower
-            {
-                i = RAH2_STD::move(bound);
-                return n - distToBound;
-            }
-        }
-        RAH2_STD::advance(i, n);
-        return 0;
-    }
-    template <
-        typename I,
-        typename S,
-        typename = RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>,
-        typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>>
-    constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
-    {
-        while (n > 0 && i != bound)
-        {
-            --n;
-            ++i;
-        }
-
-        while (n < 0 && i != bound)
-        {
-            ++n;
-            --i;
-        }
-
-        return n;
-    }
-
-    template <
-        typename I,
-        typename S,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
-    constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
-    {
-        while (n > 0 && i != bound)
-        {
-            --n;
-            ++i;
-        }
-
-        return n;
-    }
-
-    template <
-        typename I,
-        RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
-    constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
-    {
-        while (n > 0)
-        {
-            --n;
-            ++i;
-        }
-    }
-
-    template <
-        typename I,
-        RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
-    constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
-    {
-        while (n > 0)
-        {
-            --n;
-            ++i;
-        }
-
-        while (n < 0)
-        {
-            ++n;
-            --i;
-        }
-    }
-
-    template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
-    constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
-    {
-        i += n;
-    }
-
-    template <
-        typename I,
-        typename S,
-        RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-        RAH2_STD::enable_if_t<RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr>
-    constexpr void advance(I& i, S bound)
-    {
-        i = RAH2_STD::move(bound);
-    }
-
-    template <
-        typename I,
-        typename S,
-        RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr,
-        RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
-    constexpr void advance(I& i, S bound)
-    {
-        advance(i, bound - i);
-    }
-
-    template <
-        typename I,
-        typename S,
-        RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr,
-        RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
-    constexpr void advance(I& i, S bound)
-    {
-        while (i != bound)
-            ++i;
-    }
-
-    /// Apply the '<' operator on two values of any type
-    struct is_lesser
-    {
-        template <typename A, typename B>
-        bool operator()(A&& a, B&& b)
-        {
-            return a < b;
-        }
-    };
-
-    struct identity
-    {
-        template <class T>
-        constexpr T&& operator()(T&& t) const noexcept
-        {
-            // Faster than forward in debug mode
-            return static_cast<T&&>(t);
-        }
-    };
-
-    template <class T>
-    constexpr RAH2_STD::add_const_t<T>& as_const(T& t) noexcept
-    {
-        return t;
-    }
-
-    // ******************************* views ******************************************************
     namespace ranges
     {
+        // ******************************* ranges views ***********************************************
 #define RAH2_SELF (*static_cast<T* const>(this))
 #define RAH2_SELF_CONST (*static_cast<T const* const>(this))
 
@@ -1571,66 +1387,16 @@ namespace RAH2_NAMESPACE
             }
         };
 
+        template <class I, class S>
+        constexpr bool enable_borrowed_range<subrange<I, S>> = true;
+
         template <typename I, typename S>
         auto make_subrange(I b, S e)
         {
             return subrange<I, S>{b, e};
         }
 
-        template <class I, class S>
-        constexpr bool enable_borrowed_range<subrange<I, S>> = true;
-
-        struct default_sentinel
-        {
-        };
-
-        struct unreachable_sentinel
-        {
-        };
-
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
-        constexpr I next(I i)
-        {
-            ++i;
-            return i;
-        }
-
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
-        constexpr I next(I i, RAH2_NAMESPACE::iter_difference_t<I> n)
-        {
-            RAH2_NAMESPACE::advance(i, n);
-            return i;
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr>
-        constexpr I next(I i, S bound)
-        {
-            static_assert(RAH2_NAMESPACE::semiregular<S>, "RAH2_NAMESPACE::semiregular<S>");
-            static_assert(
-                RAH2_NAMESPACE::input_or_output_iterator<I>,
-                "RAH2_NAMESPACE::input_or_output_iterator<I>");
-            static_assert(
-                RAH2_NAMESPACE::details::weakly_equality_comparable_with<I, S>,
-                "weakly_equality_comparable_with<I, S>");
-            RAH2_NAMESPACE::advance(i, bound);
-            return i;
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr>
-        constexpr I next(I i, RAH2_NAMESPACE::iter_difference_t<I> n, S bound)
-        {
-            RAH2_NAMESPACE::advance(i, n, bound);
-            return i;
-        }
-
+        // ********************** <ranges> Dangling iterator handling  ****************************
         struct dangling
         {
             constexpr dangling() noexcept = default;
@@ -1652,6 +1418,240 @@ namespace RAH2_NAMESPACE
             RAH2_NAMESPACE::ranges::subrange<iterator_t<R>>,
             RAH2_NAMESPACE::ranges::dangling>;
     } // namespace ranges
+
+    // ***************************** <iterator> functions *****************************************
+    namespace ranges
+    {
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<
+                !RAH2_NAMESPACE::sized_sentinel_for<S, I>
+                && RAH2_NAMESPACE::details::weakly_equality_comparable_with<S, I>>* = nullptr>
+        RAH2_NAMESPACE::iter_difference_t<I> distance(I first, S last)
+        {
+            iter_difference_t<I> len = 0;
+            for (; first != last; ++first, ++len)
+            {
+            }
+            return len;
+        }
+
+        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+        auto distance(I first, S last)
+        {
+            return last - first;
+        }
+        template <typename R>
+        auto distance(R&& r)
+        {
+            return RAH2_NAMESPACE::ranges::distance(begin(r), end(r));
+        }
+
+        template <
+            typename I,
+            typename S,
+            typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>>
+        constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
+        {
+            // RAH2_STD::abs is not constexpr until C++23
+            auto abs = [](intptr_t const x)
+            {
+                return x < 0 ? -x : x;
+            };
+
+            auto const distToBound = bound - i;
+            if (distToBound == 0)
+            {
+                return n;
+            }
+
+            if ((n * distToBound) > 0) // Same side
+            {
+                auto const dist = abs(n) - abs(distToBound);
+                if (dist > 0) // bound is lower
+                {
+                    i = RAH2_STD::move(bound);
+                    return n - distToBound;
+                }
+            }
+            RAH2_STD::advance(i, n);
+            return 0;
+        }
+        template <
+            typename I,
+            typename S,
+            typename = RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>,
+            typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>>
+        constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
+        {
+            while (n > 0 && i != bound)
+            {
+                --n;
+                ++i;
+            }
+
+            while (n < 0 && i != bound)
+            {
+                ++n;
+                --i;
+            }
+
+            return n;
+        }
+
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+        constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
+        {
+            while (n > 0 && i != bound)
+            {
+                --n;
+                ++i;
+            }
+
+            return n;
+        }
+
+        template <
+            typename I,
+            RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+        constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
+        {
+            while (n > 0)
+            {
+                --n;
+                ++i;
+            }
+        }
+
+        template <
+            typename I,
+            RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
+        constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
+        {
+            while (n > 0)
+            {
+                --n;
+                ++i;
+            }
+
+            while (n < 0)
+            {
+                ++n;
+                --i;
+            }
+        }
+
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
+        constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
+        {
+            i += n;
+        }
+
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr>
+        constexpr void advance(I& i, S bound)
+        {
+            i = RAH2_STD::move(bound);
+        }
+
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+        constexpr void advance(I& i, S bound)
+        {
+            advance(i, bound - i);
+        }
+
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+        constexpr void advance(I& i, S bound)
+        {
+            while (i != bound)
+                ++i;
+        }
+
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
+        constexpr I next(I i)
+        {
+            ++i;
+            return i;
+        }
+
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
+        constexpr I next(I i, RAH2_NAMESPACE::iter_difference_t<I> n)
+        {
+            RAH2_NAMESPACE::ranges::advance(i, n);
+            return i;
+        }
+
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr>
+        constexpr I next(I i, S bound)
+        {
+            static_assert(RAH2_NAMESPACE::semiregular<S>, "RAH2_NAMESPACE::semiregular<S>");
+            static_assert(
+                RAH2_NAMESPACE::input_or_output_iterator<I>,
+                "RAH2_NAMESPACE::input_or_output_iterator<I>");
+            static_assert(
+                RAH2_NAMESPACE::details::weakly_equality_comparable_with<I, S>,
+                "weakly_equality_comparable_with<I, S>");
+            RAH2_NAMESPACE::ranges::advance(i, bound);
+            return i;
+        }
+
+        template <
+            typename I,
+            typename S,
+            RAH2_STD::enable_if_t<
+                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr>
+        constexpr I next(I i, RAH2_NAMESPACE::iter_difference_t<I> n, S bound)
+        {
+            RAH2_NAMESPACE::ranges::advance(i, n, bound);
+            return i;
+        }
+
+    } // namespace ranges
+
+    // ********************** <iterator> Classes **************************************************
+
+    struct default_sentinel_t
+    {
+    };
+    constexpr default_sentinel_t default_sentinel{};
+
+    struct unreachable_sentinel_t
+    {
+        template <typename I>
+        friend constexpr bool operator==(unreachable_sentinel_t, I const&) noexcept
+        {
+            return false;
+        }
+    };
+    constexpr unreachable_sentinel_t unreachable_sentinel{};
+
     // ************************************** optional ********************************************
     namespace details
     {

@@ -529,7 +529,7 @@ namespace RAH2_NAMESPACE
                 auto const n2 = RAH2_NAMESPACE::ranges::distance(first2, last2);
                 if (n1 < n2)
                     return false;
-                RAH2_NAMESPACE::advance(first1, n1 - n2);
+                RAH2_NAMESPACE::ranges::advance(first1, n1 - n2);
                 return RAH2_NAMESPACE::ranges::equal(
                     RAH2_STD::move(first1),
                     RAH2_STD::move(last1),
@@ -612,7 +612,7 @@ namespace RAH2_NAMESPACE
                 if (n <= 0)
                     return {RAH2_STD::move(first), RAH2_STD::move(last)};
                 auto mid = first;
-                auto diff = RAH2_NAMESPACE::advance(first, n, last);
+                auto diff = RAH2_NAMESPACE::ranges::advance(first, n, last);
                 if (diff != 0)
                 {
                     return {RAH2_STD::move(mid), RAH2_STD::move(last)};
@@ -644,7 +644,7 @@ namespace RAH2_NAMESPACE
                     return {RAH2_STD::move(first), RAH2_STD::move(last)};
                 }
                 auto mid = last;
-                if (RAH2_NAMESPACE::advance(mid, -n, first) != 0)
+                if (RAH2_NAMESPACE::ranges::advance(mid, -n, first) != 0)
                 {
                     return {RAH2_STD::move(first), RAH2_STD::move(last)};
                 }
@@ -693,7 +693,7 @@ namespace RAH2_NAMESPACE
                     return first;
                 }
                 auto result = first;
-                if (RAH2_NAMESPACE::advance(result, n, last) != 0)
+                if (RAH2_NAMESPACE::ranges::advance(result, n, last) != 0)
                 {
                     return last;
                 }
@@ -1119,7 +1119,7 @@ namespace RAH2_NAMESPACE
                 if (n1 > n2)
                 {
                     d1 = n1 / 2;
-                    RAH2_NAMESPACE::advance(cut1, d1);
+                    RAH2_NAMESPACE::ranges::advance(cut1, d1);
                     cut2 = RAH2_NAMESPACE::ranges::lower_bound(
                         middle, last, *cut1, RAH2_STD::ref(comp));
                     d2 = RAH2_NAMESPACE::ranges::distance(middle, cut2);
@@ -1127,7 +1127,7 @@ namespace RAH2_NAMESPACE
                 else
                 {
                     d2 = n2 / 2;
-                    RAH2_NAMESPACE::advance(cut2, d2);
+                    RAH2_NAMESPACE::ranges::advance(cut2, d2);
                     cut1 = RAH2_NAMESPACE::ranges::upper_bound(
                         first, middle, *cut2, RAH2_STD::ref(comp));
                     d1 = RAH2_NAMESPACE::ranges::distance(first, cut1);

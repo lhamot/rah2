@@ -189,11 +189,11 @@ public:
         {
             return it1.val_ == it2.val_;
         }
-        friend constexpr bool operator==(rah2::ranges::default_sentinel const&, iterator const&)
+        friend constexpr bool operator==(rah2::default_sentinel_t const&, iterator const&)
         {
             return false;
         }
-        friend constexpr bool operator==(iterator const&, rah2::ranges::default_sentinel const&)
+        friend constexpr bool operator==(iterator const&, rah2::default_sentinel_t const&)
         {
             return false;
         }
@@ -227,7 +227,7 @@ public:
     template <CommonOrSent S = Sent, std::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
     {
-        return rah2::ranges::default_sentinel{};
+        return rah2::default_sentinel_t{};
     }
     template <CommonOrSent S = Sent, std::enable_if_t<S == Common>* = nullptr>
     auto end()
@@ -328,11 +328,11 @@ public:
         {
             return it1.iter_ == it2.iter_;
         }
-        friend constexpr bool operator==(rah2::ranges::default_sentinel const&, iterator const&)
+        friend constexpr bool operator==(rah2::default_sentinel_t const&, iterator const&)
         {
             return false;
         }
-        friend constexpr bool operator==(iterator const&, rah2::ranges::default_sentinel const&)
+        friend constexpr bool operator==(iterator const&, rah2::default_sentinel_t const&)
         {
             return false;
         }
@@ -358,7 +358,7 @@ public:
     template <CommonOrSent S = Sent, std::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
     {
-        return rah2::ranges::default_sentinel{};
+        return rah2::default_sentinel_t{};
     }
     template <CommonOrSent S = Sent, std::enable_if_t<S == Common>* = nullptr>
     auto end()
