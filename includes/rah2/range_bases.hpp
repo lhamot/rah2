@@ -45,7 +45,6 @@
 namespace RAH2_NAMESPACE
 {
     // ***************************** <type_traits> traits *****************************************
-
     template <class Base, class Derived>
     constexpr bool is_base_of_v = RAH2_STD::is_base_of<Base, Derived>::value;
 
@@ -159,7 +158,6 @@ namespace RAH2_NAMESPACE
     constexpr in_place_index_t<I> in_place_index{};
 
     // ****************************** <utility> functions *****************************************
-
     template <class T>
     constexpr RAH2_STD::add_const_t<T>& as_const(T& t) noexcept
     {
@@ -363,7 +361,6 @@ namespace RAH2_NAMESPACE
     constexpr bool totally_ordered = totally_ordered_impl<T>::value;
 
     // **************************** <iterator> traits *********************************************
-
     using RAH2_STD::bidirectional_iterator_tag;
     using RAH2_STD::forward_iterator_tag;
     using RAH2_STD::input_iterator_tag;
@@ -394,7 +391,6 @@ namespace RAH2_NAMESPACE
     using iter_const_reference_t = decltype(*RAH2_STD::declval<T const&>());
 
     // **************************** <iterator> Customization Point Object *************************
-
     namespace ranges
     {
         template <class T>
@@ -411,7 +407,6 @@ namespace RAH2_NAMESPACE
     } // namespace ranges
 
     // **************************** <iterator> concepts *******************************************
-
     namespace details
     {
         template <typename I>
@@ -871,21 +866,14 @@ namespace RAH2_NAMESPACE
 
         } // namespace customization_point_objects
 
-    } // namespace ranges
-
-    // **************************** <ranges> traits ***********************************************
-    namespace ranges
-    {
-
+        // **************************** <ranges> traits ***********************************************
         template <typename T>
         using iterator_t = decltype(begin(RAH2_STD::declval<T>()));
 
         template <typename T>
         using sentinel_t = decltype(end(RAH2_STD::declval<T&>()));
-    } // namespace ranges
-    // **************************** <ranges> concepts *********************************************
-    namespace ranges
-    {
+
+        // **************************** <ranges> concepts *********************************************
         template <typename R, bool Diagnostic = false>
         struct range_impl
         {
@@ -914,10 +902,8 @@ namespace RAH2_NAMESPACE
 
         template <class T>
         constexpr bool common_range = common_range_impl<T>::value;
-    } // namespace ranges
-    // **************************** <ranges> access ************************************************
-    namespace ranges
-    {
+
+        // **************************** <ranges> access ************************************************
         template <class>
         constexpr bool disable_sized_range = false;
 
@@ -925,9 +911,7 @@ namespace RAH2_NAMESPACE
         {
             struct rbegin_impl
             {
-                template <
-                    typename R,
-                    typename = RAH2_STD::enable_if_t<ranges::details::has_rbegin_member<remove_cvref_t<R>>>>
+                template <typename R, RAH2_STD::enable_if_t<has_rbegin_member<remove_cvref_t<R>>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return range.rbegin();
@@ -949,8 +933,8 @@ namespace RAH2_NAMESPACE
                         RAH2_STD::enable_if_t<not ranges::details::has_rbegin_member<remove_cvref_t<R>>>,
                     typename =
                         RAH2_STD::enable_if_t<not ranges::details::has_rbegin_ADL<remove_cvref_t<R>>>,
-                    typename = RAH2_STD::enable_if_t<common_range<R>>,
-                    typename = RAH2_STD::enable_if_t<bidirectional_iterator<ranges::iterator_t<R>>>>
+                    RAH2_STD::enable_if_t<common_range<R>>* = nullptr,
+                    RAH2_STD::enable_if_t<bidirectional_iterator<iterator_t<R>>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return RAH2_STD::make_reverse_iterator(end(range));
@@ -959,9 +943,7 @@ namespace RAH2_NAMESPACE
 
             struct rend_impl
             {
-                template <
-                    typename R,
-                    typename = RAH2_STD::enable_if_t<ranges::details::has_rend_member<remove_cvref_t<R>>>>
+                template <typename R, RAH2_STD::enable_if_t<has_rend_member<remove_cvref_t<R>>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return range.rend();
@@ -971,7 +953,7 @@ namespace RAH2_NAMESPACE
                     typename R,
                     typename =
                         RAH2_STD::enable_if_t<not ranges::details::has_rend_member<remove_cvref_t<R>>>,
-                    typename = RAH2_STD::enable_if_t<ranges::details::has_rend_ADL<remove_cvref_t<R>>>>
+                    RAH2_STD::enable_if_t<has_rend_ADL<remove_cvref_t<R>>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return rend(range);
@@ -981,9 +963,9 @@ namespace RAH2_NAMESPACE
                     typename R,
                     typename =
                         RAH2_STD::enable_if_t<not ranges::details::has_rend_member<remove_cvref_t<R>>>,
-                    typename = RAH2_STD::enable_if_t<not ranges::details::has_rend_ADL<remove_cvref_t<R>>>,
-                    typename = RAH2_STD::enable_if_t<common_range<R>>,
-                    typename = RAH2_STD::enable_if_t<bidirectional_iterator<ranges::iterator_t<R>>>>
+                    RAH2_STD::enable_if_t<not ranges::details::has_rend_ADL<remove_cvref_t<R>>>* = nullptr,
+                    RAH2_STD::enable_if_t<common_range<R>>* = nullptr,
+                    RAH2_STD::enable_if_t<bidirectional_iterator<ranges::iterator_t<R>>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return RAH2_STD::make_reverse_iterator(begin(range));
@@ -1100,10 +1082,8 @@ namespace RAH2_NAMESPACE
             constexpr auto data = details::data_impl();
             constexpr auto cdata = details::cdata_impl();
         } // namespace customization_point_objects
-    } // namespace ranges
-    // **************************** <ranges> traits ***********************************************
-    namespace ranges
-    {
+
+        // **************************** <ranges> traits ***********************************************
         template <typename A, typename B>
         using common_iterator_tag =
             RAH2_STD::conditional_t<RAH2_NAMESPACE::derived_from<A, B>, B, A>;
@@ -1144,10 +1124,8 @@ namespace RAH2_NAMESPACE
         template <typename R>
         using range_iter_categ_t =
             typename RAH2_STD::iterator_traits<iterator_t<R>>::iterator_category;
-    } // namespace ranges
-    // ******************************** <ranges> concepts *****************************************
-    namespace ranges
-    {
+
+        // ******************************** <ranges> concepts *****************************************
         template <class R>
         constexpr bool enable_borrowed_range = false;
 
@@ -1308,10 +1286,6 @@ namespace RAH2_NAMESPACE
                         || (RAH2_NAMESPACE::movable<RAH2_STD::remove_reference_t<T>>
                             && !is_initializer_list<T>))));
 
-    } // namespace ranges
-
-    namespace ranges
-    {
         // ******************************* ranges views ***********************************************
 #define RAH2_SELF (*static_cast<T* const>(this))
 #define RAH2_SELF_CONST (*static_cast<T const* const>(this))
@@ -1417,11 +1391,8 @@ namespace RAH2_NAMESPACE
             RAH2_NAMESPACE::ranges::borrowed_range<R>,
             RAH2_NAMESPACE::ranges::subrange<iterator_t<R>>,
             RAH2_NAMESPACE::ranges::dangling>;
-    } // namespace ranges
 
-    // ***************************** <iterator> functions *****************************************
-    namespace ranges
-    {
+        // ***************************** <iterator> functions *****************************************
         template <
             typename I,
             typename S,
@@ -1448,10 +1419,7 @@ namespace RAH2_NAMESPACE
             return RAH2_NAMESPACE::ranges::distance(begin(r), end(r));
         }
 
-        template <
-            typename I,
-            typename S,
-            typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>>
+        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
         constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
         {
             // RAH2_STD::abs is not constexpr until C++23
@@ -1481,8 +1449,8 @@ namespace RAH2_NAMESPACE
         template <
             typename I,
             typename S,
-            typename = RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>,
-            typename = RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>>
+            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
         constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
         {
             while (n > 0 && i != bound)
@@ -1636,7 +1604,6 @@ namespace RAH2_NAMESPACE
     } // namespace ranges
 
     // ********************** <iterator> Classes **************************************************
-
     struct default_sentinel_t
     {
     };
