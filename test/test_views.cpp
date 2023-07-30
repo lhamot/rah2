@@ -20,51 +20,51 @@ void test_counted_iterator()
 {
     testSuite.test_case("sample", "");
     {
-        using Iter = decltype(make_counted_iterator(begin(inputSentView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(inputSentView), 10));
         STATIC_ASSERT(rah2::input_iterator<Iter>);
         STATIC_ASSERT(not rah2::forward_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(fwdSentView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(fwdSentView), 10));
         STATIC_ASSERT(rah2::forward_iterator<Iter>);
         STATIC_ASSERT(not rah2::bidirectional_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(fwdCommonView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(fwdCommonView), 10));
         STATIC_ASSERT(rah2::forward_iterator<Iter>);
         STATIC_ASSERT(not rah2::bidirectional_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(bidirSentView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(bidirSentView), 10));
         STATIC_ASSERT((rah2::bidirectional_iterator_impl<Iter, true>::value));
         STATIC_ASSERT(not rah2::random_access_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(bidirCommonView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(bidirCommonView), 10));
         constexpr auto fsdkjfgqs = rah2::bidirectional_iterator_impl<Iter, true>::value;
         STATIC_ASSERT(fsdkjfgqs);
         STATIC_ASSERT(rah2::bidirectional_iterator<Iter>);
         STATIC_ASSERT(not rah2::random_access_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(rdmSentView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(rdmSentView), 10));
         // STATIC_ASSERT(rah2::totally_ordered<Iter>);
         STATIC_ASSERT((rah2::random_access_iterator_impl<Iter, true>::value));
         STATIC_ASSERT(rah2::random_access_iterator<Iter>);
         STATIC_ASSERT(not rah2::contiguous_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(rdmCommonView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(rdmCommonView), 10));
         STATIC_ASSERT(rah2::random_access_iterator<Iter>);
         STATIC_ASSERT(not rah2::contiguous_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(contiSentView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(contiSentView), 10));
         STATIC_ASSERT((rah2::contiguous_iterator_impl<Iter, true>::value));
         STATIC_ASSERT(rah2::contiguous_iterator<Iter>);
     }
     {
-        using Iter = decltype(make_counted_iterator(begin(contiCommonView), 10));
+        using Iter = decltype(rah2::make_counted_iterator(begin(contiCommonView), 10));
         STATIC_ASSERT(rah2::contiguous_iterator<Iter>);
     }
 }
@@ -80,7 +80,7 @@ void test_empty_view()
     /// [empty]
 
     testSuite.test_case("concept");
-    STATIC_ASSERT((rah2::ranges::contiguous_range_impl<rah2::views::empty_view<int>, true>::value));
+    STATIC_ASSERT((rah2::ranges::contiguous_range_impl<rah2::ranges::empty_view<int>, true>::value));
 }
 
 void test_single_view()
@@ -94,7 +94,7 @@ void test_single_view()
     /// [single]
 
     testSuite.test_case("concept");
-    STATIC_ASSERT(rah2::ranges::contiguous_range<rah2::views::single_view<int>>);
+    STATIC_ASSERT(rah2::ranges::contiguous_range<rah2::ranges::single_view<int>>);
 }
 
 void test_iota_view()
@@ -153,7 +153,7 @@ void test_repeat_view()
     /// [repeat]
     std::vector<int> out;
     auto range = rah2::views::repeat(42);
-    std::copy_n(begin(range), 5, std::back_inserter(out));
+    std::copy_n(rah2::ranges::begin(range), 5, std::back_inserter(out));
     assert(out == std::vector<int>({42, 42, 42, 42, 42}));
     /// [repeat]
     STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(range), true>::value));
@@ -181,14 +181,14 @@ void test_all_view()
     // EQUAL_RANGE((il<int>{ 0, 1, 2, 3 } | rah2::views::all()), (il<int>{ 0, 1, 2, 3 }));
     int intTab[] = {0, 1, 2, 3};
     testSuite.test_case("lvalue_container");
-    EQUAL_RANGE((intTab | rah2::views::all()), (il<int>{0, 1, 2, 3}));
+    EQUAL_RANGE((intTab | rah2::ranges::all()), (il<int>{0, 1, 2, 3}));
     testSuite.test_case("rvalue_container");
-    EQUAL_RANGE((std::vector<int>({0, 1, 2, 3}) | rah2::views::all()), (il<int>{0, 1, 2, 3}));
+    EQUAL_RANGE((std::vector<int>({0, 1, 2, 3}) | rah2::ranges::all()), (il<int>{0, 1, 2, 3}));
 
     testSuite.test_case("sample");
     /// [views::all]
     std::vector<int> out;
-    auto all = rah2::views::all(std::vector<int>{0, 1, 2, 2, 3});
+    auto all = rah2::ranges::all(std::vector<int>{0, 1, 2, 2, 3});
     for (auto&& val : all)
     {
         out.push_back(val);
@@ -1143,7 +1143,7 @@ void test_chunk_view()
         /// Chunk with non-common_view
         auto vec_01234 = rah2::views::iota(0) | rah2::views::take(5);
         std::vector<std::vector<int>> result;
-        for (auto elts : chunk(vec_01234, 2))
+        for (auto elts : rah2::views::chunk(vec_01234, 2))
             result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
@@ -1198,7 +1198,7 @@ struct make_ref_view
     BaseRange base;
     auto make()
     {
-        return rah2::ranges::ref(base);
+        return rah2::views::ref(base);
     }
     static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
     static constexpr bool is_common = rah2::ranges::common_range<BaseRange>;
@@ -1212,7 +1212,7 @@ void test_ref_view()
         /// [ref]
         std::vector<int> vec{0, 1, 2, 2, 3};
         std::vector<int> out;
-        auto const ref = rah2::ranges::ref(vec);
+        auto const ref = rah2::views::ref(vec);
         for (auto&& val : ref)
         {
             out.push_back(val);

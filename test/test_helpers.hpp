@@ -823,7 +823,7 @@ std::ostream& operator<<(std::ostream& os, std::tuple<Args...> tup)
         (std::cout << std::forward<decltype(elt)>(elt)) << " ";
     };
 
-    rah2::views::details::for_each(tup, print_elt);
+    rah2::ranges::details::for_each(tup, print_elt);
     return os;
 }
 

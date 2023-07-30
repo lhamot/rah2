@@ -588,7 +588,7 @@ try
         size_t ySize = 3;
         auto xyIndexes = [=](size_t y)
         {
-            return zip(rah2::views::repeat(y), rah2::views::iota<size_t>(0, xSize));
+            return rah2::views::zip(rah2::views::repeat(y), rah2::views::iota<size_t>(0, xSize));
         };
         auto range = rah2::views::iota<size_t>(0, ySize) | rah2::views::for_each(xyIndexes);
         std::vector<std::tuple<size_t, size_t>> result;
@@ -601,7 +601,7 @@ try
         size_t zSize = 4;
         auto xyzIndexes = [=](size_t z)
         {
-            return zip(
+            return rah2::views::zip(
                 rah2::views::repeat(z),
                 rah2::views::iota<size_t>(0, ySize) | rah2::views::for_each(xyIndexes));
         };
@@ -635,7 +635,7 @@ try
                 return prev;
             });
         std::vector<int> gen_copy;
-        std::copy_n(begin(gen), 4, std::back_inserter(gen_copy));
+        std::copy_n(rah2::ranges::begin(gen), 4, std::back_inserter(gen_copy));
         assert(gen_copy == std::vector<int>({1, 2, 4, 8}));
         /// [generate]
         STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
