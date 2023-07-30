@@ -80,7 +80,7 @@ void test_empty_view()
     /// [empty]
 
     testSuite.test_case("concept");
-    STATIC_ASSERT((rah2::contiguous_range_impl<rah2::views::empty_view<int>, true>::value));
+    STATIC_ASSERT((rah2::ranges::contiguous_range_impl<rah2::views::empty_view<int>, true>::value));
 }
 
 void test_single_view()
@@ -94,7 +94,7 @@ void test_single_view()
     /// [single]
 
     testSuite.test_case("concept");
-    STATIC_ASSERT(rah2::contiguous_range<rah2::views::single_view<int>>);
+    STATIC_ASSERT(rah2::ranges::contiguous_range<rah2::views::single_view<int>>);
 }
 
 void test_iota_view()
@@ -107,7 +107,7 @@ void test_iota_view()
             result.push_back(i);
         assert(result == std::vector<int>({10, 11, 12, 13, 14}));
         /// [iota]
-        STATIC_ASSERT(rah2::random_access_range<decltype(rah2::views::iota(10, 15))>);
+        STATIC_ASSERT(rah2::ranges::random_access_range<decltype(rah2::views::iota(10, 15))>);
     }
 
     {
@@ -143,7 +143,7 @@ void test_istream_view()
     }
 
     testSuite.test_case("concepts");
-    STATIC_ASSERT((rah2::input_range<decltype(rah2::views::istream<std::string>(
+    STATIC_ASSERT((rah2::ranges::input_range<decltype(rah2::views::istream<std::string>(
                        std::declval<std::stringstream&>()))>));
 }
 
@@ -156,7 +156,7 @@ void test_repeat_view()
     std::copy_n(begin(range), 5, std::back_inserter(out));
     assert(out == std::vector<int>({42, 42, 42, 42, 42}));
     /// [repeat]
-    STATIC_ASSERT((rah2::random_access_range_impl<decltype(range), true>::value));
+    STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(range), true>::value));
 }
 
 void test_owning_view()
@@ -171,7 +171,7 @@ void test_owning_view()
     }
     assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
     /// [owning_view]
-    STATIC_ASSERT((rah2::random_access_range_impl<decltype(owning), true>::value));
+    STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(owning), true>::value));
 }
 
 void test_all_view()
@@ -197,7 +197,7 @@ void test_all_view()
     /// [views::all]
 
     testSuite.test_case("concepts");
-    STATIC_ASSERT((rah2::random_access_range_impl<decltype(all), true>::value));
+    STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(all), true>::value));
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -209,7 +209,7 @@ struct make_filter_view
             make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
     }
     static constexpr bool is_sized = false;
-    static constexpr bool is_common = rah2::common_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool is_common = rah2::ranges::common_range<test_view<CS, Tag, Sized>>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = false;
 };
@@ -234,12 +234,12 @@ struct make_transform_view
     auto make()
     {
         auto v = make_test_view<CS, Tag, Sized>();
-        AssertEqual<rah2::sized_range<decltype(v)>, Sized>();
+        AssertEqual<rah2::ranges::sized_range<decltype(v)>, Sized>();
         return rah2::views::transform(
             make_test_view<CS, Tag, Sized>(), [](auto a) { return a % 2 == 0; });
     }
     static constexpr bool is_sized = Sized;
-    static constexpr bool is_common = rah2::common_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool is_common = rah2::ranges::common_range<test_view<CS, Tag, Sized>>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = false;
 };
@@ -265,8 +265,8 @@ void test_transform_view()
             return a * 2;
         };
         auto selectedValuesRange = rah2::views::transform(vec, valueSelector);
-        auto bounds =
-            std::minmax_element(rah2::begin(selectedValuesRange), rah2::end(selectedValuesRange));
+        auto bounds = std::minmax_element(
+            rah2::ranges::begin(selectedValuesRange), rah2::ranges::end(selectedValuesRange));
         auto const min = *bounds.first;
         assert(min == 0);
         auto const max = *bounds.second;
@@ -295,9 +295,10 @@ struct make_take_view
     }
     static constexpr bool is_sized = Sized;
     using R = test_view<CS, Tag, Sized>;
-    static constexpr bool is_common = rah2::sized_range<R> && rah2::random_access_range<R>;
+    static constexpr bool is_common =
+        rah2::ranges::sized_range<R> && rah2::ranges::random_access_range<R>;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<R>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<R>;
 };
 void test_take_view()
 {
@@ -307,11 +308,11 @@ void test_take_view()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::take(in, 5);
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
         auto range2 = rah2::views::take(in, 1000);
         std::vector<int> out2;
-        std::copy(rah2::begin(range2), rah2::end(range2), std::back_inserter(out2));
+        std::copy(rah2::ranges::begin(range2), rah2::ranges::end(range2), std::back_inserter(out2));
         assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         /// [take]
     }
@@ -321,11 +322,11 @@ void test_take_view()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::take(5);
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
         auto range2 = in | rah2::views::take(1000);
         std::vector<int> out2;
-        std::copy(rah2::begin(range2), rah2::end(range2), std::back_inserter(out2));
+        std::copy(rah2::ranges::begin(range2), rah2::ranges::end(range2), std::back_inserter(out2));
         assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         /// [take_pipeable]
     }
@@ -343,9 +344,9 @@ struct make_drop_view
     }
     using base_type = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = Sized;
-    static constexpr bool is_common = rah2::common_range<base_type>;
+    static constexpr bool is_common = rah2::ranges::common_range<base_type>;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<base_type>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<base_type>;
 };
 void test_drop_view()
 {
@@ -356,7 +357,7 @@ void test_drop_view()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::drop(in, 6);
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({6, 7, 8, 9}));
         /// [drop]
     }
@@ -367,7 +368,7 @@ void test_drop_view()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::drop(6);
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({6, 7, 8, 9}));
         /// [drop_pipeable]
     }
@@ -385,10 +386,11 @@ struct make_drop_while_view
     }
     using V = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized =
-        rah2::forward_range<V> && rah2::sized_sentinel_for<rah2::sentinel_t<V>, rah2::iterator_t<V>>;
-    static constexpr bool is_common = rah2::common_range<V>;
+        rah2::ranges::forward_range<V>
+        && rah2::sized_sentinel_for<rah2::ranges::sentinel_t<V>, rah2::ranges::iterator_t<V>>;
+    static constexpr bool is_common = rah2::ranges::common_range<V>;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<V>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<V>;
 };
 void test_drop_while_view()
 {
@@ -398,7 +400,7 @@ void test_drop_while_view()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::drop_while(in, [](auto v) { return v < 6; });
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({6, 7, 8, 9}));
         /// [drop_while]
     }
@@ -409,7 +411,7 @@ void test_drop_while_view()
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::drop_while([](auto v) { return v < 6; });
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({6, 7, 8, 9}));
         /// [drop_while_pipeable]
     }
@@ -447,7 +449,7 @@ void test_join_view()
         };
         auto range = rah2::views::join(in);
         std::vector<int> result;
-        rah2::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, std::back_inserter(result));
         assert(result == std::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join]
     }
@@ -463,7 +465,7 @@ void test_join_view()
         };
         auto range = in | rah2::views::join();
         std::vector<int> result;
-        rah2::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, std::back_inserter(result));
         assert(result == std::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join_pipeable]
     }
@@ -475,7 +477,7 @@ void test_join_view()
                          [](auto i) { return rah2::views::repeat(1) | rah2::views::take(i); })
                      | rah2::views::join();
         std::vector<int> result;
-        rah2::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, std::back_inserter(result));
         assert(result == std::vector<int>(15, 1));
     }
 
@@ -493,7 +495,7 @@ struct make_split_view
     }
     static constexpr bool is_sized = false;
     static constexpr bool is_common = false;
-    static constexpr bool do_test = rah2::forward_range<test_view<CS, Tag, Sized>>;
+    static constexpr bool do_test = rah2::ranges::forward_range<test_view<CS, Tag, Sized>>;
     static constexpr bool is_borrowed = false;
 };
 void test_split_view()
@@ -526,8 +528,9 @@ struct make_counted_view
         return rah2::views::counted(r.begin(), 8);
     }
     using BaseRange = test_view<CS, Tag, Sized>;
-    static constexpr bool is_sized = rah2::random_access_range<BaseRange>;
-    static constexpr bool is_common = rah2::random_access_iterator<rah2::iterator_t<BaseRange>>;
+    static constexpr bool is_sized = rah2::ranges::random_access_range<BaseRange>;
+    static constexpr bool is_common =
+        rah2::random_access_iterator<rah2::ranges::iterator_t<BaseRange>>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = true; // It is actually a subrange
 };
@@ -538,7 +541,7 @@ void test_counted_view()
     std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     auto range = rah2::views::counted(in.begin(), 5);
     std::vector<int> out;
-    std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+    std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
     assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     /// [counted]
 
@@ -554,10 +557,10 @@ struct make_common_view
         return rah2::views::common(make_test_view<CS, Tag, Sized>());
     }
     using BaseRange = test_view<CS, Tag, Sized>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
     static constexpr bool is_common = true;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 void test_common_view()
 {
@@ -583,10 +586,11 @@ struct make_reverse_view
     }
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized =
-        rah2::sized_range<BaseRange> || rah2::random_access_iterator<rah2::iterator_t<BaseRange>>;
+        rah2::ranges::sized_range<BaseRange>
+        || rah2::random_access_iterator<rah2::ranges::iterator_t<BaseRange>>;
     static constexpr bool is_common = true;
-    static constexpr bool do_test = rah2::bidirectional_range<BaseRange>;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool do_test = rah2::ranges::bidirectional_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 void test_reverse_view()
 {
@@ -629,10 +633,10 @@ struct make_elements_view
         return rah2::views::elements<2>(make_test_view_adapter<CS, Tag, Sized>(vec));
     }
     using BaseRange = test_view_adapter<CS, Tag, Sized, std::vector<std::tuple<bool, char, int>>>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
-    static constexpr bool is_common = rah2::common_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common = rah2::ranges::common_range<BaseRange>;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 void test_elements_view()
 {
@@ -702,10 +706,11 @@ struct make_enumerate_view
         return rah2::views::enumerate(make_test_view<CS, Tag, Sized>());
     }
     using BaseRange = test_view<CS, Tag, Sized>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
-    static constexpr bool is_common = rah2::common_range<BaseRange> && rah2::sized_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common =
+        rah2::ranges::common_range<BaseRange> && rah2::ranges::sized_range<BaseRange>;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 void test_enumerate_view()
 {
@@ -740,7 +745,7 @@ void test_enumerate_view()
                      | rah2::views::keys();
 
         std::vector<intptr_t> ref;
-        rah2::copy(range, std::back_inserter(ref));
+        rah2::ranges::copy(range, std::back_inserter(ref));
         assert(ref == (std::vector<intptr_t>{1, 2, 5}));
     }
 
@@ -756,12 +761,12 @@ struct make_zip_view1
         return rah2::views::zip(make_test_view<CS, Tag, Sized>());
     }
     using BaseRange = test_view<CS, Tag, Sized>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
     static constexpr bool is_common =
-        rah2::common_range<BaseRange>
-        || (rah2::sized_range<BaseRange> && rah2::random_access_range<BaseRange>);
+        rah2::ranges::common_range<BaseRange>
+        || (rah2::ranges::sized_range<BaseRange> && rah2::ranges::random_access_range<BaseRange>);
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view2
@@ -774,13 +779,14 @@ struct make_zip_view2
     }
     using BaseRange1 = test_view<CS, Tag, Sized>;
     using BaseRange2 = test_view<Common, rah2::contiguous_iterator_tag, true>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange1> && rah2::sized_range<BaseRange2>;
+    static constexpr bool is_sized =
+        rah2::ranges::sized_range<BaseRange1> && rah2::ranges::sized_range<BaseRange2>;
     static constexpr bool is_common =
-        (rah2::sized_range<BaseRange1> && rah2::random_access_range<BaseRange1>)&&(
-            rah2::sized_range<BaseRange2> && rah2::random_access_range<BaseRange2>);
+        (rah2::ranges::sized_range<BaseRange1> && rah2::ranges::random_access_range<BaseRange1>)&&(
+            rah2::ranges::sized_range<BaseRange2> && rah2::ranges::random_access_range<BaseRange2>);
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed =
-        rah2::enable_borrowed_range<BaseRange1> && rah2::enable_borrowed_range<BaseRange2>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange1>
+                                        && rah2::ranges::enable_borrowed_range<BaseRange2>;
 };
 void test_zip_view()
 {
@@ -808,8 +814,9 @@ void test_zip_view()
                      | rah2::views::filter([](auto a_b) { return std::get<1>(a_b); });
         std::vector<std::tuple<int, bool>> result;
 
-        rah2::copy(range, std::back_inserter(result));
-        assert(rah2::equal(result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
+        rah2::ranges::copy(range, std::back_inserter(result));
+        assert(rah2::ranges::equal(
+            result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
     }
 
     testSuite.test_case("concepts");
@@ -825,10 +832,10 @@ struct make_adjacent_view
         return rah2::views::adjacent<3>(make_test_view<CS, Tag, Sized>());
     }
     using BaseRange = test_view<CS, Tag, Sized>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
-    static constexpr bool is_common = rah2::common_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common = rah2::ranges::common_range<BaseRange>;
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 void test_adjacent_view()
 {
@@ -979,7 +986,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 3))
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
         /// [sliding]
@@ -989,13 +999,13 @@ void test_slide_view()
         // slide with non common_range
         std::vector<std::vector<int>> out;
         auto r = rah2::views::iota(0) | rah2::views::take(6) | rah2::views::slide(3);
-        auto it = rah2::begin(r);
-        auto e = rah2::end(r);
+        auto it = rah2::ranges::begin(r);
+        auto e = rah2::ranges::end(r);
         for (; it != e; ++it)
         {
             out.emplace_back();
             auto&& subRange = *it;
-            rah2::copy(subRange, std::back_inserter(out.back()));
+            rah2::ranges::copy(subRange, std::back_inserter(out.back()));
         }
         assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
     }
@@ -1008,7 +1018,10 @@ void test_slide_view()
         for (auto subRange : in | rah2::views::slide(3))
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
         /// [sliding_pipeable]
@@ -1022,7 +1035,10 @@ void test_slide_view()
         for (auto subRange : range | rah2::views::common())
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(
             out
@@ -1042,7 +1058,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 4))
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(out == (std::vector<std::vector<int>>{{0, 1, 2, 3}}));
     }
@@ -1053,7 +1072,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 4))
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(out.empty());
     }
@@ -1064,7 +1086,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 0))
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(out == (std::vector<std::vector<int>>{{0}, {1}, {2}, {3}}));
     }
@@ -1075,7 +1100,10 @@ void test_slide_view()
         for (auto subRange : in | rah2::views::slide(1))
         {
             out.emplace_back();
-            std::copy(rah2::begin(subRange), rah2::end(subRange), std::back_inserter(out.back()));
+            std::copy(
+                rah2::ranges::begin(subRange),
+                rah2::ranges::end(subRange),
+                std::back_inserter(out.back()));
         }
         assert(
             out
@@ -1096,7 +1124,7 @@ void test_chunk_view()
         std::vector<int> vec_01234{0, 1, 2, 3, 4};
         std::vector<std::vector<int>> result;
         for (auto elts : rah2::views::chunk(vec_01234, 2))
-            result.emplace_back(rah2::begin(elts), rah2::end(elts));
+            result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
         /// [chunk]
     }
@@ -1106,7 +1134,7 @@ void test_chunk_view()
         std::vector<int> vec_01234{0, 1, 2, 3, 4};
         std::vector<std::vector<int>> result;
         for (auto elts : vec_01234 | rah2::views::chunk(2))
-            result.emplace_back(rah2::begin(elts), rah2::end(elts));
+            result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
         /// [chunk_pipeable]
     }
@@ -1116,7 +1144,7 @@ void test_chunk_view()
         auto vec_01234 = rah2::views::iota(0) | rah2::views::take(5);
         std::vector<std::vector<int>> result;
         for (auto elts : chunk(vec_01234, 2))
-            result.emplace_back(rah2::begin(elts), rah2::end(elts));
+            result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
 }
@@ -1129,12 +1157,12 @@ struct make_stride_view
         return rah2::views::stride(make_test_view<CS, Tag, Sized>(), 3);
     }
     using BaseRange = test_view<CS, Tag, Sized>;
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
     static constexpr bool is_common =
-        rah2::common_range<BaseRange>
-        && (rah2::sized_range<BaseRange> || !rah2::bidirectional_range<BaseRange>);
+        rah2::ranges::common_range<BaseRange>
+        && (rah2::ranges::sized_range<BaseRange> || !rah2::ranges::bidirectional_range<BaseRange>);
     static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = rah2::enable_borrowed_range<BaseRange>;
+    static constexpr bool is_borrowed = rah2::ranges::enable_borrowed_range<BaseRange>;
 };
 void test_stride_view()
 {
@@ -1170,10 +1198,10 @@ struct make_ref_view
     BaseRange base;
     auto make()
     {
-        return rah2::views::ref(base);
+        return rah2::ranges::ref(base);
     }
-    static constexpr bool is_sized = rah2::sized_range<BaseRange>;
-    static constexpr bool is_common = rah2::common_range<BaseRange>;
+    static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common = rah2::ranges::common_range<BaseRange>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = true;
 };
@@ -1184,7 +1212,7 @@ void test_ref_view()
         /// [ref]
         std::vector<int> vec{0, 1, 2, 2, 3};
         std::vector<int> out;
-        auto const ref = rah2::views::ref(vec);
+        auto const ref = rah2::ranges::ref(vec);
         for (auto&& val : ref)
         {
             out.push_back(val);

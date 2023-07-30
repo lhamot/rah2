@@ -29,13 +29,14 @@ bool is_odd(int val)
 /// [make_pipeable create]
 auto test_count(int i)
 {
-    return rah2::make_pipeable([=](auto&& range) { return std::count(begin(range), end(range), i); });
+    return rah2::ranges::make_pipeable([=](auto&& range)
+                                       { return std::count(begin(range), end(range), i); });
 }
 /// [make_pipeable create]
 
 // Test creation of a custom iterator
 struct CustomGenerator
-    : rah2::iterator_facade<CustomGenerator, rah2::default_sentinel, int, RAH2_STD::forward_iterator_tag>
+    : rah2::ranges::iterator_facade<CustomGenerator, rah2::ranges::default_sentinel, int, RAH2_STD::forward_iterator_tag>
 {
     int y = 1;
 
@@ -56,7 +57,7 @@ struct CustomGenerator
 
 auto customGenerate()
 {
-    return rah2::subrange<CustomGenerator, CustomGenerator>{};
+    return rah2::ranges::subrange<CustomGenerator, CustomGenerator>{};
 }
 
 void test_empty_view();
@@ -296,19 +297,19 @@ void test_concepts()
 void test_range_traits()
 {
     testSuite.test_case("on non-range");
-    STATIC_ASSERT(!rah2::range<int>);
-    STATIC_ASSERT(!rah2::borrowed_range<int>);
-    STATIC_ASSERT(!rah2::sized_range<int>);
-    STATIC_ASSERT(!rah2::view<int>);
-    STATIC_ASSERT(!rah2::input_range<int>);
-    STATIC_ASSERT((!rah2::output_range<int, int>));
-    STATIC_ASSERT(!rah2::forward_range<int>);
-    STATIC_ASSERT(!rah2::bidirectional_range<int>);
-    STATIC_ASSERT(!rah2::random_access_range<int>);
-    STATIC_ASSERT(!rah2::contiguous_range<int>);
-    STATIC_ASSERT(!rah2::common_range<int>);
-    STATIC_ASSERT(!rah2::viewable_range<int>);
-    STATIC_ASSERT(!rah2::constant_range<int>);
+    STATIC_ASSERT(!rah2::ranges::range<int>);
+    STATIC_ASSERT(!rah2::ranges::borrowed_range<int>);
+    STATIC_ASSERT(!rah2::ranges::sized_range<int>);
+    STATIC_ASSERT(!rah2::ranges::view<int>);
+    STATIC_ASSERT(!rah2::ranges::input_range<int>);
+    STATIC_ASSERT((!rah2::ranges::output_range<int, int>));
+    STATIC_ASSERT(!rah2::ranges::forward_range<int>);
+    STATIC_ASSERT(!rah2::ranges::bidirectional_range<int>);
+    STATIC_ASSERT(!rah2::ranges::random_access_range<int>);
+    STATIC_ASSERT(!rah2::ranges::contiguous_range<int>);
+    STATIC_ASSERT(!rah2::ranges::common_range<int>);
+    STATIC_ASSERT(!rah2::ranges::viewable_range<int>);
+    STATIC_ASSERT(!rah2::ranges::constant_range<int>);
 }
 
 int main()
@@ -500,7 +501,7 @@ try
             result.push_back(i);
         assert(result == std::vector<int>({10, 12, 14, 16, 18}));
         /// [irange]
-        STATIC_ASSERT((rah2::random_access_range<decltype(rah2::views::irange(10, 19, 2))>));
+        STATIC_ASSERT((rah2::ranges::random_access_range<decltype(rah2::views::irange(10, 19, 2))>));
     }
 
     {
@@ -525,7 +526,7 @@ try
         };
         auto range = rah2::views::for_each(rah2::views::iota<size_t>(0, 5), createRange);
         std::string result;
-        rah2::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, std::back_inserter(result));
         assert(result == "bccdddeeee");
         /// [for_each]
     }
@@ -591,7 +592,7 @@ try
         };
         auto range = rah2::views::iota<size_t>(0, ySize) | rah2::views::for_each(xyIndexes);
         std::vector<std::tuple<size_t, size_t>> result;
-        rah2::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, std::back_inserter(result));
         assert(
             result
             == (std::vector<std::tuple<size_t, size_t>>{
@@ -612,7 +613,7 @@ try
         auto rangeZYX = rah2::views::iota<size_t>(0, zSize) | rah2::views::for_each(xyzIndexes)
                         | rah2::views::transform(flattenTuple);
         std::vector<std::tuple<size_t, size_t, size_t>> resultZYX;
-        rah2::copy(rangeZYX, std::back_inserter(resultZYX));
+        rah2::ranges::copy(rangeZYX, std::back_inserter(resultZYX));
         assert(
             resultZYX
             == (std::vector<std::tuple<size_t, size_t, size_t>>{
@@ -637,11 +638,12 @@ try
         std::copy_n(begin(gen), 4, std::back_inserter(gen_copy));
         assert(gen_copy == std::vector<int>({1, 2, 4, 8}));
         /// [generate]
-        STATIC_ASSERT(rah2::input_range<decltype(gen)>);
+        STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
         STATIC_ASSERT(((
-            RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
-        STATIC_ASSERT(not rah2::forward_range<decltype(gen)>);
-        STATIC_ASSERT(not rah2::common_range<decltype(gen)>);
+            RAH2_NAMESPACE::
+                is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
+        STATIC_ASSERT(not rah2::ranges::forward_range<decltype(gen)>);
+        STATIC_ASSERT(not rah2::ranges::common_range<decltype(gen)>);
     }
     {
         /// [generate_n]
@@ -655,17 +657,18 @@ try
                 y *= 2;
                 return prev;
             });
-        auto i = rah2::begin(gen);
-        auto e = rah2::end(gen);
+        auto i = rah2::ranges::begin(gen);
+        auto e = rah2::ranges::end(gen);
         for (; i != e; ++i)
             result.push_back(*i);
         assert(result == std::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
-        STATIC_ASSERT(rah2::input_range<decltype(gen)>);
+        STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
         STATIC_ASSERT((
-            RAH2_NAMESPACE::is_same_v<rah2::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
-        STATIC_ASSERT(not rah2::forward_range<decltype(gen)>);
-        STATIC_ASSERT(not rah2::common_range<decltype(gen)>);
+            RAH2_NAMESPACE::
+                is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
+        STATIC_ASSERT(not rah2::ranges::forward_range<decltype(gen)>);
+        STATIC_ASSERT(not rah2::ranges::common_range<decltype(gen)>);
     }
 
     {
@@ -676,8 +679,8 @@ try
         std::copy_n(cy.begin(), 8, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
         /// [cycle]
-        STATIC_ASSERT((rah2::bidirectional_range<decltype(cy)>));
-        STATIC_ASSERT((not rah2::random_access_range<decltype(cy)>));
+        STATIC_ASSERT((rah2::ranges::bidirectional_range<decltype(cy)>));
+        STATIC_ASSERT((not rah2::ranges::random_access_range<decltype(cy)>));
     }
     { // Cycle + input/sentinel => input/sentinel
         auto cyInputSent =
@@ -740,7 +743,7 @@ try
         auto cy = rah2::views::cycle(in) | rah2::views::take(8);
         std::vector<int> out;
         // static_assert(RAH2_NAMESPACE::range<decltype(std::back_inserter(out))>, "dkjh");
-        rah2::copy(cy, std::back_inserter(out));
+        rah2::ranges::copy(cy, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
     }
 
@@ -748,7 +751,7 @@ try
         std::vector<int> in{0, 1, 2};
         auto range = rah2::views::drop(in, 6);
         std::vector<int> out;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out.empty());
     }
 
@@ -757,7 +760,7 @@ try
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::unbounded(in.begin());
         std::vector<int> out;
-        std::copy_n(rah2::begin(range), 5, std::back_inserter(out));
+        std::copy_n(rah2::ranges::begin(range), 5, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
         /// [unbounded]
     }
@@ -766,7 +769,7 @@ try
         std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::unbounded(in.begin()) | rah2::views::slice(0, 5);
         std::vector<int> out;
-        rah2::copy(range, std::back_inserter(out));
+        rah2::ranges::copy(range, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     }
 
@@ -775,7 +778,7 @@ try
         auto range = rah2::views::unbounded(static_cast<int const* const>(std::begin(in)))
                      | rah2::views::slice(0, 5);
         std::vector<int> out;
-        rah2::copy(range, std::back_inserter(out));
+        rah2::ranges::copy(range, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4}));
     }
 
@@ -784,11 +787,11 @@ try
         std::vector<int> in{0, 1, 2, 3, 4, 5};
         auto range = in | rah2::views::take(9);
         std::vector<int> out;
-        auto a = rah2::begin(range);
-        auto b = rah2::end(range);
+        auto a = rah2::ranges::begin(range);
+        auto b = rah2::ranges::end(range);
         auto volatile dist = std::distance(a, b);
         (void)dist;
-        std::copy(rah2::begin(range), rah2::end(range), std::back_inserter(out));
+        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [counted_pipeable]
     }
@@ -903,13 +906,13 @@ try
         // test filter with the first elements filtered
         auto range1 =
             rah2::views::iota(1, 10) | rah2::views::filter([](auto&& val) { return val % 2 == 0; });
-        assert(rah2::none_of(range1, [](auto v) { return (v % 2) == 1; }));
+        assert(rah2::ranges::none_of(range1, [](auto v) { return (v % 2) == 1; }));
 
         // test generate + filter
         auto range2 = rah2::views::generate_n(100, []() { return rand(); })
                       | rah2::views::filter([](auto&& val) { return val % 2 == 0; });
 
-        assert(rah2::none_of(range2, [](auto v) { return (v % 2) == 1; }));
+        assert(rah2::ranges::none_of(range2, [](auto v) { return (v % 2) == 1; }));
 
         // Can create some compilation issue about lambda copy
         auto range3 = rah2::views::iota(0, 5)
@@ -919,7 +922,7 @@ try
                               return rah2::views::generate_n(5, []() { return rand(); })
                                      | rah2::views::filter([](auto&& val) { return val % 2 == 0; });
                           });
-        assert(rah2::none_of(range3, [](auto v) { return (v % 2) == 1; }));
+        assert(rah2::ranges::none_of(range3, [](auto v) { return (v % 2) == 1; }));
     }
 
     {
@@ -1010,8 +1013,8 @@ try
                 in1.push_back(rand() % 100);
             for (size_t i = 0; i < size2; ++i)
                 in2.push_back(rand() % 100);
-            rah2::sort(in1);
-            rah2::sort(in2);
+            rah2::ranges::sort(in1);
+            rah2::ranges::sort(in2);
             std::vector<int> outRef;
             std::set_difference(
                 begin(in1), end(in1), begin(in2), end(in2), std::back_inserter(outRef));
@@ -1027,22 +1030,22 @@ try
     {
         /// [rah2::to_container_pipeable]
         std::vector<std::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
-        std::map<int, char> map_4a_5b_6c_7d = in1 | rah2::to<std::map<int, char>>();
+        std::map<int, char> map_4a_5b_6c_7d = in1 | rah2::ranges::to<std::map<int, char>>();
         assert(map_4a_5b_6c_7d == (std::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
 
         std::list<int> in2{4, 5, 6, 7};
-        std::vector<int> out = in2 | rah2::to<std::vector<int>>();
+        std::vector<int> out = in2 | rah2::ranges::to<std::vector<int>>();
         assert(out == (std::vector<int>{4, 5, 6, 7}));
         /// [rah2::to_container_pipeable]
     }
     {
         /// [rah2::to]
         std::vector<std::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
-        auto map_4a_5b_6c_7d = rah2::to<std::map<int, char>>(in1);
+        auto map_4a_5b_6c_7d = rah2::ranges::to<std::map<int, char>>(in1);
         assert(map_4a_5b_6c_7d == (std::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
 
         std::list<int> in2{4, 5, 6, 7};
-        auto out = rah2::to<std::vector<int>>(in2);
+        auto out = rah2::ranges::to<std::vector<int>>(in2);
         assert(out == (std::vector<int>{4, 5, 6, 7}));
         /// [rah2::to]
     }
@@ -1050,13 +1053,13 @@ try
     {
         /// [rah2::size]
         std::vector<int> vec3{1, 2, 3};
-        assert(rah2::size(vec3) == 3);
+        assert(rah2::ranges::size(vec3) == 3);
         /// [rah2::size]
     }
 
     /// [rah2::empty]
-    assert(not(rah2::empty(std::vector<int>{1, 2, 3})));
-    assert(rah2::empty(std::vector<int>()));
+    assert(not(rah2::ranges::empty(std::vector<int>{1, 2, 3})));
+    assert(rah2::ranges::empty(std::vector<int>()));
     /// [rah2::empty]
 
     // ********************************* test return ref and non-ref ******************************
@@ -1110,7 +1113,9 @@ try
 
         std::vector<Elt> vec = {{1}};
         auto r_copy = vec | transform([](auto a) { return Elt{a.member + 1}; });
-        for (auto iter = rah2::begin(r_copy), end_iter = rah2::end(r_copy); iter != end_iter; ++iter)
+        for (auto iter = rah2::ranges::begin(r_copy), end_iter = rah2::ranges::end(r_copy);
+             iter != end_iter;
+             ++iter)
         {
             // Not possible since *iter is a rvalue (can't take the pointer of a rvalue)
             // assert(iter->member == 2); // Check for mutability
@@ -1129,7 +1134,9 @@ try
                 "elt is not expected to be a reference");
         }
         auto r_ref = vec | transform([](auto a) { return a.member; });
-        for (auto iter = rah2::begin(r_ref), end_iter = rah2::end(r_ref); iter != end_iter; ++iter)
+        for (auto iter = rah2::ranges::begin(r_ref), end_iter = rah2::ranges::end(r_ref);
+             iter != end_iter;
+             ++iter)
         {
             assert(*iter == 1); // Check for mutability
             static_assert(
@@ -1212,13 +1219,13 @@ try
     // iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | rah2::to<std::vector<int>>();
 
     views::iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | slice(1, 9)
-        | rah2::to<std::vector<int>>();
+        | rah2::ranges::to<std::vector<int>>();
 
     {
         // Test creation of a custom iterator
         auto gen = customGenerate();
         std::vector<int> gen_copy;
-        std::copy(rah2::begin(gen), rah2::end(gen), std::back_inserter(gen_copy));
+        std::copy(rah2::ranges::begin(gen), rah2::ranges::end(gen), std::back_inserter(gen_copy));
         EQUAL_RANGE(gen_copy, std::vector<int>({1, 2, 4, 8}));
     }
 
@@ -1257,7 +1264,7 @@ try
         for (auto ySelector : views::iota(0, 3))
         {
             auto rng = irange(startY + ySelector, endY + 1, 3) | transform(getRangeX);
-            rah2::for_each(rng, updateRaw);
+            rah2::ranges::for_each(rng, updateRaw);
         }
 
         assert(all_of(test_ | slice(0, start), [](auto&& val) { return val == 0; }));
