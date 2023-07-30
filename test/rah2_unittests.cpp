@@ -640,8 +640,7 @@ try
         /// [generate]
         STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
         STATIC_ASSERT(((
-            RAH2_NAMESPACE::
-                is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
+            RAH2_NS::is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
         STATIC_ASSERT(not rah2::ranges::forward_range<decltype(gen)>);
         STATIC_ASSERT(not rah2::ranges::common_range<decltype(gen)>);
     }
@@ -665,8 +664,7 @@ try
         /// [generate_n]
         STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
         STATIC_ASSERT((
-            RAH2_NAMESPACE::
-                is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
+            RAH2_NS::is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
         STATIC_ASSERT(not rah2::ranges::forward_range<decltype(gen)>);
         STATIC_ASSERT(not rah2::ranges::common_range<decltype(gen)>);
     }
@@ -742,7 +740,7 @@ try
         std::vector<int> in{0, 1, 2};
         auto cy = rah2::views::cycle(in) | rah2::views::take(8);
         std::vector<int> out;
-        // static_assert(RAH2_NAMESPACE::range<decltype(std::back_inserter(out))>, "dkjh");
+        // static_assert(RAH2_NS::range<decltype(std::back_inserter(out))>, "dkjh");
         rah2::ranges::copy(cy, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
     }
@@ -1094,7 +1092,7 @@ try
         for (auto&& elt : r)
         {
             static_assert(
-                RAH2_NAMESPACE::is_reference_v<decltype(elt)>, "elt is expected to be a reference");
+                RAH2_NS::is_reference_v<decltype(elt)>, "elt is expected to be a reference");
             elt.member = 78; // Check for mutability
         }
         EQUAL_RANGE(r, (il<Elt>({{78}, {78}, {78}, {78}, {78}})));
@@ -1121,16 +1119,16 @@ try
             // assert(iter->member == 2); // Check for mutability
             // assert((*iter).member == 2); // Check for mutability
             static_assert(
-                RAH2_NAMESPACE::is_rvalue_reference_v<decltype(*iter)>
-                    || (not RAH2_NAMESPACE::is_reference_v<decltype(*iter)>),
+                RAH2_NS::is_rvalue_reference_v<decltype(*iter)>
+                    || (not RAH2_NS::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_copy)
         {
             assert(elt.member == 2); // Check for mutability
             static_assert(
-                RAH2_NAMESPACE::is_rvalue_reference_v<decltype(elt)>
-                    || (not RAH2_NAMESPACE::is_reference_v<decltype(elt)>),
+                RAH2_NS::is_rvalue_reference_v<decltype(elt)>
+                    || (not RAH2_NS::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
         auto r_ref = vec | transform([](auto a) { return a.member; });
@@ -1140,16 +1138,16 @@ try
         {
             assert(*iter == 1); // Check for mutability
             static_assert(
-                RAH2_NAMESPACE::is_rvalue_reference_v<decltype(*iter)>
-                    || (not RAH2_NAMESPACE::is_reference_v<decltype(*iter)>),
+                RAH2_NS::is_rvalue_reference_v<decltype(*iter)>
+                    || (not RAH2_NS::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_ref)
         {
             assert(elt == 1); // Check for mutability
             static_assert(
-                RAH2_NAMESPACE::is_rvalue_reference_v<decltype(elt)>
-                    || (not RAH2_NAMESPACE::is_reference_v<decltype(elt)>),
+                RAH2_NS::is_rvalue_reference_v<decltype(elt)>
+                    || (not RAH2_NS::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
     }

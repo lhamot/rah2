@@ -2,7 +2,7 @@
 
 #include "range_bases.hpp"
 
-namespace RAH2_NAMESPACE
+namespace RAH2_NS
 {
     namespace ranges
     {
@@ -159,7 +159,7 @@ namespace RAH2_NAMESPACE
                 position = childPosition - 1;
             }
 
-            RAH2_NAMESPACE::ranges::promote_heap<RandomAccessIterator, Distance, T>(
+            RAH2_NS::ranges::promote_heap<RandomAccessIterator, Distance, T>(
                 first, topPosition, position, RAH2_STD::forward<ValueType>(value));
         }
 
@@ -239,7 +239,7 @@ namespace RAH2_NAMESPACE
                 position = childPosition - 1;
             }
 
-            RAH2_NAMESPACE::ranges::promote_heap<RandomAccessIterator, Distance, T, Compare>(
+            RAH2_NS::ranges::promote_heap<RandomAccessIterator, Distance, T, Compare>(
                 first, topPosition, position, RAH2_STD::forward<ValueType>(value), compare);
         }
 
@@ -314,10 +314,10 @@ namespace RAH2_NAMESPACE
             using difference_type =
                 typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            auto lasti = RAH2_NAMESPACE::ranges::next(first, last);
+            auto lasti = RAH2_NS::ranges::next(first, last);
             value_type const tempBottom(RAH2_STD::forward<value_type>(*(lasti - 1)));
 
-            RAH2_NAMESPACE::ranges::promote_heap<RandomAccessIterator, difference_type, value_type>(
+            RAH2_NS::ranges::promote_heap<RandomAccessIterator, difference_type, value_type>(
                 first,
                 static_cast<difference_type>(0),
                 static_cast<difference_type>(lasti - first - 1),
@@ -328,8 +328,8 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessRange>
         borrowed_iterator_t<RandomAccessRange> push_heap(RandomAccessRange&& range)
         {
-            return RAH2_NAMESPACE::ranges::push_heap(
-                RAH2_NAMESPACE::ranges::begin(range), RAH2_NAMESPACE::ranges::end(range));
+            return RAH2_NS::ranges::push_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
         }
 
         /// push_heap
@@ -348,10 +348,10 @@ namespace RAH2_NAMESPACE
             using difference_type =
                 typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            auto lasti = RAH2_NAMESPACE::ranges::next(first, last);
+            auto lasti = RAH2_NS::ranges::next(first, last);
             value_type const tempBottom(*(lasti - 1));
 
-            RAH2_NAMESPACE::ranges::promote_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+            RAH2_NS::ranges::promote_heap<RandomAccessIterator, difference_type, value_type, Compare>(
                 first,
                 static_cast<difference_type>(0),
                 static_cast<difference_type>(lasti - first - 1),
@@ -366,10 +366,8 @@ namespace RAH2_NAMESPACE
             RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
         borrowed_iterator_t<RandomAccessRange> push_heap(RandomAccessRange&& range, Compare compare)
         {
-            return RAH2_NAMESPACE::ranges::push_heap(
-                RAH2_NAMESPACE::ranges::begin(range),
-                RAH2_NAMESPACE::ranges::end(range),
-                RAH2_STD::move(compare));
+            return RAH2_NS::ranges::push_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -402,10 +400,10 @@ namespace RAH2_NAMESPACE
             using difference_type =
                 typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            auto lasti = RAH2_NAMESPACE::ranges::next(first, last);
+            auto lasti = RAH2_NS::ranges::next(first, last);
             value_type tempBottom(RAH2_STD::forward<value_type>(*(lasti - 1)));
             *(lasti - 1) = RAH2_STD::forward<value_type>(*first);
-            RAH2_NAMESPACE::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type>(
+            RAH2_NS::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type>(
                 first,
                 static_cast<difference_type>(0),
                 static_cast<difference_type>(lasti - first - 1),
@@ -417,8 +415,8 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessRange>
         borrowed_iterator_t<RandomAccessRange> pop_heap(RandomAccessRange&& range)
         {
-            return RAH2_NAMESPACE::ranges::pop_heap(
-                RAH2_NAMESPACE::ranges::begin(range), RAH2_NAMESPACE::ranges::end(range));
+            return RAH2_NS::ranges::pop_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
         }
 
         /// pop_heap
@@ -437,10 +435,10 @@ namespace RAH2_NAMESPACE
             using difference_type =
                 typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            auto lasti = RAH2_NAMESPACE::ranges::next(first, last);
+            auto lasti = RAH2_NS::ranges::next(first, last);
             value_type tempBottom(RAH2_STD::forward<value_type>(*(lasti - 1)));
             *(lasti - 1) = RAH2_STD::forward<value_type>(*first);
-            RAH2_NAMESPACE::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+            RAH2_NS::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
                 first,
                 static_cast<difference_type>(0),
                 static_cast<difference_type>(lasti - first - 1),
@@ -456,10 +454,8 @@ namespace RAH2_NAMESPACE
             RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
         borrowed_iterator_t<RandomAccessRange> pop_heap(RandomAccessRange&& range, Compare compare)
         {
-            return RAH2_NAMESPACE::ranges::pop_heap(
-                RAH2_NAMESPACE::ranges::begin(range),
-                RAH2_NAMESPACE::ranges::end(range),
-                RAH2_STD::move(compare));
+            return RAH2_NS::ranges::pop_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -499,7 +495,7 @@ namespace RAH2_NAMESPACE
                 {
                     --parentPosition;
                     value_type temp(RAH2_STD::forward<value_type>(*(first + parentPosition)));
-                    RAH2_NAMESPACE::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type>(
+                    RAH2_NS::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type>(
                         first,
                         parentPosition,
                         heapSize,
@@ -513,8 +509,8 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessRange>
         borrowed_iterator_t<RandomAccessRange> make_heap(RandomAccessRange&& range)
         {
-            return RAH2_NAMESPACE::ranges::make_heap(
-                RAH2_NAMESPACE::ranges::begin(range), RAH2_NAMESPACE::ranges::end(range));
+            return RAH2_NS::ranges::make_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
         }
 
         template <typename RandomAccessIterator, typename Sentinel, typename Compare>
@@ -538,14 +534,13 @@ namespace RAH2_NAMESPACE
                 {
                     --parentPosition;
                     value_type temp(RAH2_STD::forward<value_type>(*(first + parentPosition)));
-                    RAH2_NAMESPACE::ranges::
-                        adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
-                            first,
-                            parentPosition,
-                            heapSize,
-                            parentPosition,
-                            RAH2_STD::forward<value_type>(temp),
-                            compare);
+                    RAH2_NS::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+                        first,
+                        parentPosition,
+                        heapSize,
+                        parentPosition,
+                        RAH2_STD::forward<value_type>(temp),
+                        compare);
                 } while (parentPosition != 0);
             }
             return lasti;
@@ -557,10 +552,8 @@ namespace RAH2_NAMESPACE
             RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
         borrowed_iterator_t<RandomAccessRange> make_heap(RandomAccessRange&& range, Compare compare)
         {
-            return RAH2_NAMESPACE::ranges::make_heap(
-                RAH2_NAMESPACE::ranges::begin(range),
-                RAH2_NAMESPACE::ranges::end(range),
-                RAH2_STD::move(compare));
+            return RAH2_NS::ranges::make_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -582,18 +575,18 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessIterator, typename Sentinel>
         RandomAccessIterator sort_heap(RandomAccessIterator first, Sentinel last)
         {
-            auto lasti = RAH2_NAMESPACE::ranges::next(first, last);
+            auto lasti = RAH2_NS::ranges::next(first, last);
             auto res = lasti;
             for (; (lasti - first) > 1; --lasti) // We simply use the heap to sort itself.
-                RAH2_NAMESPACE::ranges::pop_heap<RandomAccessIterator>(first, lasti);
+                RAH2_NS::ranges::pop_heap<RandomAccessIterator>(first, lasti);
             return res;
         }
 
         template <typename RandomAccessRange>
         borrowed_iterator_t<RandomAccessRange> sort_heap(RandomAccessRange&& range)
         {
-            return RAH2_NAMESPACE::ranges::sort_heap(
-                RAH2_NAMESPACE::ranges::begin(range), RAH2_NAMESPACE::ranges::end(range));
+            return RAH2_NS::ranges::sort_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
         }
 
         /// sort_heap
@@ -604,10 +597,10 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessIterator, typename Sentinel, typename Compare>
         RandomAccessIterator sort_heap(RandomAccessIterator first, Sentinel last, Compare compare)
         {
-            auto lasti = RAH2_NAMESPACE::ranges::next(first, last);
+            auto lasti = RAH2_NS::ranges::next(first, last);
             auto res = lasti;
             for (; (lasti - first) > 1; --lasti) // We simply use the heap to sort itself.
-                RAH2_NAMESPACE::ranges::pop_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
+                RAH2_NS::ranges::pop_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
                     first, lasti, compare);
             return res;
         }
@@ -615,10 +608,8 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessRange, typename Compare>
         borrowed_iterator_t<RandomAccessRange> sort_heap(RandomAccessRange&& range, Compare compare)
         {
-            return RAH2_NAMESPACE::ranges::sort_heap(
-                RAH2_NAMESPACE::ranges::begin(range),
-                RAH2_NAMESPACE::ranges::end(range),
-                RAH2_STD::move(compare));
+            return RAH2_NS::ranges::sort_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -645,8 +636,8 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessRange>
         iterator_t<RandomAccessRange> is_heap_until(RandomAccessRange&& range)
         {
-            return RAH2_NAMESPACE::ranges::is_heap_until(
-                RAH2_NAMESPACE::ranges::begin(range), RAH2_NAMESPACE::ranges::end(range));
+            return RAH2_NS::ranges::is_heap_until(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
         }
 
         /// is_heap_until
@@ -672,10 +663,8 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessRange, typename Compare>
         iterator_t<RandomAccessRange> is_heap_until(RandomAccessRange&& range, Compare compare)
         {
-            return RAH2_NAMESPACE::ranges::is_heap_until(
-                RAH2_NAMESPACE::ranges::begin(range),
-                RAH2_NAMESPACE::ranges::end(range),
-                RAH2_STD::move(compare));
+            return RAH2_NS::ranges::is_heap_until(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
         }
 
         ///////////////////////////////////////////////////////////////////////
@@ -695,14 +684,14 @@ namespace RAH2_NAMESPACE
                 && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
         bool is_heap(RandomAccessIterator first, Sentinel last)
         {
-            return (RAH2_NAMESPACE::ranges::is_heap_until(first, last) == last);
+            return (RAH2_NS::ranges::is_heap_until(first, last) == last);
         }
 
         template <typename RandomAccessRange>
         bool is_heap(RandomAccessRange&& range)
         {
-            return RAH2_NAMESPACE::ranges::is_heap(
-                RAH2_NAMESPACE::ranges::begin(range), RAH2_NAMESPACE::ranges::end(range));
+            return RAH2_NS::ranges::is_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
         }
 
         /// is_heap
@@ -713,7 +702,7 @@ namespace RAH2_NAMESPACE
         template <typename RandomAccessIterator, typename Sentinel, typename Compare>
         bool is_heap(RandomAccessIterator first, Sentinel last, Compare compare)
         {
-            return (RAH2_NAMESPACE::ranges::is_heap_until(first, last, compare) == last);
+            return (RAH2_NS::ranges::is_heap_until(first, last, compare) == last);
         }
 
         template <
@@ -722,10 +711,8 @@ namespace RAH2_NAMESPACE
             RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
         bool is_heap(RandomAccessRange&& range, Compare compare)
         {
-            return RAH2_NAMESPACE::ranges::is_heap(
-                RAH2_NAMESPACE::ranges::begin(range),
-                RAH2_NAMESPACE::ranges::end(range),
-                RAH2_STD::move(compare));
+            return RAH2_NS::ranges::is_heap(
+                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
         }
     } // namespace ranges
-} // namespace RAH2_NAMESPACE
+} // namespace RAH2_NS

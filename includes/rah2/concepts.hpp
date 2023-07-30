@@ -4,14 +4,11 @@
 #define RAH2_STD ::std
 #endif
 
-#ifndef RAH2_NAMESPACE
-#define RAH2_NAMESPACE rah2
+#ifndef RAH2_NS
+#define RAH2_NS rah2
 #endif
 
-#include <utility>
-#include <type_traits>
-
-namespace RAH2_NAMESPACE
+namespace RAH2_NS
 {
 
     template <typename... Ts>
@@ -98,5 +95,5 @@ namespace RAH2_NAMESPACE
     template <typename T>                                                                          \
     using __##NAME##_impl = decltype(NEED_COMPILE);                                                \
     template <typename T>                                                                          \
-    constexpr bool(NAME) = ::RAH2_NAMESPACE::compiles<false, T, __##NAME##_impl>;
-} // namespace RAH2_NAMESPACE
+    constexpr bool(NAME) = ::RAH2_NS::compiles<false, T, __##NAME##_impl>;
+} // namespace RAH2_NS

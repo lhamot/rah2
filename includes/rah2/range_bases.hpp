@@ -5,7 +5,7 @@
 #include <cassert>
 #include <iterator>
 
-#define RAH2_ITC_NS RAH2_NAMESPACE
+#define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
 #define RAH2_ASSERT(expression) assert(expression)
 
@@ -42,7 +42,7 @@
 #define RAH2_NODISCARD
 #endif
 
-namespace RAH2_NAMESPACE
+namespace RAH2_NS
 {
     // ***************************** <type_traits> traits *****************************************
     template <class Base, class Derived>
@@ -207,12 +207,12 @@ namespace RAH2_NAMESPACE
     // ***************************** <concepts> concept *******************************************
     template <class Derived, class Base>
     constexpr bool derived_from =
-        RAH2_NAMESPACE::is_base_of_v<Base, Derived>
-        && RAH2_NAMESPACE::is_convertible_v<Derived const volatile*, Base const volatile*>;
+        RAH2_NS::is_base_of_v<Base, Derived>
+        && RAH2_NS::is_convertible_v<Derived const volatile*, Base const volatile*>;
 
     template <class T, class... Args>
     constexpr bool constructible_from =
-        RAH2_NAMESPACE::is_destructible_v<T> && RAH2_NAMESPACE::is_constructible_v<T, Args...>;
+        RAH2_NS::is_destructible_v<T> && RAH2_NS::is_constructible_v<T, Args...>;
 
     template <class From, class To, bool Diagnostic = false>
     struct convertible_to_impl
@@ -229,22 +229,21 @@ namespace RAH2_NAMESPACE
 
     template <class T>
     constexpr bool move_constructible =
-        RAH2_NAMESPACE::constructible_from<T, T> && RAH2_NAMESPACE::convertible_to<T, T>;
+        RAH2_NS::constructible_from<T, T> && RAH2_NS::convertible_to<T, T>;
 
     template <class U, typename V>
-    constexpr bool same_as = RAH2_NAMESPACE::is_same_v<U, V>;
+    constexpr bool same_as = RAH2_NS::is_same_v<U, V>;
 
     template <class LHS, class RHS, bool Diagnostic = false>
     struct assignable_from_impl
     {
         template <class LHS_>
-        using check_assign = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+        using check_assign = RAH2_STD::enable_if_t<RAH2_NS::is_same_v<
             decltype(RAH2_STD::declval<LHS_>() = RAH2_STD::forward<RHS>(RAH2_STD::declval<RHS&&>())),
             LHS_>>;
 
-        static constexpr bool value =
-            is_true_v<Diagnostic, RAH2_NAMESPACE::is_lvalue_reference_v<LHS>>
-            && compiles<Diagnostic, LHS, check_assign>;
+        static constexpr bool value = is_true_v<Diagnostic, RAH2_NS::is_lvalue_reference_v<LHS>>
+                                      && compiles<Diagnostic, LHS, check_assign>;
     };
 
     template <class LHS, class RHS>
@@ -256,23 +255,20 @@ namespace RAH2_NAMESPACE
     constexpr bool is_object_v = RAH2_STD::is_object<T>::value;
 
     template <class T>
-    constexpr bool movable =
-        RAH2_NAMESPACE::is_object_v<T> && RAH2_NAMESPACE::move_constructible<T>
-        && RAH2_NAMESPACE::assignable_from<T&, T> && RAH2_NAMESPACE::swappable<T>;
+    constexpr bool movable = RAH2_NS::is_object_v<T> && RAH2_NS::move_constructible<T>
+                             && RAH2_NS::assignable_from<T&, T> && RAH2_NS::swappable<T>;
 
     template <class T>
     constexpr bool copy_constructible =
-        RAH2_NAMESPACE::move_constructible<T> && RAH2_NAMESPACE::constructible_from<T, T&>
-        && RAH2_NAMESPACE::convertible_to<T&, T> && RAH2_NAMESPACE::constructible_from<T, T const&>
-        && RAH2_NAMESPACE::convertible_to<T const&, T>
-        && RAH2_NAMESPACE::constructible_from<T, T const>
-        && RAH2_NAMESPACE::convertible_to<T const, T>;
+        RAH2_NS::move_constructible<T> && RAH2_NS::constructible_from<T, T&>
+        && RAH2_NS::convertible_to<T&, T> && RAH2_NS::constructible_from<T, T const&>
+        && RAH2_NS::convertible_to<T const&, T> && RAH2_NS::constructible_from<T, T const>
+        && RAH2_NS::convertible_to<T const, T>;
 
     template <class T>
     constexpr bool copyable =
-        RAH2_NAMESPACE::copy_constructible<T> && RAH2_NAMESPACE::movable<T>
-        && RAH2_NAMESPACE::assignable_from<T&, T&> && RAH2_NAMESPACE::assignable_from<T&, T const&>
-        && RAH2_NAMESPACE::assignable_from<T&, T const>;
+        RAH2_NS::copy_constructible<T> && RAH2_NS::movable<T> && RAH2_NS::assignable_from<T&, T&>
+        && RAH2_NS::assignable_from<T&, T const&> && RAH2_NS::assignable_from<T&, T const>;
 
     template <typename T, bool Diagnostic = false>
     struct default_initializable_impl
@@ -280,15 +276,14 @@ namespace RAH2_NAMESPACE
         template <typename T2>
         using default_ctor = decltype(T2{});
 
-        constexpr static bool value = is_true_v<Diagnostic, RAH2_NAMESPACE::constructible_from<T>>
+        constexpr static bool value = is_true_v<Diagnostic, RAH2_NS::constructible_from<T>>
                                       && compiles<Diagnostic, T, default_ctor>;
     };
     template <typename T>
     constexpr bool default_initializable = default_initializable_impl<T>::value;
 
     template <class T>
-    constexpr bool semiregular =
-        RAH2_NAMESPACE::copyable<T> && RAH2_NAMESPACE::default_initializable<T>;
+    constexpr bool semiregular = RAH2_NS::copyable<T> && RAH2_NS::default_initializable<T>;
 
     namespace details
     {
@@ -313,7 +308,7 @@ namespace RAH2_NAMESPACE
     constexpr bool regular = semiregular<T> && equality_comparable<T>;
 
     template <class T>
-    constexpr bool destructible = RAH2_NAMESPACE::is_nothrow_destructible_v<T>;
+    constexpr bool destructible = RAH2_NS::is_nothrow_destructible_v<T>;
 
     namespace details
     {
@@ -353,7 +348,7 @@ namespace RAH2_NAMESPACE
     struct totally_ordered_impl
     {
         static constexpr bool value =
-            is_true_v<Diagnostic, RAH2_NAMESPACE::equality_comparable<T>>
+            is_true_v<Diagnostic, RAH2_NS::equality_comparable<T>>
             && details::partially_ordered_with_impl<T, T, Diagnostic>::value;
     };
 
@@ -411,8 +406,8 @@ namespace RAH2_NAMESPACE
     {
         template <typename I>
         using iterator_category = std::conditional_t<
-            RAH2_NAMESPACE::is_pointer_v<I>,
-            RAH2_NAMESPACE::contiguous_iterator_tag,
+            RAH2_NS::is_pointer_v<I>,
+            RAH2_NS::contiguous_iterator_tag,
             typename RAH2_STD::iterator_traits<I>::iterator_category>;
 
     } // namespace details
@@ -443,10 +438,10 @@ namespace RAH2_NAMESPACE
         using has_rval_ref = iter_rvalue_reference_t<T>;
         template <class T>
         using deref = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::is_same_v<decltype(*RAH2_STD::declval<T>()), iter_reference_t<T>>>;
+            RAH2_NS::is_same_v<decltype(*RAH2_STD::declval<T>()), iter_reference_t<T>>>;
         template <class T>
         using itermove = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::is_same_v<decltype(iter_move(RAH2_STD::declval<T>())), iter_rvalue_reference_t<T>>>;
+            RAH2_NS::is_same_v<decltype(iter_move(RAH2_STD::declval<T>())), iter_rvalue_reference_t<T>>>;
 
         // TODO re-add checks
         static constexpr bool value =
@@ -465,10 +460,10 @@ namespace RAH2_NAMESPACE
     struct indirectly_movable_impl
     {
         template <typename In2>
-        using indirectly_writable = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::indirectly_writable<Out, RAH2_NAMESPACE::iter_rvalue_reference_t<In2>>>;
+        using indirectly_writable =
+            RAH2_STD::enable_if_t<RAH2_NS::indirectly_writable<Out, RAH2_NS::iter_rvalue_reference_t<In2>>>;
 
-        static constexpr bool value = is_true_v<Diagnostic, RAH2_NAMESPACE::indirectly_readable<In>>
+        static constexpr bool value = is_true_v<Diagnostic, RAH2_NS::indirectly_readable<In>>
                                       && compiles<Diagnostic, In, indirectly_writable>;
     };
 
@@ -479,25 +474,22 @@ namespace RAH2_NAMESPACE
     struct indirectly_movable_storable_impl
     {
         template <typename In2>
-        using indirectly_writable = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::indirectly_writable<Out, RAH2_NAMESPACE::iter_value_t<In2>>>;
+        using indirectly_writable =
+            RAH2_STD::enable_if_t<RAH2_NS::indirectly_writable<Out, RAH2_NS::iter_value_t<In2>>>;
         template <typename In2>
-        using movable =
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::movable<RAH2_NAMESPACE::iter_value_t<In2>>>;
+        using movable = RAH2_STD::enable_if_t<RAH2_NS::movable<RAH2_NS::iter_value_t<In2>>>;
         template <typename In2>
-        using constructible_from = RAH2_STD::enable_if_t<RAH2_NAMESPACE::constructible_from<
-            RAH2_NAMESPACE::iter_value_t<In2>,
-            RAH2_NAMESPACE::iter_rvalue_reference_t<In2>>>;
+        using constructible_from = RAH2_STD::enable_if_t<
+            RAH2_NS::constructible_from<RAH2_NS::iter_value_t<In2>, RAH2_NS::iter_rvalue_reference_t<In2>>>;
         template <typename In2>
-        using assignable_from = RAH2_STD::enable_if_t<RAH2_NAMESPACE::assignable_from<
-            RAH2_NAMESPACE::iter_value_t<In2>&,
-            RAH2_NAMESPACE::iter_rvalue_reference_t<In2>>>;
+        using assignable_from = RAH2_STD::enable_if_t<
+            RAH2_NS::assignable_from<RAH2_NS::iter_value_t<In2>&, RAH2_NS::iter_rvalue_reference_t<In2>>>;
 
-        static constexpr bool value =
-            RAH2_NAMESPACE::indirectly_movable_impl<In, Out, Diagnostic>::value
-            && compiles<Diagnostic, In, indirectly_writable> && compiles<Diagnostic, In, movable>
-            && compiles<Diagnostic, In, constructible_from>
-            && compiles<Diagnostic, In, assignable_from>;
+        static constexpr bool value = RAH2_NS::indirectly_movable_impl<In, Out, Diagnostic>::value
+                                      && compiles<Diagnostic, In, indirectly_writable>
+                                      && compiles<Diagnostic, In, movable>
+                                      && compiles<Diagnostic, In, constructible_from>
+                                      && compiles<Diagnostic, In, assignable_from>;
     };
 
     template <class In, class Out>
@@ -507,21 +499,21 @@ namespace RAH2_NAMESPACE
     struct indirectly_swappable_impl
     {
         template <class U1>
-        using can_swap_1_1 = decltype(RAH2_NAMESPACE::ranges::iter_swap(
+        using can_swap_1_1 = decltype(RAH2_NS::ranges::iter_swap(
             RAH2_STD::declval<U1 const>(), RAH2_STD::declval<U1 const>()));
         template <class U1>
-        using can_swap_1_2 = decltype(RAH2_NAMESPACE::ranges::iter_swap(
+        using can_swap_1_2 = decltype(RAH2_NS::ranges::iter_swap(
             RAH2_STD::declval<U1 const>(), RAH2_STD::declval<I2 const>()));
         template <class U1>
-        using can_swap_2_1 = decltype(RAH2_NAMESPACE::ranges::iter_swap(
+        using can_swap_2_1 = decltype(RAH2_NS::ranges::iter_swap(
             RAH2_STD::declval<I1 const>(), RAH2_STD::declval<U1 const>()));
         template <class U2>
-        using can_swap_2_2 = decltype(RAH2_NAMESPACE::ranges::iter_swap(
+        using can_swap_2_2 = decltype(RAH2_NS::ranges::iter_swap(
             RAH2_STD::declval<U2 const>(), RAH2_STD::declval<U2 const>()));
 
         static constexpr bool value =
-            is_true_v<Diagnostic, RAH2_NAMESPACE::indirectly_readable<I1>>
-            && is_true_v<Diagnostic, RAH2_NAMESPACE::indirectly_readable<I2>>
+            is_true_v<Diagnostic, RAH2_NS::indirectly_readable<I1>>
+            && is_true_v<Diagnostic, RAH2_NS::indirectly_readable<I2>>
             && compiles<Diagnostic, I1, can_swap_1_1> && compiles<Diagnostic, I1, can_swap_1_2>
             && compiles<Diagnostic, I1, can_swap_2_1> && compiles<Diagnostic, I2, can_swap_2_2>;
     };
@@ -533,11 +525,10 @@ namespace RAH2_NAMESPACE
     {
         template <class T>
         using diff_is_signed_integer = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::is_integral_v<iter_difference_t<T>>
-            && RAH2_NAMESPACE::is_signed_v<iter_difference_t<T>>>;
+            RAH2_NS::is_integral_v<iter_difference_t<T>> && RAH2_NS::is_signed_v<iter_difference_t<T>>>;
         template <class T>
         using incr_type =
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(++RAH2_STD::declval<T>()), T&>>;
+            RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(++RAH2_STD::declval<T>()), T&>>;
 
         template <class T>
         using can_post_incr = decltype(RAH2_STD::declval<T&>()++);
@@ -555,7 +546,7 @@ namespace RAH2_NAMESPACE
     {
         template <typename U>
         using check_incr =
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(RAH2_STD::declval<U&>()++), U>>;
+            RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()++), U>>;
 
         static constexpr bool value = is_true_v<Diagnostic, regular<I>>
                                       && weakly_incrementable_impl<I, Diagnostic>::value
@@ -569,7 +560,7 @@ namespace RAH2_NAMESPACE
     {
         template <class T>
         using can_ref =
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::is_same_v<decltype(*RAH2_STD::declval<T>()), void>>;
+            RAH2_STD::enable_if_t<not RAH2_NS::is_same_v<decltype(*RAH2_STD::declval<T>()), void>>;
 
         static constexpr bool value =
             weakly_incrementable_impl<R, Diagnostic>::value && compiles<Diagnostic, R, can_ref>;
@@ -584,10 +575,9 @@ namespace RAH2_NAMESPACE
         template <typename U>
         using can_assign_incr = decltype(*RAH2_STD::declval<U&>()++ = RAH2_STD::declval<T&&>());
 
-        static constexpr bool value =
-            is_true_v<Diagnostic, RAH2_NAMESPACE::input_or_output_iterator<I>>
-            && RAH2_NAMESPACE::indirectly_writable_impl<I, T, Diagnostic>::value
-            && RAH2_NAMESPACE::compiles<Diagnostic, I, can_assign_incr>;
+        static constexpr bool value = is_true_v<Diagnostic, RAH2_NS::input_or_output_iterator<I>>
+                                      && RAH2_NS::indirectly_writable_impl<I, T, Diagnostic>::value
+                                      && RAH2_NS::compiles<Diagnostic, I, can_assign_incr>;
     };
 
     template <class I, class T>
@@ -598,7 +588,7 @@ namespace RAH2_NAMESPACE
     {
         template <typename I2>
         using derived_from_input = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::derived_from<details::iterator_category<I2>, RAH2_STD::input_iterator_tag>>;
+            RAH2_NS::derived_from<details::iterator_category<I2>, RAH2_STD::input_iterator_tag>>;
 
         static constexpr bool value = is_true_v<Diagnostic, input_or_output_iterator<I>>
                                       && indirectly_readable_impl<I, Diagnostic>::value
@@ -613,8 +603,8 @@ namespace RAH2_NAMESPACE
     struct sentinel_for_impl
     {
         static constexpr bool value =
-            is_true_v<Diagnostic, RAH2_NAMESPACE::semiregular<S>>
-            && is_true_v<Diagnostic, RAH2_NAMESPACE::input_or_output_iterator<I>>
+            is_true_v<Diagnostic, RAH2_NS::semiregular<S>>
+            && is_true_v<Diagnostic, RAH2_NS::input_or_output_iterator<I>>
             && details::weakly_equality_comparable_with_impl<I, S, Diagnostic>::value;
     };
 
@@ -639,8 +629,8 @@ namespace RAH2_NAMESPACE
 
     template <class I>
     constexpr bool permutable =
-        RAH2_NAMESPACE::forward_iterator<I> && RAH2_NAMESPACE::indirectly_movable_storable<I, I>
-        && RAH2_NAMESPACE::indirectly_swappable<I, I>;
+        RAH2_NS::forward_iterator<I> && RAH2_NS::indirectly_movable_storable<I, I>
+        && RAH2_NS::indirectly_swappable<I, I>;
 
     template <class S, class I, bool Diagnostic = false>
     static constexpr bool disable_sized_sentinel_for = false;
@@ -652,10 +642,10 @@ namespace RAH2_NAMESPACE
         using less_s_i =
             decltype(RAH2_STD::declval<S2>() - RAH2_STD::declval<I>(), RAH2_STD::declval<I>() - RAH2_STD::declval<S2>());
         static constexpr bool value =
-            RAH2_NAMESPACE::sentinel_for_impl<S, I, Diagnostic>::value
+            RAH2_NS::sentinel_for_impl<S, I, Diagnostic>::value
             && is_true_v<
                 Diagnostic,
-                !RAH2_NAMESPACE::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<S>, RAH2_STD::remove_cv_t<I>>>
+                !RAH2_NS::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<S>, RAH2_STD::remove_cv_t<I>>>
             && compiles<Diagnostic, S, less_s_i>;
     };
     template <class S, class I>
@@ -666,10 +656,10 @@ namespace RAH2_NAMESPACE
     {
         template <typename U>
         using can_pre_decr =
-            std::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(--RAH2_STD::declval<U&>()), U&>>;
+            std::enable_if_t<RAH2_NS::is_same_v<decltype(--RAH2_STD::declval<U&>()), U&>>;
         template <typename U>
         using can_post_decr =
-            std::enable_if_t<RAH2_NAMESPACE::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
+            std::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
         template <typename U>
         using has_bidir_cat = RAH2_STD::enable_if_t<
             derived_from<details::iterator_category<U>, RAH2_STD::bidirectional_iterator_tag>>;
@@ -685,44 +675,39 @@ namespace RAH2_NAMESPACE
     struct random_access_iterator_impl
     {
         template <typename U>
-        using addEqual = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U&>() += RAH2_NAMESPACE::iter_difference_t<U>()),
-            U&>>;
+        using addEqual = RAH2_STD::enable_if_t<
+            RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>() += RAH2_NS::iter_difference_t<U>()), U&>>;
 
         template <typename U>
-        using add = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U>() + RAH2_NAMESPACE::iter_difference_t<U>()),
-            U>>;
+        using add = RAH2_STD::enable_if_t<
+            RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U>() + RAH2_NS::iter_difference_t<U>()), U>>;
 
         template <typename U>
-        using add2 = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_NAMESPACE::iter_difference_t<U>() + RAH2_STD::declval<U>()),
-            U>>;
+        using add2 = RAH2_STD::enable_if_t<
+            RAH2_NS::is_same_v<decltype(RAH2_NS::iter_difference_t<U>() + RAH2_STD::declval<U>()), U>>;
 
         template <typename U>
-        using subEqual = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U&>() -= RAH2_NAMESPACE::iter_difference_t<U>()),
-            U&>>;
+        using subEqual = RAH2_STD::enable_if_t<
+            RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>() -= RAH2_NS::iter_difference_t<U>()), U&>>;
 
         template <typename U>
-        using sub = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U>() - RAH2_NAMESPACE::iter_difference_t<U>()),
-            U>>;
+        using sub = RAH2_STD::enable_if_t<
+            RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U>() - RAH2_NS::iter_difference_t<U>()), U>>;
 
         template <typename U>
-        using arr = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
-            decltype(RAH2_STD::declval<U>()[RAH2_NAMESPACE::iter_difference_t<U>()]),
-            RAH2_NAMESPACE::iter_reference_t<U>>>;
+        using arr = RAH2_STD::enable_if_t<RAH2_NS::is_same_v<
+            decltype(RAH2_STD::declval<U>()[RAH2_NS::iter_difference_t<U>()]),
+            RAH2_NS::iter_reference_t<U>>>;
 
         template <typename U>
         using has_random_access_cat = RAH2_STD::enable_if_t<
-            RAH2_NAMESPACE::derived_from<details::iterator_category<U>, RAH2_STD::random_access_iterator_tag>>;
+            RAH2_NS::derived_from<details::iterator_category<U>, RAH2_STD::random_access_iterator_tag>>;
 
         static constexpr bool value =
-            RAH2_NAMESPACE::bidirectional_iterator_impl<I, Diagnostic>::value
+            RAH2_NS::bidirectional_iterator_impl<I, Diagnostic>::value
             && compiles<Diagnostic, I, has_random_access_cat>
-            && RAH2_NAMESPACE::totally_ordered_impl<I, Diagnostic>::value
-            && RAH2_NAMESPACE::sized_sentinel_for_impl<I, I, Diagnostic>::value
+            && RAH2_NS::totally_ordered_impl<I, Diagnostic>::value
+            && RAH2_NS::sized_sentinel_for_impl<I, I, Diagnostic>::value
             && compiles<Diagnostic, I, addEqual> && compiles<Diagnostic, I, add>
             && compiles<Diagnostic, I, add2> && compiles<Diagnostic, I, subEqual>
             && compiles<Diagnostic, I, sub> && compiles<Diagnostic, I, arr>;
@@ -734,24 +719,20 @@ namespace RAH2_NAMESPACE
     struct contiguous_iterator_impl
     {
         static constexpr bool value =
-            RAH2_NAMESPACE::random_access_iterator_impl<I, Diagnostic>::value
+            RAH2_NS::random_access_iterator_impl<I, Diagnostic>::value
+            && is_true_v<Diagnostic, RAH2_NS::derived_from<details::iterator_category<I>, RAH2_NS::contiguous_iterator_tag>>
+            && is_true_v<Diagnostic, RAH2_NS::is_lvalue_reference_v<RAH2_NS::iter_reference_t<I>>>
             && is_true_v<
                 Diagnostic,
-                RAH2_NAMESPACE::derived_from<details::iterator_category<I>, RAH2_NAMESPACE::contiguous_iterator_tag>>
-            && is_true_v<Diagnostic, RAH2_NAMESPACE::is_lvalue_reference_v<RAH2_NAMESPACE::iter_reference_t<I>>>
-            && is_true_v<
-                Diagnostic,
-                RAH2_NAMESPACE::same_as<
-                    RAH2_NAMESPACE::iter_value_t<I>,
-                    RAH2_NAMESPACE::remove_cvref_t<RAH2_NAMESPACE::iter_reference_t<I>>>>;
+                RAH2_NS::same_as<RAH2_NS::iter_value_t<I>, RAH2_NS::remove_cvref_t<RAH2_NS::iter_reference_t<I>>>>;
     };
     template <typename I>
     static constexpr bool contiguous_iterator = contiguous_iterator_impl<I>::value;
 
     template <class In, class Out>
     constexpr bool indirectly_copyable =
-        RAH2_NAMESPACE::indirectly_readable<In>
-        && RAH2_NAMESPACE::indirectly_writable<Out, RAH2_NAMESPACE::iter_reference_t<In>>;
+        RAH2_NS::indirectly_readable<In>
+        && RAH2_NS::indirectly_writable<Out, RAH2_NS::iter_reference_t<In>>;
 
     // **************************** <ranges> access ***********************************************
     namespace ranges
@@ -894,7 +875,7 @@ namespace RAH2_NAMESPACE
         {
             template <typename U>
             using iter_is_sent =
-                RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<iterator_t<U>, sentinel_t<U>>>;
+                RAH2_STD::enable_if_t<RAH2_NS::is_same_v<iterator_t<U>, sentinel_t<U>>>;
 
             static constexpr bool value =
                 range_impl<T, Diagnostic>::value && compiles<Diagnostic, T, iter_is_sent>;
@@ -1085,17 +1066,16 @@ namespace RAH2_NAMESPACE
 
         // **************************** <ranges> traits ***********************************************
         template <typename A, typename B>
-        using common_iterator_tag =
-            RAH2_STD::conditional_t<RAH2_NAMESPACE::derived_from<A, B>, B, A>;
+        using common_iterator_tag = RAH2_STD::conditional_t<RAH2_NS::derived_from<A, B>, B, A>;
 
         template <typename A, typename B>
-        using max_iterator_tag = RAH2_STD::conditional_t<RAH2_NAMESPACE::derived_from<A, B>, A, B>;
+        using max_iterator_tag = RAH2_STD::conditional_t<RAH2_NS::derived_from<A, B>, A, B>;
 
         template <typename Cat, typename MinCat, typename MaxCat>
         using cap_iterator_tag = max_iterator_tag<common_iterator_tag<Cat, MaxCat>, MinCat>;
 
         //template <typename T>
-        //using iterator_t = decltype(RAH2_NAMESPACE::ranges::begin(RAH2_STD::declval<T>()));
+        //using iterator_t = decltype(RAH2_NS::ranges::begin(RAH2_STD::declval<T>()));
 
         template <typename T>
         using const_iterator_t = decltype(cbegin(RAH2_STD::declval<T>()));
@@ -1107,19 +1087,19 @@ namespace RAH2_NAMESPACE
         using range_size_t = decltype(size(RAH2_STD::declval<R&>()));
 
         template <typename R>
-        using range_difference_t = RAH2_NAMESPACE::iter_difference_t<iterator_t<R>>;
+        using range_difference_t = RAH2_NS::iter_difference_t<iterator_t<R>>;
 
         template <typename R>
-        using range_value_t = RAH2_NAMESPACE::iter_value_t<iterator_t<R>>;
+        using range_value_t = RAH2_NS::iter_value_t<iterator_t<R>>;
 
         template <typename R>
-        using range_reference_t = RAH2_NAMESPACE::iter_reference_t<iterator_t<R>>;
+        using range_reference_t = RAH2_NS::iter_reference_t<iterator_t<R>>;
 
         template <typename R>
-        using range_const_reference_t = RAH2_NAMESPACE::iter_const_reference_t<iterator_t<R>>;
+        using range_const_reference_t = RAH2_NS::iter_const_reference_t<iterator_t<R>>;
 
         template <typename R>
-        using range_rvalue_reference_t = RAH2_NAMESPACE::iter_rvalue_reference_t<iterator_t<R>>;
+        using range_rvalue_reference_t = RAH2_NS::iter_rvalue_reference_t<iterator_t<R>>;
 
         template <typename R>
         using range_iter_categ_t =
@@ -1132,7 +1112,7 @@ namespace RAH2_NAMESPACE
         template <class R>
         constexpr bool borrowed_range =
             range<R>
-            && (RAH2_NAMESPACE::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
+            && (RAH2_NS::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
 
         template <typename T, bool Diagnostic = false>
         struct sized_range_impl
@@ -1157,8 +1137,7 @@ namespace RAH2_NAMESPACE
             derived_from<R, view_base> || derived_from<R, view_interface<R>>;
 
         template <typename T>
-        constexpr bool view =
-            range<T> && RAH2_NAMESPACE::movable<T> && RAH2_NAMESPACE::ranges::enable_view<T>;
+        constexpr bool view = range<T> && RAH2_NS::movable<T> && RAH2_NS::ranges::enable_view<T>;
 
         template <class R, class T, bool Diagnostic = false>
         struct output_range_impl
@@ -1243,12 +1222,12 @@ namespace RAH2_NAMESPACE
         struct contiguous_range_impl
         {
             template <typename T>
-            using has_data = RAH2_STD::enable_if_t<RAH2_NAMESPACE::is_same_v<
+            using has_data = RAH2_STD::enable_if_t<RAH2_NS::is_same_v<
                 decltype(data(RAH2_STD::declval<T>())),
                 RAH2_STD::add_pointer_t<range_reference_t<T>>>>;
             template <typename T>
-            using contiguous_iterator = RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::contiguous_iterator_impl<iterator_t<T>, Diagnostic>::value>;
+            using contiguous_iterator =
+                RAH2_STD::enable_if_t<RAH2_NS::contiguous_iterator_impl<iterator_t<T>, Diagnostic>::value>;
 
             static constexpr bool value = random_access_range_impl<R, Diagnostic>::value
                                           && compiles<Diagnostic, R, contiguous_iterator>
@@ -1264,7 +1243,7 @@ namespace RAH2_NAMESPACE
             template <class U>
             static constexpr bool constant_iterator =
                 input_iterator<U>
-                && RAH2_NAMESPACE::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
+                && RAH2_NS::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
 
             template <typename U>
             using const_iter = RAH2_STD::enable_if_t<constant_iterator<iterator_t<U>>>;
@@ -1279,11 +1258,11 @@ namespace RAH2_NAMESPACE
         template <class T>
         constexpr bool viewable_range =
             range<T>
-            && ((RAH2_NAMESPACE::ranges::view<RAH2_NAMESPACE::remove_cvref_t<T>>
-                 && RAH2_NAMESPACE::constructible_from<RAH2_NAMESPACE::remove_cvref_t<T>, T>)
-                || (!RAH2_NAMESPACE::ranges::view<RAH2_NAMESPACE::remove_cvref_t<T>>
-                    && (RAH2_NAMESPACE::is_lvalue_reference_v<T>
-                        || (RAH2_NAMESPACE::movable<RAH2_STD::remove_reference_t<T>>
+            && ((RAH2_NS::ranges::view<RAH2_NS::remove_cvref_t<T>>
+                 && RAH2_NS::constructible_from<RAH2_NS::remove_cvref_t<T>, T>)
+                || (!RAH2_NS::ranges::view<RAH2_NS::remove_cvref_t<T>>
+                    && (RAH2_NS::is_lvalue_reference_v<T>
+                        || (RAH2_NS::movable<RAH2_STD::remove_reference_t<T>>
                             && !is_initializer_list<T>))));
 
         // ******************************* ranges views ***********************************************
@@ -1321,7 +1300,7 @@ namespace RAH2_NAMESPACE
         {
             I iterator_;
             S sentinel_;
-            using iter_cat = RAH2_NAMESPACE::details::iterator_category<I>;
+            using iter_cat = RAH2_NS::details::iterator_category<I>;
 
         public:
             subrange() = default;
@@ -1341,8 +1320,7 @@ namespace RAH2_NAMESPACE
             }
             template <
                 typename Cat = iter_cat,
-                RAH2_STD::enable_if_t<
-                    RAH2_NAMESPACE::derived_from<Cat, RAH2_NAMESPACE::contiguous_iterator_tag>>* = nullptr>
+                RAH2_STD::enable_if_t<RAH2_NS::derived_from<Cat, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
             auto data()
             {
                 return &(*iterator_);
@@ -1381,25 +1359,23 @@ namespace RAH2_NAMESPACE
         };
 
         template <typename R>
-        using borrowed_iterator_t = RAH2_STD::conditional_t<
-            RAH2_NAMESPACE::ranges::borrowed_range<R>,
-            iterator_t<R>,
-            RAH2_NAMESPACE::ranges::dangling>;
+        using borrowed_iterator_t =
+            RAH2_STD::conditional_t<RAH2_NS::ranges::borrowed_range<R>, iterator_t<R>, RAH2_NS::ranges::dangling>;
 
         template <typename R>
         using borrowed_subrange_t = RAH2_STD::conditional_t<
-            RAH2_NAMESPACE::ranges::borrowed_range<R>,
-            RAH2_NAMESPACE::ranges::subrange<iterator_t<R>>,
-            RAH2_NAMESPACE::ranges::dangling>;
+            RAH2_NS::ranges::borrowed_range<R>,
+            RAH2_NS::ranges::subrange<iterator_t<R>>,
+            RAH2_NS::ranges::dangling>;
 
         // ***************************** <iterator> functions *****************************************
         template <
             typename I,
             typename S,
             RAH2_STD::enable_if_t<
-                !RAH2_NAMESPACE::sized_sentinel_for<S, I>
-                && RAH2_NAMESPACE::details::weakly_equality_comparable_with<S, I>>* = nullptr>
-        RAH2_NAMESPACE::iter_difference_t<I> distance(I first, S last)
+                !RAH2_NS::sized_sentinel_for<S, I>
+                && RAH2_NS::details::weakly_equality_comparable_with<S, I>>* = nullptr>
+        RAH2_NS::iter_difference_t<I> distance(I first, S last)
         {
             iter_difference_t<I> len = 0;
             for (; first != last; ++first, ++len)
@@ -1408,7 +1384,7 @@ namespace RAH2_NAMESPACE
             return len;
         }
 
-        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
         auto distance(I first, S last)
         {
             return last - first;
@@ -1416,10 +1392,10 @@ namespace RAH2_NAMESPACE
         template <typename R>
         auto distance(R&& r)
         {
-            return RAH2_NAMESPACE::ranges::distance(begin(r), end(r));
+            return RAH2_NS::ranges::distance(begin(r), end(r));
         }
 
-        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
         constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
         {
             // RAH2_STD::abs is not constexpr until C++23
@@ -1449,8 +1425,8 @@ namespace RAH2_NAMESPACE
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+            RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr>
         constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
         {
             while (n > 0 && i != bound)
@@ -1471,8 +1447,8 @@ namespace RAH2_NAMESPACE
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
+            RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
         constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
         {
             while (n > 0 && i != bound)
@@ -1486,9 +1462,9 @@ namespace RAH2_NAMESPACE
 
         template <
             typename I,
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr>
-        constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
+            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
+        constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
         {
             while (n > 0)
             {
@@ -1499,9 +1475,9 @@ namespace RAH2_NAMESPACE
 
         template <
             typename I,
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::bidirectional_iterator<I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
-        constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
+            RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NS::random_access_iterator<I>>* = nullptr>
+        constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
         {
             while (n > 0)
             {
@@ -1516,8 +1492,8 @@ namespace RAH2_NAMESPACE
             }
         }
 
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::random_access_iterator<I>>* = nullptr>
-        constexpr void advance(I& i, RAH2_NAMESPACE::iter_difference_t<I> n)
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<I>>* = nullptr>
+        constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
         {
             i += n;
         }
@@ -1525,9 +1501,8 @@ namespace RAH2_NAMESPACE
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NS::assignable_from<I&, S>>* = nullptr>
         constexpr void advance(I& i, S bound)
         {
             i = RAH2_STD::move(bound);
@@ -1536,10 +1511,9 @@ namespace RAH2_NAMESPACE
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
+            RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
         constexpr void advance(I& i, S bound)
         {
             advance(i, bound - i);
@@ -1548,56 +1522,52 @@ namespace RAH2_NAMESPACE
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::assignable_from<I&, S>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NAMESPACE::sized_sentinel_for<S, I>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
+            RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
         constexpr void advance(I& i, S bound)
         {
             while (i != bound)
                 ++i;
         }
 
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
         constexpr I next(I i)
         {
             ++i;
             return i;
         }
 
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NAMESPACE::input_or_output_iterator<I>>* = nullptr>
-        constexpr I next(I i, RAH2_NAMESPACE::iter_difference_t<I> n)
+        template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
+        constexpr I next(I i, RAH2_NS::iter_difference_t<I> n)
         {
-            RAH2_NAMESPACE::ranges::advance(i, n);
+            RAH2_NS::ranges::advance(i, n);
             return i;
         }
 
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
         constexpr I next(I i, S bound)
         {
-            static_assert(RAH2_NAMESPACE::semiregular<S>, "RAH2_NAMESPACE::semiregular<S>");
+            static_assert(RAH2_NS::semiregular<S>, "RAH2_NS::semiregular<S>");
             static_assert(
-                RAH2_NAMESPACE::input_or_output_iterator<I>,
-                "RAH2_NAMESPACE::input_or_output_iterator<I>");
+                RAH2_NS::input_or_output_iterator<I>, "RAH2_NS::input_or_output_iterator<I>");
             static_assert(
-                RAH2_NAMESPACE::details::weakly_equality_comparable_with<I, S>,
+                RAH2_NS::details::weakly_equality_comparable_with<I, S>,
                 "weakly_equality_comparable_with<I, S>");
-            RAH2_NAMESPACE::ranges::advance(i, bound);
+            RAH2_NS::ranges::advance(i, bound);
             return i;
         }
 
         template <
             typename I,
             typename S,
-            RAH2_STD::enable_if_t<
-                RAH2_NAMESPACE::input_or_output_iterator<I> && RAH2_NAMESPACE::sentinel_for<S, I>>* = nullptr>
-        constexpr I next(I i, RAH2_NAMESPACE::iter_difference_t<I> n, S bound)
+            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
+        constexpr I next(I i, RAH2_NS::iter_difference_t<I> n, S bound)
         {
-            RAH2_NAMESPACE::ranges::advance(i, n, bound);
+            RAH2_NS::ranges::advance(i, n, bound);
             return i;
         }
 
@@ -1699,7 +1669,7 @@ namespace RAH2_NAMESPACE
                 new (get_ptr()) T(RAH2_STD::move(other));
             }
             template <typename... Args>
-            explicit optional(RAH2_NAMESPACE::in_place_t, Args&&... args)
+            explicit optional(RAH2_NS::in_place_t, Args&&... args)
                 : is_allocated_(true)
             {
                 new (get_ptr()) T(RAH2_STD::forward<Args>(args)...);
@@ -1781,8 +1751,8 @@ namespace RAH2_NAMESPACE
             {
                 value().~T();
             }
-            RAH2_STD::aligned_storage_t<sizeof(T), RAH2_NAMESPACE::alignment_of_v<T>> value_{};
+            RAH2_STD::aligned_storage_t<sizeof(T), RAH2_NS::alignment_of_v<T>> value_{};
             bool is_allocated_ = false;
         };
     } // namespace details
-} // namespace RAH2_NAMESPACE
+} // namespace RAH2_NS

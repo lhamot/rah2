@@ -119,7 +119,7 @@ public:
     };
 
     using ref_type =
-        std::conditional_t<RAH2_NAMESPACE::is_same_v<Cat, std::output_iterator_tag>, int&, int const&>;
+        std::conditional_t<RAH2_NS::is_same_v<Cat, std::output_iterator_tag>, int&, int const&>;
 
     class iterator : public rah2::ranges::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
@@ -236,17 +236,13 @@ public:
         auto const rounded_last = ((last_index + (step_ - 1)) / step_) * step_;
         return iterator(start_ + rounded_last, step_);
     }
-    template <
-        typename C = Cat,
-        std::enable_if_t<RAH2_NAMESPACE::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
+    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
     RAH2_STD::remove_reference_t<ref_type>* data()
     {
         return nullptr;
     }
 
-    template <
-        typename C = Cat,
-        std::enable_if_t<RAH2_NAMESPACE::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
+    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
     RAH2_STD::remove_reference_t<ref_type>* data() const
     {
         return nullptr;
@@ -365,17 +361,13 @@ public:
     {
         return iterator(rah2::ranges::end(base_));
     }
-    template <
-        typename C = Cat,
-        std::enable_if_t<RAH2_NAMESPACE::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
+    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
     int* data()
     {
         return rah2::ranges::data(base_);
     }
 
-    template <
-        typename C = Cat,
-        std::enable_if_t<RAH2_NAMESPACE::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
+    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, rah2::contiguous_iterator_tag>>* = nullptr>
     int* data() const
     {
         return rah2::ranges::data(base_);
@@ -403,8 +395,7 @@ auto make_test_view_adapter(Range&& r)
 // output
 using OutputCommonView = test_view<Common, std::output_iterator_tag, false>;
 static_assert(
-    rah2::input_or_output_iterator<RAH2_NAMESPACE::ranges::iterator_t<OutputCommonView>>,
-    "Should be input");
+    rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<OutputCommonView>>, "Should be input");
 static_assert(not rah2::ranges::input_range<OutputCommonView>, "Should be input");
 static_assert(rah2::ranges::output_range<OutputCommonView, int>, "Should be output");
 static_assert(not rah2::input_or_output_iterator<OutputCommonView>, "Should be input");
@@ -416,8 +407,7 @@ static_assert(not rah2::ranges::contiguous_range<OutputCommonView>, "Should not 
 // input
 using InputCommonView = test_view<Common, std::input_iterator_tag, false>;
 static_assert(
-    rah2::input_or_output_iterator<RAH2_NAMESPACE::ranges::iterator_t<InputCommonView>>,
-    "Should be input");
+    rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<InputCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<InputCommonView>, "Should be input");
 static_assert(not rah2::ranges::output_range<InputCommonView, int>, "Should not be output");
 static_assert(not rah2::ranges::forward_range<InputCommonView>, "Should be Forward");
@@ -428,7 +418,7 @@ static_assert(not rah2::ranges::contiguous_range<InputCommonView>, "Should not b
 // Forward
 using ForwardCommonView = test_view<Common, std::forward_iterator_tag, false>;
 static_assert(
-    rah2::input_or_output_iterator<RAH2_NAMESPACE::ranges::iterator_t<ForwardCommonView>>,
+    rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<ForwardCommonView>>,
     "Should be input");
 static_assert(rah2::ranges::input_range<ForwardCommonView>, "Should be input");
 static_assert(not rah2::ranges::output_range<ForwardCommonView, int>, "Should not be output");
@@ -440,8 +430,7 @@ static_assert(not rah2::ranges::contiguous_range<ForwardCommonView>, "Should not
 // bidirectional
 using BidirCommonView = test_view<Common, std::bidirectional_iterator_tag, false>;
 static_assert(
-    rah2::input_or_output_iterator<RAH2_NAMESPACE::ranges::iterator_t<BidirCommonView>>,
-    "Should be input");
+    rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<BidirCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<BidirCommonView>, "Should be input");
 static_assert(not rah2::ranges::output_range<BidirCommonView, int>, "Should not be outnput");
 static_assert(rah2::ranges::forward_range<BidirCommonView>, "Should be Forward");
@@ -452,26 +441,24 @@ static_assert(not rah2::ranges::contiguous_range<BidirCommonView>, "Should not b
 // random access
 using RandomCommonView = test_view<Common, std::random_access_iterator_tag, true>;
 static_assert(
-    rah2::input_or_output_iterator<RAH2_NAMESPACE::ranges::iterator_t<RandomCommonView>>,
-    "Should be input");
+    rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<RandomCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<RandomCommonView>, "Should be input");
 static_assert(not rah2::ranges::output_range<RandomCommonView, int>, "Should not be output");
 static_assert(rah2::ranges::forward_range<RandomCommonView>, "Should be Forward");
 using It = rah2::ranges::iterator_t<RandomCommonView>;
 using cat = rah2::ranges::range_iter_categ_t<RandomCommonView>;
 static_assert(rah2::forward_iterator<It>, "");
-static_assert(RAH2_NAMESPACE::is_same_v<decltype(--std::declval<It>()), It&>, "");
+static_assert(RAH2_NS::is_same_v<decltype(--std::declval<It>()), It&>, "");
 STATIC_ASSERT((rah2::ranges::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(rah2::ranges::bidirectional_range<RandomCommonView>, "Should be bidirectional");
-using RandomCommonViewIter = RAH2_NAMESPACE::ranges::iterator_t<RandomCommonView>;
+using RandomCommonViewIter = RAH2_NS::ranges::iterator_t<RandomCommonView>;
 STATIC_ASSERT((rah2::ranges::random_access_range_impl<RandomCommonView, true>::value));
 static_assert(not rah2::ranges::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
 // contiguous
 using ContiCommonView = test_view<Common, rah2::contiguous_iterator_tag, true>;
 static_assert(
-    rah2::input_or_output_iterator<RAH2_NAMESPACE::ranges::iterator_t<ContiCommonView>>,
-    "Should be input");
+    rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<ContiCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<ContiCommonView>, "Should be input");
 static_assert(not rah2::ranges::output_range<ContiCommonView, int>, "Should not be output");
 static_assert(rah2::ranges::forward_range<ContiCommonView>, "Should be Forward");
@@ -749,7 +736,7 @@ struct PairEqualImpl
     auto operator()(P&& ab)
     {
         static_assert(
-            RAH2_NAMESPACE::details::
+            RAH2_NS::details::
                 weakly_equality_comparable_with<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
             "second not assignable to first");
         return std::get<0>(ab) == std::get<1>(ab);
@@ -797,7 +784,7 @@ void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
     ++testSuite.test_count;
 
     static_assert(
-        RAH2_NAMESPACE::details::weakly_equality_comparable_with<
+        RAH2_NS::details::weakly_equality_comparable_with<
             rah2::ranges::range_reference_t<decltype(RANGE)>,
             rah2::ranges::range_reference_t<decltype(IL)>>,
         "Can't compare");
