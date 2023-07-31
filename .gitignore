@@ -7,3 +7,4 @@ test/Release
 *.exe
 /Release
 /Debug
+/build
