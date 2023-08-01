@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         BUILD_TYPE: [Debug, Release]
-        cppstd: [17, 20]
+        cppstd: [14, 20]
         compiler: [ 
             {os: windows-latest, cpp: msvc, c: msvc }, 
             {os: macos-latest, cpp: clang++, c: clang} ,
