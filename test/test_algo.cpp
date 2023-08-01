@@ -910,13 +910,13 @@ void test_remove_copy_if()
     testSuite.test_case("sample");
     /// [rah2::ranges::remove_copy_if]
     // Copy only the complex numbers with positive imaginary part.
-    using Ci = std::complex<int>;
-    constexpr std::array<Ci, 5> source{Ci{1, 0}, Ci{0, 1}, Ci{2, -1}, Ci{3, 2}, Ci{4, -3}};
-    std::vector<std::complex<int>> target;
+    using Ci = std::complex<double>;
+    constexpr std::array<Ci, 5> source{Ci{1., 0.}, Ci{0., 1.}, Ci{2., -1.}, Ci{3., 2.}, Ci{4., -3.}};
+    std::vector<std::complex<double>> target;
 
     rah2::ranges::remove_copy_if(
         source, std::back_inserter(target), [](Ci z) { return z.imag() <= 0; });
-    assert(target == (std::vector<std::complex<int>>{{0, 1}, {3, 2}}));
+    assert(target == (std::vector<std::complex<double>>{{0., 1.}, {3., 2.}}));
     /// [rah2::ranges::remove_copy_if]
 }
 void test_replace()

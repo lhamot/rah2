@@ -972,8 +972,7 @@ namespace RAH2_NS
             {
                 if (result_first == result_last)
                     return {
-                        RAH2_STD::move(
-                            RAH2_NS::ranges::next(RAH2_STD::move(first), RAH2_STD::move(last))),
+                        RAH2_NS::ranges::next(RAH2_STD::move(first), RAH2_STD::move(last)),
                         RAH2_STD::move(result_first)};
 
                 auto out_last{result_first};
