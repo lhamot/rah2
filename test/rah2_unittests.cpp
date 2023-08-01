@@ -837,7 +837,7 @@ try
         auto range = rah2::views::generate_n(5, []() { return rand(); })
                      | rah2::views::filter([](auto&& val) { return val % 2 == 0; });
         std::vector<int> result;
-        for (int i : range)
+        for (int i : range | rah2::views::common())
             result.push_back(i);
     }
     {
@@ -940,13 +940,13 @@ try
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB))
+            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common())
                 result.push_back(i);
             assert(result == std::vector<int>({0, 1, 2, 3, 4, 5, 6}));
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB, inputC))
+            for (int i : rah2::views::concat(inputA, inputB, inputC) | rah2::views::common())
                 result.push_back(i);
             assert(result == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
         }
@@ -957,19 +957,19 @@ try
         std::vector<int> inputB{1, 2, 3, 4};
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB))
+            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common())
                 result.push_back(i);
             assert(result == std::vector<int>({1, 2, 3, 4}));
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB))
+            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common())
                 result.push_back(i);
             assert(result == std::vector<int>({1, 2, 3, 4}));
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputA))
+            for (int i : rah2::views::concat(inputA, inputA) | rah2::views::common())
                 result.push_back(i);
             assert(result == std::vector<int>({}));
         }
@@ -980,7 +980,7 @@ try
         std::vector<int> in1 = {1, 2, 3, 4, 5, 6};
         std::vector<int> in2 = {2, 4, 6, 7, 8, 9, 10};
         std::vector<int> out;
-        for (int val : rah2::views::set_difference(in1, in2))
+        for (int val : rah2::views::set_difference(in1, in2) | rah2::views::common())
             out.push_back(val);
         assert(out == std::vector<int>({1, 3, 5}));
         /// [views::set_difference]
@@ -993,7 +993,7 @@ try
                                       std::vector<int> const& expected)
         {
             std::vector<int> out;
-            for (int const val : rah2::views::set_difference(in1, in2))
+            for (int const val : rah2::views::set_difference(in1, in2) | rah2::views::common())
                 out.push_back(val);
             assert(out == expected);
         };
@@ -1021,7 +1021,7 @@ try
             std::set_difference(
                 begin(in1), end(in1), begin(in2), end(in2), std::back_inserter(outRef));
             std::vector<int> out;
-            for (int val : in1 | rah2::views::set_difference(in2))
+            for (int val : in1 | rah2::views::set_difference(in2) | rah2::views::common())
                 out.push_back(val);
             assert(out == outRef);
         }

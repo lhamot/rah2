@@ -112,14 +112,14 @@ void test_iota_view()
 
     {
         std::vector<int> result;
-        for (int const i : rah2::views::iota(10) | rah2::views::slice(2, 5))
+        for (int const i : rah2::views::iota(10) | rah2::views::slice(2, 5) | rah2::views::common())
             result.push_back(i);
         assert(result == std::vector<int>({12, 13, 14}));
     }
 
     {
         std::vector<size_t> result;
-        for (size_t const i : rah2::views::iota() | rah2::views::slice(2, 5))
+        for (size_t const i : rah2::views::iota() | rah2::views::slice(2, 5) | rah2::views::common())
             result.push_back(i);
         assert(result == std::vector<size_t>({2, 3, 4}));
     }
@@ -855,7 +855,8 @@ void test_adjacent_view()
         testSuite.test_case("non_common");
         // adjacent With non common_range
         std::vector<std::vector<int>> out;
-        for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6) | rah2::views::adjacent<3>())
+        for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6) | rah2::views::adjacent<3>()
+                              | rah2::views::common())
         {
             out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
         }
@@ -865,7 +866,8 @@ void test_adjacent_view()
         testSuite.test_case("N > size()");
         // adjacent With N > view.size()
         std::vector<std::vector<int>> out;
-        for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6) | rah2::views::adjacent<45>())
+        for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6) | rah2::views::adjacent<45>()
+                              | rah2::views::common())
         {
             out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
         }
@@ -929,8 +931,9 @@ void test_adjacent_transform()
         /// [adjacent_transform]
         std::vector<int> in{0, 1, 2, 3, 4, 5};
         std::vector<int> out;
-        for (auto abc : rah2::views::adjacent_transform<3>(
-                 in, [](auto a, auto b, auto c) { return a + b + c; }))
+        for (auto abc :
+             rah2::views::adjacent_transform<3>(in, [](auto a, auto b, auto c) { return a + b + c; })
+                 | rah2::views::common())
         {
             out.push_back(abc);
         }
@@ -943,7 +946,8 @@ void test_adjacent_transform()
         std::vector<int> out;
         for (auto abc : rah2::views::iota(0) | rah2::views::take(6)
                             | rah2::views::adjacent_transform<3>([](auto a, auto b, auto c)
-                                                                 { return a + b + c; }))
+                                                                 { return a + b + c; })
+                            | rah2::views::common())
         {
             out.push_back(abc);
         }
@@ -954,7 +958,7 @@ void test_adjacent_transform()
         // adjacent_transform With N > view.size()
         std::vector<int> out;
         for (auto abc : rah2::views::iota(0) | rah2::views::take(6)
-                            | rah2::views::adjacent_transform<45>(Add{}))
+                            | rah2::views::adjacent_transform<45>(Add{}) | rah2::views::common())
         {
             out.push_back(abc);
         }
@@ -1143,7 +1147,7 @@ void test_chunk_view()
         /// Chunk with non-common_view
         auto vec_01234 = rah2::views::iota(0) | rah2::views::take(5);
         std::vector<std::vector<int>> result;
-        for (auto elts : rah2::views::chunk(vec_01234, 2))
+        for (auto elts : rah2::views::chunk(vec_01234, 2) | rah2::views::common())
             result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
         assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
