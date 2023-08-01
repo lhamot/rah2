@@ -287,6 +287,8 @@ void test_concepts()
     STATIC_ASSERT(!concept_test<check_true_is_false>);
     STATIC_ASSERT(!concept_test<check_traits_is_false>);
 
+    assert(concept_test<test_ok>);
+
     // To check error messages
     // STATIC_ASSERT((concept_test_impl<CheckBuildFail, true>::value)); // Ok with compiles + decltype
     // STATIC_ASSERT((concept_test_impl<CheckTrueNoBuild, true>::value)); // Ok with compiles + enable_if_t
@@ -318,6 +320,7 @@ try
     // std::cout.imbue(std::locale("en_EN"));
 
     testSuite.addTest("Range_concepts", "*", test_range_traits);
+    testSuite.addTest("concepts", "*", test_concepts);
 
     // Range_factories
     auto range_factories = "Range_factories";
