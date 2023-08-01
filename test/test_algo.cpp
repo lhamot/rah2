@@ -1797,10 +1797,12 @@ void test_minmax()
     testSuite.test_case("sample");
     /// [rah2::ranges::minmax]
 
-    auto const res1 = rah2::ranges::minmax(1, 3);
+    constexpr int a = 1;
+    constexpr int b = 3;
+    auto const res1 = rah2::ranges::minmax(a, b);
     assert(res1.min == 1);
     assert(res1.max == 3);
-    auto const res2 = rah2::ranges::minmax(1, 3, rah2::greater{});
+    auto const res2 = rah2::ranges::minmax(a, b, rah2::greater{});
     assert(res2.min == 3);
     assert(res2.max == 1);
 

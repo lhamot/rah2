@@ -10,7 +10,7 @@ endif()
 
 enable_testing()
 
-file(GLOB UNITTEST_SOURCES "test/*.cpp" "includes/rah2/*.hpp")
+file(GLOB UNITTEST_SOURCES "test/*.cpp" "test/*.hpp" "includes/rah2/*.hpp")
 add_executable(UnitTests ${UNITTEST_SOURCES})
 target_include_directories(UnitTests PRIVATE includes)
 add_test(UnitTests UnitTests)
