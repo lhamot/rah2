@@ -281,6 +281,8 @@ void test_concepts()
         }
     };
 
+    check_traits_is_false test;
+
     STATIC_ASSERT(concept_test<test_ok>);
     STATIC_ASSERT(!concept_test<check_build_fail>);
     STATIC_ASSERT(!concept_test<check_true_no_build>);
