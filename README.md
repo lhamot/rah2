@@ -63,7 +63,7 @@ rah2 is licensed under the [Boost Software License](http://www.boost.org/LICENSE
 - On Windows
   - Visual Studio 2019 (stdcpp14, stdcpp17 and stdcpp17)
   - clang++ 13 (-std=c++14, -std=c++17 and -std=c++20)
-  - g++ (-std=c++14, -std=c++17 and -std=c++20)
+  - g++ 13 (-std=c++14, -std=c++17 and -std=c++20)
 - On Linux
   - 🚧 Work In Progress 🚧
 ## Continuous integration

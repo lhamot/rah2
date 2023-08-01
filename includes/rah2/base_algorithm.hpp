@@ -2,6 +2,8 @@
 
 #include "range_bases.hpp"
 
+#include <string.h> // memcmp
+
 namespace RAH2_NS
 {
     namespace ranges
