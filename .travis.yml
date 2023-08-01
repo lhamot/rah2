@@ -1,0 +1,31 @@
+language: cpp
+sudo: false
+dist: xenial
+os:
+  - linux
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-xenial-13.0
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-13.0
+            - g++-16
+
+script:
+  - cd test
+  - clang++ -v
+  - g++ -v
+  - clang++ -O0 -m64 -ftemplate-backtrace-limit=0 -otest rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++14 -I../includes -Wall -Wno-c++17-extensions
+  - ./test
+  - clang++ -O0 -m64 -ftemplate-backtrace-limit=0 -otest rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++20 -I../includes -Wall -Wno-c++17-extensions
+  - ./test
+  - clang++ -O0 -m32 -ftemplate-backtrace-limit=0 -otest rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++20 -I../includes -Wall -Wno-c++17-extensions
+  - ./test
+  - g++ -O0 -m64 -ftemplate-backtrace-limit=0 -otest rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++14 -I../includes -Wall -Wno-c++17-extensions
+  - ./test
+  - g++ -O0 -m64 -ftemplate-backtrace-limit=0 -otest rah2_unittests.cpp test_algo.cpp test_views.cpp -std=c++20 -I../includes -Wall -Wno-c++17-extensions
+  - ./test
