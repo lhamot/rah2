@@ -10,6 +10,7 @@
 #include <numeric>
 #include <forward_list>
 #include <set>
+#include <cstring>
 #if RAH2_CPP20
 #include <ranges>
 #endif
