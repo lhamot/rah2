@@ -71,7 +71,7 @@ namespace RAH2_NS
         template <typename C>
         auto to()
         {
-            return make_pipeable([=](auto&& range)
+            return make_pipeable([](auto&& range)
                                  { return to<C>(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
@@ -772,30 +772,36 @@ namespace RAH2_NS
             }
             auto begin() const
             {
+                assert(ref_ != nullptr);
                 return RAH2_NS::ranges::begin(*ref_);
             }
             auto end() const
             {
+                assert(ref_ != nullptr);
                 return RAH2_NS::ranges::end(*ref_);
             }
             bool empty() const
             {
+                assert(ref_ != nullptr);
                 return RAH2_NS::ranges::empty(*ref_);
             }
             template <bool IsSized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
+                assert(ref_ != nullptr);
                 return RAH2_NS::ranges::size(*ref_);
             }
             template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
+                assert(ref_ != nullptr);
                 return RAH2_NS::ranges::size(*ref_);
             }
 
             template <typename U = R, RAH2_STD::enable_if_t<RAH2_NS::ranges::contiguous_range<U>>* = nullptr>
             auto data()
             {
+                assert(ref_ != nullptr);
                 return RAH2_NS::ranges::data(*ref_);
             }
         };
@@ -915,7 +921,7 @@ namespace RAH2_NS
 
         inline auto all()
         {
-            return make_pipeable([=](auto&& range)
+            return make_pipeable([](auto&& range)
                                  { return all(RAH2_STD::forward<decltype(range)>(range)); });
         }
 
@@ -1078,8 +1084,10 @@ namespace RAH2_NS
             auto filter(P&& pred)
             {
                 return make_pipeable(
-                    [=](auto&& range)
-                    { return filter(RAH2_STD::forward<decltype(range)>(range), pred); });
+                    [=](auto&& range) {
+                        return filter(
+                            RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
+                    });
             }
         } // namespace views
         // ******************************************* transform ******************************************
@@ -1233,8 +1241,8 @@ namespace RAH2_NS
             constexpr auto transform(F&& func)
             {
                 return make_pipeable(
-                    [=](auto&& range)
-                    { return transform(RAH2_STD::forward<decltype(range)>(range), func); });
+                    [=](auto&& range) { return transform(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
+                    });
             }
         } // namespace views
 
@@ -2063,7 +2071,7 @@ namespace RAH2_NS
             inline auto reverse()
             {
                 return make_pipeable(
-                    [=](auto&& range)
+                    [](auto&& range)
                     { return views::reverse(RAH2_STD::forward<decltype(range)>(range)); });
             }
         } // namespace views
@@ -2196,7 +2204,7 @@ namespace RAH2_NS
             auto elements()
             {
                 return make_pipeable(
-                    [=](auto&& range)
+                    [](auto&& range)
                     { return elements<N>(RAH2_STD::forward<decltype(range)>(range)); });
             }
 
@@ -2212,7 +2220,7 @@ namespace RAH2_NS
 
             inline auto keys()
             {
-                return make_pipeable([=](auto&& range)
+                return make_pipeable([](auto&& range)
                                      { return keys(RAH2_STD::forward<decltype(range)>(range)); });
             }
 
@@ -2228,7 +2236,7 @@ namespace RAH2_NS
 
             inline auto values()
             {
-                return make_pipeable([=](auto&& range)
+                return make_pipeable([](auto&& range)
                                      { return values(RAH2_STD::forward<decltype(range)>(range)); });
             }
         } // namespace views
@@ -3176,7 +3184,7 @@ namespace RAH2_NS
             auto adjacent()
             {
                 return make_pipeable(
-                    [=](auto&& range)
+                    [](auto&& range)
                     { return adjacent<N>(RAH2_STD::forward<decltype(range)>(range)); });
             }
 
@@ -3190,7 +3198,7 @@ namespace RAH2_NS
             inline auto pairwise()
             {
                 return make_pipeable(
-                    [=](auto&& range)
+                    [](auto&& range)
                     { return adjacent<2>(RAH2_STD::forward<decltype(range)>(range)); });
             }
         } // namespace views
@@ -3297,7 +3305,7 @@ namespace RAH2_NS
             {
                 return make_pipeable(
                     [=](auto&& range) {
-                        return adjacent_transform<N>(RAH2_STD::forward<decltype(range)>(range), func);
+                        return adjacent_transform<N>(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
                     });
             }
         } // namespace views
@@ -4217,8 +4225,8 @@ namespace RAH2_NS
             auto set_difference(R2&& range2)
             {
                 return make_pipeable(
-                    [r2 = all(range2)](auto&& range)
-                    { return set_difference(RAH2_STD::forward<decltype(range)>(range), r2); });
+                    [r2 = all(range2)](auto&& range) { return set_difference(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(r2));
+                    });
             }
         } // namespace views
         // ********************************** for_each ****************************************************
@@ -4234,8 +4242,8 @@ namespace RAH2_NS
             auto for_each(F&& func)
             {
                 return make_pipeable(
-                    [=](auto&& range)
-                    { return views::for_each(RAH2_STD::forward<decltype(range)>(range), func); });
+                    [=](auto&& range) { return views::for_each(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
+                    });
             }
         } // namespace views
         // ***************************************** slice ************************************************

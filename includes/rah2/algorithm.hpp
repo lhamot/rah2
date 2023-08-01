@@ -972,8 +972,7 @@ namespace RAH2_NS
             {
                 if (result_first == result_last)
                     return {
-                        RAH2_STD::move(
-                            RAH2_NS::ranges::next(RAH2_STD::move(first), RAH2_STD::move(last))),
+                        RAH2_NS::ranges::next(RAH2_STD::move(first), RAH2_STD::move(last)),
                         RAH2_STD::move(result_first)};
 
                 auto out_last{result_first};
@@ -1236,6 +1235,10 @@ namespace RAH2_NS
                 return {a, b};
             }
 
+            template <class T, typename Comp = RAH2_NS::less>
+            constexpr RAH2_NS::ranges::minmax_result<T const&>
+            operator()(T&& a, T&& b, Comp comp = {}) const = delete;
+
             template <typename T, typename Comp = RAH2_NS::less>
             constexpr RAH2_NS::ranges::minmax_result<T>
             operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
@@ -1244,7 +1247,7 @@ namespace RAH2_NS
                 return {*result.min, *result.max};
             }
 
-            template <typename R, typename Comp = RAH2_NS::less>
+            template <typename R, typename Comp = RAH2_NS::less, std::enable_if_t<forward_range<R>>* = nullptr>
             // requires RAH2_STD::indirectly_copyable_storable<ranges::iterator_t<R>, ranges::range_value_t<R>*>
             constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
             operator()(R&& r, Comp comp = {}) const

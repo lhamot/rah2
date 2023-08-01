@@ -11,7 +11,6 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <ciso646>
 #include <sstream>
 #include <random>
 #include <atomic>
@@ -281,11 +280,15 @@ void test_concepts()
         }
     };
 
+    check_traits_is_false test;
+
     STATIC_ASSERT(concept_test<test_ok>);
     STATIC_ASSERT(!concept_test<check_build_fail>);
     STATIC_ASSERT(!concept_test<check_true_no_build>);
     STATIC_ASSERT(!concept_test<check_true_is_false>);
     STATIC_ASSERT(!concept_test<check_traits_is_false>);
+
+    assert(concept_test<test_ok>);
 
     // To check error messages
     // STATIC_ASSERT((concept_test_impl<CheckBuildFail, true>::value)); // Ok with compiles + decltype
@@ -318,6 +321,7 @@ try
     // std::cout.imbue(std::locale("en_EN"));
 
     testSuite.addTest("Range_concepts", "*", test_range_traits);
+    testSuite.addTest("concepts", "*", test_concepts);
 
     // Range_factories
     auto range_factories = "Range_factories";
