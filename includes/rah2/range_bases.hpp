@@ -5,7 +5,6 @@
 #include <cassert>
 #include <iterator>
 #include <tuple> // for tuple_size
-#include <ciso646> // TODO : Remove this include (replace not/or/and etc)
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
