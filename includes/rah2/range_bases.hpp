@@ -43,6 +43,10 @@
 #define RAH2_NODISCARD
 #endif
 
+#if !RAH2_CPP20
+#include <ciso646>
+#endif
+
 namespace RAH2_NS
 {
     // ***************************** <type_traits> traits *****************************************
