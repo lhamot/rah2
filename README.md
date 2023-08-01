@@ -61,23 +61,24 @@ rah2 is licensed under the [Boost Software License](http://www.boost.org/LICENSE
 🚧 Documentation is Work In Progress 🚧
 ## Supported Compilers
 - On Windows
-  - Visual Studio 2019 (stdcpp14, stdcpp17 and stdcpp17)
-  - clang++ 13 (-std=c++14, -std=c++17 and -std=c++20)
-  - g++ 13 (-std=c++14, -std=c++17 and -std=c++20)
-- On Linux
-  - 🚧 Work In Progress 🚧
+    - Visual Studio 2019 && 2022 (stdcpp14, stdcpp17 and stdcpp17)
+    - clang++ 13 (-std=c++14, -std=c++17 and -std=c++20)
+    - g++ 13 (-std=c++17 and -std=c++20)
+- On Ubuntu
+    - clang++ 14 (-std=c++17 and -std=c++20)
+    - g++ 11 (-std=c++17 and -std=c++20)
+- On macos
+    - clang++ 14 (-std=c++17 and -std=c++20)
 ## Continuous integration
-- 🚧 Work In Progress 🚧
+- ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
 ## How to use?
 - Add **rah2/includes** in your include path
-	- Include **rah2/ranges.hpp** to get the views
-	- Include **rah2/algorithm.hpp** to get the algorithms
+    - Include **rah2/ranges.hpp** to get the views
+    - Include **rah2/algorithm.hpp** to get the algorithms
 - Doc is WIP but cppreference is great
 - Views are in **rah2::views** namespace. [Ranges library](https://en.cppreference.com/w/cpp/ranges)
 - Algorithms are in **rah2::ranges** namespace [Constrained algorithms](https://en.cppreference.com/w/cpp/algorithm/ranges)
 ## The future of **rah2**
 - More tests (have to test all iterator category with all algo and all adaptors)
 - More optimizations
-- Contiguous integration
-- Linux test
 - Doc
