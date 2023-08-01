@@ -12,13 +12,17 @@ jobs:
       matrix:
         BUILD_TYPE: [Debug, Release]
         cppstd: [17, 20]
-        compiler: [ {cpp: g++, c: gcc}, {cpp: clang++, c: clang} ]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        compiler: [ 
+            {os: windows-latest, cpp: msvc, c: msvc }, 
+            {os: macos-latest, cpp: clang++, c: clang} ,
+            {os: ubuntu-latest, cpp: clang++, c: clang},
+            {os: ubuntu-latest, cpp: g++, c: gcc} 
+        ]
         
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.compiler.os }}
 
     steps:
     - uses: actions/checkout@v3
