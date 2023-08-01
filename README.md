@@ -70,7 +70,7 @@ rah2 is licensed under the [Boost Software License](http://www.boost.org/LICENSE
 - On macos
     - clang++ 14 (-std=c++17 and -std=c++20)
 ## Continuous integration
-    ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
+- ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
 ## How to use?
 - Add **rah2/includes** in your include path
     - Include **rah2/ranges.hpp** to get the views
