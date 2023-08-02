@@ -1353,6 +1353,16 @@ namespace RAH2_NS
             return subrange<I, S>{b, e};
         }
 
+        template <class D>
+        class closure_object_facade
+        {
+            template <typename R>
+            friend auto operator|(R&& range, D const& closure)
+            {
+                return closure(RAH2_STD::forward<R>(range));
+            }
+        };
+
         // ********************** <ranges> Dangling iterator handling  ****************************
         struct dangling
         {

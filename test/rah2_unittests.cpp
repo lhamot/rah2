@@ -733,7 +733,7 @@ try
     {
         /// [cycle_pipeable]
         std::vector<int> in{0, 1, 2};
-        auto cy = in | rah2::views::cycle();
+        auto cy = in | rah2::views::cycle;
         std::vector<int> out;
         std::copy_n(cy.begin(), 8, std::back_inserter(out));
         assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
@@ -837,7 +837,7 @@ try
         auto range = rah2::views::generate_n(5, []() { return rand(); })
                      | rah2::views::filter([](auto&& val) { return val % 2 == 0; });
         std::vector<int> result;
-        for (int i : range | rah2::views::common())
+        for (int i : range | rah2::views::common)
             result.push_back(i);
     }
     {
@@ -889,7 +889,7 @@ try
         for (auto&& i :
              rah2::views::zip(vec_01234, vec_bool)
                  | rah2::views::filter([](auto&& a) { return std::get<0>(a).front() % 2 == 0; })
-                 | rah2::views::common())
+                 | rah2::views::common)
             result.push_back(std::get<0>(i));
         assert(result == (std::vector<std::vector<int>>{{0}, {2}, {4}}));
         assert(vec_01234 == (std::vector<std::vector<int>>{{0}, {1}, {2}, {3}, {4}}));
@@ -940,13 +940,13 @@ try
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common())
+            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common)
                 result.push_back(i);
             assert(result == std::vector<int>({0, 1, 2, 3, 4, 5, 6}));
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB, inputC) | rah2::views::common())
+            for (int i : rah2::views::concat(inputA, inputB, inputC) | rah2::views::common)
                 result.push_back(i);
             assert(result == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
         }
@@ -957,19 +957,19 @@ try
         std::vector<int> inputB{1, 2, 3, 4};
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common())
+            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common)
                 result.push_back(i);
             assert(result == std::vector<int>({1, 2, 3, 4}));
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common())
+            for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common)
                 result.push_back(i);
             assert(result == std::vector<int>({1, 2, 3, 4}));
         }
         {
             std::vector<int> result;
-            for (int i : rah2::views::concat(inputA, inputA) | rah2::views::common())
+            for (int i : rah2::views::concat(inputA, inputA) | rah2::views::common)
                 result.push_back(i);
             assert(result == std::vector<int>({}));
         }
@@ -980,7 +980,7 @@ try
         std::vector<int> in1 = {1, 2, 3, 4, 5, 6};
         std::vector<int> in2 = {2, 4, 6, 7, 8, 9, 10};
         std::vector<int> out;
-        for (int val : rah2::views::set_difference(in1, in2) | rah2::views::common())
+        for (int val : rah2::views::set_difference(in1, in2) | rah2::views::common)
             out.push_back(val);
         assert(out == std::vector<int>({1, 3, 5}));
         /// [views::set_difference]
@@ -993,7 +993,7 @@ try
                                       std::vector<int> const& expected)
         {
             std::vector<int> out;
-            for (int const val : rah2::views::set_difference(in1, in2) | rah2::views::common())
+            for (int const val : rah2::views::set_difference(in1, in2) | rah2::views::common)
                 out.push_back(val);
             assert(out == expected);
         };
@@ -1021,7 +1021,7 @@ try
             std::set_difference(
                 begin(in1), end(in1), begin(in2), end(in2), std::back_inserter(outRef));
             std::vector<int> out;
-            for (int val : in1 | rah2::views::set_difference(in2) | rah2::views::common())
+            for (int val : in1 | rah2::views::set_difference(in2) | rah2::views::common)
                 out.push_back(val);
             assert(out == outRef);
         }
@@ -1103,7 +1103,7 @@ try
     }
     {
         std::vector<int> vec(5);
-        for (int& i : vec | views::transform([](int& i) -> int& { return i; }))
+        for (int& i : vec | rah2::views::transform([](int& i) -> int& { return i; }))
             i = 42; // Check for mutability
         EQUAL_RANGE(vec, (il<int>({42, 42, 42, 42, 42})));
     }
@@ -1111,10 +1111,11 @@ try
     // Test return non-reference
     {
         std::vector<int> constVect{0, 1, 2, 3};
-        EQUAL_RANGE(constVect | transform([](auto a) { return a * 2; }), il<int>({0, 2, 4, 6}));
+        EQUAL_RANGE(
+            constVect | rah2::views::transform([](auto a) { return a * 2; }), il<int>({0, 2, 4, 6}));
 
         std::vector<Elt> vec = {{1}};
-        auto r_copy = vec | transform([](auto a) { return Elt{a.member + 1}; });
+        auto r_copy = vec | rah2::views::transform([](auto a) { return Elt{a.member + 1}; });
         for (auto iter = rah2::ranges::begin(r_copy), end_iter = rah2::ranges::end(r_copy);
              iter != end_iter;
              ++iter)
@@ -1135,7 +1136,7 @@ try
                     || (not RAH2_NS::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
-        auto r_ref = vec | transform([](auto a) { return a.member; });
+        auto r_ref = vec | rah2::views::transform([](auto a) { return a.member; });
         for (auto iter = rah2::ranges::begin(r_ref), end_iter = rah2::ranges::end(r_ref);
              iter != end_iter;
              ++iter)
@@ -1163,7 +1164,7 @@ try
         {
             return zip(repeat(i), rah2::views::iota<size_t>(0, 3));
         };
-        auto globalRange = rah2::views::iota<size_t>(0, 4) | views::transform(genRange) | join();
+        auto globalRange = rah2::views::iota<size_t>(0, 4) | rah2::views::transform(genRange) | join;
 
         EQUAL_RANGE(
             globalRange,
@@ -1183,44 +1184,48 @@ try
     }
 
     EQUAL_RANGE(
-        (views::iota(0, 3) | transform([](auto i) { return i * 2; }) | enumerate()),
+        (rah2::views::iota(0, 3) | rah2::views::transform([](auto i) { return i * 2; }) | enumerate),
         (il<std::pair<intptr_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
 
     std::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
     EQUAL_RANGE(
-        (vec_abcd | transform([](char i) { return static_cast<char>(i + 1); }) | enumerate()),
+        (vec_abcd | rah2::views::transform([](char i) { return static_cast<char>(i + 1); })
+         | enumerate),
         (il<std::pair<intptr_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
 
     // TODO : Make Zip bidirectional when possible
     //EQUAL_RANGE(
-    //    (iota(0, 3000, 3) | transform([](auto i) { return i * 2; }) | enumerate() | slice(10, 13)),
+    //    (iota(0, 3000, 3) | transform([](auto i) { return i * 2; }) | enumerate | slice(10, 13)),
     //    (il<std::pair<size_t, int>>{ { 10, 60 }, { 11, 66 }, { 12, 72 } }));
 
     EQUAL_RANGE(
-        (zip(vec_abcd, views::iota(0, 4))),
+        (zip(vec_abcd, rah2::views::iota(0, 4))),
         (il<std::tuple<char, int>>{{'a', 0}, {'b', 1}, {'c', 2}, {'d', 3}}));
 
-    EQUAL_RANGE((views::iota(0, 100) | slice(0, 20) | stride(3)), (il<int>{0, 3, 6, 9, 12, 15, 18}));
+    EQUAL_RANGE(
+        (rah2::views::iota(0, 100) | slice(0, 20) | stride(3)), (il<int>{0, 3, 6, 9, 12, 15, 18}));
 
-    EQUAL_RANGE((views::iota(10, 15) | reverse()), (il<int>{14, 13, 12, 11, 10}));
+    EQUAL_RANGE((rah2::views::iota(10, 15) | rah2::views::reverse), (il<int>{14, 13, 12, 11, 10}));
 
-    EQUAL_RANGE((views::iota(0, 100) | slice(10, 15) | reverse()), (il<int>{14, 13, 12, 11, 10}));
+    EQUAL_RANGE(
+        (rah2::views::iota(0, 100) | slice(10, 15) | rah2::views::reverse),
+        (il<int>{14, 13, 12, 11, 10}));
 
     //EQUAL_RANGE(
-    //    (iota(10, 15) | enumerate() | reverse()),
+    //    (iota(10, 15) | enumerate | reverse),
     //    (il<std::tuple<size_t, int>>{ { 4, 14 }, { 3, 13 }, { 2, 12 }, { 1, 11 }, { 0, 10 } }));
 
     //EQUAL_RANGE(
-    //    (iota(0, 100) | enumerate() | slice(10, 15)),
+    //    (iota(0, 100) | enumerate | slice(10, 15)),
     //    (il<std::tuple<size_t, int>>{ { 10, 10 }, { 11, 11 }, { 12, 12 }, { 13, 13 }, { 14, 14 } }));
 
     //EQUAL_RANGE(
-    //    (iota(0, 100) | enumerate() | slice(10, 15) | reverse()),
+    //    (iota(0, 100) | enumerate | slice(10, 15) | reverse),
     //    (il<std::tuple<size_t, int>>{ { 14, 14 }, { 13, 13 }, { 12, 12 }, { 11, 11 }, { 10, 10 } }));
 
     // iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | rah2::to<std::vector<int>>();
 
-    views::iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | slice(1, 9)
+    rah2::views::iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | slice(1, 9)
         | rah2::ranges::to<std::vector<int>>();
 
     {
@@ -1233,7 +1238,7 @@ try
 
     {
         using namespace rah2;
-        using namespace views;
+        using namespace rah2::views;
         int const width = 5;
         int const height = 6;
         int const start = 8;
@@ -1245,11 +1250,11 @@ try
         auto getRangeX = [=](int y)
         {
             if (y == startY)
-                return std::make_tuple(y, views::iota(startX, width));
+                return std::make_tuple(y, rah2::views::iota(startX, width));
             else if (y == endY)
-                return std::make_tuple(y, views::iota(0, endX));
+                return std::make_tuple(y, rah2::views::iota(0, endX));
             else
-                return std::make_tuple(y, views::iota(0, width));
+                return std::make_tuple(y, rah2::views::iota(0, width));
         };
 
         std::vector<std::atomic<int>> test_(static_cast<int>(width * height));
@@ -1263,9 +1268,10 @@ try
                 ++test_[x + y * width];
         };
 
-        for (auto ySelector : views::iota(0, 3))
+        for (auto ySelector : rah2::views::iota(0, 3))
         {
-            auto rng = irange(startY + ySelector, endY + 1, 3) | transform(getRangeX);
+            auto rng = rah2::views::irange(startY + ySelector, endY + 1, 3)
+                       | rah2::views::transform(getRangeX);
             rah2::ranges::for_each(rng, updateRaw);
         }
 

@@ -418,35 +418,33 @@ namespace RAH2_NS
         class empty_view : public view_interface<empty_view<T>>
         {
         public:
-            T* begin()
+            // ReSharper disable CppMemberFunctionMayBeStatic
+            T* begin() const
             {
                 return nullptr;
             }
-            T* end()
+            T* end() const
             {
                 return nullptr;
             }
-            T* data()
+            T* data() const
             {
                 return nullptr;
             }
-            static size_t size()
+            size_t size() const
             {
                 return 0;
             }
-            bool empty()
+            bool empty() const
             {
                 return true;
             }
+            // ReSharper restore CppMemberFunctionMayBeStatic
         };
         namespace views
         {
-
-            template <typename T>
-            auto empty()
-            {
-                return empty_view<T>{};
-            }
+            template <class T>
+            constexpr empty_view<T> empty{};
         } // namespace views
         // ********************************** single ******************************************************
 
@@ -874,56 +872,51 @@ namespace RAH2_NS
 
         namespace views
         {
-            template <typename R>
-            auto owning(R&& range)
+            struct owning_raco : closure_object_facade<owning_raco>
             {
-                static_assert(
-                    not RAH2_NS::is_lvalue_reference_v<R>, "range can't be a lvalue reference");
-                return owning_view<RAH2_STD::remove_reference_t<R>>(RAH2_STD::forward<R>(range));
-            }
-
-            inline auto owning()
-            {
-                return make_pipeable([](auto&& range)
-                                     { return owning(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename R>
+                auto operator()(R&& range) const
+                {
+                    static_assert(
+                        not RAH2_NS::is_lvalue_reference_v<R>, "range can't be a lvalue reference");
+                    return owning_view<RAH2_STD::remove_reference_t<R>>(RAH2_STD::forward<R>(range));
+                }
+            };
+            constexpr owning_raco owning;
         } // namespace views
         // ********************************** all *************************************************
+        struct all_raco : closure_object_facade<all_raco>
+        {
+            template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
+            auto operator()(R&& range) const -> decltype(RAH2_STD::forward<R>(range))
+            {
+                return RAH2_STD::forward<R>(range);
+            }
+            template <
+                typename R,
+                RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
+                RAH2_STD::enable_if_t<RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return views::ref(RAH2_STD::forward<R>(range));
+            }
 
-        template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
-        auto all(R&& range) -> decltype(RAH2_STD::forward<R>(range))
-        {
-            return RAH2_STD::forward<R>(range);
-        }
-        template <
-            typename R,
-            RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
-        auto all(R&& range)
-        {
-            return views::ref(RAH2_STD::forward<R>(range));
-        }
+            template <
+                typename R,
+                RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
+                RAH2_STD::enable_if_t<not RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
+            auto operator()(R&& range) const
+            {
+                return owning_view<RAH2_STD::decay_t<R>>(RAH2_STD::forward<R>(range));
+            }
 
-        template <
-            typename R,
-            RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
-        auto all(R&& range)
-        {
-            return owning_view<RAH2_STD::decay_t<R>>(RAH2_STD::forward<R>(range));
-        }
-
-        template <typename V>
-        auto all(RAH2_STD::initializer_list<V>& range)
-        {
-            return views::ref(range);
-        }
-
-        inline auto all()
-        {
-            return make_pipeable([](auto&& range)
-                                 { return all(RAH2_STD::forward<decltype(range)>(range)); });
-        }
+            template <typename V>
+            auto operator()(RAH2_STD::initializer_list<V>& range) const
+            {
+                return views::ref(range);
+            }
+        };
+        constexpr all_raco all;
 
         template <typename R, RAH2_STD::enable_if_t<viewable_range<R>>* = nullptr>
         using all_t = decltype(all(RAH2_STD::declval<R>()));
@@ -1072,23 +1065,27 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename R, typename P>
-            auto filter(R&& range, P&& pred)
+            struct filter_raco
             {
-                auto view_ref = all(RAH2_STD::forward<R>(range));
-                return filter_view<decltype(view_ref), RAH2_NS::remove_cvref_t<P>>(
-                    RAH2_STD::move(view_ref), RAH2_STD::forward<P>(pred));
-            }
+                template <typename R, typename P>
+                auto operator()(R&& range, P&& pred) const
+                {
+                    auto view_ref = all(RAH2_STD::forward<R>(range));
+                    return filter_view<decltype(view_ref), RAH2_NS::remove_cvref_t<P>>(
+                        RAH2_STD::move(view_ref), RAH2_STD::forward<P>(pred));
+                }
 
-            template <typename P>
-            auto filter(P&& pred)
-            {
-                return make_pipeable(
-                    [=](auto&& range) {
-                        return filter(
-                            RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
-                    });
-            }
+                template <typename P>
+                auto operator()(P&& pred) const
+                {
+                    return make_pipeable(
+                        [this, pred = RAH2_STD::forward<P>(pred)](auto&& range) {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
+                        });
+                }
+            };
+            constexpr filter_raco filter;
         } // namespace views
         // ******************************************* transform ******************************************
 
@@ -1228,22 +1225,27 @@ namespace RAH2_NS
         };
         namespace views
         {
-
-            template <typename R, typename F>
-            constexpr auto transform(R&& range, F&& func)
+            struct transform_raco
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return transform_view<decltype(ref), RAH2_NS::remove_cvref_t<F>>(
-                    RAH2_STD::move(ref), RAH2_STD::forward<F>(func));
-            }
+                template <typename R, typename F>
+                constexpr auto operator()(R&& range, F&& func) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return transform_view<decltype(ref), RAH2_NS::remove_cvref_t<F>>(
+                        RAH2_STD::move(ref), RAH2_STD::forward<F>(func));
+                }
 
-            template <typename F>
-            constexpr auto transform(F&& func)
-            {
-                return make_pipeable(
-                    [=](auto&& range) { return transform(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
-                    });
-            }
+                template <typename F>
+                constexpr auto operator()(F&& func) const
+                {
+                    return make_pipeable(
+                        [this, func = RAH2_STD::forward<F>(func)](auto&& range) {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
+                        });
+                }
+            };
+            constexpr transform_raco transform;
         } // namespace views
 
         // ******************************************* take ***********************************************
@@ -1324,23 +1326,27 @@ namespace RAH2_NS
 
         namespace views
         {
-            template <typename R>
-            auto take(R&& range, range_difference_t<R> count)
+            struct take_raco
             {
-                auto range_view = all(RAH2_STD::forward<R>(range));
-                return take_view<decltype(range_view)>(RAH2_STD::move(range_view), count);
-            }
+                template <typename R>
+                auto operator()(R&& range, range_difference_t<R> count) const
+                {
+                    auto range_view = all(RAH2_STD::forward<R>(range));
+                    return take_view<decltype(range_view)>(RAH2_STD::move(range_view), count);
+                }
 
-            inline auto take(size_t count)
-            {
-                return make_pipeable(
-                    [=](auto&& range)
-                    {
-                        return take(
-                            RAH2_STD::forward<decltype(range)>(range),
-                            static_cast<range_difference_t<decltype(range)>>(count));
-                    });
-            }
+                auto operator()(size_t count) const
+                {
+                    return make_pipeable(
+                        [this, count](auto&& range)
+                        {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range),
+                                static_cast<range_difference_t<decltype(range)>>(count));
+                        });
+                }
+            };
+            constexpr take_raco take;
         } // namespace views
 
         // ******************************************* drop ***********************************************
@@ -1405,23 +1411,27 @@ namespace RAH2_NS
 
         namespace views
         {
-            template <typename R>
-            auto drop(R&& range, range_difference_t<R> count)
+            struct drop_raco
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return drop_view<decltype(ref)>(RAH2_STD::move(ref), count);
-            }
+                template <typename R>
+                auto operator()(R&& range, range_difference_t<R> count) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return drop_view<decltype(ref)>(RAH2_STD::move(ref), count);
+                }
 
-            inline auto drop(size_t count)
-            {
-                return make_pipeable(
-                    [=](auto&& range)
-                    {
-                        return drop(
-                            RAH2_STD::forward<decltype(range)>(range),
-                            static_cast<range_difference_t<decltype(range)>>(count));
-                    });
-            }
+                inline auto operator()(size_t count) const
+                {
+                    return make_pipeable(
+                        [this, count](auto&& range)
+                        {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range),
+                                static_cast<range_difference_t<decltype(range)>>(count));
+                        });
+                }
+            };
+            constexpr drop_raco drop;
         } // namespace views
 
         // ******************************************* drop_while *********************************
@@ -1474,28 +1484,32 @@ namespace RAH2_NS
 
         namespace views
         {
-            /// @brief A view of elements from an underlying sequence, beginning at the first element
-            /// for which the predicate returns false.
-            ///
-            /// @snippet test.cpp RAH2_NS::views::drop_while
-            /// @snippet test.cpp RAH2_NS::views::drop_while_pipeable
-            template <typename R, typename P>
-            auto drop_while(R&& range, P&& predicate)
+            struct drop_while_raco
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return drop_while_view<decltype(ref), RAH2_NS::remove_cvref_t<P>>(
-                    RAH2_STD::move(ref), RAH2_STD::forward<P>(predicate));
-            }
+                /// @brief A view of elements from an underlying sequence, beginning at the first element
+                /// for which the predicate returns false.
+                ///
+                /// @snippet test.cpp RAH2_NS::views::drop_while
+                /// @snippet test.cpp RAH2_NS::views::drop_while_pipeable
+                template <typename R, typename P>
+                auto operator()(R&& range, P&& predicate) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return drop_while_view<decltype(ref), RAH2_NS::remove_cvref_t<P>>(
+                        RAH2_STD::move(ref), RAH2_STD::forward<P>(predicate));
+                }
 
-            template <typename P>
-            auto drop_while(P&& predicate)
-            {
-                return make_pipeable(
-                    [pred = RAH2_STD::forward<P>(predicate)](auto&& range) {
-                        return drop_while(
-                            RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
-                    });
-            }
+                template <typename P>
+                auto operator()(P&& predicate) const
+                {
+                    return make_pipeable(
+                        [this, pred = RAH2_STD::forward<P>(predicate)](auto&& range) {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
+                        });
+                }
+            };
+            constexpr drop_while_raco drop_while;
         } // namespace views
 
         // ********************************** join ********************************************************
@@ -1609,18 +1623,17 @@ namespace RAH2_NS
         };
         namespace views
         {
-
-            template <typename R>
-            auto join(R&& range_of_ranges)
+            struct join_raco : closure_object_facade<join_raco>
             {
-                auto rangeRef = all(RAH2_STD::forward<R>(range_of_ranges));
-                return join_view<decltype(rangeRef)>(RAH2_STD::move(rangeRef));
-            }
+                template <typename R>
+                auto operator()(R&& range_of_ranges) const
+                {
+                    auto rangeRef = all(RAH2_STD::forward<R>(range_of_ranges));
+                    return join_view<decltype(rangeRef)>(RAH2_STD::move(rangeRef));
+                }
+            };
+            constexpr join_raco join;
 
-            inline auto join()
-            {
-                return make_pipeable([](auto&& range) { return join(range); });
-            }
         } // namespace views
 
         // ************************************ split_view ****************************************
@@ -1752,22 +1765,27 @@ namespace RAH2_NS
         };
         namespace views
         {
-
-            template <typename R, typename P, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-            auto split(R&& range, P&& pattern)
+            struct split_raco
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return split_view<decltype(ref), RAH2_NS::remove_cvref_t<P>>(
-                    RAH2_STD::move(ref), RAH2_STD::forward<P>(pattern));
-            }
+                template <typename R, typename P, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+                auto operator()(R&& range, P&& pattern) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return split_view<decltype(ref), RAH2_NS::remove_cvref_t<P>>(
+                        RAH2_STD::move(ref), RAH2_STD::forward<P>(pattern));
+                }
 
-            template <typename P>
-            auto split(P&& pattern)
-            {
-                return make_pipeable(
-                    [p = RAH2_STD::forward<P>(pattern)](auto&& range)
-                    { return split(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(p)); });
-            }
+                template <typename P>
+                auto operator()(P&& pattern) const
+                {
+                    return make_pipeable(
+                        [p = RAH2_STD::forward<P>(pattern)](auto&& range) {
+                            return split(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(p));
+                        });
+                }
+            };
+            constexpr split_raco split;
         } // namespace views
         // ******************************************* counted ************************************
         namespace views
@@ -1981,30 +1999,26 @@ namespace RAH2_NS
 
         namespace views
         {
-
-            /// @brief Adapts a given view with different types for iterator/sentinel pair into a view
-            /// that is also a common_range. A common_view always has the same iterator/sentinel type.
-            ///
-            /// @snippet test.cpp RAH2_NS::views::common
-            template <typename R, RAH2_STD::enable_if_t<not common_range<R>>* = nullptr>
-            auto common(R&& range)
+            struct common_raco : closure_object_facade<common_raco>
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return common_view<decltype(ref)>(RAH2_STD::move(ref));
-            }
+                /// @brief Adapts a given view with different types for iterator/sentinel pair into a view
+                /// that is also a common_range. A common_view always has the same iterator/sentinel type.
+                ///
+                /// @snippet test.cpp RAH2_NS::views::common
+                template <typename R, RAH2_STD::enable_if_t<not common_range<R>>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return common_view<decltype(ref)>(RAH2_STD::move(ref));
+                }
 
-            template <typename R, RAH2_STD::enable_if_t<common_range<R>>* = nullptr>
-            auto common(R&& range)
-            {
-                return all(RAH2_STD::forward<R>(range));
-            }
-
-            /// @snippet test.cpp RAH2_NS::views::common_pipeable
-            inline auto common()
-            {
-                return make_pipeable([](auto&& range)
-                                     { return common(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename R, RAH2_STD::enable_if_t<common_range<R>>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    return all(RAH2_STD::forward<R>(range));
+                }
+            };
+            constexpr common_raco common;
         } // namespace views
 
         // ***************************************** reverse **********************************************
@@ -2059,21 +2073,20 @@ namespace RAH2_NS
 
         namespace views
         {
-            template <typename R>
-            auto reverse(R&& range)
+            struct reverse_raco : closure_object_facade<reverse_raco>
             {
-                static_assert(
-                    RAH2_NS::ranges::bidirectional_range<R>, "reverse expect a bidirectional_range");
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return reverse_view<decltype(ref)>(RAH2_STD::move(ref));
-            }
+                template <typename R>
+                auto operator()(R&& range) const
+                {
+                    static_assert(
+                        RAH2_NS::ranges::bidirectional_range<R>,
+                        "reverse expect a bidirectional_range");
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return reverse_view<decltype(ref)>(RAH2_STD::move(ref));
+                }
+            };
 
-            inline auto reverse()
-            {
-                return make_pipeable(
-                    [](auto&& range)
-                    { return views::reverse(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+            constexpr reverse_raco reverse;
         } // namespace views
 
         // **************************** element_view **********************************************
@@ -2192,53 +2205,46 @@ namespace RAH2_NS
         };
         namespace views
         {
-
-            template <size_t N, typename T>
-            auto elements(T&& range)
-            {
-                auto ref = all(RAH2_STD::forward<T>(range));
-                return elements_view<decltype(ref), N>(RAH2_STD::move(ref));
-            }
-
             template <size_t N>
-            auto elements()
+            struct elements_raco : closure_object_facade<elements_raco<N>>
             {
-                return make_pipeable(
-                    [](auto&& range)
-                    { return elements<N>(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename T>
+                auto operator()(T&& range) const
+                {
+                    auto ref = all(RAH2_STD::forward<T>(range));
+                    return elements_view<decltype(ref), N>(RAH2_STD::move(ref));
+                }
+            };
+            template <size_t N>
+            constexpr elements_raco<N> elements;
 
             template <typename T>
             using keys_view = elements_view<T, 0>;
 
-            template <typename T>
-            auto keys(T&& range)
+            struct keys_raco : closure_object_facade<keys_raco>
             {
-                auto ref = all(RAH2_STD::forward<T>(range));
-                return keys_view<decltype(ref)>(RAH2_STD::move(ref));
-            }
-
-            inline auto keys()
-            {
-                return make_pipeable([](auto&& range)
-                                     { return keys(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename T>
+                auto operator()(T&& range) const
+                {
+                    auto ref = all(RAH2_STD::forward<T>(range));
+                    return keys_view<decltype(ref)>(RAH2_STD::move(ref));
+                }
+            };
+            constexpr keys_raco keys;
 
             template <typename T>
             using values_view = elements_view<T, 1>;
 
-            template <typename T>
-            auto values(T&& range)
+            struct values_raco : closure_object_facade<values_raco>
             {
-                auto ref = all(RAH2_STD::forward<T>(range));
-                return values_view<decltype(ref)>(RAH2_STD::move(ref));
-            }
-
-            inline auto values()
-            {
-                return make_pipeable([](auto&& range)
-                                     { return values(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename T>
+                auto operator()(T&& range) const
+                {
+                    auto ref = all(RAH2_STD::forward<T>(range));
+                    return values_view<decltype(ref)>(RAH2_STD::move(ref));
+                }
+            };
+            constexpr values_raco values;
         } // namespace views
         // *************************** enumerate **********************************************************
 
@@ -2379,19 +2385,16 @@ namespace RAH2_NS
             RAH2_NS::ranges::enable_borrowed_range<T>;
         namespace views
         {
-            template <typename R>
-            auto enumerate(R&& range)
+            struct enumerate_raco : closure_object_facade<enumerate_raco>
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return enumerate_view<decltype(ref)>(RAH2_STD::move(ref));
-            }
-
-            inline auto enumerate()
-            {
-                return make_pipeable(
-                    [](auto&& range)
-                    { return enumerate(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename R>
+                auto operator()(R&& range) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return enumerate_view<decltype(ref)>(RAH2_STD::move(ref));
+                }
+            };
+            constexpr enumerate_raco enumerate;
         } // namespace views
 
         // *************************** zip ****************************************************************
@@ -3167,40 +3170,35 @@ namespace RAH2_NS
 
         namespace views
         {
-            template <size_t N, typename R, RAH2_STD::enable_if_t<N != 0>* = nullptr>
-            auto adjacent(R&& range)
-            {
-                auto range_view = all(range);
-                return adjacent_view<decltype(range_view), N>(RAH2_STD::move(range_view));
-            }
-
-            template <size_t N, typename R, RAH2_STD::enable_if_t<N == 0>* = nullptr>
-            auto adjacent(R&&)
-            {
-                return views::empty<RAH2_STD::tuple<>>();
-            }
-
             template <size_t N>
-            auto adjacent()
+            struct adjacent_raco : closure_object_facade<adjacent_raco<N>>
             {
-                return make_pipeable(
-                    [](auto&& range)
-                    { return adjacent<N>(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename R, size_t M = N, RAH2_STD::enable_if_t<M != 0>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    auto range_view = all(range);
+                    return adjacent_view<decltype(range_view), N>(RAH2_STD::move(range_view));
+                }
 
-            template <typename R>
-            auto pairwise(R&& range)
-            {
-                auto range_view = all(range);
-                return adjacent_view<decltype(range_view), 2>(RAH2_STD::move(range_view));
-            }
+                template <typename R, size_t M = N, RAH2_STD::enable_if_t<M == 0>* = nullptr>
+                auto operator()(R&&) const
+                {
+                    return views::empty<RAH2_STD::tuple<>>;
+                }
+            };
+            template <size_t N>
+            constexpr adjacent_raco<N> adjacent;
 
-            inline auto pairwise()
+            struct pairwise_raco : closure_object_facade<pairwise_raco>
             {
-                return make_pipeable(
-                    [](auto&& range)
-                    { return adjacent<2>(RAH2_STD::forward<decltype(range)>(range)); });
-            }
+                template <typename R>
+                auto pairwise(R&& range)
+                {
+                    auto range_view = all(range);
+                    return adjacent_view<decltype(range_view), 2>(RAH2_STD::move(range_view));
+                }
+            };
+            constexpr pairwise_raco pairwise;
         } // namespace views
 
         // ********************************* adjacent_transform ***********************************
@@ -3285,29 +3283,35 @@ namespace RAH2_NS
         };
         namespace views
         {
-
-            template <size_t N, typename R, typename F, RAH2_STD::enable_if_t<N != 0>* = nullptr>
-            auto adjacent_transform(R&& range, F&& func)
+            template <size_t N>
+            struct adjacent_transform_raco
             {
-                auto range_view = all(range);
-                return adjacent_transform_view<decltype(range_view), F, N>(
-                    RAH2_STD::move(range_view), RAH2_STD::forward<F>(func));
-            }
+                template <typename R, typename F, size_t M = N, RAH2_STD::enable_if_t<M != 0>* = nullptr>
+                auto operator()(R&& range, F&& func) const
+                {
+                    auto range_view = all(range);
+                    return adjacent_transform_view<decltype(range_view), F, N>(
+                        RAH2_STD::move(range_view), RAH2_STD::forward<F>(func));
+                }
 
-            template <size_t N, typename R, typename F, RAH2_STD::enable_if_t<N == 0>* = nullptr>
-            auto adjacent_transform(R&&, F&&)
-            {
-                return views::empty<RAH2_STD::tuple<>>();
-            }
+                template <typename R, typename F, size_t M = N, RAH2_STD::enable_if_t<M == 0>* = nullptr>
+                auto operator()(R&&, F&&) const
+                {
+                    return views::empty<RAH2_STD::tuple<>>;
+                }
 
-            template <size_t N, typename F>
-            auto adjacent_transform(F&& func)
-            {
-                return make_pipeable(
-                    [=](auto&& range) {
-                        return adjacent_transform<N>(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
-                    });
-            }
+                template <typename F>
+                auto operator()(F&& func) const
+                {
+                    return make_pipeable(
+                        [this, func = RAH2_STD::forward<F>(func)](auto&& range) {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
+                        });
+                }
+            };
+            template <size_t N>
+            constexpr adjacent_transform_raco<N> adjacent_transform;
         } // namespace views
         // ******************************************* sliding ********************************************
 
@@ -3438,23 +3442,27 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename R>
-            auto slide(R&& range, range_difference_t<R> n)
+            struct slide_raco
             {
-                auto range_view = all(range);
-                return slide_view<decltype(range_view)>(RAH2_STD::move(range_view), n);
-            }
+                template <typename R>
+                auto operator()(R&& range, range_difference_t<R> n) const
+                {
+                    auto range_view = all(range);
+                    return slide_view<decltype(range_view)>(RAH2_STD::move(range_view), n);
+                }
 
-            inline auto slide(size_t n)
-            {
-                return make_pipeable(
-                    [=](auto&& range)
-                    {
-                        return slide(
-                            RAH2_STD::forward<decltype(range)>(range),
-                            static_cast<range_difference_t<decltype(range)>>(n));
-                    });
-            }
+                inline auto operator()(size_t n) const
+                {
+                    return make_pipeable(
+                        [this, n](auto&& range)
+                        {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range),
+                                static_cast<range_difference_t<decltype(range)>>(n));
+                        });
+                }
+            };
+            constexpr slide_raco slide;
         } // namespace views
         // ************************************ chunk *********************************************
 
@@ -3567,24 +3575,27 @@ namespace RAH2_NS
         };
         namespace views
         {
-
-            template <typename R, RAH2_STD::enable_if_t<not RAH2_NS::is_rvalue_reference_v<R&&>, int> = 0>
-            auto chunk(R&& range, range_difference_t<R> step)
+            struct chunk_raco
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return chunk_view<decltype(ref)>(RAH2_STD::move(ref), step);
-            }
+                template <typename R, RAH2_STD::enable_if_t<not RAH2_NS::is_rvalue_reference_v<R&&>, int> = 0>
+                auto operator()(R&& range, range_difference_t<R> step) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return chunk_view<decltype(ref)>(RAH2_STD::move(ref), step);
+                }
 
-            inline auto chunk(size_t step)
-            {
-                return make_pipeable(
-                    [=](auto&& range)
-                    {
-                        return chunk(
-                            RAH2_STD::forward<decltype(range)>(range),
-                            static_cast<range_difference_t<decltype(range)>>(step));
-                    });
-            }
+                inline auto operator()(size_t step) const
+                {
+                    return make_pipeable(
+                        [this, step](auto&& range)
+                        {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range),
+                                static_cast<range_difference_t<decltype(range)>>(step));
+                        });
+                }
+            };
+            constexpr chunk_raco chunk;
         } // namespace views
         // ***************************************** stride ***********************************************
         template <typename R>
@@ -3716,24 +3727,27 @@ namespace RAH2_NS
         constexpr bool enable_borrowed_range<stride_view<V>> = enable_borrowed_range<V>;
         namespace views
         {
-
-            template <typename R>
-            auto stride(R&& range, range_difference_t<R> step)
+            struct stride_raco
             {
-                auto views = all(RAH2_STD::forward<R>(range));
-                return stride_view<decltype(views)>(RAH2_STD::move(views), step);
-            }
+                template <typename R>
+                auto operator()(R&& range, range_difference_t<R> step) const
+                {
+                    auto views = all(RAH2_STD::forward<R>(range));
+                    return stride_view<decltype(views)>(RAH2_STD::move(views), step);
+                }
 
-            inline auto stride(size_t step)
-            {
-                return make_pipeable(
-                    [=](auto&& range)
-                    {
-                        return stride(
-                            RAH2_STD::forward<decltype(range)>(range),
-                            static_cast<range_difference_t<decltype(range)>>(step));
-                    });
-            }
+                inline auto operator()(size_t step) const
+                {
+                    return make_pipeable(
+                        [this, step](auto&& range)
+                        {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range),
+                                static_cast<range_difference_t<decltype(range)>>(step));
+                        });
+                }
+            };
+            constexpr stride_raco stride;
         } // namespace views
 
         // ******************************************* views extra ********************************
@@ -4041,18 +4055,17 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename R>
-            auto cycle(R&& range)
+            struct cycle_raco : closure_object_facade<cycle_raco>
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return cycle_view<decltype(ref)>(RAH2_STD::move(ref));
-            }
+                template <typename R>
+                auto operator()(R&& range) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return cycle_view<decltype(ref)>(RAH2_STD::move(ref));
+                }
+            };
+            constexpr cycle_raco cycle;
 
-            inline auto cycle()
-            {
-                return make_pipeable([](auto&& range)
-                                     { return cycle(RAH2_STD::forward<decltype(range)>(range)); });
-            }
         } // namespace views
         // ********************************** generate ****************************************************
         template <typename F>
@@ -4212,39 +4225,51 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename R1, typename R2>
-            auto set_difference(R1&& range1, R2&& range2)
+            struct set_difference_raco : closure_object_facade<set_difference_raco>
             {
-                auto ref1 = all(RAH2_STD::forward<R1>(range1));
-                auto ref2 = all(RAH2_STD::forward<R2>(range2));
-                return set_difference_view<decltype(ref1), decltype(ref2)>(
-                    RAH2_STD::move(ref1), RAH2_STD::move(ref2));
-            }
+                template <typename R1, typename R2>
+                auto operator()(R1&& range1, R2&& range2) const
+                {
+                    auto ref1 = all(RAH2_STD::forward<R1>(range1));
+                    auto ref2 = all(RAH2_STD::forward<R2>(range2));
+                    return set_difference_view<decltype(ref1), decltype(ref2)>(
+                        RAH2_STD::move(ref1), RAH2_STD::move(ref2));
+                }
 
-            template <typename R2>
-            auto set_difference(R2&& range2)
-            {
-                return make_pipeable(
-                    [r2 = all(range2)](auto&& range) { return set_difference(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(r2));
-                    });
-            }
+                template <typename R2>
+                auto operator()(R2&& range2) const
+                {
+                    return make_pipeable(
+                        [this, r2 = all(range2)](auto&& range) {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(r2));
+                        });
+                }
+            };
+            constexpr set_difference_raco set_difference;
         } // namespace views
         // ********************************** for_each ****************************************************
         namespace views
         {
-            template <typename R, typename F>
-            auto for_each(R&& range, F&& func)
+            struct for_each_raco
             {
-                return range | transform(func) | join();
-            }
+                template <typename R, typename F>
+                auto operator()(R&& range, F&& func) const
+                {
+                    return range | transform(func) | join;
+                }
 
-            template <typename F>
-            auto for_each(F&& func)
-            {
-                return make_pipeable(
-                    [=](auto&& range) { return views::for_each(RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
-                    });
-            }
+                template <typename F>
+                auto operator()(F&& func) const
+                {
+                    return make_pipeable(
+                        [this, func = RAH2_STD::forward<F>(func)](auto&& range) {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
+                        });
+                }
+            };
+            constexpr for_each_raco for_each;
         } // namespace views
         // ***************************************** slice ************************************************
 
@@ -4315,24 +4340,29 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename R>
-            auto slice(R&& range, range_difference_t<R> begin_idx, range_difference_t<R> end_idx)
+            struct slice_raco
             {
-                auto ref = all(RAH2_STD::forward<R>(range));
-                return slice_view<decltype(ref)>{RAH2_STD::move(ref), begin_idx, end_idx};
-            }
+                template <typename R>
+                auto operator()(
+                    R&& range, range_difference_t<R> begin_idx, range_difference_t<R> end_idx) const
+                {
+                    auto ref = all(RAH2_STD::forward<R>(range));
+                    return slice_view<decltype(ref)>{RAH2_STD::move(ref), begin_idx, end_idx};
+                }
 
-            inline auto slice(size_t beg, size_t sent)
-            {
-                return make_pipeable(
-                    [=](auto&& range)
-                    {
-                        return slice(
-                            RAH2_STD::forward<decltype(range)>(range),
-                            static_cast<range_difference_t<decltype(range)>>(beg),
-                            static_cast<range_difference_t<decltype(range)>>(sent));
-                    });
-            }
+                inline auto operator()(size_t beg, size_t sent) const
+                {
+                    return make_pipeable(
+                        [this, beg, sent](auto&& range)
+                        {
+                            return (*this)(
+                                RAH2_STD::forward<decltype(range)>(range),
+                                static_cast<range_difference_t<decltype(range)>>(beg),
+                                static_cast<range_difference_t<decltype(range)>>(sent));
+                        });
+                }
+            };
+            constexpr slice_raco slice;
         } // namespace views
 
         // ***************************************** concat ***********************************************
@@ -4467,33 +4497,6 @@ namespace RAH2_NS
                     concat(RAH2_STD::forward<R1>(range1), RAH2_STD::forward<R2>(range2)), ranges...);
             }
         } // namespace views
-
-        /*
-        template <
-            typename R,
-            RAH2_STD::enable_if_t<
-                RAH2_NS::ranges::enable_view<RAH2_STD::remove_reference_t<R>>
-                && ranges::details::has_begin_member<R>>* = nullptr>
-        auto begin(R&& r)
-        {
-            return r.begin();
-        }
-        template <
-            typename R,
-            RAH2_STD::enable_if_t<
-                RAH2_NS::ranges::enable_view<RAH2_STD::remove_reference_t<R>>
-                && ranges::details::has_end_member<R>>* = nullptr>
-        auto end(R&& r)
-        {
-            return r.end();
-        }
-
-        template <typename R, RAH2_STD::enable_if_t<RAH2_NS::ranges::contiguous_range<R>>* = nullptr>
-        auto data(R&& r)
-        {
-            return r.data();
-        }
-        */
     } // namespace ranges
 
     namespace views = ranges::views;

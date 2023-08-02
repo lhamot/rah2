@@ -1990,8 +1990,7 @@ void test_fold_left_first()
 
     // get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
-    auto sec =
-        rah2::ranges::fold_left_first(data | rah2::ranges::views::values(), std::multiplies<>());
+    auto sec = rah2::ranges::fold_left_first(data | rah2::ranges::views::values, std::multiplies<>());
     assert(*sec == 42);
 
     // use a program defined function object (lambda-expression):
@@ -2021,7 +2020,7 @@ void test_fold_right()
     // Get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
     float const r4 =
-        rah2::ranges::fold_right(data | rah2::ranges::views::values(), 2.0f, std::multiplies<>());
+        rah2::ranges::fold_right(data | rah2::ranges::views::values, 2.0f, std::multiplies<>());
     assert(r4 == 42);
     /// [rah2::ranges::fold_right]
 }
@@ -2045,8 +2044,7 @@ void test_fold_right_last()
 
     // Get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
-    auto r4 =
-        rah2::ranges::fold_right_last(data | rah2::ranges::views::values(), std::multiplies<>());
+    auto r4 = rah2::ranges::fold_right_last(data | rah2::ranges::views::values, std::multiplies<>());
     assert(*r4 == 42);
     /// [rah2::ranges::fold_right_last]
 }
@@ -2068,7 +2066,7 @@ void test_fold_left_with_iter()
     // get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
     auto const sec = rah2::ranges::fold_left_with_iter(
-        data | rah2::ranges::views::values(), 2.0f, std::multiplies<>());
+        data | rah2::ranges::views::values, 2.0f, std::multiplies<>());
     assert(sec.value == 42);
 
     // use a program defined function object (lambda-expression):
@@ -2100,7 +2098,7 @@ void test_fold_left_first_with_iter()
     // get the product of the std::pair::second of all pairs in the vector:
     std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 7.f}};
     auto sec = rah2::ranges::fold_left_first_with_iter(
-        data | rah2::ranges::views::values(), std::multiplies<>());
+        data | rah2::ranges::views::values, std::multiplies<>());
     assert(sec.value.value() == 42);
 
     // use a program defined function object (lambda-expression):
