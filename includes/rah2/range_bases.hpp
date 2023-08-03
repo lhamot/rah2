@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <iterator>
+#include <utility> // std::move
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
