@@ -766,7 +766,7 @@ namespace RAH2_NS
 
                 // this branch preserves "stability" of the sample elements
                 auto rest{RAH2_NS::ranges::distance(first, last)};
-                for (n = RAH2_STD::min(n, rest); n != 0; ++first)
+                for (n = RAH2_NS::details::min(n, rest); n != 0; ++first)
                 {
                     if (D(gen, param_t(0, --rest)) < n)
                     {

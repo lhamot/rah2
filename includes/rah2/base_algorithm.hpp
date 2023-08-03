@@ -1469,7 +1469,8 @@ namespace RAH2_NS
             operator()(char const* first1, char const* last1, char const* first2, char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1477,7 +1478,8 @@ namespace RAH2_NS
             operator()(char* first1, char const* last1, char* first2, char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1489,7 +1491,8 @@ namespace RAH2_NS
                 unsigned char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1501,7 +1504,8 @@ namespace RAH2_NS
                 unsigned char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1513,7 +1517,8 @@ namespace RAH2_NS
                 signed char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1525,7 +1530,8 @@ namespace RAH2_NS
                 signed char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 

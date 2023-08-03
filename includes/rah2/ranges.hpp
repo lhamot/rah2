@@ -1273,12 +1273,14 @@ namespace RAH2_NS
             template <bool IsSized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return RAH2_STD::min(range_size_t<R>(count_), RAH2_NS::ranges::size(input_view_));
+                return RAH2_NS::details::min(
+                    range_size_t<R>(count_), RAH2_NS::ranges::size(input_view_));
             }
             template <bool IsSized = sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return RAH2_STD::min(range_size_t<R>(count_), RAH2_NS::ranges::size(input_view_));
+                return RAH2_NS::details::min(
+                    range_size_t<R>(count_), RAH2_NS::ranges::size(input_view_));
             }
 
             template <typename U = R, RAH2_STD::enable_if_t<RAH2_NS::ranges::contiguous_range<U>>* = nullptr>
@@ -2571,7 +2573,7 @@ namespace RAH2_NS
             template <typename Arg1, typename... Args>
             auto min(Arg1 val, Args... others)
             {
-                return RAH2_STD::min<Arg1>(val, min(Arg1(others)...));
+                return RAH2_NS::details::min<Arg1>(val, min(Arg1(others)...));
             }
 
             struct compute_min_size
@@ -4297,7 +4299,7 @@ namespace RAH2_NS
             auto begin()
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
-                iter += RAH2_STD::min(begin_idx_, RAH2_NS::ranges::ssize(base_));
+                iter += RAH2_NS::details::min(begin_idx_, RAH2_NS::ranges::ssize(base_));
                 return iter;
             }
 
@@ -4313,7 +4315,7 @@ namespace RAH2_NS
             auto end()
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
-                iter += RAH2_STD::min(end_idx_, RAH2_NS::ranges::ssize(base_));
+                iter += RAH2_NS::details::min(end_idx_, RAH2_NS::ranges::ssize(base_));
                 return iter;
             }
 
@@ -4328,14 +4330,16 @@ namespace RAH2_NS
             {
                 auto const base_size = RAH2_NS::ranges::ssize(base_);
                 return range_size_t<R>(
-                    RAH2_STD::min(end_idx_, base_size) - RAH2_STD::min(begin_idx_, base_size));
+                    RAH2_NS::details::min(end_idx_, base_size)
+                    - RAH2_NS::details::min(begin_idx_, base_size));
             }
             template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
                 auto const base_size = RAH2_NS::ranges::ssize(base_);
                 return range_size_t<R>(
-                    RAH2_STD::min(end_idx_, base_size) - RAH2_STD::min(begin_idx_, base_size));
+                    RAH2_NS::details::min(end_idx_, base_size)
+                    - RAH2_NS::details::min(begin_idx_, base_size));
             }
         };
         namespace views
