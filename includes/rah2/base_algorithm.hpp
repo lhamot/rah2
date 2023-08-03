@@ -3,6 +3,7 @@
 #include "range_bases.hpp"
 
 #include <string.h> // memcmp
+#include <utility> // std::move
 
 namespace RAH2_NS
 {
