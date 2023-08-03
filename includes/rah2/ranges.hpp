@@ -10,7 +10,6 @@
 
 #include <tuple>
 #include <utility>
-#include <algorithm> // 'min(std::initializer_list<long long unsigned int>)'
 
 #ifdef _MSC_VER
 #define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
