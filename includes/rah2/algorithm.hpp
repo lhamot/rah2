@@ -707,7 +707,7 @@ namespace RAH2_NS
                                 RAH2_STD::move(first), RAH2_STD::move(mid), RAH2_STD::move(trail));
                             return {move_in_out.out, trail};
                         }
-                        RAH2_STD::iter_swap(mid, trail);
+                        RAH2_NS::ranges::iter_swap(mid, trail);
                     }
                 }
             }
@@ -766,7 +766,7 @@ namespace RAH2_NS
 
                 // this branch preserves "stability" of the sample elements
                 auto rest{RAH2_NS::ranges::distance(first, last)};
-                for (n = RAH2_STD::min(n, rest); n != 0; ++first)
+                for (n = RAH2_NS::details::min(n, rest); n != 0; ++first)
                 {
                     if (D(gen, param_t(0, --rest)) < n)
                     {
@@ -981,7 +981,7 @@ namespace RAH2_NS
                     *out_last = *first;
 
                 // convert N copied elements into a max-heap
-                RAH2_STD::make_heap(result_first, out_last, comp);
+                RAH2_NS::ranges::make_heap(result_first, out_last, comp);
 
                 // process the rest of the input range (if any), preserving the heap property
                 for (; first != last; ++first)
@@ -989,15 +989,15 @@ namespace RAH2_NS
                     if (RAH2_INVOKE_2(comp, *first, *result_first))
                     {
                         // pop out the biggest item and push in a newly found smaller one
-                        RAH2_STD::pop_heap(result_first, out_last, comp);
+                        RAH2_NS::ranges::pop_heap(result_first, out_last, comp);
                         *(out_last - 1) = *first;
-                        RAH2_STD::push_heap(result_first, out_last, comp);
+                        RAH2_NS::ranges::push_heap(result_first, out_last, comp);
                     }
                 }
 
                 // first N elements in the output range is still
                 // a heap - convert it into a sorted range
-                RAH2_STD::sort_heap(result_first, out_last, comp);
+                RAH2_NS::ranges::sort_heap(result_first, out_last, comp);
 
                 return {RAH2_STD::move(first), RAH2_STD::move(out_last)};
             }

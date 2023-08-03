@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <iterator>
+#include <utility> // std::move
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
@@ -1600,6 +1601,20 @@ namespace RAH2_NS
     };
     constexpr unreachable_sentinel_t unreachable_sentinel{};
 
+    // ***************************** algorithm replacement ****************************************
+    namespace details
+    {
+        template <class T>
+        constexpr const T& min(const T& a, const T& b)
+        {
+            return a < b ? a : b;
+        }
+        template <class T>
+        constexpr const T& max(const T& a, const T& b)
+        {
+            return a > b ? a : b;
+        }
+    } // namespace details
     // ************************************** optional ********************************************
     namespace details
     {

@@ -3,6 +3,7 @@
 #include "range_bases.hpp"
 
 #include <string.h> // memcmp
+#include <utility> // std::move
 
 namespace RAH2_NS
 {
@@ -1469,7 +1470,8 @@ namespace RAH2_NS
             operator()(char const* first1, char const* last1, char const* first2, char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1477,7 +1479,8 @@ namespace RAH2_NS
             operator()(char* first1, char const* last1, char* first2, char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1489,7 +1492,8 @@ namespace RAH2_NS
                 unsigned char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1501,7 +1505,8 @@ namespace RAH2_NS
                 unsigned char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1513,7 +1518,8 @@ namespace RAH2_NS
                 signed char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -1525,7 +1531,8 @@ namespace RAH2_NS
                 signed char const* last2) const
             {
                 ptrdiff_t const n1(last1 - first1), n2(last2 - first2);
-                int const result = memcmp(first1, first2, static_cast<size_t>(RAH2_STD::min(n1, n2)));
+                int const result =
+                    memcmp(first1, first2, static_cast<size_t>(RAH2_NS::details::min(n1, n2)));
                 return result != 0 ? (result < 0) : (n1 < n2);
             }
 
@@ -2345,7 +2352,8 @@ namespace RAH2_NS
         {
             for (; (first != last) && (first != --last);
                  ++first) // We are not allowed to use operator <, <=, >, >= with a
-                RAH2_STD::iter_swap(first, last); // generic (bidirectional or otherwise) iterator.
+                RAH2_NS::ranges::iter_swap(
+                    first, last); // generic (bidirectional or otherwise) iterator.
             return first;
         }
 
@@ -2357,7 +2365,7 @@ namespace RAH2_NS
             {
                 for (; first < --last;
                      ++first) // With a random access iterator, we can use operator < to more efficiently implement
-                    RAH2_STD::iter_swap(
+                    RAH2_NS::ranges::iter_swap(
                         first,
                         last); // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
             }
@@ -3395,7 +3403,7 @@ namespace RAH2_NS
                                 *i, *--j)) // Find the final value that's greater than the first (it may be equal to the second).
                             {
                             }
-                            RAH2_STD::iter_swap(i, j); // Swap the first and the final.
+                            RAH2_NS::ranges::iter_swap(i, j); // Swap the first and the final.
                             RAH2_NS::ranges::reverse(
                                 ii, last); // Reverse the ranget from second to last.
                             return {RAH2_STD::move(lasti), true};
@@ -3500,12 +3508,10 @@ namespace RAH2_NS
                 using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
                 value_type temp(RAH2_STD::move(*first));
-                ForwardIterator result = RAH2_STD::move(
-                    RAH2_STD::next(first),
-                    last,
-                    first); // Note that while our template type is BidirectionalIterator, if the actual
-                *result = RAH2_STD::move(
-                    temp); // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
+                // Note that while our template type is BidirectionalIterator, if the actual
+                auto result = RAH2_NS::ranges::move(RAH2_STD::next(first), last, first).out;
+                // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
+                *result = RAH2_STD::move(temp);
 
                 auto back = result;
                 ++back;

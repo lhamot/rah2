@@ -696,7 +696,7 @@ namespace RAH2_NS
                 if (first >= last) // Random access iterators allow operator >=
                     return first;
 
-                RAH2_STD::iter_swap(first, last);
+                RAH2_NS::ranges::iter_swap(first, last);
             }
         }
 
@@ -748,7 +748,7 @@ namespace RAH2_NS
                 if (first >= last) // Random access iterators allow operator >=
                     return first;
 
-                RAH2_STD::iter_swap(first, last);
+                RAH2_NS::ranges::iter_swap(first, last);
             }
         }
 

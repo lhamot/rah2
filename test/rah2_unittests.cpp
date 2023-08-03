@@ -17,6 +17,7 @@
 #include <array>
 
 #include <iomanip>
+#include <algorithm>
 
 #include "test_helpers.hpp"
 
