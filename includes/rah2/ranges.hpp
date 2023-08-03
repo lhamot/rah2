@@ -2562,6 +2562,27 @@ namespace RAH2_NS
                 return lesser_tuple<sizeof...(Args)>{}(a, b);
             }
 
+            template <typename Arg1>
+            auto min(Arg1 val)
+            {
+                return val;
+            }
+
+            template <typename Arg1, typename... Args>
+            auto min(Arg1 val, Args... others)
+            {
+                return RAH2_STD::min<Arg1>(val, min(Arg1(others)...));
+            }
+
+            struct compute_min_size
+            {
+                template <typename... Args>
+                auto operator()(Args&&... args) const
+                {
+                    return details::min(RAH2_STD::forward<Args>(args)...);
+                }
+            };
+
             template <typename... Args, size_t... Is>
             auto get_begin_tuple_impl(RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
             {
@@ -2676,16 +2697,6 @@ namespace RAH2_NS
                 details::all_type<RangeTuple, details::range_has_cat<RAH2_NS::random_access_iterator_tag>>()
                 && all_sized;
 
-            struct compute_min_size
-            {
-                template <typename... Args>
-                auto operator()(Args... args) const
-                {
-                    return RAH2_STD::min(
-                        RAH2_STD::initializer_list<size_t>{static_cast<size_t>(args)...});
-                }
-            };
-
         public:
             static constexpr bool is_borrowed_range =
                 details::all_type<RangeTuple, is_borrowed_range_impl>();
@@ -2791,7 +2802,7 @@ namespace RAH2_NS
             {
                 auto sizes = details::transform_each(
                     bases_, [](auto&& r) { return RAH2_NS::ranges::size(r); });
-                auto const min_size = details::apply(compute_min_size(), sizes);
+                auto const min_size = details::apply(details::compute_min_size(), sizes);
                 return iterator(details::transform_each(
                     bases_,
                     [min_size](auto&& r) {
@@ -2814,14 +2825,14 @@ namespace RAH2_NS
             {
                 auto sizes = details::transform_each(
                     bases_, [](auto&& r) { return RAH2_NS::ranges::size(r); });
-                return details::apply(compute_min_size(), sizes);
+                return details::apply(details::compute_min_size(), sizes);
             }
             template <bool IsSized = all_sized, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             size_t size()
             {
                 auto sizes = details::transform_each(
                     bases_, [](auto&& r) { return RAH2_NS::ranges::size(r); });
-                return details::apply(compute_min_size(), sizes);
+                return details::apply(details::compute_min_size(), sizes);
             }
         };
         template <class... Views>
@@ -2860,16 +2871,6 @@ namespace RAH2_NS
             static constexpr bool common_all_sized_random_access =
                 details::all_type<RangeTuple, details::range_has_cat<RAH2_NS::random_access_iterator_tag>>()
                 && all_sized;
-
-            struct compute_min_size
-            {
-                template <typename... Args>
-                auto operator()(Args... args) const
-                {
-                    return RAH2_STD::min(
-                        RAH2_STD::initializer_list<size_t>{static_cast<size_t>(args)...});
-                }
-            };
 
         public:
             struct sentinel
@@ -2979,7 +2980,7 @@ namespace RAH2_NS
             {
                 auto sizes = details::transform_each(
                     bases_, [](auto&& r) { return RAH2_NS::ranges::size(r); });
-                auto const min_size = details::apply(compute_min_size(), sizes);
+                auto const min_size = details::apply(details::compute_min_size(), sizes);
                 return iterator(
                     this,
                     details::transform_each(
