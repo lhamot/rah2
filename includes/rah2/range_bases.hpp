@@ -1608,6 +1608,11 @@ namespace RAH2_NS
         {
             return a < b ? a : b;
         }
+        template <class T>
+        constexpr const T& max(const T& a, const T& b)
+        {
+            return a > b ? a : b;
+        }
     } // namespace details
     // ************************************** optional ********************************************
     namespace details

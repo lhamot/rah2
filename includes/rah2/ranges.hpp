@@ -1376,14 +1376,14 @@ namespace RAH2_NS
             {
                 using base_size_t = range_size_t<R>;
                 auto const subsize = RAH2_NS::ranges::size(base_);
-                return RAH2_STD::max(base_size_t(0), base_size_t(subsize - drop_count_));
+                return RAH2_NS::details::max(base_size_t(0), base_size_t(subsize - drop_count_));
             }
             template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
                 using base_size_t = range_size_t<R>;
                 auto const subsize = RAH2_NS::ranges::size(base_);
-                return RAH2_STD::max(base_size_t(0), base_size_t(subsize - drop_count_));
+                return RAH2_NS::details::max(base_size_t(0), base_size_t(subsize - drop_count_));
             }
 
             auto begin()

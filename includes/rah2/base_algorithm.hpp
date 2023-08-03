@@ -2351,7 +2351,8 @@ namespace RAH2_NS
         {
             for (; (first != last) && (first != --last);
                  ++first) // We are not allowed to use operator <, <=, >, >= with a
-                RAH2_STD::iter_swap(first, last); // generic (bidirectional or otherwise) iterator.
+                RAH2_NS::ranges::iter_swap(
+                    first, last); // generic (bidirectional or otherwise) iterator.
             return first;
         }
 
@@ -2363,7 +2364,7 @@ namespace RAH2_NS
             {
                 for (; first < --last;
                      ++first) // With a random access iterator, we can use operator < to more efficiently implement
-                    RAH2_STD::iter_swap(
+                    RAH2_NS::ranges::iter_swap(
                         first,
                         last); // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
             }
@@ -3401,7 +3402,7 @@ namespace RAH2_NS
                                 *i, *--j)) // Find the final value that's greater than the first (it may be equal to the second).
                             {
                             }
-                            RAH2_STD::iter_swap(i, j); // Swap the first and the final.
+                            RAH2_NS::ranges::iter_swap(i, j); // Swap the first and the final.
                             RAH2_NS::ranges::reverse(
                                 ii, last); // Reverse the ranget from second to last.
                             return {RAH2_STD::move(lasti), true};
