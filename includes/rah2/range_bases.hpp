@@ -1605,12 +1605,12 @@ namespace RAH2_NS
     namespace details
     {
         template <class T>
-        constexpr const T& min(const T& a, const T& b)
+        constexpr T const& min(T const& a, T const& b)
         {
             return a < b ? a : b;
         }
         template <class T>
-        constexpr const T& max(const T& a, const T& b)
+        constexpr T const& max(T const& a, T const& b)
         {
             return a > b ? a : b;
         }
