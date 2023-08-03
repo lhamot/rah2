@@ -3,7 +3,7 @@
 #include "range_bases.hpp"
 
 #include <string.h> // memcmp
-#include <type_traits> // std::move
+#include <utility> // std::move
 
 namespace RAH2_NS
 {
@@ -3508,12 +3508,10 @@ namespace RAH2_NS
                 using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
                 value_type temp(RAH2_STD::move(*first));
-                ForwardIterator result = RAH2_STD::move(
-                    RAH2_STD::next(first),
-                    last,
-                    first); // Note that while our template type is BidirectionalIterator, if the actual
-                *result = RAH2_STD::move(
-                    temp); // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
+                // Note that while our template type is BidirectionalIterator, if the actual
+                auto result = RAH2_NS::ranges::move(RAH2_STD::next(first), last, first).out;
+                // iterator is a RandomAccessIterator then this move will be a memmove for trivial types.
+                *result = RAH2_STD::move(temp);
 
                 auto back = result;
                 ++back;
