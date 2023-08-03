@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <iterator>
-#include <tuple> // for tuple_size
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
@@ -95,9 +94,6 @@ namespace RAH2_NS
 
     template <class T>
     constexpr bool is_rvalue_reference_v = RAH2_STD::is_rvalue_reference<T>::value;
-
-    template <class T>
-    constexpr RAH2_STD::size_t tuple_size_v = RAH2_STD::tuple_size<T>::value;
 
     template <class T>
     struct is_scalar
@@ -1724,13 +1720,13 @@ namespace RAH2_NS
 
             T& value()
             {
-                assert(is_allocated_);
+                RAH2_ASSERT(is_allocated_);
                 return *get_ptr();
             }
 
             T const& value() const
             {
-                assert(is_allocated_);
+                RAH2_ASSERT(is_allocated_);
                 return *get_ptr();
             }
 
@@ -1744,12 +1740,12 @@ namespace RAH2_NS
             }
             T* operator->()
             {
-                assert(is_allocated_);
+                RAH2_ASSERT(is_allocated_);
                 return get_ptr();
             }
             T const* operator->() const
             {
-                assert(is_allocated_);
+                RAH2_ASSERT(is_allocated_);
                 return get_ptr();
             }
 

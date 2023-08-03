@@ -2438,7 +2438,7 @@ namespace RAH2_NS
             template <typename Tuple, typename Check>
             constexpr bool all_type()
             {
-                return all_type_impl<Tuple, RAH2_NS::tuple_size_v<Tuple> - 1, Check>::value;
+                return all_type_impl<Tuple, RAH2_STD::tuple_size<Tuple>::value - 1, Check>::value;
             }
 
             template <class F, typename... Args, size_t... Is>
@@ -2668,7 +2668,7 @@ namespace RAH2_NS
                 static constexpr bool value = RAH2_NS::ranges::borrowed_range<Range const>;
             };
             static constexpr bool common_one_range =
-                RAH2_NS::tuple_size_v<RangeTuple> == 1
+                RAH2_STD::tuple_size<RangeTuple>::value == 1
                 && RAH2_NS::ranges::common_range<RAH2_STD::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool all_const_sized =
@@ -2855,7 +2855,7 @@ namespace RAH2_NS
                 static constexpr bool value = RAH2_NS::ranges::sized_range<Range>;
             };
             static constexpr bool common_one_range =
-                RAH2_NS::tuple_size_v<RangeTuple> == 1
+                RAH2_STD::tuple_size<RangeTuple>::value == 1
                 && RAH2_NS::ranges::common_range<RAH2_STD::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
             static constexpr bool common_all_sized_random_access =
@@ -2886,7 +2886,7 @@ namespace RAH2_NS
             {
                 IterTuple iters_;
                 zip_transform_view* parent_ = nullptr;
-                static constexpr size_t tuple_size = RAH2_NS::tuple_size_v<RangeTuple>;
+                static constexpr size_t tuple_size = RAH2_STD::tuple_size<RangeTuple>::value;
 
             public:
                 iterator() = default;
