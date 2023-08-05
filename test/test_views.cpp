@@ -6,13 +6,13 @@
 #include <array>
 #include <algorithm>
 
-auto inputSentView = make_test_view<Sentinel, std::input_iterator_tag, false>();
-auto fwdSentView = make_test_view<Sentinel, std::forward_iterator_tag, false>();
-auto fwdCommonView = make_test_view<Common, std::forward_iterator_tag, false>();
-auto bidirSentView = make_test_view<Sentinel, std::bidirectional_iterator_tag, false>();
-auto bidirCommonView = make_test_view<Common, std::bidirectional_iterator_tag, false>();
-auto rdmSentView = make_test_view<Sentinel, std::random_access_iterator_tag, true>();
-auto rdmCommonView = make_test_view<Common, std::random_access_iterator_tag, true>();
+auto inputSentView = make_test_view<Sentinel, RAH2_STD::input_iterator_tag, false>();
+auto fwdSentView = make_test_view<Sentinel, RAH2_STD::forward_iterator_tag, false>();
+auto fwdCommonView = make_test_view<Common, RAH2_STD::forward_iterator_tag, false>();
+auto bidirSentView = make_test_view<Sentinel, RAH2_STD::bidirectional_iterator_tag, false>();
+auto bidirCommonView = make_test_view<Common, RAH2_STD::bidirectional_iterator_tag, false>();
+auto rdmSentView = make_test_view<Sentinel, RAH2_STD::random_access_iterator_tag, true>();
+auto rdmCommonView = make_test_view<Common, RAH2_STD::random_access_iterator_tag, true>();
 auto contiSentView = make_test_view<Sentinel, rah2::contiguous_iterator_tag, true>();
 auto contiCommonView = make_test_view<Common, rah2::contiguous_iterator_tag, true>();
 
@@ -73,7 +73,7 @@ void test_empty_view()
 {
     testSuite.test_case("sample");
     /// [empty]
-    std::vector<int> result;
+    RAH2_STD::vector<int> result;
     for (int const i : rah2::views::empty<int>)
         result.push_back(i);
     assert(result.empty());
@@ -87,10 +87,10 @@ void test_single_view()
 {
     testSuite.test_case("sample");
     /// [single]
-    std::vector<int> result;
+    RAH2_STD::vector<int> result;
     for (int const i : rah2::views::single(20))
         result.push_back(i);
-    assert(result == std::vector<int>({20}));
+    assert(result == RAH2_STD::vector<int>({20}));
     /// [single]
 
     testSuite.test_case("concept");
@@ -102,26 +102,26 @@ void test_iota_view()
     {
         testSuite.test_case("sample");
         /// [iota]
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int const i : rah2::views::iota(10, 15))
             result.push_back(i);
-        assert(result == std::vector<int>({10, 11, 12, 13, 14}));
+        assert(result == RAH2_STD::vector<int>({10, 11, 12, 13, 14}));
         /// [iota]
         STATIC_ASSERT(rah2::ranges::random_access_range<decltype(rah2::views::iota(10, 15))>);
     }
 
     {
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int const i : rah2::views::iota(10) | rah2::views::slice(2, 5) | rah2::views::common)
             result.push_back(i);
-        assert(result == std::vector<int>({12, 13, 14}));
+        assert(result == RAH2_STD::vector<int>({12, 13, 14}));
     }
 
     {
-        std::vector<size_t> result;
+        RAH2_STD::vector<size_t> result;
         for (size_t const i : rah2::views::iota() | rah2::views::slice(2, 5) | rah2::views::common)
             result.push_back(i);
-        assert(result == std::vector<size_t>({2, 3, 4}));
+        assert(result == RAH2_STD::vector<size_t>({2, 3, 4}));
     }
 }
 
@@ -131,14 +131,15 @@ void test_istream_view()
         testSuite.test_case("sample");
         /// [views::istream]
         std::stringstream ss("a b c d e f g h i j k l");
-        std::vector<std::string> out;
+        RAH2_STD::vector<std::string> out;
         for (auto&& str : rah2::views::istream<std::string>(ss) | rah2::views::common)
         {
             out.push_back(str);
         }
         assert(
             out
-            == std::vector<std::string>({"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}));
+            == RAH2_STD::vector<std::string>(
+                {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}));
         /// [views::istream]
     }
 
@@ -151,10 +152,10 @@ void test_repeat_view()
 {
     testSuite.test_case("sample");
     /// [repeat]
-    std::vector<int> out;
+    RAH2_STD::vector<int> out;
     auto range = rah2::views::repeat(42);
     std::copy_n(rah2::ranges::begin(range), 5, std::back_inserter(out));
-    assert(out == std::vector<int>({42, 42, 42, 42, 42}));
+    assert(out == RAH2_STD::vector<int>({42, 42, 42, 42, 42}));
     /// [repeat]
     STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(range), true>::value));
 }
@@ -163,13 +164,13 @@ void test_owning_view()
 {
     testSuite.test_case("sample");
     /// [owning_view]
-    std::vector<int> out;
-    auto owning = rah2::views::owning(std::vector<int>{0, 1, 2, 2, 3});
+    RAH2_STD::vector<int> out;
+    auto owning = rah2::views::owning(RAH2_STD::vector<int>{0, 1, 2, 2, 3});
     for (auto&& val : owning)
     {
         out.push_back(val);
     }
-    assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+    assert(out == (RAH2_STD::vector<int>{0, 1, 2, 2, 3}));
     /// [owning_view]
     STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(owning), true>::value));
 }
@@ -183,17 +184,17 @@ void test_all_view()
     testSuite.test_case("lvalue_container");
     EQUAL_RANGE((intTab | rah2::ranges::all), (il<int>{0, 1, 2, 3}));
     testSuite.test_case("rvalue_container");
-    EQUAL_RANGE((std::vector<int>({0, 1, 2, 3}) | rah2::ranges::all), (il<int>{0, 1, 2, 3}));
+    EQUAL_RANGE((RAH2_STD::vector<int>({0, 1, 2, 3}) | rah2::ranges::all), (il<int>{0, 1, 2, 3}));
 
     testSuite.test_case("sample");
     /// [views::all]
-    std::vector<int> out;
-    auto all = rah2::ranges::all(std::vector<int>{0, 1, 2, 2, 3});
+    RAH2_STD::vector<int> out;
+    auto all = rah2::ranges::all(RAH2_STD::vector<int>{0, 1, 2, 2, 3});
     for (auto&& val : all)
     {
         out.push_back(val);
     }
-    assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+    assert(out == (RAH2_STD::vector<int>{0, 1, 2, 2, 3}));
     /// [views::all]
 
     testSuite.test_case("concepts");
@@ -217,15 +218,15 @@ void test_filter_view()
 {
     testSuite.test_case("sample");
     /// [filter]
-    std::vector<int> vec_01234{0, 1, 2, 3, 4, 5};
-    std::vector<int> result;
+    RAH2_STD::vector<int> vec_01234{0, 1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> result;
     for (int const i : rah2::views::filter(vec_01234, [](auto a) { return a % 2 == 0; }))
         result.push_back(i);
-    assert(result == std::vector<int>({0, 2, 4}));
+    assert(result == RAH2_STD::vector<int>({0, 2, 4}));
     /// [filter]
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::bidirectional_iterator_tag, std::input_iterator_tag, make_filter_view>();
+    check_all_cat<rah2::bidirectional_iterator_tag, RAH2_STD::input_iterator_tag, make_filter_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -250,16 +251,16 @@ void test_transform_view()
     {
         testSuite.test_case("sample");
         /// [rah2::views::transform]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3};
+        RAH2_STD::vector<int> result;
         for (int const i : rah2::views::transform(vec, [](auto a) { return a * 2; }))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4, 6}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4, 6}));
         /// [rah2::views::transform]
     }
     testSuite.test_case("various");
     {
-        std::vector<int> vec{0, 1, 2, 3};
+        RAH2_STD::vector<int> vec{0, 1, 2, 3};
         auto valueSelector = [](auto a)
         {
             return a * 2;
@@ -274,16 +275,16 @@ void test_transform_view()
     }
     {
         /// [rah2::views::transform_pipeable]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3};
+        RAH2_STD::vector<int> result;
         for (int const i : vec | rah2::views::transform([](auto a) { return a * 2; }))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4, 6}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4, 6}));
         /// [rah2::views::transform_pipeable]
     }
 
     testSuite.test_case("concept");
-    check_all_cat<rah2::random_access_iterator_tag, std::input_iterator_tag, make_transform_view>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_transform_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -305,34 +306,34 @@ void test_take_view()
     {
         testSuite.test_case("sample");
         /// [take]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::take(in, 5);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
         auto range2 = rah2::views::take(in, 1000);
-        std::vector<int> out2;
+        RAH2_STD::vector<int> out2;
         std::copy(rah2::ranges::begin(range2), rah2::ranges::end(range2), std::back_inserter(out2));
-        assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        assert(out2 == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         /// [take]
     }
     testSuite.test_case("sample_pipeable");
     {
         /// [take_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::take(5);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
         auto range2 = in | rah2::views::take(1000);
-        std::vector<int> out2;
+        RAH2_STD::vector<int> out2;
         std::copy(rah2::ranges::begin(range2), rah2::ranges::end(range2), std::back_inserter(out2));
-        assert(out2 == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        assert(out2 == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         /// [take_pipeable]
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::contiguous_iterator_tag, std::input_iterator_tag, make_take_view>();
+    check_all_cat<rah2::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_take_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -354,26 +355,26 @@ void test_drop_view()
         testSuite.test_case("sample");
 
         /// [drop]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::drop(in, 6);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
+        assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop]
     }
 
     {
         testSuite.test_case("sample_pipeable");
         /// [drop_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::drop(6);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
+        assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop_pipeable]
     }
     testSuite.test_case("concepts");
-    check_all_cat<rah2::contiguous_iterator_tag, std::input_iterator_tag, make_drop_view>();
+    check_all_cat<rah2::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_drop_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -397,27 +398,27 @@ void test_drop_while_view()
     {
         testSuite.test_case("sample");
         /// [drop_while]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::drop_while(in, [](auto v) { return v < 6; });
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
+        assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop_while]
     }
 
     {
         testSuite.test_case("sample_pipeable");
         /// [drop_while_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::drop_while([](auto v) { return v < 6; });
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({6, 7, 8, 9}));
+        assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop_while_pipeable]
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::contiguous_iterator_tag, std::input_iterator_tag, make_drop_while_view>();
+    check_all_cat<rah2::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_drop_while_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -439,7 +440,7 @@ void test_join_view()
     {
         testSuite.test_case("sample");
         /// [join]
-        std::vector<std::vector<int>> in = {
+        RAH2_STD::vector<RAH2_STD::vector<int>> in = {
             {},
             {0, 1},
             {},
@@ -448,15 +449,15 @@ void test_join_view()
             {},
         };
         auto range = rah2::views::join(in);
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         rah2::ranges::copy(range, std::back_inserter(result));
-        assert(result == std::vector<int>({0, 1, 2, 3, 4, 5}));
+        assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join]
     }
     {
         testSuite.test_case("sample_pipeable");
         /// [join_pipeable]
-        std::vector<std::vector<int>> in = {
+        RAH2_STD::vector<RAH2_STD::vector<int>> in = {
             {0, 1},
             {},
             {2, 3, 4},
@@ -464,9 +465,9 @@ void test_join_view()
             {},
         };
         auto range = in | rah2::views::join;
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         rah2::ranges::copy(range, std::back_inserter(result));
-        assert(result == std::vector<int>({0, 1, 2, 3, 4, 5}));
+        assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join_pipeable]
     }
     {
@@ -476,19 +477,19 @@ void test_join_view()
                      | rah2::views::transform(
                          [](auto i) { return rah2::views::repeat(1) | rah2::views::take(i); })
                      | rah2::views::join;
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         rah2::ranges::copy(range, std::back_inserter(result));
-        assert(result == std::vector<int>(15, 1));
+        assert(result == RAH2_STD::vector<int>(15, 1));
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::input_iterator_tag, std::input_iterator_tag, make_join_view>();
+    check_all_cat<rah2::input_iterator_tag, RAH2_STD::input_iterator_tag, make_join_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_split_view
 {
-    std::array<int, 2> delim = {3, 4};
+    RAH2_STD::array<int, 2> delim = {3, 4};
     auto make()
     {
         return rah2::views::split(make_test_view<CS, Tag, Sized>(), delim);
@@ -502,26 +503,26 @@ void test_split_view()
 {
     testSuite.test_case("sample");
     /// [views::split]
-    std::string sentence{"Keep..moving..forward.."};
-    std::string const delim{".."};
-    auto words =
-        rah2::views::split(sentence, delim)
-        | rah2::views::transform([](auto word) { return std::string(word.begin(), word.end()); });
+    RAH2_STD::string sentence{"Keep..moving..forward.."};
+    RAH2_STD::string const delim{".."};
+    auto words = rah2::views::split(sentence, delim)
+                 | rah2::views::transform([](auto word)
+                                          { return RAH2_STD::string(word.begin(), word.end()); });
 
-    EQUAL_RANGE(words, std::vector<std::string>({"Keep", "moving", "forward"}));
+    EQUAL_RANGE(words, RAH2_STD::vector<RAH2_STD::string>({"Keep", "moving", "forward"}));
     /// [views::split]
 
     testSuite.test_case("concepts");
     // TODO : Allow forward_iterator
     // TODO : Allow common_range
     // TODO : Check inner_range (reference_t)
-    check_all_cat<rah2::input_iterator_tag, std::input_iterator_tag, make_split_view>();
+    check_all_cat<rah2::input_iterator_tag, RAH2_STD::input_iterator_tag, make_split_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_counted_view
 {
-    std::array<int, 2> delim = {3, 4};
+    RAH2_STD::array<int, 2> delim = {3, 4};
     auto make()
     {
         auto r = make_test_view<CS, Tag, Sized>();
@@ -538,15 +539,15 @@ void test_counted_view()
 {
     testSuite.test_case("sample");
     /// [counted]
-    std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     auto range = rah2::views::counted(in.begin(), 5);
-    std::vector<int> out;
+    RAH2_STD::vector<int> out;
     std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-    assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+    assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
     /// [counted]
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::contiguous_iterator_tag, std::input_iterator_tag, make_counted_view>();
+    check_all_cat<rah2::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_counted_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -567,10 +568,10 @@ void test_common_view()
     testSuite.test_case("sample");
     /// [rah2::views::common]
     auto c = rah2::views::iota(0, 5) | rah2::views::filter([](auto i) { return i % 2 == 0; });
-    std::vector<int> result;
+    RAH2_STD::vector<int> result;
     for (auto&& i : c | rah2::views::common)
         result.push_back(i);
-    assert(result == std::vector<int>({0, 2, 4}));
+    assert(result == RAH2_STD::vector<int>({0, 2, 4}));
     /// [rah2::views::common]
 
     testSuite.test_case("concepts");
@@ -597,21 +598,21 @@ void test_reverse_view()
     {
         testSuite.test_case("sample");
         /// [reverse]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3};
+        RAH2_STD::vector<int> result;
         for (int const i : rah2::views::reverse(vec))
             result.push_back(i);
-        assert(result == std::vector<int>({3, 2, 1, 0}));
+        assert(result == RAH2_STD::vector<int>({3, 2, 1, 0}));
         /// [reverse]
     }
     {
         testSuite.test_case("sample_pipeable");
         /// [reverse_pipeable]
-        std::vector<int> vec{0, 1, 2, 3};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3};
+        RAH2_STD::vector<int> result;
         for (int const i : vec | rah2::views::reverse)
             result.push_back(i);
-        assert(result == std::vector<int>({3, 2, 1, 0}));
+        assert(result == RAH2_STD::vector<int>({3, 2, 1, 0}));
         /// [reverse_pipeable]
     }
     testSuite.test_case("concepts");
@@ -621,7 +622,7 @@ void test_reverse_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_elements_view
 {
-    std::vector<std::tuple<bool, char, int>> vec{
+    RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
         {true, 'a', 1000},
         {false, 'b', 1001},
         {true, 'c', 1002},
@@ -632,7 +633,8 @@ struct make_elements_view
     {
         return rah2::views::elements<2>(make_test_view_adapter<CS, Tag, Sized>(vec));
     }
-    using BaseRange = test_view_adapter<CS, Tag, Sized, std::vector<std::tuple<bool, char, int>>>;
+    using BaseRange =
+        test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>>>;
     static constexpr bool is_sized = rah2::ranges::sized_range<BaseRange>;
     static constexpr bool is_common = rah2::ranges::common_range<BaseRange>;
     static constexpr bool do_test = true;
@@ -643,21 +645,21 @@ void test_elements_view()
     {
         testSuite.test_case("sample");
         /// [elements_view]
-        std::vector<std::tuple<bool, char, int>> vec{
+        RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
             {true, 'a', 1000},
             {false, 'b', 1001},
             {true, 'c', 1002},
             {false, 'd', 1003},
         };
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (auto i : vec | rah2::views::elements<2>)
             result.push_back(i);
-        assert(result == std::vector<int>({1000, 1001, 1002, 1003}));
+        assert(result == RAH2_STD::vector<int>({1000, 1001, 1002, 1003}));
         /// [elements_view]
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::random_access_iterator_tag, std::input_iterator_tag, make_elements_view>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_elements_view>();
 }
 
 void test_values_view()
@@ -665,16 +667,16 @@ void test_values_view()
     {
         testSuite.test_case("sample");
         /// [values_view]
-        std::vector<std::tuple<bool, char, int>> vec{
+        RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
             {true, 'a', 1000},
             {false, 'b', 1001},
             {true, 'c', 1002},
             {false, 'd', 1003},
         };
-        std::vector<char> result;
+        RAH2_STD::vector<char> result;
         for (auto i : vec | rah2::views::values)
             result.push_back(i);
-        assert(result == std::vector<char>({'a', 'b', 'c', 'd'}));
+        assert(result == RAH2_STD::vector<char>({'a', 'b', 'c', 'd'}));
         /// [values_view]
     }
 }
@@ -684,16 +686,16 @@ void test_keys_view()
     {
         testSuite.test_case("sample");
         /// [keys_view]
-        std::vector<std::tuple<bool, char, int>> vec{
+        RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
             {true, 'a', 1000},
             {false, 'b', 1001},
             {true, 'c', 1002},
             {false, 'd', 1003},
         };
-        std::vector<bool> result;
+        RAH2_STD::vector<bool> result;
         for (auto i : vec | rah2::views::keys)
             result.push_back(i);
-        assert(result == std::vector<bool>({true, false, true, false}));
+        assert(result == RAH2_STD::vector<bool>({true, false, true, false}));
         /// [keys_view]
     }
 }
@@ -717,22 +719,26 @@ void test_enumerate_view()
     {
         testSuite.test_case("sample");
         /// [enumerate]
-        std::vector<int> input{4, 5, 6, 7};
-        std::vector<std::tuple<intptr_t, int>> result;
+        RAH2_STD::vector<int> input{4, 5, 6, 7};
+        RAH2_STD::vector<RAH2_STD::tuple<intptr_t, int>> result;
         rah2::views::enumerate(input);
         for (auto i_value : rah2::views::enumerate(input))
             result.emplace_back(i_value);
-        assert(result == (std::vector<std::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
+        assert(
+            result
+            == (RAH2_STD::vector<RAH2_STD::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate]
     }
     {
         testSuite.test_case("sample_pipeable");
         /// [enumerate_pipeable]
-        std::vector<int> input{4, 5, 6, 7};
-        std::vector<std::tuple<intptr_t, int>> result;
+        RAH2_STD::vector<int> input{4, 5, 6, 7};
+        RAH2_STD::vector<RAH2_STD::tuple<intptr_t, int>> result;
         for (auto i_value : input | rah2::views::enumerate | rah2::views::common)
             result.emplace_back(i_value);
-        assert(result == (std::vector<std::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
+        assert(
+            result
+            == (RAH2_STD::vector<RAH2_STD::tuple<intptr_t, int>>{{0, 4}, {1, 5}, {2, 6}, {3, 7}}));
         /// [enumerate_pipeable]
     }
 
@@ -740,17 +746,18 @@ void test_enumerate_view()
         testSuite.test_case("various");
         // This can't work since enumerate return an rvalue pairs since map_key want an lvalue
         bool bools[] = {false, true, true, false, false, true};
-        auto range = bools | rah2::views::enumerate
-                     | rah2::views::filter([](auto&& index_bool) { return std::get<1>(index_bool); })
-                     | rah2::views::keys;
+        auto range =
+            bools | rah2::views::enumerate
+            | rah2::views::filter([](auto&& index_bool) { return RAH2_STD::get<1>(index_bool); })
+            | rah2::views::keys;
 
-        std::vector<intptr_t> ref;
-        rah2::ranges::copy(range, std::back_inserter(ref));
-        assert(ref == (std::vector<intptr_t>{1, 2, 5}));
+        RAH2_STD::vector<intptr_t> ref;
+        rah2::ranges::copy(range, RAH2_STD::back_inserter(ref));
+        assert(ref == (RAH2_STD::vector<intptr_t>{1, 2, 5}));
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::random_access_iterator_tag, std::input_iterator_tag, make_enumerate_view>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_enumerate_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -793,35 +800,41 @@ void test_zip_view()
     {
         testSuite.test_case("sample");
         /// [zip]
-        std::vector<int> inputA{1, 2, 3, 4};
-        std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
-        std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
-        std::vector<std::tuple<int, double, char>> result;
-        for (auto const& a_b_c : rah2::views::zip(inputA, inputB, inputC) | rah2::views::common)
+        RAH2_STD::vector<int> inputA{1, 2, 3, 4};
+        RAH2_STD::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
+        RAH2_STD::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+        RAH2_STD::vector<RAH2_STD::tuple<int, double, char>> result;
+        for (auto&& a_b_c : rah2::views::zip(inputA, inputB, inputC) | rah2::views::common)
             result.emplace_back(a_b_c);
         assert(
             result
-            == (std::vector<std::tuple<int, double, char>>{
+            == (RAH2_STD::vector<RAH2_STD::tuple<int, double, char>>{
                 {1, 2.5, 'a'}, {2, 4.5, 'b'}, {3, 6.5, 'c'}, {4, 8.5, 'd'}}));
         /// [zip]
     }
 
     {
         testSuite.test_case("various");
-        std::vector<int> inputA{1, 2, 3, 4};
-        std::vector<bool> inputB{false, true, true, false};
+        RAH2_STD::vector<int> inputA{1, 2, 3, 4};
+        RAH2_STD::vector<uint8_t> inputB{false, true, true, false};
         auto range = rah2::views::zip(inputA, inputB)
-                     | rah2::views::filter([](auto a_b) { return std::get<1>(a_b); });
-        std::vector<std::tuple<int, bool>> result;
-
-        rah2::ranges::copy(range, std::back_inserter(result));
+                     | rah2::views::filter([](auto a_b) { return RAH2_STD::get<1>(a_b); });
+        RAH2_STD::vector<RAH2_STD::tuple<int, uint8_t>> result;
+        auto b = rah2::ranges::begin(range);
+        auto e = rah2::ranges::end(range);
+        auto o = RAH2_STD::back_inserter(result);
+        for (; b != e; ++b, ++o)
+        {
+            *o = *b;
+        }
+        // rah2::ranges::copy(range, RAH2_STD::back_inserter(result));
         assert(rah2::ranges::equal(
-            result, std::vector<std::tuple<int, bool>>({{2, true}, {3, true}})));
+            result, RAH2_STD::vector<RAH2_STD::tuple<int, uint8_t>>({{2, true}, {3, true}})));
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::random_access_iterator_tag, std::input_iterator_tag, make_zip_view1>();
-    check_all_cat<rah2::random_access_iterator_tag, std::input_iterator_tag, make_zip_view2>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_zip_view1>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_zip_view2>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -842,41 +855,45 @@ void test_adjacent_view()
     {
         testSuite.test_case("sample");
         /// [adjacent]
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto&& abc : rah2::views::adjacent<3>(in))
         {
-            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
+            out.push_back({RAH2_STD::get<0>(abc), RAH2_STD::get<1>(abc), RAH2_STD::get<2>(abc)});
         }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+        assert(
+            out
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
         /// [adjacent]
     }
     {
         testSuite.test_case("non_common");
         // adjacent With non common_range
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6)
                               | rah2::views::adjacent<3> | rah2::views::common)
         {
-            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
+            out.push_back({RAH2_STD::get<0>(abc), RAH2_STD::get<1>(abc), RAH2_STD::get<2>(abc)});
         }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+        assert(
+            out
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
     }
     {
         testSuite.test_case("N > size()");
         // adjacent With N > view.size()
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6)
                               | rah2::views::adjacent<45> | rah2::views::common)
         {
-            out.push_back({std::get<0>(abc), std::get<1>(abc), std::get<2>(abc)});
+            out.push_back({RAH2_STD::get<0>(abc), RAH2_STD::get<1>(abc), RAH2_STD::get<2>(abc)});
         }
         assert(out.empty());
     }
     {
         testSuite.test_case("N == 0");
         // adjacent With N == 0
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6) | rah2::views::adjacent<0>)
         {
             static_assert(
@@ -888,17 +905,17 @@ void test_adjacent_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::random_access_iterator_tag, std::forward_iterator_tag, make_adjacent_view>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::forward_iterator_tag, make_adjacent_view>();
 }
 
 void test_zip_transform()
 {
     testSuite.test_case("sample");
     /// [zip_transform]
-    std::vector<int> inputA{1, 2, 3, 4};
-    std::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
-    std::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
-    std::vector<std::string> result;
+    RAH2_STD::vector<int> inputA{1, 2, 3, 4};
+    RAH2_STD::vector<double> inputB{2.5, 4.5, 6.5, 8.5};
+    RAH2_STD::vector<char> inputC{'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+    RAH2_STD::vector<std::string> result;
     auto func = [](int a, double d, char c)
     {
         std::stringstream ss;
@@ -907,7 +924,7 @@ void test_zip_transform()
     };
     for (auto a_b_c : rah2::views::zip_transform(func, inputA, inputB, inputC) | rah2::views::common)
         result.emplace_back(a_b_c);
-    assert(result == (std::vector<std::string>{{"12.5a"}, {"24.5b"}, {"36.5c"}, {"48.5d"}}));
+    assert(result == (RAH2_STD::vector<std::string>{{"12.5a"}, {"24.5b"}, {"36.5c"}, {"48.5d"}}));
     /// [zip_transform]
 }
 
@@ -928,21 +945,21 @@ void test_adjacent_transform()
     {
         testSuite.test_case("sample");
         /// [adjacent_transform]
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
-        std::vector<int> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
+        RAH2_STD::vector<int> out;
         for (auto abc :
              rah2::views::adjacent_transform<3>(in, [](auto a, auto b, auto c) { return a + b + c; })
                  | rah2::views::common)
         {
             out.push_back(abc);
         }
-        assert(out == (std::vector<int>{3, 6, 9, 12}));
+        assert(out == (RAH2_STD::vector<int>{3, 6, 9, 12}));
         /// [adjacent_transform]
     }
     {
         testSuite.test_case("non common_range");
         // adjacent_transform With non common_range
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         for (auto abc : rah2::views::iota(0) | rah2::views::take(6)
                             | rah2::views::adjacent_transform<3>([](auto a, auto b, auto c)
                                                                  { return a + b + c; })
@@ -950,12 +967,12 @@ void test_adjacent_transform()
         {
             out.push_back(abc);
         }
-        assert(out == (std::vector<int>{3, 6, 9, 12}));
+        assert(out == (RAH2_STD::vector<int>{3, 6, 9, 12}));
     }
     {
         testSuite.test_case("N > size()");
         // adjacent_transform With N > view.size()
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         for (auto abc : rah2::views::iota(0) | rah2::views::take(6)
                             | rah2::views::adjacent_transform<45>(Add{}) | rah2::views::common)
         {
@@ -966,7 +983,7 @@ void test_adjacent_transform()
     {
         testSuite.test_case("N == 0");
         // adjacent_transform With N == 0
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6)
                               | rah2::views::adjacent_transform<0>([](auto i) { return i + 1; }))
         {
@@ -984,8 +1001,8 @@ void test_slide_view()
     {
         testSuite.test_case("sample");
         /// [sliding]
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto subRange : rah2::views::slide(in, 3))
         {
             out.emplace_back();
@@ -994,13 +1011,15 @@ void test_slide_view()
                 rah2::ranges::end(subRange),
                 std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+        assert(
+            out
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
         /// [sliding]
     }
     {
         testSuite.test_case("non common_range");
         // slide with non common_range
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         auto r = rah2::views::iota(0) | rah2::views::take(6) | rah2::views::slide(3);
         auto it = rah2::ranges::begin(r);
         auto e = rah2::ranges::end(r);
@@ -1010,14 +1029,16 @@ void test_slide_view()
             auto&& subRange = *it;
             rah2::ranges::copy(subRange, std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+        assert(
+            out
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
     }
 
     {
         testSuite.test_case("sample_pipeable");
         /// [sliding_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto subRange : in | rah2::views::slide(3))
         {
             out.emplace_back();
@@ -1026,14 +1047,16 @@ void test_slide_view()
                 rah2::ranges::end(subRange),
                 std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
+        assert(
+            out
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2}, {1, 2, 3}, {2, 3, 4}, {3, 4, 5}}));
         /// [sliding_pipeable]
     }
 
     {
         testSuite.test_case("various");
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         auto range = in | rah2::views::cycle | rah2::views::slide(3) | rah2::views::take(in.size());
         for (auto subRange : range | rah2::views::common)
         {
@@ -1045,7 +1068,7 @@ void test_slide_view()
         }
         assert(
             out
-            == (std::vector<std::vector<int>>{
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{
                 {0, 1, 2},
                 {1, 2, 3},
                 {2, 3, 4},
@@ -1056,8 +1079,8 @@ void test_slide_view()
     }
 
     {
-        std::vector<int> in{0, 1, 2, 3};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto subRange : rah2::views::slide(in, 4))
         {
             out.emplace_back();
@@ -1066,12 +1089,12 @@ void test_slide_view()
                 rah2::ranges::end(subRange),
                 std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{{0, 1, 2, 3}}));
+        assert(out == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2, 3}}));
     }
 
     {
-        std::vector<int> in{0, 1};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto subRange : rah2::views::slide(in, 4))
         {
             out.emplace_back();
@@ -1084,8 +1107,8 @@ void test_slide_view()
     }
 
     {
-        std::vector<int> in{0, 1, 2, 3};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto subRange : rah2::views::slide(in, 0))
         {
             out.emplace_back();
@@ -1094,12 +1117,12 @@ void test_slide_view()
                 rah2::ranges::end(subRange),
                 std::back_inserter(out.back()));
         }
-        assert(out == (std::vector<std::vector<int>>{{0}, {1}, {2}, {3}}));
+        assert(out == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0}, {1}, {2}, {3}}));
     }
 
     {
-        std::vector<int> in{0, 1, 2, 3};
-        std::vector<std::vector<int>> out;
+        RAH2_STD::vector<int> in{0, 1, 2, 3};
+        RAH2_STD::vector<RAH2_STD::vector<int>> out;
         for (auto subRange : in | rah2::views::slide(1))
         {
             out.emplace_back();
@@ -1110,7 +1133,7 @@ void test_slide_view()
         }
         assert(
             out
-            == (std::vector<std::vector<int>>{
+            == (RAH2_STD::vector<RAH2_STD::vector<int>>{
                 {0},
                 {1},
                 {2},
@@ -1124,31 +1147,38 @@ void test_chunk_view()
     {
         testSuite.test_case("sample");
         /// [chunk]
-        std::vector<int> vec_01234{0, 1, 2, 3, 4};
-        std::vector<std::vector<int>> result;
+        RAH2_STD::vector<int> vec_01234{0, 1, 2, 3, 4};
+        RAH2_STD::vector<RAH2_STD::vector<int>> result;
         for (auto elts : rah2::views::chunk(vec_01234, 2))
             result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
-        assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
+        assert(result == RAH2_STD::vector<RAH2_STD::vector<int>>({{0, 1}, {2, 3}, {4}}));
         /// [chunk]
     }
     {
         testSuite.test_case("sample_pipeable");
         /// [chunk_pipeable]
-        std::vector<int> vec_01234{0, 1, 2, 3, 4};
-        std::vector<std::vector<int>> result;
+        RAH2_STD::vector<int> vec_01234{0, 1, 2, 3, 4};
+        RAH2_STD::vector<RAH2_STD::vector<int>> result;
         for (auto elts : vec_01234 | rah2::views::chunk(2))
             result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
-        assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
+        assert(result == RAH2_STD::vector<RAH2_STD::vector<int>>({{0, 1}, {2, 3}, {4}}));
         /// [chunk_pipeable]
     }
     {
         testSuite.test_case("non-common_view");
         /// Chunk with non-common_view
         auto vec_01234 = rah2::views::iota(0) | rah2::views::take(5);
-        std::vector<std::vector<int>> result;
+        RAH2_STD::vector<RAH2_STD::vector<int>> result;
         for (auto elts : rah2::views::chunk(vec_01234, 2) | rah2::views::common)
-            result.emplace_back(rah2::ranges::begin(elts), rah2::ranges::end(elts));
-        assert(result == std::vector<std::vector<int>>({{0, 1}, {2, 3}, {4}}));
+        {
+            result.emplace_back();
+            auto& back = result.back();
+            for (auto i : elts)
+            {
+                back.emplace_back(i);
+            }
+        }
+        assert(result == RAH2_STD::vector<RAH2_STD::vector<int>>({{0, 1}, {2, 3}, {4}}));
     }
 }
 
@@ -1172,26 +1202,26 @@ void test_stride_view()
     {
         testSuite.test_case("sample");
         /// [stride]
-        std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        RAH2_STD::vector<int> result;
         for (int const i : rah2::views::stride(vec, 2))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4, 6}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4, 6}));
         /// [stride]
     }
     {
         testSuite.test_case("sample_pipeable");
         /// [stride_pipeable]
-        std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        RAH2_STD::vector<int> result;
         for (int const i : vec | rah2::views::stride(2))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4, 6}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4, 6}));
         /// [stride_pipeable]
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::random_access_iterator_tag, std::input_iterator_tag, make_stride_view>();
+    check_all_cat<rah2::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_stride_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -1213,17 +1243,17 @@ void test_ref_view()
     {
         testSuite.test_case("sample");
         /// [ref]
-        std::vector<int> vec{0, 1, 2, 2, 3};
-        std::vector<int> out;
+        RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
+        RAH2_STD::vector<int> out;
         auto const ref = rah2::views::ref(vec);
         for (auto&& val : ref)
         {
             out.push_back(val);
         }
-        assert(out == (std::vector<int>{0, 1, 2, 2, 3}));
+        assert(out == (RAH2_STD::vector<int>{0, 1, 2, 2, 3}));
         /// [ref]
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<rah2::contiguous_iterator_tag, std::input_iterator_tag, make_ref_view>();
+    check_all_cat<rah2::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_ref_view>();
 }

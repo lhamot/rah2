@@ -6,7 +6,6 @@
 #include <map>
 #include <iostream>
 #include <chrono>
-#include <vector>
 
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 
@@ -18,14 +17,15 @@ struct TestSuite
         size_t testCount = 0;
     };
 
-    std::map<std::string, std::function<void()>> testMap;
-    std::map<std::string, TestResult> testResult;
-    std::map<std::string, std::vector<std::pair<std::string, std::string>>> testCases;
+    RAH2_STD::map<RAH2_STD::string, std::function<void()>> testMap;
+    RAH2_STD::map<RAH2_STD::string, TestResult> testResult;
+    RAH2_STD::map<RAH2_STD::string, RAH2_STD::vector<RAH2_STD::pair<RAH2_STD::string, RAH2_STD::string>>>
+        testCases;
 
     bool current_test_status = true;
     size_t test_count = 0;
 
-    void addTest(std::string const& group, std::string const& name, std::function<void()> test)
+    void addTest(RAH2_STD::string const& group, RAH2_STD::string const& name, std::function<void()> test)
     {
         testMap.emplace(group + " - " + name, std::move(test));
     }
@@ -41,7 +41,7 @@ struct TestSuite
         for (auto const& name_test : testMap)
         {
             auto& name = name_test.first;
-            std::cout << name_test.first << " : ";
+            std::cout << name_test.first.c_str() << " : ";
             auto iter = testResult.find(name);
             if (iter != testResult.end())
             {
@@ -60,7 +60,7 @@ struct TestSuite
             {
                 for (auto& caseName_extra : testCases.at(name))
                 {
-                    std::cout << " / " << caseName_extra.first;
+                    std::cout << " / " << caseName_extra.first.c_str();
                 }
             }
             std::cout << std::endl;
@@ -119,7 +119,7 @@ public:
     };
 
     using ref_type =
-        std::conditional_t<RAH2_NS::is_same_v<Cat, std::output_iterator_tag>, int&, int const&>;
+        std::conditional_t<RAH2_NS::is_same_v<Cat, RAH2_NS::output_iterator_tag>, int&, int const&>;
 
     class iterator : public rah2::ranges::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
@@ -142,7 +142,7 @@ public:
         RAH2_POST_INCR(Cat)
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         iterator& operator+=(intptr_t value)
         {
             val_ += static_cast<int>(step_ * value);
@@ -151,7 +151,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::bidirectional_iterator_tag>>* = nullptr>
         iterator& operator--()
         {
             val_ -= step_;
@@ -159,18 +159,18 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::bidirectional_iterator_tag>>* = nullptr>
         RAH2_POST_DECR;
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         auto operator-(iterator const& other) const
         {
             return (val_ - other.val_) / step_;
         }
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         iterator& operator-=(intptr_t value)
         {
             val_ -= static_cast<int>(step_ * value);
@@ -184,7 +184,7 @@ public:
         {
             return val_;
         }
-        template <typename C = Cat, std::enable_if_t<rah2::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+        template <typename C = Cat, std::enable_if_t<rah2::derived_from<C, rah2::forward_iterator_tag>>* = nullptr>
         friend constexpr bool operator==(iterator const& it1, iterator const& it2)
         {
             return it1.val_ == it2.val_;
@@ -199,7 +199,7 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         friend bool operator<(iterator const& it1, iterator const& it2)
         {
             return it1.val_ < it2.val_;
@@ -277,7 +277,7 @@ public:
         RAH2_POST_INCR(Cat)
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         iterator& operator+=(intptr_t value)
         {
             iter_ += value;
@@ -286,7 +286,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::bidirectional_iterator_tag>>* = nullptr>
         iterator& operator--()
         {
             --iter_;
@@ -294,18 +294,18 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::bidirectional_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::bidirectional_iterator_tag>>* = nullptr>
         RAH2_POST_DECR;
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         auto operator-(iterator const& other) const
         {
             return iter_ - other.iter_;
         }
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         iterator& operator-=(intptr_t value)
         {
             iter_ -= value;
@@ -319,7 +319,9 @@ public:
         {
             return *iter_;
         }
-        template <typename C = Cat, std::enable_if_t<rah2::derived_from<C, std::forward_iterator_tag>>* = nullptr>
+        template <
+            typename C = Cat,
+            std::enable_if_t<rah2::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
         friend constexpr bool operator==(iterator const& it1, iterator const& it2)
         {
             return it1.iter_ == it2.iter_;
@@ -334,7 +336,7 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<rah2::derived_from<C, std::random_access_iterator_tag>>* = nullptr>
+            std::enable_if_t<rah2::derived_from<C, rah2::random_access_iterator_tag>>* = nullptr>
         friend bool operator<(iterator const& it1, iterator const& it2)
         {
             return it1.iter_ < it2.iter_;
@@ -393,7 +395,7 @@ auto make_test_view_adapter(Range&& r)
 }
 
 // output
-using OutputCommonView = test_view<Common, std::output_iterator_tag, false>;
+using OutputCommonView = test_view<Common, RAH2_NS::output_iterator_tag, false>;
 static_assert(
     rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<OutputCommonView>>, "Should be input");
 static_assert(not rah2::ranges::input_range<OutputCommonView>, "Should be input");
@@ -405,7 +407,7 @@ static_assert(not rah2::ranges::random_access_range<OutputCommonView>, "Should n
 static_assert(not rah2::ranges::contiguous_range<OutputCommonView>, "Should not be contiguous");
 
 // input
-using InputCommonView = test_view<Common, std::input_iterator_tag, false>;
+using InputCommonView = test_view<Common, RAH2_NS::input_iterator_tag, false>;
 static_assert(
     rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<InputCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<InputCommonView>, "Should be input");
@@ -416,19 +418,19 @@ static_assert(not rah2::ranges::random_access_range<InputCommonView>, "Should no
 static_assert(not rah2::ranges::contiguous_range<InputCommonView>, "Should not be contiguous");
 
 // Forward
-using ForwardCommonView = test_view<Common, std::forward_iterator_tag, false>;
+using ForwardCommonView = test_view<Common, RAH2_NS::forward_iterator_tag, false>;
 static_assert(
     rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<ForwardCommonView>>,
     "Should be input");
 static_assert(rah2::ranges::input_range<ForwardCommonView>, "Should be input");
 static_assert(not rah2::ranges::output_range<ForwardCommonView, int>, "Should not be output");
-static_assert(rah2::ranges::forward_range<ForwardCommonView>, "Should be Forward");
+static_assert(rah2::ranges::forward_range_impl<ForwardCommonView, true>::value, "Should be Forward");
 static_assert(!rah2::ranges::bidirectional_range<ForwardCommonView>, "Should not be bidirectional");
 static_assert(!rah2::ranges::random_access_range<ForwardCommonView>, "Should not be random");
 static_assert(not rah2::ranges::contiguous_range<ForwardCommonView>, "Should not be contiguous");
 
 // bidirectional
-using BidirCommonView = test_view<Common, std::bidirectional_iterator_tag, false>;
+using BidirCommonView = test_view<Common, RAH2_NS::bidirectional_iterator_tag, false>;
 static_assert(
     rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<BidirCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<BidirCommonView>, "Should be input");
@@ -439,7 +441,7 @@ static_assert(!rah2::ranges::random_access_range<BidirCommonView>, "Should not b
 static_assert(not rah2::ranges::contiguous_range<BidirCommonView>, "Should not be contiguous");
 
 // random access
-using RandomCommonView = test_view<Common, std::random_access_iterator_tag, true>;
+using RandomCommonView = test_view<Common, RAH2_NS::random_access_iterator_tag, true>;
 static_assert(
     rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<RandomCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<RandomCommonView>, "Should be input");
@@ -456,7 +458,7 @@ STATIC_ASSERT((rah2::ranges::random_access_range_impl<RandomCommonView, true>::v
 static_assert(not rah2::ranges::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
 // contiguous
-using ContiCommonView = test_view<Common, rah2::contiguous_iterator_tag, true>;
+using ContiCommonView = test_view<Common, RAH2_NS::contiguous_iterator_tag, true>;
 static_assert(
     rah2::input_or_output_iterator<RAH2_NS::ranges::iterator_t<ContiCommonView>>, "Should be input");
 static_assert(rah2::ranges::input_range<ContiCommonView>, "Should be input");
@@ -518,14 +520,14 @@ template <typename C, typename R>
 struct check_cat_impl;
 
 template <typename R>
-struct check_cat_impl<std::input_iterator_tag, R>
+struct check_cat_impl<RAH2_STD::input_iterator_tag, R>
 {
     STATIC_ASSERT(rah2::ranges::input_range<R>);
     STATIC_ASSERT(not rah2::ranges::forward_range<R>);
 };
 
 template <typename R>
-struct check_cat_impl<std::forward_iterator_tag, R>
+struct check_cat_impl<RAH2_STD::forward_iterator_tag, R>
 {
     STATIC_ASSERT((rah2::forward_iterator_impl<rah2::ranges::iterator_t<R>, true>::value));
     STATIC_ASSERT(rah2::ranges::forward_range<R>);
@@ -533,14 +535,14 @@ struct check_cat_impl<std::forward_iterator_tag, R>
 };
 
 template <typename R>
-struct check_cat_impl<std::bidirectional_iterator_tag, R>
+struct check_cat_impl<rah2::bidirectional_iterator_tag, R>
 {
     STATIC_ASSERT((rah2::ranges::bidirectional_range_impl<R, true>::value));
     STATIC_ASSERT(not rah2::ranges::random_access_range<R>);
 };
 
 template <typename R>
-struct check_cat_impl<std::random_access_iterator_tag, R>
+struct check_cat_impl<rah2::random_access_iterator_tag, R>
 {
     STATIC_ASSERT((rah2::ranges::random_access_range_impl<R, true>::value));
     STATIC_ASSERT(not rah2::ranges::contiguous_range<R>);
@@ -601,31 +603,31 @@ void test_one_range_setup()
     test_one_range_setup_impl<do_test, Sentinel, Cat2, ExpectedCat, Sized, Trait>::test();
 }
 
-template <typename MaxCat, typename MinCat = std::input_iterator_tag, template <CommonOrSent, typename, bool> class MakeR>
+template <typename MaxCat, typename MinCat = RAH2_STD::input_iterator_tag, template <CommonOrSent, typename, bool> class MakeR>
 void check_all_cat()
 {
     test_one_range_setup<
         Sentinel,
-        std::input_iterator_tag,
-        rah2::ranges::cap_iterator_tag<std::input_iterator_tag, MinCat, MaxCat>,
+        RAH2_STD::input_iterator_tag,
+        rah2::ranges::cap_iterator_tag<RAH2_STD::input_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
-        std::forward_iterator_tag,
-        rah2::ranges::cap_iterator_tag<std::forward_iterator_tag, MinCat, MaxCat>,
+        RAH2_STD::forward_iterator_tag,
+        rah2::ranges::cap_iterator_tag<RAH2_STD::forward_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
-        std::bidirectional_iterator_tag,
-        rah2::ranges::cap_iterator_tag<std::bidirectional_iterator_tag, MinCat, MaxCat>,
+        rah2::bidirectional_iterator_tag,
+        rah2::ranges::cap_iterator_tag<rah2::bidirectional_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
-        std::random_access_iterator_tag,
-        rah2::ranges::cap_iterator_tag<std::random_access_iterator_tag, MinCat, MaxCat>,
+        rah2::random_access_iterator_tag,
+        rah2::ranges::cap_iterator_tag<rah2::random_access_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
@@ -719,15 +721,15 @@ void check_all_cat()
 }
 
 template <typename A, typename B, typename C, typename D>
-bool operator==(std::tuple<A, B> a, std::pair<D, C> b)
+bool operator==(RAH2_STD::tuple<A, B> a, RAH2_STD::pair<D, C> b)
 {
-    return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b);
+    return RAH2_STD::get<0>(a) == RAH2_STD::get<0>(b) && RAH2_STD::get<1>(a) == RAH2_STD::get<1>(b);
 }
 
 template <typename A, typename B, typename C, typename D>
-bool operator==(std::pair<A, B> a, std::tuple<D, C> b)
+bool operator==(RAH2_STD::pair<A, B> a, RAH2_STD::tuple<D, C> b)
 {
-    return std::get<0>(a) == std::get<0>(b) && std::get<1>(a) == std::get<1>(b);
+    return RAH2_STD::get<0>(a) == RAH2_STD::get<0>(b) && RAH2_STD::get<1>(a) == RAH2_STD::get<1>(b);
 }
 
 struct PairEqualImpl
@@ -736,10 +738,11 @@ struct PairEqualImpl
     auto operator()(P&& ab)
     {
         static_assert(
-            RAH2_NS::details::
-                weakly_equality_comparable_with<decltype(std::get<0>(ab)), decltype(std::get<1>(ab))>,
+            RAH2_NS::details::weakly_equality_comparable_with<
+                decltype(RAH2_STD::get<0>(ab)),
+                decltype(RAH2_STD::get<1>(ab))>,
             "second not assignable to first");
-        return std::get<0>(ab) == std::get<1>(ab);
+        return RAH2_STD::get<0>(ab) == RAH2_STD::get<1>(ab);
     }
 };
 
@@ -816,7 +819,7 @@ template <typename T>
 using il = std::initializer_list<T>;
 
 template <typename... Args>
-std::ostream& operator<<(std::ostream& os, std::tuple<Args...> tup)
+std::ostream& operator<<(std::ostream& os, RAH2_STD::tuple<Args...> tup)
 {
     auto print_elt = [](auto&& elt)
     {

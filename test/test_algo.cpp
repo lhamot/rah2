@@ -11,6 +11,8 @@
 #include <forward_list>
 #include <set>
 #include <cstring>
+#include <random>
+
 #if RAH2_CPP20
 #include <ranges>
 #endif
@@ -25,7 +27,7 @@ void test_all_of()
         std::initializer_list<int>{4, 4, 4, 4}, [](auto a) { return a == 4; }));
     /// [rah2::ranges::all_of]
     testSuite.test_case("no");
-    std::vector<int> vec = {4, 4, 3, 4};
+    RAH2_STD::vector<int> vec = {4, 4, 3, 4};
     testSuite.test_case("iter");
     assert(rah2::ranges::all_of(vec.begin(), vec.end(), [](auto a) { return a == 4; }) == false);
 }
@@ -40,7 +42,7 @@ void test_any_of()
     /// [rah2::ranges::any_of]
     testSuite.test_case("no");
     testSuite.test_case("iter");
-    std::vector<int> vec = {3, 0, 1, 3, 4, 6};
+    RAH2_STD::vector<int> vec = {3, 0, 1, 3, 4, 6};
     assert(rah2::ranges::any_of(vec.begin(), vec.end(), [](auto a) { return a == 5; }) == false);
 }
 void test_none_of()
@@ -54,7 +56,7 @@ void test_none_of()
     /// [rah2::ranges::none_of]
     testSuite.test_case("no");
     testSuite.test_case("iter");
-    std::vector<int> vec = {7, 8, 9, 10};
+    RAH2_STD::vector<int> vec = {7, 8, 9, 10};
     assert(rah2::ranges::none_of(vec.begin(), vec.end(), [](auto a) { return a == 9; }) == false);
 }
 void test_for_each()
@@ -62,10 +64,11 @@ void test_for_each()
     testSuite.test_case("sample");
     testSuite.test_case("range");
     /// [rah2::ranges::for_each]
-    std::vector<int> testFE{4, 4, 4, 4};
+    RAH2_STD::vector<int> testFE{4, 4, 4, 4};
     rah2::ranges::for_each(testFE, [](auto& value) { return ++value; });
     assert(rah2::ranges::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
     /// [rah2::ranges::for_each]
+    STATIC_ASSERT((rah2::ranges::input_range_impl<decltype(testFE), true>::value));
     testSuite.test_case("iter");
     rah2::ranges::for_each(testFE.begin(), testFE.end(), [](auto& value) { return ++value; });
     assert(rah2::ranges::equal(testFE, std::initializer_list<int>({6, 6, 6, 6})));
@@ -74,7 +77,7 @@ void test_for_each_n()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::for_each_n]
-    std::vector<int> testFE{4, 4, 4, 4};
+    RAH2_STD::vector<int> testFE{4, 4, 4, 4};
     auto const res = rah2::ranges::for_each_n(
         testFE.begin(), static_cast<intptr_t>(testFE.size()), [](auto& value) { return ++value; });
     assert(rah2::ranges::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
@@ -111,11 +114,11 @@ void test_algo_count()
             int x;
             int y;
         };
-        std::vector<Coord> coordsVec;
+        RAH2_STD::vector<Coord> coordsVec;
         coordsVec.insert(coordsVec.end(), 10000000, {1, 47});
         coordsVec.insert(coordsVec.end(), 79, {2, 47});
         coordsVec.insert(coordsVec.end(), 10000000, {3, 47});
-        std::vector<int> intsVec;
+        RAH2_STD::vector<int> intsVec;
         intsVec.insert(intsVec.end(), 10000000, 1);
         intsVec.insert(intsVec.end(), 79, 2);
         intsVec.insert(intsVec.end(), 10000000, 3);
@@ -211,7 +214,7 @@ void test_count_if()
     testSuite.test_case("sample");
     testSuite.test_case("range");
     /// [rah2::ranges::count_if]
-    std::vector<int> vec = {4, 4, 4, 3};
+    RAH2_STD::vector<int> vec = {4, 4, 4, 3};
     assert(rah2::ranges::count_if(vec, [](auto a) { return a == 4; }) == 3);
     /// [rah2::ranges::count_if]
 
@@ -225,7 +228,7 @@ void test_count_if()
             int x;
             int y;
         };
-        std::vector<coord> coords_vec;
+        RAH2_STD::vector<coord> coords_vec;
         coords_vec.insert(coords_vec.end(), 10000000, {1, 47});
         coords_vec.insert(coords_vec.end(), 79, {2, 47});
         coords_vec.insert(coords_vec.end(), 10000000, {3, 47});
@@ -275,8 +278,8 @@ void test_mismatch()
     testSuite.test_case("sample");
     testSuite.test_case("range");
     /// [rah2::ranges::mismatch]
-    std::vector<int> in1 = {1, 2, 3, 4};
-    std::vector<int> in2 = {1, 2, 42, 43};
+    RAH2_STD::vector<int> in1 = {1, 2, 3, 4};
+    RAH2_STD::vector<int> in2 = {1, 2, 42, 43};
     auto r1_r2 = rah2::ranges::mismatch(in1, in2);
     assert(*r1_r2.in1 == 3);
     assert(*r1_r2.in2 == 42);
@@ -292,9 +295,9 @@ void test_equal()
     testSuite.test_case("sample");
     testSuite.test_case("range");
     /// [rah2::ranges::equal]
-    std::vector<int> in1{1, 2, 3};
-    std::vector<int> in2{1, 2, 3};
-    std::vector<int> in3{11, 12, 13};
+    RAH2_STD::vector<int> in1{1, 2, 3};
+    RAH2_STD::vector<int> in2{1, 2, 3};
+    RAH2_STD::vector<int> in3{11, 12, 13};
     assert(rah2::ranges::equal(in1, in2));
     assert(rah2::ranges::equal(in1, in3) == false);
     /// [rah2::ranges::equal]
@@ -308,8 +311,8 @@ void test_lexicographical_compare()
     testSuite.test_case("sample");
     testSuite.test_case("range");
     /// [rah2::ranges::lexicographical_compare]
-    std::vector<char> v1{'a', 'b', 'c', 'd'};
-    std::vector<char> v2{'a', 'x', 'y', 'z'};
+    RAH2_STD::vector<char> v1{'a', 'b', 'c', 'd'};
+    RAH2_STD::vector<char> v2{'a', 'x', 'y', 'z'};
     assert(rah2::ranges::lexicographical_compare(v1, v1) == false);
     assert(rah2::ranges::lexicographical_compare(v1, v2) == true);
     assert(rah2::ranges::lexicographical_compare(v2, v1) == false);
@@ -324,7 +327,7 @@ void test_find()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::find]
-    std::vector<int> in{1, 2, 3, 4};
+    RAH2_STD::vector<int> in{1, 2, 3, 4};
     auto const iter = rah2::ranges::find(in, 3);
     assert(rah2::ranges::equal(
         rah2::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
@@ -334,7 +337,7 @@ void test_find_if()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::find_if]
-    std::vector<int> in{1, 2, 3, 4};
+    RAH2_STD::vector<int> in{1, 2, 3, 4};
     auto const iter = rah2::ranges::find_if(in, [](int i) { return i == 3; });
     assert(rah2::ranges::equal(
         rah2::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
@@ -344,7 +347,7 @@ void test_find_if_not()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::find_if_not]
-    std::vector<int> in{1, 2, 3, 4};
+    RAH2_STD::vector<int> in{1, 2, 3, 4};
     auto const iter = rah2::ranges::find_if_not(in, [](int i) { return i < 3; });
     assert(rah2::ranges::equal(
         rah2::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
@@ -436,31 +439,31 @@ void test_find_end()
     testSuite.test_case("sample");
     /// [rah2::ranges::find_end]
     using namespace std::literals;
-    std::string secret{"password password word..."};
-    std::string wanted{"password"};
+    RAH2_STD::string secret{"password password word..."};
+    RAH2_STD::string wanted{"password"};
 
     auto const found1 =
         rah2::ranges::find_end(secret.begin(), secret.end(), wanted.begin(), wanted.end());
     assert(found1.begin() == secret.begin() + static_cast<intptr_t>(strlen("password ")));
     assert(found1.end() == secret.begin() + static_cast<intptr_t>(strlen("password password")));
 
-    auto const found2 = rah2::ranges::find_end(secret, std::string("word"));
+    auto const found2 = rah2::ranges::find_end(secret, RAH2_STD::string("word"));
     assert(found2.begin() == secret.begin() + static_cast<intptr_t>(strlen("password password ")));
     assert(found2.end() == secret.begin() + static_cast<intptr_t>(strlen("password password word")));
 
     auto const found3 = rah2::ranges::find_end(
-        secret, std::string("ORD"), [](char const x, char const y) { // uses a binary predicate
+        secret, RAH2_STD::string("ORD"), [](char const x, char const y) { // uses a binary predicate
             return std::tolower(x) == std::tolower(y);
         });
     assert(found3.begin() == secret.begin() + static_cast<intptr_t>(strlen("password password w")));
     assert(found3.end() == secret.begin() + static_cast<intptr_t>(strlen("password password word")));
 
     auto const found4 = rah2::ranges::find_end(
-        secret, std::string("SWORD"), {}, {}, [](char c) { return std::tolower(c); }); // projects the 2nd range
+        secret, RAH2_STD::string("SWORD"), {}, {}, [](char c) { return std::tolower(c); }); // projects the 2nd range
     assert(found4.begin() == secret.begin() + static_cast<intptr_t>(strlen("password pas")));
     assert(found4.end() == secret.begin() + static_cast<intptr_t>(strlen("password password")));
 
-    assert(rah2::ranges::find_end(secret, std::string("PASS")).empty()); // => not found
+    assert(rah2::ranges::find_end(secret, RAH2_STD::string("PASS")).empty()); // => not found
     /// [rah2::ranges::find_end]
 }
 void test_find_first_of()
@@ -519,8 +522,8 @@ void test_search()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::search]
-    std::string haystack{"abcd abcd"};
-    std::string needle{"bcd"};
+    RAH2_STD::string haystack{"abcd abcd"};
+    RAH2_STD::string needle{"bcd"};
 
     // the search uses iterator pairs begin()/end():
     auto const found1 =
@@ -535,21 +538,21 @@ void test_search()
     // print(2, haystack, needle, found2);
 
     // 'needle' range is empty:
-    std::string none;
+    RAH2_STD::string none;
     auto const found3 = rah2::ranges::search(haystack, none);
     assert(found3.begin() - haystack.begin() == 0);
     assert(found3.end() - haystack.begin() == 0);
     // print(3, haystack, none, found3);
 
     // 'needle' will not be found:
-    std::string awl{"efg"};
+    RAH2_STD::string awl{"efg"};
     auto const found4 = rah2::ranges::search(haystack, awl);
     assert(found4.begin() - haystack.begin() == 9);
     assert(found4.end() - haystack.begin() == 9);
     // print(4, haystack, awl, found4);
 
     // the search uses custom comparator and projections:
-    std::string bodkin{"234"};
+    RAH2_STD::string bodkin{"234"};
     auto const found5 = rah2::ranges::search(
         haystack,
         bodkin,
@@ -607,7 +610,7 @@ void test_contains()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::contains]
-    constexpr auto haystack = std::array<int, 5>{3, 1, 4, 1, 5};
+    constexpr auto haystack = RAH2_STD::array<int, 5>{3, 1, 4, 1, 5};
     auto increment = [](int x)
     {
         return ++x;
@@ -623,9 +626,9 @@ void test_contains_subrange()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::contains_subrange]
-    constexpr auto haystack = std::array<int, 5>{3, 1, 4, 1, 5};
-    constexpr auto needle = std::array<int, 3>{1, 4, 1};
-    constexpr auto bodkin = std::array<int, 3>{2, 5, 2};
+    constexpr auto haystack = RAH2_STD::array<int, 5>{3, 1, 4, 1, 5};
+    constexpr auto needle = RAH2_STD::array<int, 3>{1, 4, 1};
+    constexpr auto bodkin = RAH2_STD::array<int, 3>{2, 5, 2};
     auto increment = [](int x)
     {
         return ++x;
@@ -659,16 +662,16 @@ void test_starts_with()
         return ascii_upper(x) == ascii_upper(y);
     };
 
-    assert(rah2::ranges::starts_with("const_cast", std::string("const")));
-    assert(rah2::ranges::starts_with("constexpr", std::string("const")));
-    assert(!rah2::ranges::starts_with("volatile", std::string("const")));
+    assert(rah2::ranges::starts_with("const_cast", RAH2_STD::string("const")));
+    assert(rah2::ranges::starts_with("constexpr", RAH2_STD::string("const")));
+    assert(!rah2::ranges::starts_with("volatile", RAH2_STD::string("const")));
 
     assert(rah2::ranges::starts_with(
-        "Constantinopolis", std::string("constant"), {}, ascii_upper, ascii_upper));
+        "Constantinopolis", RAH2_STD::string("constant"), {}, ascii_upper, ascii_upper));
     assert(not rah2::ranges::starts_with(
-        "Istanbul", std::string("constant"), {}, ascii_upper, ascii_upper));
-    assert(rah2::ranges::starts_with("Metropolis", std::string("metro"), cmp_ignore_case));
-    assert(not rah2::ranges::starts_with("Acropolis", std::string("metro"), cmp_ignore_case));
+        "Istanbul", RAH2_STD::string("constant"), {}, ascii_upper, ascii_upper));
+    assert(rah2::ranges::starts_with("Metropolis", RAH2_STD::string("metro"), cmp_ignore_case));
+    assert(not rah2::ranges::starts_with("Acropolis", RAH2_STD::string("metro"), cmp_ignore_case));
 
     auto v = {1, 3, 5, 7, 9};
     auto odd = [](int x)
@@ -682,8 +685,8 @@ void test_starts_with()
     /// [rah2::ranges::starts_with]
 
     testSuite.test_case("iter");
-    std::string acropolis = "Acropolis";
-    std::string metro = "metro";
+    RAH2_STD::string acropolis = "Acropolis";
+    RAH2_STD::string metro = "metro";
     assert(not rah2::ranges::starts_with(
         acropolis.begin(), acropolis.end(), metro.begin(), metro.end(), cmp_ignore_case));
 }
@@ -701,41 +704,41 @@ void test_ends_with()
     assert(!rah2::ranges::ends_with("as_const", "cast"));
     assert(!!rah2::ranges::ends_with("bit_cast", "cast"));
     assert(!rah2::ranges::ends_with("to_underlying", "cast"));
-    assert(!!rah2::ranges::ends_with(std::vector<int>{1, 2, 3, 4}, std::vector<int>{3, 4}));
-    assert(!rah2::ranges::ends_with(std::vector<int>{1, 2, 3, 4}, std::vector<int>{4, 5}));
+    assert(!!rah2::ranges::ends_with(RAH2_STD::vector<int>{1, 2, 3, 4}, RAH2_STD::vector<int>{3, 4}));
+    assert(!rah2::ranges::ends_with(RAH2_STD::vector<int>{1, 2, 3, 4}, RAH2_STD::vector<int>{4, 5}));
     /// [rah2::ranges::ends_with]
 }
 void test_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::copy]
-    std::vector<int> in{1, 2, 3};
-    std::vector<int> out{0, 0, 0, 4, 5};
+    RAH2_STD::vector<int> in{1, 2, 3};
+    RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
     assert(rah2::ranges::equal(
         rah2::ranges::make_subrange(rah2::ranges::copy(in, out.begin()).out, end(out)),
         std::initializer_list<int>({4, 5})));
-    assert(out == (std::vector<int>{1, 2, 3, 4, 5}));
+    assert(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
     /// [rah2::ranges::copy]
 }
 void test_copy_if()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::copy_if]
-    std::vector<int> in{1, 2, 3, 4};
-    std::vector<int> out{0, 0, 5, 6};
+    RAH2_STD::vector<int> in{1, 2, 3, 4};
+    RAH2_STD::vector<int> out{0, 0, 5, 6};
     assert(rah2::ranges::equal(
         rah2::ranges::make_subrange(
             rah2::ranges::copy_if(in, out.begin(), [](int i) { return i % 2 == 0; }).out, end(out)),
         std::initializer_list<int>({5, 6})));
-    assert(out == (std::vector<int>{2, 4, 5, 6}));
+    assert(out == (RAH2_STD::vector<int>{2, 4, 5, 6}));
     /// [rah2::ranges::copy_if]
 }
 void test_copy_n()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::copy_n]
-    std::string const in{"ABCDEFGH"};
-    std::string out;
+    RAH2_STD::string const in{"ABCDEFGH"};
+    RAH2_STD::string out;
 
     rah2::ranges::copy_n(in.begin(), 4, std::back_inserter(out));
     assert(out == "ABCD");
@@ -754,13 +757,13 @@ void test_copy_backward()
     /// [rah2::ranges::copy_backward]
     auto const src = {1, 2, 3, 4};
 
-    std::vector<int> dst(src.size() + 2);
+    RAH2_STD::vector<int> dst(src.size() + 2);
     rah2::ranges::copy_backward(src, dst.end());
-    assert(dst == (std::vector<int>{0, 0, 1, 2, 3, 4}));
+    assert(dst == (RAH2_STD::vector<int>{0, 0, 1, 2, 3, 4}));
 
     rah2::ranges::fill(dst, 0);
     auto const in_out = rah2::ranges::copy_backward(src.begin(), src.end() - 2, dst.end());
-    assert(dst == (std::vector<int>{0, 0, 0, 0, 1, 2}));
+    assert(dst == (RAH2_STD::vector<int>{0, 0, 0, 0, 1, 2}));
 
     assert(rah2::ranges::distance(src.begin(), in_out.in) == 2);
     assert(rah2::ranges::distance(dst.begin(), in_out.out) == 4);
@@ -779,12 +782,12 @@ void test_move()
         NonCopyable& operator=(NonCopyable&&) = default;
         ~NonCopyable() = default;
     };
-    std::vector<NonCopyable> v;
+    RAH2_STD::vector<NonCopyable> v;
     v.emplace_back();
     v.emplace_back();
     v.emplace_back();
 
-    std::list<NonCopyable> l;
+    RAH2_STD::list<NonCopyable> l;
     auto res = rah2::ranges::move(v, std::back_inserter(l));
     assert(res.in == v.end());
     /// [rah2::ranges::move]
@@ -793,7 +796,7 @@ void test_move_backward()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::move_backward]
-    using Vec = std::vector<std::string>;
+    using Vec = RAH2_STD::vector<RAH2_STD::string>;
     Vec a{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
     Vec b(a.size());
 
@@ -813,20 +816,20 @@ void test_fill()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::fill]
-    std::vector<int> out{0, 0, 0, 4, 5};
+    RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
     rah2::ranges::fill(out, 42);
-    assert(out == (std::vector<int>{42, 42, 42, 42, 42}));
+    assert(out == (RAH2_STD::vector<int>{42, 42, 42, 42, 42}));
     rah2::ranges::fill(out.begin(), out.end(), 78);
-    assert(out == (std::vector<int>{78, 78, 78, 78, 78}));
+    assert(out == (RAH2_STD::vector<int>{78, 78, 78, 78, 78}));
     /// [rah2::ranges::fill]
 }
 void test_fill_n()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::fill_n]
-    std::vector<int> out(5);
+    RAH2_STD::vector<int> out(5);
     rah2::ranges::fill_n(out.begin(), 4, 42);
-    assert(out == (std::vector<int>{42, 42, 42, 42, 0}));
+    assert(out == (RAH2_STD::vector<int>{42, 42, 42, 42, 0}));
     /// [rah2::ranges::fill_n]
 }
 void test_transform()
@@ -834,20 +837,20 @@ void test_transform()
     testSuite.test_case("sample");
     {
         /// [rah2::ranges::transform]
-        std::vector<int> vecIn1{0, 1, 2, 3};
-        std::vector<int> vecOut{0, 0, 0, 0};
+        RAH2_STD::vector<int> vecIn1{0, 1, 2, 3};
+        RAH2_STD::vector<int> vecOut{0, 0, 0, 0};
         rah2::ranges::transform(vecIn1, begin(vecOut), [](int a) { return a + 1; });
-        assert(vecOut == std::vector<int>({1, 2, 3, 4}));
+        assert(vecOut == RAH2_STD::vector<int>({1, 2, 3, 4}));
         /// [rah2::ranges::transform]
     }
     {
         /// [rah2::ranges::transform2]
-        std::vector<int> vecIn1{0, 1, 2, 3};
-        std::vector<int> const vecIn2{4, 3, 2, 1};
-        std::vector<int> vecOut;
+        RAH2_STD::vector<int> vecIn1{0, 1, 2, 3};
+        RAH2_STD::vector<int> const vecIn2{4, 3, 2, 1};
+        RAH2_STD::vector<int> vecOut;
         rah2::ranges::transform(
             vecIn1, vecIn2, std::back_inserter(vecOut), [](int a, int b) { return a + b; });
-        assert(vecOut == std::vector<int>({4, 4, 4, 4}));
+        assert(vecOut == RAH2_STD::vector<int>({4, 4, 4, 4}));
         /// [rah2::ranges::transform2]
     }
 }
@@ -855,19 +858,19 @@ void test_generate()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::generate]
-    std::array<int, 8> v = {};
+    RAH2_STD::array<int, 8> v = {};
     rah2::ranges::generate(v, [n = 1]() mutable { return n++; });
-    assert(v == (std::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+    assert(v == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
     /// [rah2::ranges::generate]
 }
 void test_generate_n()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::generate_n]
-    std::array<int, 8> v = {};
+    RAH2_STD::array<int, 8> v = {};
     rah2::ranges::generate_n(
         v.begin(), static_cast<intptr_t>(v.size()), [n{0}]() mutable { return n++; });
-    assert(v == (std::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
+    assert(v == (RAH2_STD::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::ranges::generate_n]
 }
 void test_remove()
@@ -875,22 +878,22 @@ void test_remove()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::remove]
-    std::vector<int> in{1, 2, 1, 3, 1};
+    RAH2_STD::vector<int> in{1, 2, 1, 3, 1};
     auto const to_erase = rah2::ranges::remove(in, 1);
     in.erase(to_erase.begin(), to_erase.end());
     std::sort(in.begin(), in.end());
-    assert(in == std::vector<int>({2, 3}));
+    assert(in == RAH2_STD::vector<int>({2, 3}));
     /// [rah2::ranges::remove]
 }
 void test_remove_if()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::remove_if]
-    std::vector<int> in{1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> in{1, 2, 3, 4, 5};
     auto const to_erase = rah2::ranges::remove_if(in, [](auto a) { return a < 4; });
     in.erase(to_erase.begin(), to_erase.end());
     std::sort(in.begin(), in.end());
-    assert(in == std::vector<int>({4, 5}));
+    assert(in == RAH2_STD::vector<int>({4, 5}));
     /// [rah2::ranges::remove_if]
 }
 void test_remove_copy()
@@ -898,9 +901,9 @@ void test_remove_copy()
     testSuite.test_case("sample");
     /// [rah2::ranges::remove_copy]
     // Filter out the hash symbol from the given string.
-    std::string const str{"#Small #Buffer #Optimization"};
+    RAH2_STD::string const str{"#Small #Buffer #Optimization"};
 
-    std::string out;
+    RAH2_STD::string out;
     rah2::ranges::remove_copy(str.begin(), str.end(), std::back_inserter(out), '#');
     assert(out == "Small Buffer Optimization");
     /// [rah2::ranges::remove_copy]
@@ -911,142 +914,143 @@ void test_remove_copy_if()
     /// [rah2::ranges::remove_copy_if]
     // Copy only the complex numbers with positive imaginary part.
     using Ci = std::complex<double>;
-    constexpr std::array<Ci, 5> source{Ci{1., 0.}, Ci{0., 1.}, Ci{2., -1.}, Ci{3., 2.}, Ci{4., -3.}};
-    std::vector<std::complex<double>> target;
+    constexpr RAH2_STD::array<Ci, 5> source{
+        Ci{1., 0.}, Ci{0., 1.}, Ci{2., -1.}, Ci{3., 2.}, Ci{4., -3.}};
+    RAH2_STD::vector<std::complex<double>> target;
 
     rah2::ranges::remove_copy_if(
         source, std::back_inserter(target), [](Ci z) { return z.imag() <= 0; });
-    assert(target == (std::vector<std::complex<double>>{{0., 1.}, {3., 2.}}));
+    assert(target == (RAH2_STD::vector<std::complex<double>>{{0., 1.}, {3., 2.}}));
     /// [rah2::ranges::remove_copy_if]
 }
 void test_replace()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::replace]
-    std::array<int, 6> p{1, 6, 1, 6, 1, 6};
+    RAH2_STD::array<int, 6> p{1, 6, 1, 6, 1, 6};
     rah2::ranges::replace(p, 6, 9);
-    assert(p == (std::array<int, 6>{1, 9, 1, 9, 1, 9}));
+    assert(p == (RAH2_STD::array<int, 6>{1, 9, 1, 9, 1, 9}));
     /// [rah2::ranges::replace]
 }
 void test_replace_if()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::replace_if]
-    std::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
+    RAH2_STD::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
     rah2::ranges::replace_if(
         q, [](int x) { return 5 < x; }, 5);
-    assert(q == (std::array<int, 8>{1, 2, 3, 5, 5, 5, 4, 5}));
+    assert(q == (RAH2_STD::array<int, 8>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_if]
 }
 void test_replace_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::replace_copy]
-    std::vector<int> o;
-    std::array<int, 6> p{1, 6, 1, 6, 1, 6};
+    RAH2_STD::vector<int> o;
+    RAH2_STD::array<int, 6> p{1, 6, 1, 6, 1, 6};
     o.resize(p.size());
     rah2::ranges::replace_copy(p, o.begin(), 6, 9);
-    assert(o == (std::vector<int>{1, 9, 1, 9, 1, 9}));
+    assert(o == (RAH2_STD::vector<int>{1, 9, 1, 9, 1, 9}));
     /// [rah2::ranges::replace_copy]
 }
 void test_replace_copy_if()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::replace_copy_if]
-    std::vector<int> o;
-    std::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
+    RAH2_STD::vector<int> o;
+    RAH2_STD::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
     o.resize(q.size());
     rah2::ranges::replace_copy_if(
         q, o.begin(), [](int x) { return 5 < x; }, 5);
-    assert(o == (std::vector<int>{1, 2, 3, 5, 5, 5, 4, 5}));
+    assert(o == (RAH2_STD::vector<int>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_copy_if]
 }
 void test_swap_ranges()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::swap_ranges]
-    std::vector<char> p{'A', 'B', 'C', 'D', 'E'};
-    std::list<char> q{'1', '2', '3', '4', '5', '6'};
+    RAH2_STD::vector<char> p{'A', 'B', 'C', 'D', 'E'};
+    RAH2_STD::list<char> q{'1', '2', '3', '4', '5', '6'};
 
     // swap p[0, 2) and q[1, 3):
     rah2::ranges::swap_ranges(
         p.begin(), p.begin() + 4, rah2::ranges::next(q.begin(), 1), rah2::ranges::next(q.begin(), 3));
-    assert(p == (std::vector<char>{'2', '3', 'C', 'D', 'E'}));
-    assert(q == (std::list<char>{'1', 'A', 'B', '4', '5', '6'}));
+    assert(p == (RAH2_STD::vector<char>{'2', '3', 'C', 'D', 'E'}));
+    assert(q == (RAH2_STD::list<char>{'1', 'A', 'B', '4', '5', '6'}));
 
     // swap p[0, 5) and q[0, 5):
     rah2::ranges::swap_ranges(p, q);
-    assert(q == (std::list<char>{'2', '3', 'C', 'D', 'E', '6'}));
-    assert(p == (std::vector<char>{'1', 'A', 'B', '4', '5'}));
+    assert(q == (RAH2_STD::list<char>{'2', '3', 'C', 'D', 'E', '6'}));
+    assert(p == (RAH2_STD::vector<char>{'1', 'A', 'B', '4', '5'}));
     /// [rah2::ranges::swap_ranges]
 }
 void test_reverse()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::reverse]
-    std::string s{"ABCDEF"};
+    RAH2_STD::string s{"ABCDEF"};
     rah2::ranges::reverse(s.begin(), s.end());
-    assert(s == std::string{"FEDCBA"});
+    assert(s == RAH2_STD::string{"FEDCBA"});
     rah2::ranges::reverse(s);
-    assert(s == std::string{"ABCDEF"});
+    assert(s == RAH2_STD::string{"ABCDEF"});
 
-    std::array<int, 5> a{1, 2, 3, 4, 5};
+    RAH2_STD::array<int, 5> a{1, 2, 3, 4, 5};
     rah2::ranges::reverse(a);
-    assert(a == (std::array<int, 5>{5, 4, 3, 2, 1}));
+    assert(a == (RAH2_STD::array<int, 5>{5, 4, 3, 2, 1}));
     /// [rah2::ranges::reverse]
 }
 void test_reverse_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::reverse_copy]
-    std::string x{"12345"};
-    std::string y(x.size(), ' ');
+    RAH2_STD::string x{"12345"};
+    RAH2_STD::string y(x.size(), ' ');
     rah2::ranges::reverse_copy(x.begin(), x.end(), y.begin());
-    assert(x == (std::string{"12345"}));
-    assert(y == (std::string{"54321"}));
+    assert(x == (RAH2_STD::string{"12345"}));
+    assert(y == (RAH2_STD::string{"54321"}));
     rah2::ranges::reverse_copy(y, x.begin());
-    assert(x == (std::string{"12345"}));
+    assert(x == (RAH2_STD::string{"12345"}));
     /// [rah2::ranges::reverse_copy]
 }
 void test_rotate()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::rotate]
-    std::string s(16, ' ');
+    RAH2_STD::string s(16, ' ');
 
     std::iota(s.begin(), s.end(), 'A');
     rah2::ranges::rotate(s, s.begin());
-    assert(s == (std::string{"ABCDEFGHIJKLMNOP"}));
+    assert(s == (RAH2_STD::string{"ABCDEFGHIJKLMNOP"}));
     rah2::ranges::rotate(s, s.begin() + 1);
-    assert(s == (std::string{"BCDEFGHIJKLMNOPA"}));
+    assert(s == (RAH2_STD::string{"BCDEFGHIJKLMNOPA"}));
     std::iota(s.begin(), s.end(), 'A');
     rah2::ranges::rotate(s, s.begin() + 3);
-    assert(s == (std::string{"DEFGHIJKLMNOPABC"}));
+    assert(s == (RAH2_STD::string{"DEFGHIJKLMNOPABC"}));
 
     std::iota(s.begin(), s.end(), 'A');
     rah2::ranges::rotate(s, s.end());
-    assert(s == (std::string{"ABCDEFGHIJKLMNOP"}));
+    assert(s == (RAH2_STD::string{"ABCDEFGHIJKLMNOP"}));
     rah2::ranges::rotate(s, s.end() - 1);
-    assert(s == (std::string{"PABCDEFGHIJKLMNO"}));
+    assert(s == (RAH2_STD::string{"PABCDEFGHIJKLMNO"}));
     std::iota(s.begin(), s.end(), 'A');
     rah2::ranges::rotate(s, s.end() - 3);
-    assert(s == (std::string{"NOPABCDEFGHIJKLM"}));
+    assert(s == (RAH2_STD::string{"NOPABCDEFGHIJKLM"}));
     /// [rah2::ranges::rotate]
 }
 void test_rotate_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::rotate_copy]
-    std::vector<int> src{1, 2, 3, 4, 5};
-    std::vector<int> dest(src.size());
+    RAH2_STD::vector<int> src{1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> dest(src.size());
     auto pivot = rah2::ranges::find(src, 3);
 
     rah2::ranges::rotate_copy(src, pivot, dest.begin());
-    assert(dest == (std::vector<int>{3, 4, 5, 1, 2}));
+    assert(dest == (RAH2_STD::vector<int>{3, 4, 5, 1, 2}));
 
     pivot = rah2::ranges::find(src, 3);
     rah2::ranges::rotate_copy(src.begin(), pivot, src.end(), dest.begin());
-    assert(dest == (std::vector<int>{3, 4, 5, 1, 2}));
+    assert(dest == (RAH2_STD::vector<int>{3, 4, 5, 1, 2}));
     /// [rah2::ranges::rotate_copy]
 }
 void test_shuffle()
@@ -1055,7 +1059,7 @@ void test_shuffle()
     /// [rah2::ranges::shuffle]
     std::random_device rd;
     std::mt19937 g(rd());
-    std::vector<int> in{1, 2, 3, 4, 5, 6};
+    RAH2_STD::vector<int> in{1, 2, 3, 4, 5, 6};
     rah2::ranges::shuffle(in, g);
     /// [rah2::ranges::shuffle]
 }
@@ -1064,17 +1068,17 @@ void test_shift_left()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::shift_left]
-    std::vector<int> b{1, 2, 3, 4, 5, 6, 7};
+    RAH2_STD::vector<int> b{1, 2, 3, 4, 5, 6, 7};
 
     auto b8 = rah2::ranges::shift_left(b, 8); // has no effect: n >= last - first
-    assert(rah2::ranges::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
-    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(rah2::ranges::equal(b8, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     auto b0 = rah2::ranges::shift_left(b, 0); // has no effect: n == 0
-    assert(rah2::ranges::equal(b0, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
-    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(rah2::ranges::equal(b0, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
-    std::vector<int> ref{4, 5, 6, 7};
+    RAH2_STD::vector<int> ref{4, 5, 6, 7};
     auto b3 = rah2::ranges::shift_left(b, 3);
     assert(rah2::ranges::equal(b3, ref));
     assert(rah2::ranges::equal(b.begin(), b.begin() + 4, ref.begin(), ref.end()));
@@ -1086,17 +1090,17 @@ void test_shift_right()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::shift_right]
-    std::vector<int> b{1, 2, 3, 4, 5, 6, 7};
+    RAH2_STD::vector<int> b{1, 2, 3, 4, 5, 6, 7};
 
     auto b8 = rah2::ranges::shift_right(b, 8); // has no effect: n >= last - first
-    assert(rah2::ranges::equal(b8, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
-    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(rah2::ranges::equal(b8, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     auto b0 = rah2::ranges::shift_right(b, 0); // has no effect: n == 0
-    assert(rah2::ranges::equal(b0, std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
-    assert(b == (std::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(rah2::ranges::equal(b0, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(b == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
-    std::vector<int> ref{1, 2, 3, 4};
+    RAH2_STD::vector<int> ref{1, 2, 3, 4};
     auto b3 = rah2::ranges::shift_right(b, 3);
     assert(rah2::ranges::equal(b3, ref));
     assert(rah2::ranges::equal(b.begin() + 3, b.end(), ref.begin(), ref.end()));
@@ -1109,7 +1113,7 @@ void test_sample()
     /// [rah2::ranges::sample]
     auto const in = {1, 2, 3, 4, 5, 6};
 
-    std::vector<int> out(in.size() + 2);
+    RAH2_STD::vector<int> out(in.size() + 2);
     auto const max = static_cast<intptr_t>(in.size() + 2);
     auto gen = std::mt19937{std::random_device{}()};
 
@@ -1129,16 +1133,16 @@ void test_unique()
     testSuite.test_case("sample");
     {
         /// [rah2::ranges::unique]
-        std::vector<int> in{2, 1, 1, 1, 5, 3, 3, 4};
+        RAH2_STD::vector<int> in{2, 1, 1, 1, 5, 3, 3, 4};
         in.erase(rah2::ranges::unique(in).begin(), end(in));
-        assert(in == std::vector<int>({2, 1, 5, 3, 4}));
+        assert(in == RAH2_STD::vector<int>({2, 1, 5, 3, 4}));
         /// [rah2::ranges::unique]
     }
     {
         /// [rah2::ranges::unique_pred]
-        std::vector<int> in{2, 1, 1, 1, 5, 3, 3, 4};
+        RAH2_STD::vector<int> in{2, 1, 1, 1, 5, 3, 3, 4};
         in.erase(rah2::ranges::unique(in, [](auto a, auto b) { return a == b; }).begin(), end(in));
-        assert(in == std::vector<int>({2, 1, 5, 3, 4}));
+        assert(in == RAH2_STD::vector<int>({2, 1, 5, 3, 4}));
         /// [rah2::ranges::unique_pred]
     }
 }
@@ -1146,22 +1150,22 @@ void test_unique_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::unique_copy]
-    std::string s1{"The      string    with many       spaces!"};
+    RAH2_STD::string s1{"The      string    with many       spaces!"};
 
-    std::string s2;
+    RAH2_STD::string s2;
     rah2::ranges::unique_copy(
         s1.begin(),
         s1.end(),
         std::back_inserter(s2),
         [](char c1, char c2) { return c1 == ' ' && c2 == ' '; });
-    assert(s2 == (std::string{"The string with many spaces!"}));
+    assert(s2 == (RAH2_STD::string{"The string with many spaces!"}));
     /// [rah2::ranges::unique_copy]
 }
 void test_is_partitioned()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::is_partitioned]
-    std::array<int, 9> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    RAH2_STD::array<int, 9> v = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     auto is_even = [](int i)
     {
@@ -1182,22 +1186,22 @@ void test_partition()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::partition]
-    std::vector<int> in{1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> in{1, 2, 3, 4, 5};
     auto const boundary = rah2::ranges::partition(in, [](auto a) { return a >= 4; });
     assert(boundary.begin() == in.begin() + 2);
     std::sort(in.begin(), boundary.begin());
     std::sort(boundary.begin(), in.end());
-    assert(in == std::vector<int>({4, 5, 1, 2, 3}));
+    assert(in == RAH2_STD::vector<int>({4, 5, 1, 2, 3}));
     /// [rah2::ranges::partition]
 }
 void test_partition_copy()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::partition_copy]
-    std::vector<char> const in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
+    RAH2_STD::vector<char> const in = {'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'};
 
-    std::vector<int> o1(in.size());
-    std::vector<int> o2(in.size());
+    RAH2_STD::vector<int> o1(in.size());
+    RAH2_STD::vector<int> o2(in.size());
 
     auto pred = [](char c)
     {
@@ -1206,9 +1210,9 @@ void test_partition_copy()
 
     auto const ret = rah2::ranges::partition_copy(in, o1.begin(), o2.begin(), pred);
 
-    assert(in == (std::vector<char>{'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'}));
-    std::vector<int> o1_expected{'N', 'U', 'M', 'B', 'E', 'R'};
-    std::vector<int> o2_expected{'3', '1', '4', '1', '5', '9'};
+    assert(in == (RAH2_STD::vector<char>{'N', '3', 'U', 'M', '1', 'B', '4', 'E', '1', '5', 'R', '9'}));
+    RAH2_STD::vector<int> o1_expected{'N', 'U', 'M', 'B', 'E', 'R'};
+    RAH2_STD::vector<int> o2_expected{'3', '1', '4', '1', '5', '9'};
     assert(rah2::ranges::equal(o1.begin(), ret.out1, o1_expected.begin(), o1_expected.end()));
     assert(rah2::ranges::equal(o2.begin(), ret.out2, o2_expected.begin(), o2_expected.end()));
     /// [rah2::ranges::partition_copy]
@@ -1217,17 +1221,17 @@ void test_stable_partition()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::stable_partition]
-    std::vector<int> in{1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> in{1, 2, 3, 4, 5};
     auto const boundary = rah2::ranges::stable_partition(in, [](auto a) { return a >= 4; });
     assert(boundary.begin() == in.begin() + 2);
-    assert(in == std::vector<int>({4, 5, 1, 2, 3}));
+    assert(in == RAH2_STD::vector<int>({4, 5, 1, 2, 3}));
     /// [rah2::ranges::stable_partition]
 }
 void test_partition_point()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::partition_point]
-    std::array<int, 9> v{1, 2, 3, 4, 5, 6, 7, 8, 9};
+    RAH2_STD::array<int, 9> v{1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     auto is_even = [](int i)
     {
@@ -1247,7 +1251,7 @@ void test_is_sorted()
     testSuite.test_case("return");
     /// [rah2::ranges::is_sorted]
 
-    std::array<int, 5> digits{3, 1, 4, 1, 5};
+    RAH2_STD::array<int, 5> digits{3, 1, 4, 1, 5};
     assert(not rah2::ranges::is_sorted(digits));
 
     rah2::ranges::sort(digits);
@@ -1264,19 +1268,19 @@ void test_is_sorted_until()
     testSuite.test_case("return");
     testSuite.test_case("empty");
     /// [rah2::ranges::is_sorted_until]
-    std::array<int, 0> a0 = {};
+    RAH2_STD::array<int, 0> a0 = {};
     auto const sorted_end0 = rah2::ranges::is_sorted_until(a0);
     assert(rah2::ranges::distance(a0.begin(), sorted_end0) == 0);
 
-    std::array<int, 6> a1{3, 1, 4, 1, 5, 9};
+    RAH2_STD::array<int, 6> a1{3, 1, 4, 1, 5, 9};
     auto const sorted_end = rah2::ranges::is_sorted_until(a1);
     assert(rah2::ranges::distance(a1.begin(), sorted_end) == 1);
 
-    std::array<int, 6> a3{3, 6, 18, 1, 5, 9};
+    RAH2_STD::array<int, 6> a3{3, 6, 18, 1, 5, 9};
     auto const sorted_end3 = rah2::ranges::is_sorted_until(a3);
     assert(rah2::ranges::distance(a3.begin(), sorted_end3) == 3);
 
-    std::array<int, 6> a6{3, 6, 18, 19, 20, 78};
+    RAH2_STD::array<int, 6> a6{3, 6, 18, 19, 20, 78};
     auto const sorted_end6 = rah2::ranges::is_sorted_until(a6);
     assert(rah2::ranges::distance(a6.begin(), sorted_end6) == 6);
     /// [rah2::ranges::is_sorted_until]
@@ -1286,16 +1290,16 @@ void test_sort()
     testSuite.test_case("sample");
     {
         /// [rah2::ranges::sort]
-        std::vector<int> in{2, 1, 5, 3, 4};
+        RAH2_STD::vector<int> in{2, 1, 5, 3, 4};
         rah2::ranges::sort(in);
-        assert(in == std::vector<int>({1, 2, 3, 4, 5}));
+        assert(in == RAH2_STD::vector<int>({1, 2, 3, 4, 5}));
         /// [rah2::ranges::sort]
     }
     {
         /// [rah2::ranges::sort_pred]
-        std::vector<int> in{2, 1, 5, 3, 4};
+        RAH2_STD::vector<int> in{2, 1, 5, 3, 4};
         rah2::ranges::sort(in, [](auto a, auto b) { return a < b; });
-        assert(in == std::vector<int>({1, 2, 3, 4, 5}));
+        assert(in == RAH2_STD::vector<int>({1, 2, 3, 4, 5}));
         /// [rah2::ranges::sort_pred]
     }
 }
@@ -1304,15 +1308,15 @@ void test_partial_sort()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::partial_sort]
-    std::vector<char> v{'x', 'P', 'y', 'C', 'z', 'w', 'P', 'o'};
+    RAH2_STD::vector<char> v{'x', 'P', 'y', 'C', 'z', 'w', 'P', 'o'};
 
     int const m{3};
     rah2::ranges::partial_sort(v, v.begin() + m);
-    assert((rah2::ranges::equal(v | rah2::ranges::views::take(3), std::string("CPP"))));
+    assert((rah2::ranges::equal(v | rah2::ranges::views::take(3), RAH2_STD::string("CPP"))));
 
-    std::string s{"3a1b41c5"};
+    RAH2_STD::string s{"3a1b41c5"};
     rah2::ranges::partial_sort(s.begin(), s.begin() + m, s.end(), rah2::greater{});
-    assert((rah2::ranges::equal(s | rah2::ranges::views::take(3), std::string("cba"))));
+    assert((rah2::ranges::equal(s | rah2::ranges::views::take(3), RAH2_STD::string("cba"))));
     /// [rah2::ranges::partial_sort]
 }
 void test_partial_sort_copy()
@@ -1322,15 +1326,15 @@ void test_partial_sort_copy()
     /// [rah2::ranges::partial_sort_copy]
     std::forward_list<int> const source{4, 2, 5, 1, 3};
 
-    std::vector<int> dest1{10, 11, 12};
+    RAH2_STD::vector<int> dest1{10, 11, 12};
     auto lastI_lastO = rah2::ranges::partial_sort_copy(source, dest1);
-    assert(dest1 == (std::vector<int>{1, 2, 3}));
+    assert(dest1 == (RAH2_STD::vector<int>{1, 2, 3}));
     assert(lastI_lastO.in == source.end());
     assert(lastI_lastO.out == dest1.end());
 
-    std::vector<int> dest2{10, 11, 12, 13, 14, 15, 16};
+    RAH2_STD::vector<int> dest2{10, 11, 12, 13, 14, 15, 16};
     lastI_lastO = rah2::ranges::partial_sort_copy(source, dest2, rah2::greater{});
-    assert(dest2 == (std::vector<int>{5, 4, 3, 2, 1, 15, 16}));
+    assert(dest2 == (RAH2_STD::vector<int>{5, 4, 3, 2, 1, 15, 16}));
     assert(lastI_lastO.in == source.end());
     assert(lastI_lastO.out == dest2.begin() + 5);
     /// [rah2::ranges::partial_sort_copy]
@@ -1354,18 +1358,19 @@ void test_stable_sort()
     };
 
     {
-        std::vector<CmpA> in{{4, 1}, {2, 1}, {4, 2}, {1, 1}, {4, 3}, {2, 2}, {4, 4}};
+        RAH2_STD::vector<CmpA> in{{4, 1}, {2, 1}, {4, 2}, {1, 1}, {4, 3}, {2, 2}, {4, 4}};
         rah2::ranges::stable_sort(in);
-        assert(in == std::vector<CmpA>({{1, 1}, {2, 1}, {2, 2}, {4, 1}, {4, 2}, {4, 3}, {4, 4}}));
+        assert(in == RAH2_STD::vector<CmpA>({{1, 1}, {2, 1}, {2, 2}, {4, 1}, {4, 2}, {4, 3}, {4, 4}}));
     }
     /// [rah2::ranges::stable_sort]
     {
         /// [rah2::ranges::stable_sort_pred]
-        std::vector<std::pair<int, int>> in{{4, 1}, {2, 1}, {4, 2}, {1, 1}, {4, 3}, {2, 2}, {4, 4}};
+        RAH2_STD::vector<RAH2_STD::pair<int, int>> in{
+            {4, 1}, {2, 1}, {4, 2}, {1, 1}, {4, 3}, {2, 2}, {4, 4}};
         rah2::ranges::stable_sort(in, [](auto l, auto r) { return l.second < r.second; });
         assert(
             in
-            == (std::vector<std::pair<int, int>>(
+            == (RAH2_STD::vector<RAH2_STD::pair<int, int>>(
                 {{4, 1}, {2, 1}, {1, 1}, {4, 2}, {2, 2}, {4, 3}, {4, 4}})));
         /// [rah2::ranges::stable_sort_pred]
     }
@@ -1374,7 +1379,7 @@ void test_nth_element()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::nth_element]
-    std::array<int, 9> v{5, 6, 4, 3, 2, 6, 7, 9, 3};
+    RAH2_STD::array<int, 9> v{5, 6, 4, 3, 2, 6, 7, 9, 3};
 
     auto out_last = rah2::ranges::nth_element(v, v.begin() + 4);
     assert(v[4] == 5);
@@ -1385,7 +1390,7 @@ void test_nth_element()
     assert(out_last == v.end());
 
     using namespace std::literals;
-    std::array<std::string, 7> names{
+    RAH2_STD::array<RAH2_STD::string, 7> names{
         "Diva",
         "Cornelius",
         "Munro",
@@ -1404,7 +1409,7 @@ void test_lower_bound()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::lower_bound]
-    std::vector<int> data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
+    RAH2_STD::vector<int> data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
     auto const lower = rah2::ranges::lower_bound(data, 4);
     assert(lower == data.begin() + 6);
     /// [rah2::ranges::lower_bound]
@@ -1414,7 +1419,7 @@ void test_upper_bound()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::upper_bound]
-    std::vector<int> data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
+    RAH2_STD::vector<int> data{1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5};
     auto const upper = rah2::ranges::upper_bound(data, 4);
     assert(upper == data.begin() + 10);
     /// [rah2::ranges::upper_bound]
@@ -1423,7 +1428,7 @@ void test_binary_search()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::binary_search]
-    std::vector<int> vecIn1{1, 2, 2, 3, 4};
+    RAH2_STD::vector<int> vecIn1{1, 2, 2, 3, 4};
     assert(not rah2::ranges::binary_search(vecIn1, 0));
     assert(rah2::ranges::binary_search(vecIn1, 1));
     assert(rah2::ranges::binary_search(vecIn1, 2));
@@ -1434,24 +1439,24 @@ void test_equal_range()
     testSuite.test_case("sample");
     {
         /// [rah2::ranges::equal_range]
-        std::vector<int> vecIn1{1, 2, 2, 3, 4};
+        RAH2_STD::vector<int> vecIn1{1, 2, 2, 3, 4};
         {
-            std::vector<int> out;
+            RAH2_STD::vector<int> out;
             for (int const i : rah2::ranges::equal_range(vecIn1, 0))
                 out.push_back(i);
-            assert(out == std::vector<int>({}));
+            assert(out == RAH2_STD::vector<int>({}));
         }
         {
-            std::vector<int> out;
+            RAH2_STD::vector<int> out;
             for (int const i : rah2::ranges::equal_range(vecIn1, 1))
                 out.push_back(i);
-            assert(out == std::vector<int>({1}));
+            assert(out == RAH2_STD::vector<int>({1}));
         }
         {
-            std::vector<int> out;
+            RAH2_STD::vector<int> out;
             for (int const i : rah2::ranges::equal_range(vecIn1, 2))
                 out.push_back(i);
-            assert(out == std::vector<int>({2, 2}));
+            assert(out == RAH2_STD::vector<int>({2, 2}));
         }
         /// [rah2::ranges::equal_range]
     }
@@ -1480,24 +1485,24 @@ void test_equal_range()
         /// [rah2::ranges::equal_range_pred_0]
         {
             /// [rah2::ranges::equal_range_pred]
-            std::vector<S> vecIn1{{1, 'a'}, {2, 'b'}, {2, 'c'}, {3, 'd'}, {4, 'd'}};
+            RAH2_STD::vector<S> vecIn1{{1, 'a'}, {2, 'b'}, {2, 'c'}, {3, 'd'}, {4, 'd'}};
             {
-                std::vector<S> out;
+                RAH2_STD::vector<S> out;
                 for (S const i : rah2::ranges::equal_range(vecIn1, 0, FindS{}))
                     out.push_back(i);
-                assert(out == std::vector<S>({}));
+                assert(out == RAH2_STD::vector<S>({}));
             }
             {
-                std::vector<S> out;
+                RAH2_STD::vector<S> out;
                 for (S const i : rah2::ranges::equal_range(vecIn1, 1, FindS{}))
                     out.push_back(i);
-                assert(out == std::vector<S>({{1, 'a'}}));
+                assert(out == RAH2_STD::vector<S>({{1, 'a'}}));
             }
             {
-                std::vector<S> out;
+                RAH2_STD::vector<S> out;
                 for (S const i : rah2::ranges::equal_range(vecIn1, 2, FindS{}))
                     out.push_back(i);
-                assert(out == std::vector<S>({{2, 'b'}, {2, 'c'}}));
+                assert(out == RAH2_STD::vector<S>({{2, 'b'}, {2, 'c'}}));
             }
             /// [rah2::ranges::equal_range_pred]
         }
@@ -1508,20 +1513,20 @@ void test_merge()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::merge]
-    std::vector<int> in1 = {1, 2, 3, 4, 5};
-    std::vector<int> in2 = {3, 4, 5, 6, 7};
-    std::vector<int> out(in1.size() + in2.size());
+    RAH2_STD::vector<int> in1 = {1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> in2 = {3, 4, 5, 6, 7};
+    RAH2_STD::vector<int> out(in1.size() + in2.size());
 
     auto const ret = rah2::ranges::merge(in1, in2, out.begin());
     assert((rah2::ranges::equal(
         rah2::ranges::make_subrange(out.begin(), ret.out),
-        std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 6, 7})));
+        RAH2_STD::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 6, 7})));
 
     in1 = {1, 2, 3, 4, 5, 5, 5};
     in2 = {3, 4, 5, 6, 7};
     out.clear();
     rah2::ranges::merge(in1, in2, std::back_inserter(out));
-    assert(out == (std::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 6, 7}));
+    assert(out == (RAH2_STD::vector<int>{1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 6, 7}));
     /// [rah2::ranges::merge]
 }
 void test_inplace_merge()
@@ -1529,7 +1534,7 @@ void test_inplace_merge()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::inplace_merge]
-    std::vector<int> v{1, 4, 8, 9, 10, 45, 2, 3, 4, 9, 11};
+    RAH2_STD::vector<int> v{1, 4, 8, 9, 10, 45, 2, 3, 4, 9, 11};
     auto const last = rah2::ranges::inplace_merge(v, v.begin() + 6);
     assert(last == v.end());
     assert(rah2::ranges::is_sorted(v));
@@ -1563,22 +1568,22 @@ void test_set_difference()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::set_difference]
-    std::vector<int> in1{1, 3, 4};
-    std::vector<int> in2{1, 2, 3};
-    std::vector<int> out{0, 0, 0, 0};
+    RAH2_STD::vector<int> in1{1, 3, 4};
+    RAH2_STD::vector<int> in2{1, 2, 3};
+    RAH2_STD::vector<int> out{0, 0, 0, 0};
     rah2::ranges::set_difference(in1, in2, out.begin());
-    assert(out == std::vector<int>({4, 0, 0, 0}));
+    assert(out == RAH2_STD::vector<int>({4, 0, 0, 0}));
     /// [rah2::ranges::set_difference]
 }
 void test_set_intersection()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::set_intersection]
-    std::vector<int> in1{1, 3, 4};
-    std::vector<int> in2{1, 2, 3};
-    std::vector<int> out{0, 0, 0, 0};
+    RAH2_STD::vector<int> in1{1, 3, 4};
+    RAH2_STD::vector<int> in2{1, 2, 3};
+    RAH2_STD::vector<int> out{0, 0, 0, 0};
     rah2::ranges::set_intersection(in1, in2, out.begin());
-    assert(out == std::vector<int>({1, 3, 0, 0}));
+    assert(out == RAH2_STD::vector<int>({1, 3, 0, 0}));
     /// [rah2::ranges::set_intersection]
 }
 void test_set_symmetric_difference()
@@ -1589,10 +1594,10 @@ void test_set_symmetric_difference()
     auto const in1 = {1, 3, 4, 6, 7, 9};
     auto const in2 = {1, 4, 5, 6, 9};
 
-    std::vector<int> out(5);
+    RAH2_STD::vector<int> out(5);
 
     auto const res = rah2::ranges::set_symmetric_difference(in1, in2, out.begin());
-    assert(out == (std::vector<int>{3, 5, 7, 0, 0}));
+    assert(out == (RAH2_STD::vector<int>{3, 5, 7, 0, 0}));
     assert(res.in1 == in1.end());
     assert(res.in2 == in2.end());
     assert(res.out == out.begin() + 3);
@@ -1603,11 +1608,11 @@ void test_set_union()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::set_union]
-    std::vector<int> in1 = {1, 2, 3, 4, 5};
-    std::vector<int> in2 = {3, 4, 5, 6, 7};
-    std::vector<int> out(in1.size() + in2.size());
+    RAH2_STD::vector<int> in1 = {1, 2, 3, 4, 5};
+    RAH2_STD::vector<int> in2 = {3, 4, 5, 6, 7};
+    RAH2_STD::vector<int> out(in1.size() + in2.size());
     auto const ret = rah2::ranges::set_union(in1, in2, out.begin());
-    assert(out == (std::vector<int>{1, 2, 3, 4, 5, 6, 7, 0, 0, 0}));
+    assert(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7, 0, 0, 0}));
     assert(ret.in1 == in1.end());
     assert(ret.in2 == in2.end());
     assert(ret.out == out.begin() + 7);
@@ -1617,7 +1622,7 @@ void test_set_union()
     out.clear();
     out.reserve(in1.size() + in2.size());
     auto const ret2 = rah2::ranges::set_union(in1, in2, std::back_inserter(out));
-    assert(out == (std::vector<int>{1, 2, 3, 4, 5, 5, 5, 6, 7}));
+    assert(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 5, 5, 6, 7}));
     assert(ret2.in1 == in1.end());
     assert(ret2.in2 == in2.end());
     /// [rah2::ranges::set_union]
@@ -1627,7 +1632,7 @@ void test_is_heap()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::is_heap]
-    std::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8};
+    RAH2_STD::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8};
     assert(!rah2::ranges::is_heap(v));
     std::make_heap(v.begin(), v.end());
     assert(rah2::ranges::is_heap(v));
@@ -1638,7 +1643,7 @@ void test_is_heap_until()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::is_heap_until]
-    std::vector<int> v{3, 1, 4, 1, 5, 9};
+    RAH2_STD::vector<int> v{3, 1, 4, 1, 5, 9};
     std::make_heap(v.begin(), v.end());
     assert(rah2::ranges::is_heap_until(v) == v.end());
 
@@ -1655,7 +1660,7 @@ void test_make_heap()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::make_heap]
-    std::vector<int> h{1, 6, 1, 8, 0, 3, 3, 9, 8, 8, 7, 4, 9, 8, 9};
+    RAH2_STD::vector<int> h{1, 6, 1, 8, 0, 3, 3, 9, 8, 8, 7, 4, 9, 8, 9};
     assert(!std::is_heap(h.begin(), h.end()));
     auto const last = rah2::ranges::make_heap(h);
     assert(last == h.end());
@@ -1673,7 +1678,7 @@ void test_push_heap()
     testSuite.test_case("return");
     /// [rah2::ranges::push_heap]
 
-    std::vector<int> v{1, 6, 1, 8, 0, 3};
+    RAH2_STD::vector<int> v{1, 6, 1, 8, 0, 3};
     rah2::ranges::make_heap(v);
 
     v.push_back(9);
@@ -1689,7 +1694,7 @@ void test_pop_heap()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::pop_heap]
-    std::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
+    RAH2_STD::vector<int> v{3, 1, 4, 1, 5, 9, 2, 6, 5, 3};
 
     std::make_heap(v.begin(), v.end());
     auto const last = rah2::ranges::pop_heap(v);
@@ -1708,7 +1713,7 @@ void test_sort_heap()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::sort_heap]
-    std::array<int, 6> v{3, 1, 4, 1, 5, 9};
+    RAH2_STD::array<int, 6> v{3, 1, 4, 1, 5, 9};
     std::make_heap(v.begin(), v.end());
     rah2::ranges::sort_heap(v);
     assert(std::is_sorted(v.begin(), v.end()));
@@ -1725,7 +1730,7 @@ void test_max()
     assert(rah2::ranges::max({1, 7, 5}) == 7);
     assert(rah2::ranges::max({1, 7, 5}, rah2::greater{}) == 1);
 
-    std::vector<int> v{1, 7, 5};
+    RAH2_STD::vector<int> v{1, 7, 5};
     assert(rah2::ranges::max(v) == 7);
     assert(rah2::ranges::max(v, rah2::greater{}) == 1);
     /// [rah2::ranges::max]
@@ -1735,17 +1740,17 @@ void test_max_element()
     testSuite.test_case("sample");
     {
         /// [rah2::ranges::max_element]
-        std::vector<int> in{1, 5, 3, 4};
+        RAH2_STD::vector<int> in{1, 5, 3, 4};
         auto const iter = rah2::ranges::max_element(in);
         assert(*iter == 5);
         /// [rah2::ranges::max_element]
     }
     {
         /// [rah2::ranges::max_element_pred]
-        std::vector<std::pair<int, int>> in{{100, 3}, {0, 5}, {0, 1}, {0, 4}};
+        RAH2_STD::vector<RAH2_STD::pair<int, int>> in{{100, 3}, {0, 5}, {0, 1}, {0, 4}};
         auto const iter =
             rah2::ranges::max_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
-        assert(*iter == (std::pair<int, int>{0, 5}));
+        assert(*iter == (RAH2_STD::pair<int, int>{0, 5}));
         /// [rah2::ranges::max_element_pred]
     }
 }
@@ -1760,7 +1765,7 @@ void test_min()
     assert(rah2::ranges::min({1, 7, 5}) == 1);
     assert(rah2::ranges::min({1, 7, 5}, rah2::greater{}) == 7);
 
-    std::vector<int> v{1, 7, 5};
+    RAH2_STD::vector<int> v{1, 7, 5};
     assert(rah2::ranges::min(v) == 1);
     assert(rah2::ranges::min(v, rah2::greater{}) == 7);
     /// [rah2::ranges::min]
@@ -1772,7 +1777,7 @@ void test_min_element()
     testSuite.test_case("nopred");
     {
         /// [rah2::ranges::min_element]
-        std::vector<int> in{1, -5, 3, 4};
+        RAH2_STD::vector<int> in{1, -5, 3, 4};
         auto iter = rah2::ranges::min_element(in);
         assert(*iter == -5);
         /// [rah2::ranges::min_element]
@@ -1785,10 +1790,10 @@ void test_min_element()
     {
         testSuite.test_case("pred");
         /// [rah2::ranges::min_element_pred]
-        std::vector<std::pair<int, int>> in{{-100, 3}, {0, -5}, {0, 1}, {0, 4}};
+        RAH2_STD::vector<RAH2_STD::pair<int, int>> in{{-100, 3}, {0, -5}, {0, 1}, {0, 4}};
         auto const iter =
             rah2::ranges::min_element(in, [](auto&& a, auto& b) { return a.second < b.second; });
-        assert(*iter == (std::pair<int, int>{0, -5}));
+        assert(*iter == (RAH2_STD::pair<int, int>{0, -5}));
         /// [rah2::ranges::min_element_pred]
     }
 }
@@ -1813,7 +1818,7 @@ void test_minmax()
     assert(res4.min == 7);
     assert(res4.max == 1);
 
-    std::vector<int> v{1, 7, 5};
+    RAH2_STD::vector<int> v{1, 7, 5};
     auto const res5 = rah2::ranges::minmax(v);
     assert(res5.min == 1);
     assert(res5.max == 7);
@@ -1826,7 +1831,7 @@ void test_minmax_element()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::minmax_element]
-    std::vector<int> v{1, 7, 5};
+    RAH2_STD::vector<int> v{1, 7, 5};
     auto const res5 = rah2::ranges::minmax_element(v);
     assert(*res5.min == 1);
     assert(*res5.max == 7);
@@ -1880,8 +1885,8 @@ void test_next_permutation()
     /// [rah2::ranges::next_permutation]
 
     // Generate all permutations (iterators case)
-    std::string s{"abc"};
-    std::set<std::string> allPermutation;
+    RAH2_STD::string s{"abc"};
+    std::set<RAH2_STD::string> allPermutation;
     do
     {
         if (not allPermutation.empty())
@@ -1890,10 +1895,10 @@ void test_next_permutation()
     } while (rah2::ranges::next_permutation(s.begin(), s.end()).found);
     assert(allPermutation.size() == factorial(s.size()));
 
-    std::set<std::array<int, 3>> allPermutation2;
+    std::set<RAH2_STD::array<int, 3>> allPermutation2;
 
     // Generate all permutations (range case)
-    std::array<int, 3> a{'a', 'b', 'c'};
+    RAH2_STD::array<int, 3> a{'a', 'b', 'c'};
     do
     {
         assert(allPermutation2.count(a) == 0);
@@ -1903,10 +1908,10 @@ void test_next_permutation()
     } while (rah2::ranges::next_permutation(a).found);
     assert(allPermutation2.size() == factorial(s.size()));
 
-    std::set<std::array<std::string, 3>> allPermutation3;
+    std::set<RAH2_STD::array<RAH2_STD::string, 3>> allPermutation3;
 
     // Generate all permutations using comparator
-    std::array<std::string, 3> z{"C", "B", "A"};
+    RAH2_STD::array<RAH2_STD::string, 3> z{"C", "B", "A"};
     do
     {
         if (not allPermutation3.empty())
@@ -1922,8 +1927,8 @@ void test_prev_permutation()
     /// [rah2::ranges::prev_permutation]
 
     // Generate all permutations (iterators case)
-    std::string s{"cba"};
-    std::set<std::string> allPermutation;
+    RAH2_STD::string s{"cba"};
+    std::set<RAH2_STD::string> allPermutation;
     do
     {
         if (not allPermutation.empty())
@@ -1932,10 +1937,10 @@ void test_prev_permutation()
     } while (rah2::ranges::prev_permutation(s.begin(), s.end()).found);
     assert(allPermutation.size() == factorial(s.size()));
 
-    std::set<std::array<int, 3>> allPermutation2;
+    std::set<RAH2_STD::array<int, 3>> allPermutation2;
 
     // Generate all permutations (range case)
-    std::array<int, 3> a{'c', 'b', 'a'};
+    RAH2_STD::array<int, 3> a{'c', 'b', 'a'};
     do
     {
         if (not allPermutation2.empty())
@@ -1944,10 +1949,10 @@ void test_prev_permutation()
     } while (rah2::ranges::prev_permutation(a).found);
     assert(allPermutation2.size() == factorial(s.size()));
 
-    std::set<std::array<std::string, 3>> allPermutation3;
+    std::set<RAH2_STD::array<RAH2_STD::string, 3>> allPermutation3;
 
     // Generate all permutations using comparator
-    std::array<std::string, 3> z{"A", "B", "C"};
+    RAH2_STD::array<RAH2_STD::string, 3> z{"A", "B", "C"};
     do
     {
         if (not allPermutation3.empty())
@@ -1961,18 +1966,18 @@ void test_iota()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::iota]
-    std::list<int> list(8);
+    RAH2_STD::list<int> list(8);
 
     // Fill the list with ascending values: 0, 1, 2, ..., 7
     rah2::ranges::iota(list, 0);
-    assert(list == (std::list<int>{0, 1, 2, 3, 4, 5, 6, 7}));
+    assert(list == (RAH2_STD::list<int>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::ranges::iota]
 }
 void test_fold_left()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::fold_left]
-    std::vector<int> vecIn1{1, 2, 3, 4};
+    RAH2_STD::vector<int> vecIn1{1, 2, 3, 4};
     assert(rah2::ranges::fold_left(vecIn1, 0, [](auto a, auto b) { return a + b; }) == 10);
     /// [rah2::ranges::fold_left]
 }
@@ -1980,7 +1985,7 @@ void test_fold_left_first()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::fold_left_first]
-    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
+    RAH2_STD::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
     auto sum = rah2::ranges::fold_left_first(v.begin(), v.end(), std::plus<>()); // (1)
     assert(sum.value() == 36);
@@ -1988,8 +1993,8 @@ void test_fold_left_first()
     auto mul = rah2::ranges::fold_left_first(v, std::multiplies<>()); // (2)
     assert(mul.value() == 40320);
 
-    // get the product of the std::pair::second of all pairs in the vector:
-    std::vector<std::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
+    // get the product of the RAH2_STD::pair::second of all pairs in the vector:
+    RAH2_STD::vector<RAH2_STD::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
     auto sec = rah2::ranges::fold_left_first(data | rah2::ranges::views::values, std::multiplies<>());
     assert(*sec == 42);
 
@@ -2004,21 +2009,21 @@ void test_fold_right()
     testSuite.test_case("return");
     /// [rah2::ranges::fold_right]
     auto v = {1, 2, 3, 4, 5, 6, 7, 8};
-    std::vector<std::string> vs{"A", "B", "C", "D"};
+    RAH2_STD::vector<RAH2_STD::string> vs{"A", "B", "C", "D"};
 
     auto const r1 = rah2::ranges::fold_right(v.begin(), v.end(), 6, std::plus<>()); // (1)
     assert(r1 == 42);
 
-    auto const r2 = rah2::ranges::fold_right(vs, std::string("!"), std::plus<>()); // (2)
-    assert(r2 == std::string("ABCD!"));
+    auto const r2 = rah2::ranges::fold_right(vs, RAH2_STD::string("!"), std::plus<>()); // (2)
+    assert(r2 == RAH2_STD::string("ABCD!"));
 
     // Use a program defined function object (lambda-expression):
-    std::string const r3 = rah2::ranges::fold_right(
-        v, "A", [](int x, std::string const& s) { return s + ':' + std::to_string(x); });
-    assert(r3 == std::string("A:8:7:6:5:4:3:2:1"));
+    RAH2_STD::string const r3 = rah2::ranges::fold_right(
+        v, "A", [](int x, RAH2_STD::string const& s) { return s + ':' + RAH2_STD::to_string(x); });
+    assert(r3 == RAH2_STD::string("A:8:7:6:5:4:3:2:1"));
 
-    // Get the product of the std::pair::second of all pairs in the vector:
-    std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
+    // Get the product of the RAH2_STD::pair::second of all pairs in the vector:
+    RAH2_STD::vector<RAH2_STD::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
     float const r4 =
         rah2::ranges::fold_right(data | rah2::ranges::views::values, 2.0f, std::multiplies<>());
     assert(r4 == 42);
@@ -2030,7 +2035,7 @@ void test_fold_right_last()
     testSuite.test_case("return");
     /// [rah2::ranges::fold_right_last]
     auto v = {1, 2, 3, 4, 5, 6, 7, 8};
-    std::vector<std::string> vs{"A", "B", "C", "D"};
+    RAH2_STD::vector<RAH2_STD::string> vs{"A", "B", "C", "D"};
 
     auto r1 = rah2::ranges::fold_right_last(v.begin(), v.end(), std::plus<>()); // (1)
     assert(*r1 == 36);
@@ -2042,8 +2047,8 @@ void test_fold_right_last()
     auto r3 = rah2::ranges::fold_right_last(v, [](int x, int y) { return x + y + 99; });
     assert(*r3 == 729);
 
-    // Get the product of the std::pair::second of all pairs in the vector:
-    std::vector<std::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
+    // Get the product of the RAH2_STD::pair::second of all pairs in the vector:
+    RAH2_STD::vector<RAH2_STD::pair<char, float>> data{{'A', 3.f}, {'B', 3.5f}, {'C', 4.f}};
     auto r4 = rah2::ranges::fold_right_last(data | rah2::ranges::views::values, std::multiplies<>());
     assert(*r4 == 42);
     /// [rah2::ranges::fold_right_last]
@@ -2053,7 +2058,7 @@ void test_fold_left_with_iter()
     testSuite.test_case("sample");
     testSuite.test_case("return");
     /// [rah2::ranges::fold_left_with_iter]
-    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
+    RAH2_STD::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
     auto const sum = rah2::ranges::fold_left_with_iter(v.begin(), v.end(), 6, std::plus<>());
     assert(sum.value == 42);
@@ -2063,8 +2068,8 @@ void test_fold_left_with_iter()
     assert(mul.value == 4233600);
     assert(mul.in == v.end());
 
-    // get the product of the std::pair::second of all pairs in the vector:
-    std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
+    // get the product of the RAH2_STD::pair::second of all pairs in the vector:
+    RAH2_STD::vector<RAH2_STD::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 3.5f}};
     auto const sec = rah2::ranges::fold_left_with_iter(
         data | rah2::ranges::views::values, 2.0f, std::multiplies<>());
     assert(sec.value == 42);
@@ -2085,7 +2090,7 @@ void test_fold_left_first_with_iter()
     testSuite.test_case("return");
     /// [rah2::ranges::fold_left_first_with_iter]
 
-    std::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
+    RAH2_STD::vector<int> v{1, 2, 3, 4, 5, 6, 7, 8};
 
     auto sum = rah2::ranges::fold_left_first_with_iter(v.begin(), v.end(), std::plus<>());
     assert(sum.value.value() == 36);
@@ -2095,8 +2100,8 @@ void test_fold_left_first_with_iter()
     assert(mul.value.value() == 40320);
     assert(mul.in == v.end());
 
-    // get the product of the std::pair::second of all pairs in the vector:
-    std::vector<std::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 7.f}};
+    // get the product of the RAH2_STD::pair::second of all pairs in the vector:
+    RAH2_STD::vector<RAH2_STD::pair<char, float>> data{{'A', 2.f}, {'B', 3.f}, {'C', 7.f}};
     auto sec = rah2::ranges::fold_left_first_with_iter(
         data | rah2::ranges::views::values, std::multiplies<>());
     assert(sec.value.value() == 42);
@@ -2126,8 +2131,8 @@ void test_uninitialized_copy()
     };
 
     auto const sz{rah2::ranges::size(v)};
-    alignas(alignof(std::string)) char pbuf[sz * sizeof(std::string)];
-    auto const first{reinterpret_cast<std::string*>(pbuf)};
+    alignas(alignof(RAH2_STD::string)) char pbuf[sz * sizeof(RAH2_STD::string)];
+    auto const first{reinterpret_cast<RAH2_STD::string*>(pbuf)};
     auto const last{first + sz};
     rah2::ranges::uninitialized_copy(std::begin(v), std::end(v), first, last);
 
@@ -2146,9 +2151,9 @@ void test_uninitialized_copy_n()
     char const* stars[] = {"Procyon", "Spica", "Pollux", "Deneb", "Polaris"};
 
     constexpr int n{4};
-    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+    alignas(alignof(RAH2_STD::string)) char out[n * sizeof(RAH2_STD::string)];
 
-    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const first{reinterpret_cast<RAH2_STD::string*>(out)};
     auto const last{first + n};
     auto const ret = rah2::ranges::uninitialized_copy_n(std::begin(stars), n, first, last);
     assert(ret.in == stars + n);
@@ -2167,9 +2172,9 @@ void test_uninitialized_fill()
     /// [rah2::ranges::uninitialized_fill]
 
     constexpr int n{4};
-    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+    alignas(alignof(RAH2_STD::string)) char out[n * sizeof(RAH2_STD::string)];
 
-    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const first{reinterpret_cast<RAH2_STD::string*>(out)};
     auto const last{first + n};
     rah2::ranges::uninitialized_fill(first, last, "▄▀▄▀▄▀▄▀");
 
@@ -2186,9 +2191,9 @@ void test_uninitialized_fill_n()
     /// [rah2::ranges::uninitialized_fill_n]
 
     constexpr int n{3};
-    alignas(alignof(std::string)) char out[n * sizeof(std::string)];
+    alignas(alignof(RAH2_STD::string)) char out[n * sizeof(RAH2_STD::string)];
 
-    auto const first{reinterpret_cast<std::string*>(out)};
+    auto const first{reinterpret_cast<RAH2_STD::string*>(out)};
     auto const last = rah2::ranges::uninitialized_fill_n(first, n, "cppreference");
 
     assert(rah2::ranges::all_of(first, last, ([](auto& x) { return x == "cppreference"; })));
@@ -2203,11 +2208,11 @@ void test_uninitialized_move()
     // testSuite.test_case("return");
     /// [rah2::ranges::uninitialized_move]
 
-    std::string in[]{"Home", "World"};
+    RAH2_STD::string in[]{"Home", "World"};
 
     constexpr auto sz = rah2::ranges::size(in);
-    alignas(alignof(std::string)) char out[sz * sizeof(std::string)];
-    auto const first{reinterpret_cast<std::string*>(out)};
+    alignas(alignof(RAH2_STD::string)) char out[sz * sizeof(RAH2_STD::string)];
+    auto const first{reinterpret_cast<RAH2_STD::string*>(out)};
     auto const last{first + sz};
     rah2::ranges::uninitialized_move(std::begin(in), std::end(in), first, last);
     assert(*first == "Home");
@@ -2221,16 +2226,16 @@ void test_uninitialized_move_n()
     // testSuite.test_case("return");
     /// [rah2::ranges::uninitialized_move_n]
 
-    std::string in[] = {"No", "Diagnostic", "Required"};
+    RAH2_STD::string in[] = {"No", "Diagnostic", "Required"};
 
     constexpr auto sz = rah2::ranges::size(in);
-    alignas(alignof(std::string)) char out[sz * sizeof(std::string)];
-    auto const first{reinterpret_cast<std::string*>(out)};
+    alignas(alignof(RAH2_STD::string)) char out[sz * sizeof(RAH2_STD::string)];
+    auto const first{reinterpret_cast<RAH2_STD::string*>(out)};
     auto const last{first + sz};
     rah2::ranges::uninitialized_move_n(std::begin(in), sz, first, last);
     rah2::ranges::equal(
         rah2::ranges::make_subrange(first, last),
-        std::initializer_list<std::string>{"No", "Diagnostic", "Required"});
+        std::initializer_list<RAH2_STD::string>{"No", "Diagnostic", "Required"});
 
     rah2::ranges::destroy(first, last);
 
@@ -2244,7 +2249,7 @@ void test_uninitialized_default_construct()
 
     struct S
     {
-        std::string m{"▄▀▄▀▄▀▄▀"};
+        RAH2_STD::string m{"▄▀▄▀▄▀▄▀"};
     };
 
     constexpr int n{4};
@@ -2275,7 +2280,7 @@ void test_uninitialized_default_construct_n()
     /// [rah2::ranges::uninitialized_default_construct_n]
     struct S
     {
-        std::string m{"█▓▒░ █▓▒░ "};
+        RAH2_STD::string m{"█▓▒░ █▓▒░ "};
     };
 
     constexpr int n{4};
@@ -2304,7 +2309,7 @@ void test_uninitialized_value_construct()
     /// [rah2::ranges::uninitialized_value_construct]
     struct S
     {
-        std::string m{"▄▀▄▀▄▀▄▀"};
+        RAH2_STD::string m{"▄▀▄▀▄▀▄▀"};
     };
 
     constexpr int n{4};
@@ -2332,7 +2337,7 @@ void test_uninitialized_value_construct_n()
     /// [rah2::ranges::uninitialized_value_construct_n]
     struct S
     {
-        std::string m{"█▓▒░ █▓▒░ █▓▒░ "};
+        RAH2_STD::string m{"█▓▒░ █▓▒░ █▓▒░ "};
     };
 
     constexpr int n{4};

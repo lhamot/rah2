@@ -486,13 +486,13 @@ try
     testSuite.run();
 
     {
-        std::vector<int> vec{0, 1, 2, 2, 3};
+        RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
         toto(vec);
         toto({0, 1, 2, 2, 3});
     }
     {
         /// [make_pipeable use]
-        std::vector<int> vec{0, 1, 2, 2, 3};
+        RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
         assert((vec | test_count(2)) == 2);
         /// [make_pipeable use]
     }
@@ -501,26 +501,26 @@ try
 
     {
         /// [irange]
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::irange(10, 19, 2))
             result.push_back(i);
-        assert(result == std::vector<int>({10, 12, 14, 16, 18}));
+        assert(result == RAH2_STD::vector<int>({10, 12, 14, 16, 18}));
         /// [irange]
         STATIC_ASSERT((rah2::ranges::random_access_range<decltype(rah2::views::irange(10, 19, 2))>));
     }
 
     {
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::irange(-5, 5, 2))
             result.push_back(i);
-        assert(result == std::vector<int>({-5, -3, -1, 1, 3}));
+        assert(result == RAH2_STD::vector<int>({-5, -3, -1, 1, 3}));
     }
 
     {
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::irange(-15, -6, 2))
             result.push_back(i);
-        assert(result == std::vector<int>({-15, -13, -11, -9, -7}));
+        assert(result == RAH2_STD::vector<int>({-15, -13, -11, -9, -7}));
     }
 
     {
@@ -530,7 +530,7 @@ try
             return rah2::views::repeat(static_cast<char>('a' + i)) | rah2::views::take(i);
         };
         auto range = rah2::views::for_each(rah2::views::iota<size_t>(0, 5), createRange);
-        std::string result;
+        RAH2_STD::string result;
         rah2::ranges::copy(range, std::back_inserter(result));
         assert(result == "bccdddeeee");
         /// [for_each]
@@ -596,11 +596,11 @@ try
             return rah2::views::zip(rah2::views::repeat(y), rah2::views::iota<size_t>(0, xSize));
         };
         auto range = rah2::views::iota<size_t>(0, ySize) | rah2::views::for_each(xyIndexes);
-        std::vector<std::tuple<size_t, size_t>> result;
+        RAH2_STD::vector<RAH2_STD::tuple<size_t, size_t>> result;
         rah2::ranges::copy(range, std::back_inserter(result));
         assert(
             result
-            == (std::vector<std::tuple<size_t, size_t>>{
+            == (RAH2_STD::vector<RAH2_STD::tuple<size_t, size_t>>{
                 {0llu, 0llu}, {0llu, 1llu}, {1llu, 0llu}, {1llu, 1llu}, {2llu, 0llu}, {2llu, 1llu}}));
 
         size_t zSize = 4;
@@ -613,15 +613,15 @@ try
         auto flattenTuple = [](auto&& z_yx)
         {
             using namespace std;
-            return std::make_tuple(get<0>(z_yx), get<0>(get<1>(z_yx)), get<1>(get<1>(z_yx)));
+            return RAH2_STD::make_tuple(get<0>(z_yx), get<0>(get<1>(z_yx)), get<1>(get<1>(z_yx)));
         };
         auto rangeZYX = rah2::views::iota<size_t>(0, zSize) | rah2::views::for_each(xyzIndexes)
                         | rah2::views::transform(flattenTuple);
-        std::vector<std::tuple<size_t, size_t, size_t>> resultZYX;
-        rah2::ranges::copy(rangeZYX, std::back_inserter(resultZYX));
+        RAH2_STD::vector<RAH2_STD::tuple<size_t, size_t, size_t>> resultZYX;
+        rah2::ranges::copy(rangeZYX, RAH2_STD::back_inserter(resultZYX));
         assert(
             resultZYX
-            == (std::vector<std::tuple<size_t, size_t, size_t>>{
+            == (RAH2_STD::vector<RAH2_STD::tuple<size_t, size_t, size_t>>{
                 {0lu, 0lu, 0lu}, {0lu, 0lu, 1lu}, {0lu, 1lu, 0lu}, {0lu, 1lu, 1lu}, {0lu, 2lu, 0lu},
                 {0lu, 2lu, 1lu}, {1lu, 0lu, 0lu}, {1lu, 0lu, 1lu}, {1lu, 1lu, 0lu}, {1lu, 1lu, 1lu},
                 {1lu, 2lu, 0lu}, {1lu, 2lu, 1lu}, {2lu, 0lu, 0lu}, {2lu, 0lu, 1lu}, {2lu, 1lu, 0lu},
@@ -639,19 +639,19 @@ try
                 y *= 2;
                 return prev;
             });
-        std::vector<int> gen_copy;
+        RAH2_STD::vector<int> gen_copy;
         std::copy_n(rah2::ranges::begin(gen), 4, std::back_inserter(gen_copy));
-        assert(gen_copy == std::vector<int>({1, 2, 4, 8}));
+        assert(gen_copy == RAH2_STD::vector<int>({1, 2, 4, 8}));
         /// [generate]
-        STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
+        STATIC_ASSERT((rah2::ranges::input_range_impl<decltype(gen), true>::value));
         STATIC_ASSERT(((
-            RAH2_NS::is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>)));
+            rah2::is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, RAH2_STD::input_iterator_tag>)));
         STATIC_ASSERT(not rah2::ranges::forward_range<decltype(gen)>);
         STATIC_ASSERT(not rah2::ranges::common_range<decltype(gen)>);
     }
     {
         /// [generate_n]
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         int y = 1;
         auto gen = rah2::views::generate_n(
             4,
@@ -665,59 +665,59 @@ try
         auto e = rah2::ranges::end(gen);
         for (; i != e; ++i)
             result.push_back(*i);
-        assert(result == std::vector<int>({1, 2, 4, 8}));
+        assert(result == RAH2_STD::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
         STATIC_ASSERT(rah2::ranges::input_range<decltype(gen)>);
         STATIC_ASSERT((
-            RAH2_NS::is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, std::input_iterator_tag>));
+            rah2::is_same_v<rah2::ranges::range_iter_categ_t<decltype(gen)>, RAH2_STD::input_iterator_tag>));
         STATIC_ASSERT(not rah2::ranges::forward_range<decltype(gen)>);
         STATIC_ASSERT(not rah2::ranges::common_range<decltype(gen)>);
     }
 
     {
         /// [cycle]
-        std::vector<int> in{0, 1, 2};
+        RAH2_STD::vector<int> in{0, 1, 2};
         auto cy = rah2::views::cycle(in);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy_n(cy.begin(), 8, std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
         /// [cycle]
         STATIC_ASSERT((rah2::ranges::bidirectional_range<decltype(cy)>));
         STATIC_ASSERT((not rah2::ranges::random_access_range<decltype(cy)>));
     }
     { // Cycle + input/sentinel => input/sentinel
         auto cyInputSent =
-            rah2::views::cycle(make_test_view<Sentinel, std::input_iterator_tag, false>());
+            rah2::views::cycle(make_test_view<Sentinel, RAH2_STD::input_iterator_tag, false>());
         STATIC_ASSERT(is_input_not_common<decltype(cyInputSent)>);
     }
     {
         auto cyForwardSent =
-            rah2::views::cycle(make_test_view<Sentinel, std::forward_iterator_tag, false>());
+            rah2::views::cycle(make_test_view<Sentinel, RAH2_STD::forward_iterator_tag, false>());
         STATIC_ASSERT(is_forward_not_common<decltype(cyForwardSent)>);
     }
     {
         auto cyForwardCommon =
-            rah2::views::cycle(make_test_view<Common, std::forward_iterator_tag, false>());
+            rah2::views::cycle(make_test_view<Common, RAH2_STD::forward_iterator_tag, false>());
         STATIC_ASSERT(is_forward_not_common<decltype(cyForwardCommon)>);
     }
     { // Cycle can't be bidir if we can't assign sentinel to iterator
-        auto cyBidirSent =
-            rah2::views::cycle(make_test_view<Sentinel, std::bidirectional_iterator_tag, false>());
+        auto cyBidirSent = rah2::views::cycle(
+            make_test_view<Sentinel, RAH2_STD::bidirectional_iterator_tag, false>());
         STATIC_ASSERT(is_forward_not_common<decltype(cyBidirSent)>);
     }
     {
         auto cyBidirCommon =
-            rah2::views::cycle(make_test_view<Common, std::bidirectional_iterator_tag, false>());
+            rah2::views::cycle(make_test_view<Common, RAH2_STD::bidirectional_iterator_tag, false>());
         STATIC_ASSERT(is_bidirectional_not_common<decltype(cyBidirCommon)>);
     }
     { // Cycle can't be bidir if we can't assign sentinel to iterator
-        auto cyRandomSent =
-            rah2::views::cycle(make_test_view<Sentinel, std::random_access_iterator_tag, true>());
+        auto cyRandomSent = rah2::views::cycle(
+            make_test_view<Sentinel, RAH2_STD::random_access_iterator_tag, true>());
         STATIC_ASSERT(is_forward_not_common<decltype(cyRandomSent)>);
     }
     {
         auto cyRandomCommon =
-            rah2::views::cycle(make_test_view<Common, std::random_access_iterator_tag, true>());
+            rah2::views::cycle(make_test_view<Common, RAH2_STD::random_access_iterator_tag, true>());
         STATIC_ASSERT(is_bidirectional_not_common<decltype(cyRandomCommon)>);
     }
     { // Cycle can't be bidir if we can't assign sentinel to iterator
@@ -733,92 +733,92 @@ try
 
     {
         /// [cycle_pipeable]
-        std::vector<int> in{0, 1, 2};
+        RAH2_STD::vector<int> in{0, 1, 2};
         auto cy = in | rah2::views::cycle;
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy_n(cy.begin(), 8, std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
         /// [cycle_pipeable]
     }
 
     {
-        std::vector<int> in{0, 1, 2};
+        RAH2_STD::vector<int> in{0, 1, 2};
         auto cy = rah2::views::cycle(in) | rah2::views::take(8);
-        std::vector<int> out;
-        // static_assert(RAH2_NS::range<decltype(std::back_inserter(out))>, "dkjh");
+        RAH2_STD::vector<int> out;
+        // static_assert(rah2::range<decltype(std::back_inserter(out))>, "dkjh");
         rah2::ranges::copy(cy, std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
     }
 
     {
-        std::vector<int> in{0, 1, 2};
+        RAH2_STD::vector<int> in{0, 1, 2};
         auto range = rah2::views::drop(in, 6);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
         assert(out.empty());
     }
 
     {
         /// [unbounded]
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::unbounded(in.begin());
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         std::copy_n(rah2::ranges::begin(range), 5, std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
         /// [unbounded]
     }
 
     {
-        std::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::unbounded(in.begin()) | rah2::views::slice(0, 5);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         rah2::ranges::copy(range, std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
     }
 
     {
         int in[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::unbounded(static_cast<int const* const>(std::begin(in)))
                      | rah2::views::slice(0, 5);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         rah2::ranges::copy(range, std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
     }
 
     {
         /// [counted_pipeable]
-        std::vector<int> in{0, 1, 2, 3, 4, 5};
+        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
         auto range = in | rah2::views::take(9);
-        std::vector<int> out;
+        RAH2_STD::vector<int> out;
         auto a = rah2::ranges::begin(range);
         auto b = rah2::ranges::end(range);
         auto volatile dist = std::distance(a, b);
         (void)dist;
         std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
-        assert(out == std::vector<int>({0, 1, 2, 3, 4, 5}));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [counted_pipeable]
     }
 
     {
         /// [slice]
-        std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::slice(vec, 2, 6))
             result.push_back(i);
-        assert(result == std::vector<int>({2, 3, 4, 5}));
-        std::vector<int> result2;
+        assert(result == RAH2_STD::vector<int>({2, 3, 4, 5}));
+        RAH2_STD::vector<int> result2;
         for (int i : rah2::views::slice(vec, 2, 6))
             result2.push_back(i);
-        assert(result2 == std::vector<int>({2, 3, 4, 5}));
+        assert(result2 == RAH2_STD::vector<int>({2, 3, 4, 5}));
         /// [slice]
     }
     {
         /// [slice_pipeable]
-        std::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        RAH2_STD::vector<int> result;
         for (int i : vec | rah2::views::slice(2, 6))
             result.push_back(i);
-        assert(result == std::vector<int>({2, 3, 4, 5}));
+        assert(result == RAH2_STD::vector<int>({2, 3, 4, 5}));
         /// [slice_pipeable]
     }
 
@@ -826,27 +826,27 @@ try
         // Pass a rvalue container to a views is possible thought a owning_view
         auto getVec = []
         {
-            return std::vector<int>{0, 1, 2, 3};
+            return RAH2_STD::vector<int>{0, 1, 2, 3};
         };
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::reverse(getVec()))
             result.push_back(i);
-        assert(result == std::vector<int>({3, 2, 1, 0}));
+        assert(result == RAH2_STD::vector<int>({3, 2, 1, 0}));
     }
 
     {
         auto range = rah2::views::generate_n(5, []() { return rand(); })
                      | rah2::views::filter([](auto&& val) { return val % 2 == 0; });
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int i : range | rah2::views::common)
             result.push_back(i);
     }
     {
-        std::vector<int> vec_01234{0, 1, 2, 3, 4};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec_01234{0, 1, 2, 3, 4};
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::filter(vec_01234, &is_odd))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4}));
     }
     {
         enum class Tutu
@@ -857,51 +857,51 @@ try
             d,
             e
         };
-        std::vector<Tutu> vec_01234{Tutu::a, Tutu::b, Tutu::c, Tutu::d, Tutu::e};
-        std::vector<Tutu> result;
+        RAH2_STD::vector<Tutu> vec_01234{Tutu::a, Tutu::b, Tutu::c, Tutu::d, Tutu::e};
+        RAH2_STD::vector<Tutu> result;
         for (Tutu i : rah2::views::filter(vec_01234, [](Tutu a) { return a != Tutu::c; }))
             result.push_back(i);
-        assert(result == std::vector<Tutu>({Tutu::a, Tutu::b, Tutu::d, Tutu::e}));
+        assert(result == RAH2_STD::vector<Tutu>({Tutu::a, Tutu::b, Tutu::d, Tutu::e}));
     }
 
     {
         int vec_01234[] = {0, 1, 2, 3, 4};
-        std::vector<int> result;
+        RAH2_STD::vector<int> result;
         for (int i : rah2::views::filter(vec_01234, [](auto a) { return a % 2 == 0; }))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4}));
     }
     {
-        std::vector<std::vector<int>> vec_01234 = {
+        RAH2_STD::vector<RAH2_STD::vector<int>> vec_01234 = {
             {0},
             {1},
             {2},
             {3},
             {4},
         };
-        std::vector<bool> vec_bool = {
+        RAH2_STD::vector<bool> vec_bool = {
             true,
             true,
             true,
             true,
             true,
         };
-        std::vector<std::vector<int>> result;
+        RAH2_STD::vector<RAH2_STD::vector<int>> result;
         for (auto&& i :
              rah2::views::zip(vec_01234, vec_bool)
-                 | rah2::views::filter([](auto&& a) { return std::get<0>(a).front() % 2 == 0; })
+                 | rah2::views::filter([](auto&& a) { return RAH2_STD::get<0>(a).front() % 2 == 0; })
                  | rah2::views::common)
-            result.push_back(std::get<0>(i));
-        assert(result == (std::vector<std::vector<int>>{{0}, {2}, {4}}));
-        assert(vec_01234 == (std::vector<std::vector<int>>{{0}, {1}, {2}, {3}, {4}}));
+            result.push_back(RAH2_STD::get<0>(i));
+        assert(result == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0}, {2}, {4}}));
+        assert(vec_01234 == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0}, {1}, {2}, {3}, {4}}));
     }
     {
         /// [filter_pipeable]
-        std::vector<int> vec_01234{0, 1, 2, 3, 4};
-        std::vector<int> result;
+        RAH2_STD::vector<int> vec_01234{0, 1, 2, 3, 4};
+        RAH2_STD::vector<int> result;
         for (int i : vec_01234 | rah2::views::filter([](auto a) { return a % 2 == 0; }))
             result.push_back(i);
-        assert(result == std::vector<int>({0, 2, 4}));
+        assert(result == RAH2_STD::vector<int>({0, 2, 4}));
         /// [filter_pipeable]
     }
 
@@ -930,70 +930,70 @@ try
 
     {
         /// [concat]
-        std::vector<int> inputA{0, 1, 2, 3};
-        std::vector<int> inputB{4, 5, 6};
-        std::vector<int> inputC{7, 8, 9, 10, 11};
+        RAH2_STD::vector<int> inputA{0, 1, 2, 3};
+        RAH2_STD::vector<int> inputB{4, 5, 6};
+        RAH2_STD::vector<int> inputC{7, 8, 9, 10, 11};
         {
-            std::vector<int> result;
+            RAH2_STD::vector<int> result;
             for (int i : rah2::views::concat(inputA))
                 result.push_back(i);
-            assert(result == std::vector<int>({0, 1, 2, 3}));
+            assert(result == RAH2_STD::vector<int>({0, 1, 2, 3}));
         }
         {
-            std::vector<int> result;
+            RAH2_STD::vector<int> result;
             for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common)
                 result.push_back(i);
-            assert(result == std::vector<int>({0, 1, 2, 3, 4, 5, 6}));
+            assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6}));
         }
         {
-            std::vector<int> result;
+            RAH2_STD::vector<int> result;
             for (int i : rah2::views::concat(inputA, inputB, inputC) | rah2::views::common)
                 result.push_back(i);
-            assert(result == std::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
+            assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
         }
         /// [concat]
     }
     {
-        std::vector<int> inputA{};
-        std::vector<int> inputB{1, 2, 3, 4};
+        RAH2_STD::vector<int> inputA{};
+        RAH2_STD::vector<int> inputB{1, 2, 3, 4};
         {
-            std::vector<int> result;
+            RAH2_STD::vector<int> result;
             for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common)
                 result.push_back(i);
-            assert(result == std::vector<int>({1, 2, 3, 4}));
+            assert(result == RAH2_STD::vector<int>({1, 2, 3, 4}));
         }
         {
-            std::vector<int> result;
+            RAH2_STD::vector<int> result;
             for (int i : rah2::views::concat(inputA, inputB) | rah2::views::common)
                 result.push_back(i);
-            assert(result == std::vector<int>({1, 2, 3, 4}));
+            assert(result == RAH2_STD::vector<int>({1, 2, 3, 4}));
         }
         {
-            std::vector<int> result;
+            RAH2_STD::vector<int> result;
             for (int i : rah2::views::concat(inputA, inputA) | rah2::views::common)
                 result.push_back(i);
-            assert(result == std::vector<int>({}));
+            assert(result == RAH2_STD::vector<int>({}));
         }
     }
 
     {
         /// [views::set_difference]
-        std::vector<int> in1 = {1, 2, 3, 4, 5, 6};
-        std::vector<int> in2 = {2, 4, 6, 7, 8, 9, 10};
-        std::vector<int> out;
+        RAH2_STD::vector<int> in1 = {1, 2, 3, 4, 5, 6};
+        RAH2_STD::vector<int> in2 = {2, 4, 6, 7, 8, 9, 10};
+        RAH2_STD::vector<int> out;
         for (int val : rah2::views::set_difference(in1, in2) | rah2::views::common)
             out.push_back(val);
-        assert(out == std::vector<int>({1, 3, 5}));
+        assert(out == RAH2_STD::vector<int>({1, 3, 5}));
         /// [views::set_difference]
     }
 
     {
         /// views::set_difference
-        auto test_set_difference = [](std::vector<int> const& in1,
-                                      std::vector<int> const& in2,
-                                      std::vector<int> const& expected)
+        auto test_set_difference = [](RAH2_STD::vector<int> const& in1,
+                                      RAH2_STD::vector<int> const& in2,
+                                      RAH2_STD::vector<int> const& expected)
         {
-            std::vector<int> out;
+            RAH2_STD::vector<int> out;
             for (int const val : rah2::views::set_difference(in1, in2) | rah2::views::common)
                 out.push_back(val);
             assert(out == expected);
@@ -1008,8 +1008,8 @@ try
 
         for (int x = 0; x < 100; ++x)
         {
-            std::vector<int> in1;
-            std::vector<int> in2;
+            RAH2_STD::vector<int> in1;
+            RAH2_STD::vector<int> in2;
             auto const size1 = static_cast<size_t>(rand() % 100);
             auto const size2 = static_cast<size_t>(rand() % 100);
             for (size_t i = 0; i < size1; ++i)
@@ -1018,10 +1018,10 @@ try
                 in2.push_back(rand() % 100);
             rah2::ranges::sort(in1);
             rah2::ranges::sort(in2);
-            std::vector<int> outRef;
+            RAH2_STD::vector<int> outRef;
             std::set_difference(
                 begin(in1), end(in1), begin(in2), end(in2), std::back_inserter(outRef));
-            std::vector<int> out;
+            RAH2_STD::vector<int> out;
             for (int val : in1 | rah2::views::set_difference(in2) | rah2::views::common)
                 out.push_back(val);
             assert(out == outRef);
@@ -1032,37 +1032,37 @@ try
 
     {
         /// [rah2::to_container_pipeable]
-        std::vector<std::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
-        std::map<int, char> map_4a_5b_6c_7d = in1 | rah2::ranges::to<std::map<int, char>>();
-        assert(map_4a_5b_6c_7d == (std::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
+        RAH2_STD::vector<RAH2_STD::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
+        RAH2_STD::map<int, char> map_4a_5b_6c_7d = in1 | rah2::ranges::to<RAH2_STD::map<int, char>>();
+        assert(map_4a_5b_6c_7d == (RAH2_STD::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
 
-        std::list<int> in2{4, 5, 6, 7};
-        std::vector<int> out = in2 | rah2::ranges::to<std::vector<int>>();
-        assert(out == (std::vector<int>{4, 5, 6, 7}));
+        RAH2_STD::list<int> in2{4, 5, 6, 7};
+        RAH2_STD::vector<int> out = in2 | rah2::ranges::to<RAH2_STD::vector<int>>();
+        assert(out == (RAH2_STD::vector<int>{4, 5, 6, 7}));
         /// [rah2::to_container_pipeable]
     }
     {
         /// [rah2::to]
-        std::vector<std::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
-        auto map_4a_5b_6c_7d = rah2::ranges::to<std::map<int, char>>(in1);
-        assert(map_4a_5b_6c_7d == (std::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
+        RAH2_STD::vector<RAH2_STD::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
+        auto map_4a_5b_6c_7d = rah2::ranges::to<RAH2_STD::map<int, char>>(in1);
+        assert(map_4a_5b_6c_7d == (RAH2_STD::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
 
-        std::list<int> in2{4, 5, 6, 7};
-        auto out = rah2::ranges::to<std::vector<int>>(in2);
-        assert(out == (std::vector<int>{4, 5, 6, 7}));
+        RAH2_STD::list<int> in2{4, 5, 6, 7};
+        auto out = rah2::ranges::to<RAH2_STD::vector<int>>(in2);
+        assert(out == (RAH2_STD::vector<int>{4, 5, 6, 7}));
         /// [rah2::to]
     }
 
     {
         /// [rah2::size]
-        std::vector<int> vec3{1, 2, 3};
+        RAH2_STD::vector<int> vec3{1, 2, 3};
         assert(rah2::ranges::size(vec3) == 3);
         /// [rah2::size]
     }
 
     /// [rah2::empty]
-    assert(not(rah2::ranges::empty(std::vector<int>{1, 2, 3})));
-    assert(rah2::ranges::empty(std::vector<int>()));
+    assert(not(rah2::ranges::empty(RAH2_STD::vector<int>{1, 2, 3})));
+    assert(rah2::ranges::empty(RAH2_STD::vector<int>()));
     /// [rah2::empty]
 
     // ********************************* test return ref and non-ref ******************************
@@ -1087,7 +1087,7 @@ try
     // Test return reference
 
     {
-        std::vector<Elt> vec = {{0}, {1}, {2}, {3}, {4}};
+        RAH2_STD::vector<Elt> vec = {{0}, {1}, {2}, {3}, {4}};
         auto& r = vec;
         for (auto iter = std::begin(r), end_iter = std::end(r); iter != end_iter; ++iter)
         {
@@ -1096,14 +1096,13 @@ try
         EQUAL_RANGE(r, (il<Elt>({{42}, {42}, {42}, {42}, {42}})));
         for (auto&& elt : r)
         {
-            static_assert(
-                RAH2_NS::is_reference_v<decltype(elt)>, "elt is expected to be a reference");
+            static_assert(rah2::is_reference_v<decltype(elt)>, "elt is expected to be a reference");
             elt.member = 78; // Check for mutability
         }
         EQUAL_RANGE(r, (il<Elt>({{78}, {78}, {78}, {78}, {78}})));
     }
     {
-        std::vector<int> vec(5);
+        RAH2_STD::vector<int> vec(5);
         for (int& i : vec | rah2::views::transform([](int& i) -> int& { return i; }))
             i = 42; // Check for mutability
         EQUAL_RANGE(vec, (il<int>({42, 42, 42, 42, 42})));
@@ -1111,11 +1110,11 @@ try
 
     // Test return non-reference
     {
-        std::vector<int> constVect{0, 1, 2, 3};
+        RAH2_STD::vector<int> constVect{0, 1, 2, 3};
         EQUAL_RANGE(
             constVect | rah2::views::transform([](auto a) { return a * 2; }), il<int>({0, 2, 4, 6}));
 
-        std::vector<Elt> vec = {{1}};
+        RAH2_STD::vector<Elt> vec = {{1}};
         auto r_copy = vec | rah2::views::transform([](auto a) { return Elt{a.member + 1}; });
         for (auto iter = rah2::ranges::begin(r_copy), end_iter = rah2::ranges::end(r_copy);
              iter != end_iter;
@@ -1125,16 +1124,16 @@ try
             // assert(iter->member == 2); // Check for mutability
             // assert((*iter).member == 2); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(*iter)>
-                    || (not RAH2_NS::is_reference_v<decltype(*iter)>),
+                rah2::is_rvalue_reference_v<decltype(*iter)>
+                    || (not rah2::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_copy)
         {
             assert(elt.member == 2); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(elt)>
-                    || (not RAH2_NS::is_reference_v<decltype(elt)>),
+                rah2::is_rvalue_reference_v<decltype(elt)>
+                    || (not rah2::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
         auto r_ref = vec | rah2::views::transform([](auto a) { return a.member; });
@@ -1144,16 +1143,16 @@ try
         {
             assert(*iter == 1); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(*iter)>
-                    || (not RAH2_NS::is_reference_v<decltype(*iter)>),
+                rah2::is_rvalue_reference_v<decltype(*iter)>
+                    || (not rah2::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_ref)
         {
             assert(elt == 1); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(elt)>
-                    || (not RAH2_NS::is_reference_v<decltype(elt)>),
+                rah2::is_rvalue_reference_v<decltype(elt)>
+                    || (not rah2::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
     }
@@ -1169,7 +1168,7 @@ try
 
         EQUAL_RANGE(
             globalRange,
-            (il<std::tuple<size_t, size_t>>{
+            (il<RAH2_STD::tuple<size_t, size_t>>{
                 {0lu, 0lu},
                 {0lu, 1lu},
                 {0lu, 2lu},
@@ -1186,22 +1185,22 @@ try
 
     EQUAL_RANGE(
         (rah2::views::iota(0, 3) | rah2::views::transform([](auto i) { return i * 2; }) | enumerate),
-        (il<std::pair<intptr_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
+        (il<RAH2_STD::pair<intptr_t, int>>{{0, 0}, {1, 2}, {2, 4}}));
 
-    std::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
+    RAH2_STD::vector<char> vec_abcd{'a', 'b', 'c', 'd'};
     EQUAL_RANGE(
         (vec_abcd | rah2::views::transform([](char i) { return static_cast<char>(i + 1); })
          | enumerate),
-        (il<std::pair<intptr_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
+        (il<RAH2_STD::pair<intptr_t, char>>{{0, 'b'}, {1, 'c'}, {2, 'd'}, {3, 'e'}}));
 
     // TODO : Make Zip bidirectional when possible
     //EQUAL_RANGE(
     //    (iota(0, 3000, 3) | transform([](auto i) { return i * 2; }) | enumerate | slice(10, 13)),
-    //    (il<std::pair<size_t, int>>{ { 10, 60 }, { 11, 66 }, { 12, 72 } }));
+    //    (il<RAH2_STD::pair<size_t, int>>{ { 10, 60 }, { 11, 66 }, { 12, 72 } }));
 
     EQUAL_RANGE(
         (zip(vec_abcd, rah2::views::iota(0, 4))),
-        (il<std::tuple<char, int>>{{'a', 0}, {'b', 1}, {'c', 2}, {'d', 3}}));
+        (il<RAH2_STD::tuple<char, int>>{{'a', 0}, {'b', 1}, {'c', 2}, {'d', 3}}));
 
     EQUAL_RANGE(
         (rah2::views::iota(0, 100) | slice(0, 20) | stride(3)), (il<int>{0, 3, 6, 9, 12, 15, 18}));
@@ -1214,27 +1213,27 @@ try
 
     //EQUAL_RANGE(
     //    (iota(10, 15) | enumerate | reverse),
-    //    (il<std::tuple<size_t, int>>{ { 4, 14 }, { 3, 13 }, { 2, 12 }, { 1, 11 }, { 0, 10 } }));
+    //    (il<RAH2_STD::tuple<size_t, int>>{ { 4, 14 }, { 3, 13 }, { 2, 12 }, { 1, 11 }, { 0, 10 } }));
 
     //EQUAL_RANGE(
     //    (iota(0, 100) | enumerate | slice(10, 15)),
-    //    (il<std::tuple<size_t, int>>{ { 10, 10 }, { 11, 11 }, { 12, 12 }, { 13, 13 }, { 14, 14 } }));
+    //    (il<RAH2_STD::tuple<size_t, int>>{ { 10, 10 }, { 11, 11 }, { 12, 12 }, { 13, 13 }, { 14, 14 } }));
 
     //EQUAL_RANGE(
     //    (iota(0, 100) | enumerate | slice(10, 15) | reverse),
-    //    (il<std::tuple<size_t, int>>{ { 14, 14 }, { 13, 13 }, { 12, 12 }, { 11, 11 }, { 10, 10 } }));
+    //    (il<RAH2_STD::tuple<size_t, int>>{ { 14, 14 }, { 13, 13 }, { 12, 12 }, { 11, 11 }, { 10, 10 } }));
 
-    // iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | rah2::to<std::vector<int>>();
+    // iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | rah2::to<RAH2_STD::vector<int>>();
 
     rah2::views::iota(0, 10) | filter([](int i) { return i % 2 == 0; }) | slice(1, 9)
-        | rah2::ranges::to<std::vector<int>>();
+        | rah2::ranges::to<RAH2_STD::vector<int>>();
 
     {
         // Test creation of a custom iterator
         auto gen = customGenerate();
-        std::vector<int> gen_copy;
+        RAH2_STD::vector<int> gen_copy;
         std::copy(rah2::ranges::begin(gen), rah2::ranges::end(gen), std::back_inserter(gen_copy));
-        EQUAL_RANGE(gen_copy, std::vector<int>({1, 2, 4, 8}));
+        EQUAL_RANGE(gen_copy, RAH2_STD::vector<int>({1, 2, 4, 8}));
     }
 
     {
@@ -1251,19 +1250,19 @@ try
         auto getRangeX = [=](int y)
         {
             if (y == startY)
-                return std::make_tuple(y, rah2::views::iota(startX, width));
+                return RAH2_STD::make_tuple(y, rah2::views::iota(startX, width));
             else if (y == endY)
-                return std::make_tuple(y, rah2::views::iota(0, endX));
+                return RAH2_STD::make_tuple(y, rah2::views::iota(0, endX));
             else
-                return std::make_tuple(y, rah2::views::iota(0, width));
+                return RAH2_STD::make_tuple(y, rah2::views::iota(0, width));
         };
 
-        std::vector<std::atomic<int>> test_(static_cast<int>(width * height));
+        RAH2_STD::vector<std::atomic<int>> test_(static_cast<int>(width * height));
 
         auto updateRaw = [&](auto&& y_xRange)
         {
-            auto y = std::get<0>(y_xRange);
-            auto xRange = std::get<1>(y_xRange);
+            auto y = RAH2_STD::get<0>(y_xRange);
+            auto xRange = RAH2_STD::get<1>(y_xRange);
 
             for (auto x : xRange)
                 ++test_[x + y * width];
