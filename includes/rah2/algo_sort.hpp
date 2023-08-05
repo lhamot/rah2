@@ -156,13 +156,15 @@ namespace RAH2_NS
             // be overhead from calling memmove with a zero size copy.
             if (first1 == last1)
             {
-                auto ret = RAH2_NS::ranges::copy(first2, last2, result);
-                return {first1, ret.in, ret.out};
+                auto ret = RAH2_NS::ranges::copy(
+                    RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(result));
+                return {RAH2_STD::move(first1), RAH2_STD::move(ret.in), RAH2_STD::move(ret.out)};
             }
             else
             {
-                auto ret = RAH2_NS::ranges::copy(first1, last1, result);
-                return {ret.in, first2, ret.out};
+                auto ret = RAH2_NS::ranges::copy(
+                    RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
+                return {RAH2_STD::move(ret.in), RAH2_STD::move(first2), RAH2_STD::move(ret.out)};
             }
         }
 
