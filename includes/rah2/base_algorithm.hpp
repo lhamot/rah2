@@ -261,7 +261,7 @@ namespace RAH2_NS
             return first;
         }
 
-        template <typename ForwardRange, typename Compare, std::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+        template <typename ForwardRange, typename Compare, RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
         auto min_element(ForwardRange&& range, Compare compare)
         {
             return RAH2_NS::ranges::min_element(
@@ -1452,7 +1452,7 @@ namespace RAH2_NS
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
                 typename Comp = RAH2_NS::less,
-                std::enable_if_t<
+                RAH2_STD::enable_if_t<
                     input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
             constexpr bool operator()(
@@ -1551,7 +1551,7 @@ namespace RAH2_NS
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
                 typename Comp = RAH2_NS::less,
-                std::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
+                RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
             constexpr bool
             operator()(R1&& r1, R2&& r2, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
             {
@@ -1595,7 +1595,7 @@ namespace RAH2_NS
                 class Pred = RAH2_NS::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
-                std::enable_if_t<
+                RAH2_STD::enable_if_t<
                     input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
             constexpr mismatch_result<I1, I2> operator()(
@@ -1620,7 +1620,7 @@ namespace RAH2_NS
                 class Pred = RAH2_NS::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
-                std::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
+                RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
             constexpr mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
             {

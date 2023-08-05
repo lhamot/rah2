@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <functional>
 
 #ifdef RAH2_USE_EASTL
 #include <EASTL/map.h>
@@ -15,7 +16,6 @@
 #include <vector>
 #include <string>
 #endif
-
 
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 

@@ -482,7 +482,7 @@ namespace RAH2_NS
                 class Pred = RAH2_NS::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
-                std::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
+                RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
             // requires RAH2_STD::indirectly_comparable<ranges::iterator_t<R1>, ranges::iterator_t<R2>, Pred, Proj1, Proj2>
             constexpr bool
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -1259,7 +1259,7 @@ namespace RAH2_NS
                 return {*result.min, *result.max};
             }
 
-            template <typename R, typename Comp = RAH2_NS::less, std::enable_if_t<forward_range<R>>* = nullptr>
+            template <typename R, typename Comp = RAH2_NS::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             // requires RAH2_STD::indirectly_copyable_storable<ranges::iterator_t<R>, ranges::range_value_t<R>*>
             constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
             operator()(R&& r, Comp comp = {}) const
