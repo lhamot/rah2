@@ -13,7 +13,8 @@ jobs:
         BUILD_TYPE: [Debug, Release]
         cppstd: [14, 20]
         compiler: [ 
-            {os: windows-latest, cpp: msvc, c: msvc },
+            # {os: windows-latest, cpp: msvc, c: msvc },
+            {os: ubuntu-latest, cpp: clang++, c: clang},
         ]
         
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -41,7 +42,7 @@ jobs:
       working-directory: ${{github.workspace}}
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}} -D RAH2_USE_EASTL=1 -DEASTL_DIR="${{github.workspace}}/eastl"
 
-    - name: Build RAH2¨
+    - name: Build RAH2
       working-directory: ${{github.workspace}}
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
