@@ -10,8 +10,17 @@
 
 #include <istream>
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/tuple.h>
+#include <EASTL/utility.h>
+
+#else
+
 #include <tuple>
 #include <utility>
+
+#endif
 
 #ifdef _MSC_VER
 #define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
@@ -208,7 +217,7 @@ namespace RAH2_NS
             //{
             //    return !(RAH2_SELF_CONST == rho);
             //}
-            template <typename Ref = reference, std::enable_if_t<RAH2_NS::is_reference_v<Ref>>* = nullptr>
+            template <typename Ref = reference, RAH2_STD::enable_if_t<RAH2_NS::is_reference_v<Ref>>* = nullptr>
             pointer operator->()
             {
                 return &(*RAH2_SELF);
@@ -2107,7 +2116,7 @@ namespace RAH2_NS
             using inner_sentinel = sentinel_t<R>;
             using base_cat = range_iter_categ_t<R>;
             using reference =
-                typename std::tuple_element<N, RAH2_STD::remove_reference_t<range_reference_t<R>>>::type;
+                typename RAH2_STD::tuple_element<N, RAH2_STD::remove_reference_t<range_reference_t<R>>>::type;
 
         public:
             using difference_type = range_difference_t<R>;
@@ -2929,7 +2938,7 @@ namespace RAH2_NS
             public:
                 iterator() = default;
                 iterator(zip_transform_view* parent, IterTuple iterators)
-                    : iters_(std::move(iterators))
+                    : iters_(RAH2_STD::move(iterators))
                     , parent_(parent)
                 {
                 }

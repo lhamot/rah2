@@ -4,6 +4,12 @@
 #include "base_algorithm.hpp"
 #include "algo_heap.hpp"
 
+#ifdef RAH2_USE_EASTL
+#include <EASTL/memory.h> // uninitialized_fill
+#else
+#include <memory> // uninitialized_fill
+#endif
+
 namespace RAH2_NS
 {
     namespace ranges

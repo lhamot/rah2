@@ -9,6 +9,17 @@
 #include <forward_list>
 #include <cstring>
 
+#ifdef RAH2_USE_EASTL
+#include <EASTL/vector.h>
+#include <EASTL/array.h>
+#include <EASTL/list.h>
+#include <EASTL/algorithm.h>
+#include <EASTL/sort.h>
+#include <EASTL/numeric.h>
+#include <EASTL/set.h>
+#include <EASTL/initializer_list.h>
+
+#else
 #include <array>
 #include <list>
 #include <algorithm>
@@ -16,7 +27,7 @@
 #include <forward_list>
 #include <set>
 #include <cstring>
-#include <random>
+#endif
 
 #if RAH2_CPP20
 #include <ranges>

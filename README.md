@@ -61,16 +61,17 @@ rah2 is licensed under the [Boost Software License](http://www.boost.org/LICENSE
 🚧 Documentation is Work In Progress 🚧
 ## Supported Compilers
 - On Windows
-    - Visual Studio 2019 && 2022 (stdcpp14, stdcpp17 and stdcpp17)
+    - Visual Studio 2019 && 2022 (/std:c++14, /std:c++17 and /std:c++20)
     - clang++ 13 (-std=c++14, -std=c++17 and -std=c++20)
-    - g++ 13 (-std=c++17 and -std=c++20)
+    - g++ 13 (-std=c++14, -std=c++17 and -std=c++20)
 - On Ubuntu
-    - clang++ 14 (-std=c++17 and -std=c++20)
-    - g++ 11 (-std=c++17 and -std=c++20)
+    - clang++ 14 (-std=c++14, -std=c++17 and -std=c++20)
+    - g++ 11 (-std=c++14, -std=c++17 and -std=c++20)
 - On macos
-    - clang++ 14 (-std=c++17 and -std=c++20)
+    - clang++ 14 (-std=c++14, -std=c++17 and -std=c++20)
 ## Continuous integration
-- ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
+- Using `std` ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
+- Using `eastl` ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake_eastl.yml/badge.svg)
 ## How to use?
 - Add **rah2/includes** in your include path
     - Include **rah2/ranges.hpp** to get the views

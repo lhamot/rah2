@@ -5,9 +5,19 @@
 #include <initializer_list>
 #include <cassert>
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/type_traits.h>
+#include <EASTL/iterator.h>
+#include <EASTL/utility.h>
+
+#else
+
 #include <type_traits>
 #include <iterator>
 #include <utility>
+
+#endif
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
@@ -411,7 +421,7 @@ namespace RAH2_NS
     namespace details
     {
         template <typename I>
-        using iterator_category = std::conditional_t<
+        using iterator_category = RAH2_STD::conditional_t<
             RAH2_NS::is_pointer_v<I>,
             RAH2_NS::contiguous_iterator_tag,
             typename RAH2_STD::iterator_traits<I>::iterator_category>;
@@ -662,10 +672,10 @@ namespace RAH2_NS
     {
         template <typename U>
         using can_pre_decr =
-            std::enable_if_t<RAH2_NS::is_same_v<decltype(--RAH2_STD::declval<U&>()), U&>>;
+            RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(--RAH2_STD::declval<U&>()), U&>>;
         template <typename U>
         using can_post_decr =
-            std::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
+            RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
         template <typename U>
         using has_bidir_cat = RAH2_STD::enable_if_t<
             derived_from<details::iterator_category<U>, RAH2_STD::bidirectional_iterator_tag>>;
@@ -1013,7 +1023,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         !has_size_member<R> && !has_size_ADL<R>
                         && sized_sentinel_for<iterator_t<R>, sentinel_t<R>>>* = nullptr>
-                constexpr auto operator()(R&& range) const
+                constexpr auto operator()(R&& range) const -> decltype(end(range) - begin(range))
                 {
                     return end(range) - begin(range);
                 }
