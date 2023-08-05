@@ -18,7 +18,7 @@
 #include <EASTL/random.h>
 #include <EASTL/algorithm.h>
 
-void* __cdecl operator new[](
+void* operator new[](
     size_t size, char const* pName, int flags, unsigned debugFlags, char const* file, int line)
 {
     (void*)pName;
