@@ -14,12 +14,6 @@ namespace RAH2_NS
         /// The range between first and the iterator returned is sorted.
         /// If the entire range is sorted, the function returns last.
         /// The elements are compared using operator< for the first version, and comp for the second.
-        ///
-        /// Example usage:
-        ///     vector<int> intArray;
-        ///     vector<int>::iterator unsorted_element = is_sorted_until(eastl::end(intArray), eastl::end(intArray));
-        ///     vector<int>::iterator unsorted_element_with_user_compare = is_sorted_until(eastl::end(intArray), eastl::end(intArray), RAH2_STD::less<int>());
-        ///
         template <
             typename ForwardIterator,
             typename Sentinel,
@@ -507,7 +501,7 @@ namespace RAH2_NS
             if (nCount > 1)
             {
                 // We need to allocate an array of nCount value_type objects as a temporary buffer.
-#ifdef RAH2_EASTL
+#ifdef RAH2_USE_EASTL
                 value_type* const pBuffer = (value_type*)allocate_memory(
                     allocator, nCount * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
 #else
@@ -520,7 +514,7 @@ namespace RAH2_NS
                     first, last, pBuffer, compare);
 
                 RAH2_NS::ranges::destroy(pBuffer, pBuffer + nCount);
-#ifdef RAH2_EASTL
+#ifdef RAH2_USE_EASTL
                 EASTLFree(allocator, pBuffer, nCount * sizeof(value_type));
 #else
                 allocator.deallocate(pBuffer, static_cast<size_t>(nCount));
@@ -534,7 +528,7 @@ namespace RAH2_NS
             using Less =
                 RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
 
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Allocator, Less>(
+            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, Allocator, Less>(
                 first, last, allocator, Less());
         }
 
@@ -604,8 +598,14 @@ namespace RAH2_NS
 
             auto const requested_size = RAH2_NS::ranges::distance(first, last);
 
+#ifdef RAH2_USE_EASTL
+            auto allocator = *RAH2_STD::get_default_allocator(0);
+            value_type* const buffer = (value_type*)allocate_memory(
+                allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
+#else
             auto allocator = RAH2_STD::allocator<value_type>();
             value_type* const buffer = allocator.allocate(static_cast<size_t>(requested_size));
+#endif
             RAH2_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
 
             ForwardIterator result1 = first;
@@ -631,7 +631,11 @@ namespace RAH2_NS
             RAH2_NS::ranges::copy(buffer, result2, result1);
 
             RAH2_NS::ranges::destroy(buffer, buffer + requested_size);
+#ifdef RAH2_USE_EASTL
+            EASTLFree(allocator, buffer, requested_size * sizeof(value_type));
+#else
             allocator.deallocate(buffer, requested_size * sizeof(value_type));
+#endif
 
             return {result1, last};
         }
@@ -1026,7 +1030,7 @@ namespace RAH2_NS
                 while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
                 {
                     RandomAccessIterator const position(
-                        RAH2_NS::ranges::get_partition<RandomAccessIterator, value_type, Compare>(
+                        RAH2_NS::ranges::get_partition<RandomAccessIterator, Sentinel, value_type, Compare>(
                             first,
                             last,
                             RAH2_STD::forward<PivotValueType>(
@@ -1038,13 +1042,13 @@ namespace RAH2_NS
                             compare));
 
                     RAH2_NS::ranges::Internal::
-                        quick_sort_impl_helper<RandomAccessIterator, Size, Compare, PivotValueType>(
+                        quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, PivotValueType>(
                             position, last, --kRecursionCount, compare);
                     last = position;
                 }
 
                 if (kRecursionCount == 0)
-                    RAH2_NS::ranges::partial_sort<RandomAccessIterator, Compare>(
+                    RAH2_NS::ranges::partial_sort<RandomAccessIterator, Sentinel, Compare>(
                         first, last, last, compare);
             }
 
@@ -1098,7 +1102,7 @@ namespace RAH2_NS
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
                 // copy constructors require const value_type
-                quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type const>(
+                quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, value_type const>(
                     first, last, kRecursionCount, compare);
             }
 
@@ -1174,18 +1178,19 @@ namespace RAH2_NS
 
             if (first != last)
             {
-                RAH2_NS::ranges::Internal::quick_sort_impl<RandomAccessIterator, difference_type, Compare>(
-                    first, last, 2 * Internal::Log2(last - first), compare);
+                RAH2_NS::ranges::Internal::
+                    quick_sort_impl<RandomAccessIterator, Sentinel, difference_type, Compare>(
+                        first, last, 2 * Internal::Log2(last - first), compare);
 
                 if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
                 {
-                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, Compare>(
+                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, RandomAccessIterator, Compare>(
                         first, first + kQuickSortLimit, compare);
-                    RAH2_NS::ranges::Internal::insertion_sort_simple<RandomAccessIterator, Compare>(
+                    RAH2_NS::ranges::Internal::insertion_sort_simple<RandomAccessIterator, Sentinel, Compare>(
                         first + kQuickSortLimit, last, compare);
                 }
                 else
-                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, Compare>(
+                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, Sentinel, Compare>(
                         first, last, compare);
             }
         }
@@ -1213,7 +1218,8 @@ namespace RAH2_NS
         template <typename RandomAccessIterator, typename Sentinel, typename Compare>
         void sort(RandomAccessIterator first, Sentinel last, Compare compare)
         {
-            RAH2_NS::ranges::quick_sort<RandomAccessIterator, Compare>(first, last, compare);
+            RAH2_NS::ranges::quick_sort<RandomAccessIterator, Sentinel, Compare>(
+                first, last, compare);
         }
 
         template <
@@ -1235,9 +1241,9 @@ namespace RAH2_NS
         template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
         void stable_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
         {
-#ifdef RAH2_EASTL
-            RAH2_NS::merge_sort<RandomAccessIterator, RAHAllocatorType, StrictWeakOrdering>(
-                first, last, *get_default_allocator(0), compare);
+#ifdef RAH2_USE_EASTL
+            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
+                first, last, *RAH2_STD::get_default_allocator(0), compare);
 #else
             using Allocator =
                 RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
@@ -1265,9 +1271,9 @@ namespace RAH2_NS
                 && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
         void stable_sort(RandomAccessIterator first, Sentinel last)
         {
-#ifdef RAH2_EASTL
-            RAH2_NS::merge_sort<RandomAccessIterator, EASTLAllocatorType>(
-                first, last, *get_default_allocator(0));
+#ifdef RAH2_USE_EASTL
+            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+                first, last, *RAH2_STD::get_default_allocator(0));
 #else
             using Allocator =
                 RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;

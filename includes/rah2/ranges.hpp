@@ -8,6 +8,8 @@
 
 #include "range_bases.hpp"
 
+#include <istream>
+
 #include <tuple>
 #include <utility>
 
@@ -367,7 +369,7 @@ namespace RAH2_NS
         {
             iter_ += off;
             count_ -= off;
-            return this;
+            return *this;
         }
         template <typename U = I, RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<U>>* = nullptr>
         counted_iterator& operator--()
@@ -576,19 +578,19 @@ namespace RAH2_NS
         } // namespace views
         // ******************************* istream_view ******************************************************
 
-        template <typename Val, class CharT, class Traits = RAH2_STD::char_traits<CharT>>
+        template <typename Val, class CharT, class Traits = std::char_traits<CharT>>
         class basic_istream_view : view_interface<basic_istream_view<Val, CharT, Traits>>
         {
-            RAH2_STD::istream* stream_ = nullptr;
+            std::istream* stream_ = nullptr;
             Val value_;
 
         public:
-            explicit basic_istream_view(RAH2_STD::istream* stream)
+            explicit basic_istream_view(std::istream* stream)
                 : stream_(stream)
             {
             }
 
-            RAH2_STD::istream* stream() const
+            std::istream* stream() const
             {
                 return stream_;
             }
@@ -910,7 +912,7 @@ namespace RAH2_NS
             }
 
             template <typename V>
-            auto operator()(RAH2_STD::initializer_list<V>& range) const
+            auto operator()(std::initializer_list<V>& range) const
             {
                 return views::ref(range);
             }
@@ -2072,6 +2074,10 @@ namespace RAH2_NS
         constexpr bool enable_borrowed_range<reverse_view<T>> =
             RAH2_NS::ranges::enable_borrowed_range<T>;
 
+        template <class T>
+        constexpr bool disable_sized_range<reverse_view<T>> =
+            not(RAH2_NS::ranges::sized_range<T> || RAH2_NS::random_access_iterator<iterator_t<T>>);
+
         namespace views
         {
             struct reverse_raco : closure_object_facade<reverse_raco>
@@ -2470,29 +2476,56 @@ namespace RAH2_NS
             }
 
             template <typename... Args, size_t... Is>
-            auto deref_impl(RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
+            auto zip_range_reference_impl(
+                RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::reference...>(
                     (*RAH2_STD::get<Is>(t))...);
             }
 
             template <typename... Args>
-            auto deref(RAH2_STD::tuple<Args...> const& t)
+            auto zip_range_reference(RAH2_STD::tuple<Args...> const& t)
             {
-                return deref_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
+                return zip_range_reference_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename... Args, size_t... Is>
-            auto deref_impl(RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
+            auto zip_range_reference_impl(RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::reference...>(
                     (*RAH2_STD::get<Is>(t))...);
             }
 
             template <typename... Args>
-            auto deref(RAH2_STD::tuple<Args...>& t)
+            auto zip_range_reference(RAH2_STD::tuple<Args...>& t)
             {
-                return deref_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
+                return zip_range_reference_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
+            }
+
+            template <typename... Args, size_t... Is>
+            auto zip_range_value_impl(RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
+            {
+                return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::value_type...>(
+                    (*RAH2_STD::get<Is>(t))...);
+            }
+
+            template <typename... Args>
+            auto zip_range_value(RAH2_STD::tuple<Args...> const& t)
+            {
+                return zip_range_value_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
+            }
+
+            template <typename... Args, size_t... Is>
+            auto zip_range_value_impl(RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
+            {
+                return RAH2_STD::tuple<typename RAH2_STD::iterator_traits<Args>::value_type...>(
+                    (*RAH2_STD::get<Is>(t))...);
+            }
+
+            template <typename... Args>
+            auto zip_range_value(RAH2_STD::tuple<Args...>& t)
+            {
+                return zip_range_value_impl(t, RAH2_STD::make_index_sequence<sizeof...(Args)>{});
             }
 
             template <typename F, typename... Args, size_t... Is>
@@ -2707,11 +2740,12 @@ namespace RAH2_NS
                 SentinelTuple sentinels;
             };
 
-            class iterator : public iterator_facade<
-                                 iterator,
-                                 sentinel,
-                                 decltype(details::deref(RAH2_STD::declval<IterTuple&>())),
-                                 base_cat>
+            class iterator
+                : public iterator_facade<
+                      iterator,
+                      sentinel,
+                      decltype(details::zip_range_reference(RAH2_STD::declval<IterTuple&>())),
+                      base_cat>
             {
                 IterTuple iters_;
 
@@ -2747,7 +2781,7 @@ namespace RAH2_NS
                 RAH2_POST_DECR;
                 auto operator*()
                 {
-                    return details::deref(iters_);
+                    return details::zip_range_reference(iters_);
                 }
                 template <
                     typename C = base_cat,
@@ -2880,11 +2914,12 @@ namespace RAH2_NS
                 SentinelTuple sentinels;
             };
 
-            class iterator : public iterator_facade<
-                                 iterator,
-                                 sentinel,
-                                 decltype(details::deref(RAH2_STD::declval<IterTuple&>())),
-                                 base_cat>
+            class iterator
+                : public iterator_facade<
+                      iterator,
+                      sentinel,
+                      decltype(details::zip_range_reference(RAH2_STD::declval<IterTuple&>())),
+                      base_cat>
             {
                 IterTuple iters_;
                 zip_transform_view* parent_ = nullptr;
@@ -3034,7 +3069,7 @@ namespace RAH2_NS
                 using type = base_value;
             };
 
-            template <RAH2_STD::size_t... Is>
+            template <size_t... Is>
             static auto make_tuple(RAH2_STD::index_sequence<Is...>)
             {
                 return RAH2_STD::tuple<typename GetType<Is>::type...>();
@@ -3086,7 +3121,7 @@ namespace RAH2_NS
                     typename C = iterator_category,
                     RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 RAH2_POST_DECR;
-                template <RAH2_STD::size_t... Is>
+                template <size_t... Is>
                 auto make_result(RAH2_STD::index_sequence<Is...>)
                 {
                     sliding_result[result_output_index] = *subRangeBegin_;

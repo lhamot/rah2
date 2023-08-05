@@ -760,7 +760,11 @@ namespace RAH2_NS
             O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
             {
                 using diff_t = RAH2_NS::iter_difference_t<I>;
+#ifdef RAH2_USE_EASTL
+                using distrib_t = RAH2_STD::uniform_int_distribution<uint32_t>;
+#else
                 using distrib_t = RAH2_STD::uniform_int_distribution<diff_t>;
+#endif
                 using param_t = typename distrib_t::param_type;
                 distrib_t D{};
 
@@ -1157,7 +1161,7 @@ namespace RAH2_NS
                 typename T, // RAH2_STD::copyable
                 typename Comp = RAH2_NS::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
                 >
-            constexpr T operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
+            constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
             {
                 return *RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp));
             }
@@ -1193,7 +1197,7 @@ namespace RAH2_NS
             }
 
             template <typename T, typename Comp = RAH2_NS::less>
-            constexpr T operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
+            constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
             {
                 return *RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp));
             }
@@ -1241,7 +1245,7 @@ namespace RAH2_NS
 
             template <typename T, typename Comp = RAH2_NS::less>
             constexpr RAH2_NS::ranges::minmax_result<T>
-            operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
+            operator()(std::initializer_list<T> r, Comp comp = {}) const
             {
                 auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::ref(comp));
                 return {*result.min, *result.max};
@@ -1780,7 +1784,7 @@ namespace RAH2_NS
         /// Complexity: Exactly '(last - first) - 1' swaps.
         ///
         /// Example usage:
-        ///     struct Rand{ RAH2_STD::size_t operator()(RAH2_STD::size_t n) { return (RAH2_STD::size_t)(rand() % n); } }; // Note: The C rand function is poor and slow.
+        ///     struct Rand{ size_t operator()(size_t n) { return (size_t)(rand() % n); } }; // Note: The C rand function is poor and slow.
         ///     Rand randInstance;
         ///     shuffle(pArrayBegin, pArrayEnd, randInstance);
         ///
@@ -1795,8 +1799,12 @@ namespace RAH2_NS
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
                 using unsigned_difference_type =
                     typename RAH2_STD::make_unsigned<difference_type>::type;
+#ifdef RAH2_USE_EASTL
+                using uniform_int_distribution = RAH2_STD::uniform_int_distribution<uint32_t>;
+#else
                 using uniform_int_distribution =
                     RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+#endif
                 using uniform_int_distribution_param_type =
                     typename uniform_int_distribution::param_type;
 

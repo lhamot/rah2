@@ -451,7 +451,7 @@ namespace RAH2_NS
         template <typename T>
         T const& median(T const& a, T const& b, T const& c)
         {
-            return median_impl(a, b, c);
+            return RAH2_NS::ranges::median_impl(a, b, c);
         }
 
         /// median
@@ -2385,7 +2385,7 @@ namespace RAH2_NS
         BidirectionalIterator reverse(BidirectionalIterator first, Sentinel last)
         {
             using IC = typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category;
-            return reverse_impl(first, last, IC());
+            return RAH2_NS::ranges::reverse_impl(first, last, IC());
         }
 
         template <typename BidirectionalRange>

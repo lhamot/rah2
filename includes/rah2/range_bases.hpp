@@ -88,7 +88,7 @@ namespace RAH2_NS
     constexpr bool is_nothrow_destructible_v = RAH2_STD::is_nothrow_destructible<T>::value;
 
     template <class T>
-    constexpr RAH2_STD::size_t alignment_of_v = RAH2_STD::alignment_of<T>::value;
+    constexpr size_t alignment_of_v = RAH2_STD::alignment_of<T>::value;
 
     template <class T>
     constexpr bool is_reference_v = RAH2_STD::is_reference<T>::value;
@@ -127,7 +127,7 @@ namespace RAH2_NS
         static constexpr bool value = false;
     };
     template <typename T>
-    struct is_initializer_list_impl<RAH2_STD::initializer_list<T>>
+    struct is_initializer_list_impl<std::initializer_list<T>>
     {
         static constexpr bool value = true;
     };
@@ -150,13 +150,13 @@ namespace RAH2_NS
     template <class T>
     constexpr in_place_type_t<T> in_place_type{};
 
-    template <RAH2_STD::size_t I>
+    template <size_t I>
     struct in_place_index_t
     {
         explicit in_place_index_t() = default;
     };
 
-    template <RAH2_STD::size_t I>
+    template <size_t I>
     constexpr in_place_index_t<I> in_place_index{};
 
     // ****************************** <utility> functions *****************************************
@@ -284,8 +284,9 @@ namespace RAH2_NS
     template <typename T>
     constexpr bool default_initializable = default_initializable_impl<T>::value;
 
-    template <class T>
-    constexpr bool semiregular = RAH2_NS::copyable<T> && RAH2_NS::default_initializable<T>;
+    template <class T, bool Diagnostic = false>
+    constexpr bool semiregular = is_true_v<Diagnostic, RAH2_NS::copyable<T>>
+                                 && RAH2_NS::default_initializable_impl<T, Diagnostic>::value;
 
     namespace details
     {
@@ -298,16 +299,16 @@ namespace RAH2_NS
 
             constexpr static bool value = compiles<Diagnostic, T, check>;
         };
-        template <class T, class U>
+        template <class T, class U, bool Diagnostic = false>
         constexpr static bool weakly_equality_comparable_with =
-            weakly_equality_comparable_with_impl<T, U>::value;
+            weakly_equality_comparable_with_impl<T, U, Diagnostic>::value;
     } // namespace details
 
-    template <class T>
-    constexpr bool equality_comparable = details::weakly_equality_comparable_with<T, T>;
+    template <class T, bool Diagnostic = false>
+    constexpr bool equality_comparable = details::weakly_equality_comparable_with<T, T, Diagnostic>;
 
-    template <class T>
-    constexpr bool regular = semiregular<T> && equality_comparable<T>;
+    template <class T, bool Diagnostic = false>
+    constexpr bool regular = semiregular<T, Diagnostic> && equality_comparable<T, Diagnostic>;
 
     template <class T>
     constexpr bool destructible = RAH2_NS::is_nothrow_destructible_v<T>;
@@ -363,7 +364,7 @@ namespace RAH2_NS
     using RAH2_STD::input_iterator_tag;
     using RAH2_STD::output_iterator_tag;
     using RAH2_STD::random_access_iterator_tag;
-#if RAH2_CPP20
+#if RAH2_CPP20 or defined(EASTL_VERSION)
     using RAH2_STD::contiguous_iterator_tag;
 #else
     struct contiguous_iterator_tag : RAH2_STD::random_access_iterator_tag
@@ -550,7 +551,7 @@ namespace RAH2_NS
         using check_incr =
             RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()++), U>>;
 
-        static constexpr bool value = is_true_v<Diagnostic, regular<I>>
+        static constexpr bool value = regular<I, Diagnostic>
                                       && weakly_incrementable_impl<I, Diagnostic>::value
                                       && compiles<Diagnostic, I, check_incr>;
     };
@@ -1121,7 +1122,7 @@ namespace RAH2_NS
         {
             template <typename T2>
             using has_ranges_size =
-                decltype(size(RAH2_STD::declval<RAH2_STD::remove_reference_t<T2>>()));
+                decltype(RAH2_NS::ranges::size(RAH2_STD::declval<RAH2_STD::remove_reference_t<T2>>()));
 
             constexpr static bool value = range_impl<T, Diagnostic>::value
                                           && compiles<Diagnostic, T, has_ranges_size>
@@ -1158,7 +1159,8 @@ namespace RAH2_NS
         struct input_range_impl
         {
             template <typename U>
-            using is_input = RAH2_STD::enable_if_t<input_iterator<iterator_t<U>>>;
+            using is_input =
+                RAH2_STD::enable_if_t<input_iterator_impl<iterator_t<U>, Diagnostic>::value>;
 
             static constexpr bool value =
                 range_impl<T, Diagnostic>::value && compiles<Diagnostic, T, is_input>;
@@ -1171,7 +1173,8 @@ namespace RAH2_NS
         struct forward_range_impl
         {
             template <typename U>
-            using forward_iterator = RAH2_STD::enable_if_t<forward_iterator<iterator_t<U>>>;
+            using forward_iterator =
+                RAH2_STD::enable_if_t<forward_iterator_impl<iterator_t<U>, Diagnostic>::value>;
 
             static constexpr bool value =
                 input_range_impl<T, Diagnostic>::value && compiles<Diagnostic, T, forward_iterator>;
