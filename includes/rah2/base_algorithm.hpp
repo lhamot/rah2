@@ -667,7 +667,7 @@ namespace RAH2_NS
             constexpr RAH2_NS::ranges::copy_n_result<I, O>
             operator()(I first, iter_difference_t<I> n, O result) const
             {
-                return RAH2_NS::ranges::copy(first, first + n, result);
+                return RAH2_NS::ranges::copy(first, first + n, RAH2_STD::move(result));
             }
         };
 
@@ -1322,7 +1322,7 @@ namespace RAH2_NS
                 RAH2_NS::ranges::end(range1),
                 RAH2_NS::ranges::begin(range2),
                 RAH2_NS::ranges::end(range2),
-                result,
+                RAH2_STD::move(result),
                 RAH2_STD::move(binaryOperation));
         }
 

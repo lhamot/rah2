@@ -3,6 +3,7 @@
 #include "test_helpers.hpp"
 
 #include <sstream>
+
 #include <array>
 #include <algorithm>
 
@@ -145,7 +146,7 @@ void test_istream_view()
 
     testSuite.test_case("concepts");
     STATIC_ASSERT((rah2::ranges::input_range<decltype(rah2::views::istream<std::string>(
-                       std::declval<std::stringstream&>()))>));
+                       RAH2_STD::declval<std::stringstream&>()))>));
 }
 
 void test_repeat_view()
@@ -154,7 +155,7 @@ void test_repeat_view()
     /// [repeat]
     RAH2_STD::vector<int> out;
     auto range = rah2::views::repeat(42);
-    std::copy_n(rah2::ranges::begin(range), 5, std::back_inserter(out));
+    RAH2_STD::copy_n(rah2::ranges::begin(range), 5, RAH2_STD::back_inserter(out));
     assert(out == RAH2_STD::vector<int>({42, 42, 42, 42, 42}));
     /// [repeat]
     STATIC_ASSERT((rah2::ranges::random_access_range_impl<decltype(range), true>::value));
@@ -266,7 +267,7 @@ void test_transform_view()
             return a * 2;
         };
         auto selectedValuesRange = rah2::views::transform(vec, valueSelector);
-        auto bounds = std::minmax_element(
+        auto bounds = RAH2_STD::minmax_element(
             rah2::ranges::begin(selectedValuesRange), rah2::ranges::end(selectedValuesRange));
         auto const min = *bounds.first;
         assert(min == 0);
@@ -309,11 +310,13 @@ void test_take_view()
         RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::take(in, 5);
         RAH2_STD::vector<int> out;
-        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
         auto range2 = rah2::views::take(in, 1000);
         RAH2_STD::vector<int> out2;
-        std::copy(rah2::ranges::begin(range2), rah2::ranges::end(range2), std::back_inserter(out2));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range2), rah2::ranges::end(range2), RAH2_STD::back_inserter(out2));
         assert(out2 == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         /// [take]
     }
@@ -323,11 +326,13 @@ void test_take_view()
         RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::take(5);
         RAH2_STD::vector<int> out;
-        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
         auto range2 = in | rah2::views::take(1000);
         RAH2_STD::vector<int> out2;
-        std::copy(rah2::ranges::begin(range2), rah2::ranges::end(range2), std::back_inserter(out2));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range2), rah2::ranges::end(range2), RAH2_STD::back_inserter(out2));
         assert(out2 == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9}));
         /// [take_pipeable]
     }
@@ -358,7 +363,8 @@ void test_drop_view()
         RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::drop(in, 6);
         RAH2_STD::vector<int> out;
-        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop]
     }
@@ -369,7 +375,8 @@ void test_drop_view()
         RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::drop(6);
         RAH2_STD::vector<int> out;
-        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop_pipeable]
     }
@@ -401,7 +408,8 @@ void test_drop_while_view()
         RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = rah2::views::drop_while(in, [](auto v) { return v < 6; });
         RAH2_STD::vector<int> out;
-        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop_while]
     }
@@ -412,7 +420,8 @@ void test_drop_while_view()
         RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         auto range = in | rah2::views::drop_while([](auto v) { return v < 6; });
         RAH2_STD::vector<int> out;
-        std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+        RAH2_STD::copy(
+            rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({6, 7, 8, 9}));
         /// [drop_while_pipeable]
     }
@@ -450,7 +459,7 @@ void test_join_view()
         };
         auto range = rah2::views::join(in);
         RAH2_STD::vector<int> result;
-        rah2::ranges::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, rah2::back_inserter(result));
         assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join]
     }
@@ -466,7 +475,7 @@ void test_join_view()
         };
         auto range = in | rah2::views::join;
         RAH2_STD::vector<int> result;
-        rah2::ranges::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, rah2::back_inserter(result));
         assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5}));
         /// [join_pipeable]
     }
@@ -478,7 +487,7 @@ void test_join_view()
                          [](auto i) { return rah2::views::repeat(1) | rah2::views::take(i); })
                      | rah2::views::join;
         RAH2_STD::vector<int> result;
-        rah2::ranges::copy(range, std::back_inserter(result));
+        rah2::ranges::copy(range, rah2::back_inserter(result));
         assert(result == RAH2_STD::vector<int>(15, 1));
     }
 
@@ -542,7 +551,8 @@ void test_counted_view()
     RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     auto range = rah2::views::counted(in.begin(), 5);
     RAH2_STD::vector<int> out;
-    std::copy(rah2::ranges::begin(range), rah2::ranges::end(range), std::back_inserter(out));
+    RAH2_STD::copy(
+        rah2::ranges::begin(range), rah2::ranges::end(range), RAH2_STD::back_inserter(out));
     assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
     /// [counted]
 
@@ -752,7 +762,7 @@ void test_enumerate_view()
             | rah2::views::keys;
 
         RAH2_STD::vector<intptr_t> ref;
-        rah2::ranges::copy(range, RAH2_STD::back_inserter(ref));
+        rah2::ranges::copy(range, rah2::back_inserter(ref));
         assert(ref == (RAH2_STD::vector<intptr_t>{1, 2, 5}));
     }
 
@@ -822,12 +832,12 @@ void test_zip_view()
         RAH2_STD::vector<RAH2_STD::tuple<int, uint8_t>> result;
         auto b = rah2::ranges::begin(range);
         auto e = rah2::ranges::end(range);
-        auto o = RAH2_STD::back_inserter(result);
+        auto o = rah2::back_inserter(result);
         for (; b != e; ++b, ++o)
         {
             *o = *b;
         }
-        // rah2::ranges::copy(range, RAH2_STD::back_inserter(result));
+        // rah2::ranges::copy(range, rah2::back_inserter(result));
         assert(rah2::ranges::equal(
             result, RAH2_STD::vector<RAH2_STD::tuple<int, uint8_t>>({{2, true}, {3, true}})));
     }
@@ -897,7 +907,7 @@ void test_adjacent_view()
         for (auto&& abc : rah2::views::iota(0) | rah2::views::take(6) | rah2::views::adjacent<0>)
         {
             static_assert(
-                RAH2_STD::tuple_size<std::remove_reference_t<decltype(abc)>>::value == 0,
+                RAH2_STD::tuple_size<RAH2_STD::remove_reference_t<decltype(abc)>>::value == 0,
                 "tuple should be empty");
             out.emplace_back();
         }
@@ -988,7 +998,7 @@ void test_adjacent_transform()
                               | rah2::views::adjacent_transform<0>([](auto i) { return i + 1; }))
         {
             static_assert(
-                RAH2_STD::tuple_size<std::remove_reference_t<decltype(abc)>>::value == 0,
+                RAH2_STD::tuple_size<RAH2_STD::remove_reference_t<decltype(abc)>>::value == 0,
                 "tuple should be empty");
             out.emplace_back();
         }
@@ -1006,10 +1016,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 3))
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(
             out
@@ -1027,7 +1037,7 @@ void test_slide_view()
         {
             out.emplace_back();
             auto&& subRange = *it;
-            rah2::ranges::copy(subRange, std::back_inserter(out.back()));
+            rah2::ranges::copy(subRange, rah2::back_inserter(out.back()));
         }
         assert(
             out
@@ -1042,10 +1052,10 @@ void test_slide_view()
         for (auto subRange : in | rah2::views::slide(3))
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(
             out
@@ -1061,10 +1071,10 @@ void test_slide_view()
         for (auto subRange : range | rah2::views::common)
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(
             out
@@ -1084,10 +1094,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 4))
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(out == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0, 1, 2, 3}}));
     }
@@ -1098,10 +1108,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 4))
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(out.empty());
     }
@@ -1112,10 +1122,10 @@ void test_slide_view()
         for (auto subRange : rah2::views::slide(in, 0))
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(out == (RAH2_STD::vector<RAH2_STD::vector<int>>{{0}, {1}, {2}, {3}}));
     }
@@ -1126,10 +1136,10 @@ void test_slide_view()
         for (auto subRange : in | rah2::views::slide(1))
         {
             out.emplace_back();
-            std::copy(
+            RAH2_STD::copy(
                 rah2::ranges::begin(subRange),
                 rah2::ranges::end(subRange),
-                std::back_inserter(out.back()));
+                RAH2_STD::back_inserter(out.back()));
         }
         assert(
             out

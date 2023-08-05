@@ -4132,7 +4132,7 @@ namespace RAH2_NS
                     return *this;
                 }
                 RAH2_POST_INCR(base_cat)
-                value operator*()
+                value operator*() const
                 {
                     return *value_;
                 }

@@ -4,8 +4,10 @@
 
 #include <initializer_list>
 #include <cassert>
+
+#include <type_traits>
 #include <iterator>
-#include <utility> // std::move
+#include <utility>
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
@@ -1604,6 +1606,78 @@ namespace RAH2_NS
         }
     };
     constexpr unreachable_sentinel_t unreachable_sentinel{};
+
+    /// back_insert_iterator
+    ///
+    /// A back_insert_iterator is simply a class that acts like an iterator but when you
+    /// assign a value to it, it calls push_back on the container with the value.
+    ///
+    template <typename Container>
+    class back_insert_iterator
+    {
+    public:
+        typedef back_insert_iterator<Container> this_type;
+        typedef Container container_type;
+        typedef typename Container::const_reference const_reference;
+        typedef RAH2_NS::output_iterator_tag iterator_category;
+        typedef void value_type;
+        typedef void difference_type;
+        typedef void pointer;
+        typedef void reference;
+
+    protected:
+        Container* container = nullptr;
+
+    public:
+        back_insert_iterator() = delete; // Not valid. Must construct with a Container.
+
+        back_insert_iterator(this_type const& x) = delete;
+        back_insert_iterator& operator=(this_type const& x) = delete;
+        back_insert_iterator(this_type&& x) = default;
+        back_insert_iterator& operator=(this_type&& x) = default;
+
+        explicit back_insert_iterator(Container& x)
+            : container(&x)
+        {
+        }
+
+        back_insert_iterator& operator=(const_reference value)
+        {
+            container->push_back(value);
+            return *this;
+        }
+
+        back_insert_iterator& operator=(typename Container::value_type&& value)
+        {
+            container->push_back(RAH2_STD::move(value));
+            return *this;
+        }
+
+        back_insert_iterator& operator*()
+        {
+            return *this;
+        }
+
+        back_insert_iterator& operator++()
+        {
+            return *this;
+        } // This is by design.
+
+        back_insert_iterator operator++(int)
+        {
+            return *this;
+        } // This is by design.
+    };
+
+    /// back_inserter
+    ///
+    /// Creates an instance of a back_insert_iterator.
+    ///
+    template <typename Container>
+    back_insert_iterator<Container> back_inserter(Container& x)
+    {
+        return back_insert_iterator<Container>(x);
+    }
 
     // ***************************** algorithm replacement ****************************************
     namespace details
