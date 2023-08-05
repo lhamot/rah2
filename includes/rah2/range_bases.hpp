@@ -1023,7 +1023,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         !has_size_member<R> && !has_size_ADL<R>
                         && sized_sentinel_for<iterator_t<R>, sentinel_t<R>>>* = nullptr>
-                constexpr auto operator()(R&& range) const
+                constexpr auto operator()(R&& range) const -> decltype(end(range) - begin(range))
                 {
                     return end(range) - begin(range);
                 }
