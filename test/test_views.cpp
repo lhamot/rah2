@@ -4,8 +4,17 @@
 
 #include <sstream>
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/array.h>
+#include <EASTL/algorithm.h>
+
+#else
+
 #include <array>
 #include <algorithm>
+
+#endif
 
 auto inputSentView = make_test_view<Sentinel, RAH2_STD::input_iterator_tag, false>();
 auto fwdSentView = make_test_view<Sentinel, RAH2_STD::forward_iterator_tag, false>();

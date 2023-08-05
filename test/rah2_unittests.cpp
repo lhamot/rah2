@@ -9,6 +9,58 @@
 
 #include "test_helpers.hpp"
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/list.h>
+#include <EASTL/map.h>
+#include <EASTL/vector.h>
+#include <EASTL/atomic.h>
+#include <EASTL/random.h>
+#include <EASTL/algorithm.h>
+
+void* __cdecl operator new[](
+    size_t size, char const* pName, int flags, unsigned debugFlags, char const* file, int line)
+{
+    (void*)pName;
+    (void*)&flags;
+    (void*)&debugFlags;
+    (void*)file;
+    (void*)&line;
+    return new uint8_t[size];
+}
+void* operator new[](
+    size_t size,
+    size_t alignment,
+    size_t alignmentOffset,
+    char const* pName,
+    int flags,
+    unsigned debugFlags,
+    char const* file,
+    int line)
+{
+    (void*)alignment;
+    (void*)alignmentOffset;
+    (void*)pName;
+    (void*)&flags;
+    (void*)&debugFlags;
+    (void*)file;
+    (void*)&line;
+
+    return new uint8_t[size];
+}
+
+namespace EA
+{
+    namespace StdC
+    {
+        int Vsnprintf(
+            char* EA_RESTRICT pDestination, size_t n, char const* EA_RESTRICT pFormat, va_list arguments)
+        {
+            return vsnprintf(pDestination, n, pFormat, arguments);
+        }
+    } // namespace StdC
+} // namespace EA
+#else
 
 #include <list>
 #include <map>
@@ -17,6 +69,7 @@
 #include <random>
 #include <algorithm>
 
+#endif
 
 bool is_odd(int val)
 {

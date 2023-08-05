@@ -3,7 +3,15 @@
 #include "range_bases.hpp"
 #include "algo_sort.hpp"
 
-#include <random>
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/random.h> // uniform_int_distribution
+
+#else
+
+#include <random> // uniform_int_distribution
+
+#endif
 
 namespace RAH2_NS
 {

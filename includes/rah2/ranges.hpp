@@ -10,8 +10,17 @@
 
 #include <istream>
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/tuple.h>
+#include <EASTL/utility.h>
+
+#else
+
 #include <tuple>
 #include <utility>
+
+#endif
 
 #ifdef _MSC_VER
 #define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))

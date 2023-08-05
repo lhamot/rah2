@@ -2,8 +2,17 @@
 
 #include "range_bases.hpp"
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/string.h>
+#include <EASTL/utility.h>
+
+#else
+
 #include <string.h> // memcmp
 #include <utility> // std::move
+
+#endif
 
 namespace RAH2_NS
 {

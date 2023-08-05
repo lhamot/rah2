@@ -5,9 +5,19 @@
 #include <initializer_list>
 #include <cassert>
 
+#ifdef RAH2_USE_EASTL
+
+#include <EASTL/type_traits.h>
+#include <EASTL/iterator.h>
+#include <EASTL/utility.h>
+
+#else
+
 #include <type_traits>
 #include <iterator>
 #include <utility>
+
+#endif
 
 #define RAH2_ITC_NS RAH2_NS
 #define RAHAllocatorType RAH2_STD::allocator
