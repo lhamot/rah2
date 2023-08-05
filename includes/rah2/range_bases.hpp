@@ -2,6 +2,7 @@
 
 #include "concepts.hpp"
 
+#include <initializer_list>
 #include <cassert>
 #include <iterator>
 #include <utility> // std::move

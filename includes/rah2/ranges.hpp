@@ -1017,7 +1017,7 @@ namespace RAH2_NS
                 }
                 template <typename U = R, RAH2_STD::enable_if_t<bidirectional_range<U>>* = nullptr>
                 RAH2_POST_DECR;
-                auto operator*() const -> decltype(*value_pointer_)
+                auto operator*() const -> iter_reference_t<inner_iterator>
                 {
                     return *value_pointer_;
                 }
@@ -2106,7 +2106,8 @@ namespace RAH2_NS
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
             using base_cat = range_iter_categ_t<R>;
-            using reference = decltype(RAH2_STD::get<N>(RAH2_STD::declval<range_reference_t<R>>()));
+            using reference =
+                typename std::tuple_element<N, RAH2_STD::remove_reference_t<range_reference_t<R>>>::type;
 
         public:
             using difference_type = range_difference_t<R>;

@@ -789,19 +789,19 @@ namespace RAH2_NS
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                    RandomAccessIterator end(current), prev(current);
+                    RandomAccessIterator it_end(current), prev(current);
                     value_type value(RAH2_STD::forward<value_type>(*current));
 
                     for (--prev; RAH2_STD::less<value_type>()(value, *prev);
-                         --end,
+                         --it_end,
                          --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
                     {
                         RAH2_VALIDATE_COMPARE(!RAH2_STD::less<value_type>()(
                             *prev, value)); // Validate that the compare function is sane.
-                        *end = RAH2_STD::forward<value_type>(*prev);
+                        *it_end = RAH2_STD::forward<value_type>(*prev);
                     }
 
-                    *end = RAH2_STD::forward<value_type>(value);
+                    *it_end = RAH2_STD::forward<value_type>(value);
                 }
             }
 
@@ -817,19 +817,19 @@ namespace RAH2_NS
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                    RandomAccessIterator end(current), prev(current);
+                    RandomAccessIterator it_end(current), prev(current);
                     value_type value(RAH2_STD::forward<value_type>(*current));
 
                     for (--prev; compare(value, *prev);
-                         --end,
+                         --it_end,
                          --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
                     {
                         RAH2_VALIDATE_COMPARE(
                             !compare(*prev, value)); // Validate that the compare function is sane.
-                        *end = RAH2_STD::forward<value_type>(*prev);
+                        *it_end = RAH2_STD::forward<value_type>(*prev);
                     }
 
-                    *end = RAH2_STD::forward<value_type>(value);
+                    *it_end = RAH2_STD::forward<value_type>(value);
                 }
             }
         } // namespace Internal
