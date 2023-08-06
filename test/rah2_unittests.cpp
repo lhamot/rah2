@@ -7,8 +7,6 @@
 #include <rah2/ranges.hpp>
 #include <rah2/algorithm.hpp>
 
-#include "test_helpers.hpp"
-
 #ifdef RAH2_USE_EASTL
 
 #include <EASTL/list.h>
@@ -64,6 +62,8 @@ namespace EA
 #include <algorithm>
 
 #endif
+
+#include "test_helpers.hpp"
 
 bool is_odd(int val)
 {
