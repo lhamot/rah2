@@ -151,8 +151,8 @@ namespace RAH2_NS
     template <                                                                                     \
         typename C = CAT,                                                                          \
         RAH2_STD::enable_if_t<                                                                     \
-            RAH2_NS::derived_from<C, RAH2_STD::forward_iterator_tag>                               \
-            or RAH2_NS::derived_from<C, RAH2_STD::output_iterator_tag>>* = nullptr>                \
+            RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>                                \
+            or RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>                 \
     auto operator++(int)                                                                           \
     {                                                                                              \
         auto it = *this;                                                                           \
@@ -162,8 +162,8 @@ namespace RAH2_NS
     template <                                                                                     \
         typename C = CAT,                                                                          \
         RAH2_STD::enable_if_t<                                                                     \
-            !RAH2_NS::derived_from<C, RAH2_STD::forward_iterator_tag>                              \
-            and !RAH2_NS::derived_from<C, RAH2_STD::output_iterator_tag>>* = nullptr>              \
+            !RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>                               \
+            and !RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>               \
     void operator++(int)                                                                           \
     {                                                                                              \
         ++(*this);                                                                                 \
@@ -3999,6 +3999,9 @@ namespace RAH2_NS
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
             using base_cat = range_iter_categ_t<R>;
+
+            static_assert(
+                RAH2_NS::ranges::forward_range<R>, "cycle_view require at leaset a forward_range");
 
         public:
             class iterator : public iterator_facade<

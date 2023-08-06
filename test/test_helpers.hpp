@@ -138,6 +138,50 @@ public:
 
     public:
         iterator() = default;
+
+        template <
+            typename C = Cat,
+            std::enable_if_t<
+                rah2::derived_from<C, rah2::input_iterator_tag>
+                || rah2::derived_from<C, rah2::output_iterator_tag>>* = nullptr>
+        iterator(iterator&& other)
+            : val_(other.val_)
+            , step_(other.step_)
+        {
+        }
+
+        template <
+            typename C = Cat,
+            std::enable_if_t<
+                rah2::derived_from<C, rah2::input_iterator_tag>
+                || rah2::derived_from<C, rah2::output_iterator_tag>>* = nullptr>
+        iterator& operator=(iterator&& other)
+        {
+            val_ = other.val_;
+            step_ = other.step_;
+        }
+
+        template <
+            typename C = Cat,
+            std::enable_if_t<
+                rah2::derived_from<C, rah2::forward_iterator_tag>
+                || rah2::derived_from<C, rah2::output_iterator_tag>>* = nullptr>
+        iterator(iterator const& other)
+            : val_(other.val_)
+            , step_(other.step_)
+        {
+        }
+
+        template <
+            typename C = Cat,
+            std::enable_if_t<
+                rah2::derived_from<C, rah2::forward_iterator_tag>
+                || rah2::derived_from<C, rah2::output_iterator_tag>>* = nullptr>
+        iterator& operator=(iterator const& other)
+        {
+            val_ = other.val_;
+            step_ = other.step_;
+        }
         iterator(int val, int step)
             : val_(val)
             , step_(step)

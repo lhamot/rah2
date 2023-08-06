@@ -19,33 +19,27 @@
 #include <EASTL/algorithm.h>
 
 void* operator new[](
-    size_t size, char const* pName, int flags, unsigned debugFlags, char const* file, int line)
+    size_t size,
+    char const*, // pName,
+    int, // flags,
+    unsigned, // debugFlags,
+    char const*, // file,
+    int // line
+)
 {
-    (void*)pName;
-    (void*)&flags;
-    (void*)&debugFlags;
-    (void*)file;
-    (void*)&line;
     return new uint8_t[size];
 }
 void* operator new[](
     size_t size,
-    size_t alignment,
-    size_t alignmentOffset,
-    char const* pName,
-    int flags,
-    unsigned debugFlags,
-    char const* file,
-    int line)
+    size_t, // alignment,
+    size_t, // alignmentOffset,
+    char const*, // pName,
+    int, // flags,
+    unsigned, // debugFlags,
+    char const*, // file,
+    int // line
+)
 {
-    (void*)alignment;
-    (void*)alignmentOffset;
-    (void*)pName;
-    (void*)&flags;
-    (void*)&debugFlags;
-    (void*)file;
-    (void*)&line;
-
     return new uint8_t[size];
 }
 
@@ -738,11 +732,6 @@ try
         /// [cycle]
         STATIC_ASSERT((rah2::ranges::bidirectional_range<decltype(cy)>));
         STATIC_ASSERT((not rah2::ranges::random_access_range<decltype(cy)>));
-    }
-    { // Cycle + input/sentinel => input/sentinel
-        auto cyInputSent =
-            rah2::views::cycle(make_test_view<Sentinel, RAH2_STD::input_iterator_tag, false>());
-        STATIC_ASSERT(is_input_not_common<decltype(cyInputSent)>);
     }
     {
         auto cyForwardSent =
