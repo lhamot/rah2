@@ -7,8 +7,6 @@
 #include <rah2/ranges.hpp>
 #include <rah2/algorithm.hpp>
 
-#include "test_helpers.hpp"
-
 #ifdef RAH2_USE_EASTL
 
 #include <EASTL/list.h>
@@ -64,6 +62,8 @@ namespace EA
 #include <algorithm>
 
 #endif
+
+#include "test_helpers.hpp"
 
 bool is_odd(int val)
 {
@@ -822,7 +822,7 @@ try
 
     {
         int in[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        auto range = rah2::views::unbounded(static_cast<int const* const>(RAH2_STD::begin(in)))
+        auto range = rah2::views::unbounded(static_cast<int const*>(RAH2_STD::begin(in)))
                      | rah2::views::slice(0, 5);
         RAH2_STD::vector<int> out;
         rah2::ranges::copy(range, rah2::back_inserter(out));

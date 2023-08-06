@@ -1,8 +1,6 @@
 #include <rah2/ranges.hpp>
 #include <rah2/algorithm.hpp>
 
-#include "test_helpers.hpp"
-
 #include <cctype>
 #include <complex>
 #include <random>
@@ -32,6 +30,8 @@
 #if RAH2_CPP20
 #include <ranges>
 #endif
+
+#include "test_helpers.hpp"
 
 void test_all_of()
 {

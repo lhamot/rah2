@@ -61,7 +61,7 @@ namespace RAH2_NS
                 RAH2_NS::details::optional<U> init(RAH2_STD::move(*first));
                 for (++first; first != last; ++first)
                     *init = RAH2_INVOKE_2(f, RAH2_STD::move(*init), *first);
-                return RAH2_STD::move(init);
+                return init;
             }
 
             template <

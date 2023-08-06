@@ -1,7 +1,5 @@
 #include <rah2/ranges.hpp>
 
-#include "test_helpers.hpp"
-
 #include <sstream>
 
 #ifdef RAH2_USE_EASTL
@@ -15,6 +13,8 @@
 #include <algorithm>
 
 #endif
+
+#include "test_helpers.hpp"
 
 auto inputSentView = make_test_view<Sentinel, RAH2_STD::input_iterator_tag, false>();
 auto fwdSentView = make_test_view<Sentinel, RAH2_STD::forward_iterator_tag, false>();
