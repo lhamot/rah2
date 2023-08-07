@@ -251,7 +251,7 @@ namespace RAH2_NS
                 typename I,
                 typename S,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::ranges::subrange<I>
             operator()(I first, S last, T const& value, Proj proj = {}) const
@@ -271,7 +271,7 @@ namespace RAH2_NS
             template <
                 typename R,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::borrowed_subrange_t<R>
             operator()(R&& r, T const& value, Proj proj = {}) const
@@ -288,7 +288,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::ranges::subrange<I>
@@ -308,7 +308,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::borrowed_subrange_t<R>
@@ -329,7 +329,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::ranges::subrange<I>
@@ -349,7 +349,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::borrowed_subrange_t<R>
@@ -371,7 +371,7 @@ namespace RAH2_NS
                 typename I,
                 typename S,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr bool operator()(I first, S last, T const& value, Proj proj = {}) const
             {
@@ -381,7 +381,7 @@ namespace RAH2_NS
             template <
                 typename R,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr bool operator()(R&& r, T const& value, Proj proj = {}) const
             {
@@ -400,8 +400,8 @@ namespace RAH2_NS
                 typename I2,
                 typename S2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<
                     forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
@@ -423,8 +423,8 @@ namespace RAH2_NS
                 typename R1,
                 typename R2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
             constexpr bool
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -450,8 +450,8 @@ namespace RAH2_NS
                 typename I2, // RAH2_STD::input_iterator
                 typename S2, // RAH2_STD::sentinel_for<I2>
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<
                     input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
@@ -480,8 +480,8 @@ namespace RAH2_NS
                 typename R1, // ranges::input_range
                 typename R2, // ranges::input_range
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
             // requires RAH2_STD::indirectly_comparable<ranges::iterator_t<R1>, ranges::iterator_t<R2>, Pred, Proj1, Proj2>
             constexpr bool
@@ -1174,13 +1174,19 @@ namespace RAH2_NS
                 return *RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp));
             }
 
-            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+            template <
+                typename R,
+                typename Comp = RAH2_NS::ranges::less,
+                RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
                 return static_cast<V>(*RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp)));
             }
-            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
+            template <
+                typename R,
+                typename Comp = RAH2_NS::ranges::less,
+                RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
@@ -1210,13 +1216,19 @@ namespace RAH2_NS
                 return *RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp));
             }
 
-            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+            template <
+                typename R,
+                typename Comp = RAH2_NS::ranges::less,
+                RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
                 return static_cast<V>(*RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp)));
             }
-            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
+            template <
+                typename R,
+                typename Comp = RAH2_NS::ranges::less,
+                RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
@@ -1259,7 +1271,10 @@ namespace RAH2_NS
                 return {*result.min, *result.max};
             }
 
-            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+            template <
+                typename R,
+                typename Comp = RAH2_NS::ranges::less,
+                RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             // requires RAH2_STD::indirectly_copyable_storable<ranges::iterator_t<R>, ranges::range_value_t<R>*>
             constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
             operator()(R&& r, Comp comp = {}) const

@@ -153,7 +153,7 @@ namespace RAH2_NS
                 typename I,
                 typename S,
                 typename O,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::ranges::copy_if_result<I, O>
@@ -171,7 +171,7 @@ namespace RAH2_NS
             template <
                 typename R,
                 typename O,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::copy_if_result<RAH2_NS::ranges::iterator_t<R>, O>
@@ -607,7 +607,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr I operator()(I first, S last, Pred pred = {}, Proj proj = {}) const
@@ -625,7 +625,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::borrowed_iterator_t<R>
@@ -805,7 +805,7 @@ namespace RAH2_NS
                 typename I,
                 typename S,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::iter_difference_t<I>
             operator()(I first, S last, T const& value, Proj proj) const
@@ -822,7 +822,7 @@ namespace RAH2_NS
             template <
                 typename R,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr range_difference_t<R> operator()(R&& r, T const& value, Proj proj) const
             {
@@ -871,7 +871,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             RAH2_NODISCARD RAH2_CONSTEXPR20 RAH2_NS::iter_difference_t<I>
@@ -886,7 +886,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             RAH2_NODISCARD RAH2_CONSTEXPR20 range_difference_t<R>
@@ -930,7 +930,7 @@ namespace RAH2_NS
                 typename I,
                 typename S,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr I operator()(I first, S last, T const& value, Proj proj = {}) const
             {
@@ -943,7 +943,7 @@ namespace RAH2_NS
             template <
                 typename R,
                 class T,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr borrowed_iterator_t<R> operator()(R&& r, T const& value, Proj proj = {}) const
             {
@@ -973,7 +973,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr I operator()(I first, S last, Pred pred, Proj proj = {}) const
@@ -986,7 +986,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr borrowed_iterator_t<R> operator()(R&& r, Pred pred, Proj proj = {}) const
@@ -1011,7 +1011,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr I operator()(I first, S last, Pred pred, Proj proj = {}) const
@@ -1024,7 +1024,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename Pred,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr borrowed_iterator_t<R> operator()(R&& r, Pred pred, Proj proj = {}) const
@@ -1067,8 +1067,8 @@ namespace RAH2_NS
                 typename I2,
                 typename S2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<
                     input_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
@@ -1093,8 +1093,8 @@ namespace RAH2_NS
                 typename R1,
                 typename R2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_range<R1> && forward_range<R2>>* = nullptr>
             constexpr borrowed_iterator_t<R1>
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -1162,7 +1162,7 @@ namespace RAH2_NS
         ///
         struct for_each_n_fn
         {
-            template <typename I, class Proj = RAH2_NS::identity, typename Fun>
+            template <typename I, class Proj = RAH2_NS::details::identity, typename Fun>
             constexpr for_each_n_result<I, Fun>
             operator()(I first, RAH2_NS::iter_difference_t<I> n, Fun fun, Proj proj = Proj{}) const
             {
@@ -1449,8 +1449,8 @@ namespace RAH2_NS
                 typename S1,
                 typename I2,
                 typename S2,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 typename Comp = RAH2_NS::ranges::less,
                 RAH2_STD::enable_if_t<
                     input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
@@ -1548,8 +1548,8 @@ namespace RAH2_NS
             template <
                 typename R1,
                 typename R2,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 typename Comp = RAH2_NS::ranges::less,
                 RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
             constexpr bool
@@ -1593,8 +1593,8 @@ namespace RAH2_NS
                 typename I2,
                 typename S2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<
                     input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
@@ -1618,8 +1618,8 @@ namespace RAH2_NS
                 typename R1,
                 typename R2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
             constexpr mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -2464,8 +2464,8 @@ namespace RAH2_NS
                 typename I2,
                 typename S2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_iterator<I1> && forward_iterator<I2>>* = nullptr>
             constexpr subrange<I1> operator()(
                 I1 first1,
@@ -2495,8 +2495,8 @@ namespace RAH2_NS
                 typename R1,
                 typename R2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
             constexpr RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -2531,7 +2531,7 @@ namespace RAH2_NS
                 typename S,
                 class T,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::ranges::subrange<I> operator()(
                 I first,
@@ -2567,7 +2567,7 @@ namespace RAH2_NS
                 typename R,
                 class T,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::borrowed_subrange_t<R> operator()(
                 R&& r, range_difference_t<R> count, T const& value, Pred pred = {}, Proj proj = {}) const
@@ -2689,7 +2689,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename C = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr subrange<I> operator()(I first, S last, C comp = {}, Proj proj = {}) const
@@ -2709,7 +2709,7 @@ namespace RAH2_NS
 
             template <
                 typename R,
-                class Proj = RAH2_NS::identity,
+                class Proj = RAH2_NS::details::identity,
                 typename C = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr borrowed_subrange_t<R> operator()(R&& r, C comp = {}, Proj proj = {}) const
@@ -2740,8 +2740,8 @@ namespace RAH2_NS
                 typename I2,
                 typename S2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<
                     forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
                     && sentinel_for<S2, I2>>* = nullptr>
@@ -2780,8 +2780,8 @@ namespace RAH2_NS
                 typename R1,
                 typename R2,
                 class Pred = RAH2_NS::ranges::equal_to,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
             constexpr RAH2_NS::ranges::borrowed_subrange_t<R1>
             operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
@@ -3287,8 +3287,8 @@ namespace RAH2_NS
                 typename S1,
                 typename I2,
                 typename S2,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 typename Pred = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<
                     forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
@@ -3336,8 +3336,8 @@ namespace RAH2_NS
             template <
                 typename R1,
                 typename R2,
-                class Proj1 = RAH2_NS::identity,
-                class Proj2 = RAH2_NS::identity,
+                class Proj1 = RAH2_NS::details::identity,
+                class Proj2 = RAH2_NS::details::identity,
                 typename Pred = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
             constexpr bool
@@ -3774,7 +3774,7 @@ namespace RAH2_NS
         ///
         struct clamp_fn
         {
-            template <class T, class Proj = RAH2_NS::identity, typename Comp = RAH2_STD::less<>>
+            template <class T, class Proj = RAH2_NS::details::identity, typename Comp = RAH2_STD::less<>>
             constexpr T const&
             operator()(T const& v, T const& lo, T const& hi, Comp comp = {}, Proj proj = {}) const
             {
