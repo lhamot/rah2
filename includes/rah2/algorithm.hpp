@@ -399,7 +399,7 @@ namespace RAH2_NS
                 typename S1,
                 typename I2,
                 typename S2,
-                class Pred = RAH2_NS::equal_to,
+                class Pred = RAH2_NS::ranges::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
                 RAH2_STD::enable_if_t<
@@ -422,7 +422,7 @@ namespace RAH2_NS
             template <
                 typename R1,
                 typename R2,
-                class Pred = RAH2_NS::equal_to,
+                class Pred = RAH2_NS::ranges::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
                 RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
@@ -449,7 +449,7 @@ namespace RAH2_NS
                 typename S1, // RAH2_STD::sentinel_for<I1>
                 typename I2, // RAH2_STD::input_iterator
                 typename S2, // RAH2_STD::sentinel_for<I2>
-                class Pred = RAH2_NS::equal_to,
+                class Pred = RAH2_NS::ranges::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
                 RAH2_STD::enable_if_t<
@@ -479,7 +479,7 @@ namespace RAH2_NS
             template <
                 typename R1, // ranges::input_range
                 typename R2, // ranges::input_range
-                class Pred = RAH2_NS::equal_to,
+                class Pred = RAH2_NS::ranges::equal_to,
                 class Proj1 = RAH2_NS::identity,
                 class Proj2 = RAH2_NS::identity,
                 RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
@@ -507,7 +507,7 @@ namespace RAH2_NS
                 typename S1, // RAH2_STD::sentinel_for<I1>
                 typename I2, // RAH2_STD::input_iterator
                 typename S2, // RAH2_STD::sentinel_for<I2>
-                class Pred = RAH2_NS::equal_to,
+                class Pred = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<(RAH2_NS::forward_iterator<I1> || RAH2_NS::sized_sentinel_for<S1, I1>)&&(
                     RAH2_NS::forward_iterator<I2> || RAH2_NS::sized_sentinel_for<S2, I2>)>* = nullptr>
             constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}) const
@@ -528,7 +528,7 @@ namespace RAH2_NS
             template <
                 typename R1, // ranges::input_range
                 typename R2, // ranges::input_range
-                class Pred = RAH2_NS::equal_to,
+                class Pred = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<(RAH2_NS::ranges::forward_range<R1> || RAH2_NS::ranges::sized_range<R1>)&&(
                     RAH2_NS::ranges::forward_range<R2> || RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
             constexpr bool operator()(R1&& r1, R2&& r2, Pred pred = {}) const
@@ -812,7 +812,7 @@ namespace RAH2_NS
                 typename I, // RAH2_STD::input_iterator
                 typename S, // RAH2_STD::sentinel_for<I>
                 typename O, // RAH2_STD::weakly_incrementable
-                typename C = RAH2_NS::equal_to,
+                typename C = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr RAH2_NS::ranges::unique_copy_result<I, O>
             operator()(I first, S last, O result, C comp = {}) const
@@ -840,7 +840,7 @@ namespace RAH2_NS
             template <
                 typename R, // ranges::input_range
                 typename O, // RAH2_STD::weakly_incrementable
-                typename C = RAH2_NS::equal_to,
+                typename C = RAH2_NS::ranges::equal_to,
                 RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
             constexpr RAH2_NS::ranges::unique_copy_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
             operator()(R&& r, O result, C comp = {}) const
@@ -978,7 +978,7 @@ namespace RAH2_NS
                 typename S1, // RAH2_STD::sentinel_for<I1>
                 typename I2, // RAH2_STD::random_access_iterator
                 typename S2, // RAH2_STD::sentinel_for<I2>
-                class Comp = RAH2_NS::less>
+                class Comp = RAH2_NS::ranges::less>
             constexpr RAH2_NS::ranges::partial_sort_copy_result<I1, I2>
             operator()(I1 first, S1 last, I2 result_first, S2 result_last, Comp comp = {}) const
             {
@@ -1017,7 +1017,7 @@ namespace RAH2_NS
             template <
                 typename R1, // ranges::input_range
                 typename R2, // ranges::random_access_range
-                class Comp = RAH2_NS::less>
+                class Comp = RAH2_NS::ranges::less>
             constexpr RAH2_NS::ranges::partial_sort_copy_result<
                 RAH2_NS::ranges::borrowed_iterator_t<R1>,
                 RAH2_NS::ranges::borrowed_iterator_t<R2>>
@@ -1040,7 +1040,7 @@ namespace RAH2_NS
             template <
                 typename I, // RAH2_STD::bidirectional_iterator
                 typename S, // RAH2_STD::sentinel_for<I>
-                class Comp = RAH2_NS::less,
+                class Comp = RAH2_NS::ranges::less,
                 RAH2_STD::enable_if_t<bidirectional_iterator<I> && sentinel_for<S, I>>* = nullptr>
             // requires RAH2_STD::sortable<I, Comp, Proj>
             constexpr I operator()(I first, I middle, S last, Comp comp = {}) const
@@ -1058,7 +1058,7 @@ namespace RAH2_NS
 
             template <
                 typename R, // ranges::bidirectional_range
-                class Comp = RAH2_NS::less,
+                class Comp = RAH2_NS::ranges::less,
                 RAH2_STD::enable_if_t<bidirectional_range<R>>* = nullptr>
             // requires RAH2_STD::sortable<ranges::iterator_t<R>, Comp, Proj>
             constexpr RAH2_NS::ranges::borrowed_iterator_t<R>
@@ -1122,7 +1122,7 @@ namespace RAH2_NS
                 typename S1, // RAH2_STD::sentinel_for<I1>
                 typename I2, // RAH2_STD::input_iterator
                 typename S2, // RAH2_STD::sentinel_for<I2>
-                typename Comp = RAH2_NS::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I1, Proj1>, RAH2_STD::projected<I2, Proj2>>
+                typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I1, Proj1>, RAH2_STD::projected<I2, Proj2>>
                 >
             constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}) const
             {
@@ -1139,7 +1139,7 @@ namespace RAH2_NS
             template <
                 typename R1, // ranges::input_range
                 typename R2, // ranges::input_range
-                typename Comp = RAH2_NS::less // RAH2_STD::indirect_strict_weak_order<
+                typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<
                 >
             constexpr bool operator()(R1&& r1, R2&& r2, Comp comp = {}) const
             {
@@ -1158,7 +1158,7 @@ namespace RAH2_NS
         {
             template <
                 class T,
-                typename Comp = RAH2_NS::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
+                typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
                 >
             constexpr T const& operator()(T const& a, T const& b, Comp comp = {}) const
             {
@@ -1167,20 +1167,20 @@ namespace RAH2_NS
 
             template <
                 typename T, // RAH2_STD::copyable
-                typename Comp = RAH2_NS::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
+                typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
                 >
             constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
             {
                 return *RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp));
             }
 
-            template <typename R, typename Comp = RAH2_NS::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
                 return static_cast<V>(*RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp)));
             }
-            template <typename R, typename Comp = RAH2_NS::less, RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
+            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
@@ -1198,25 +1198,25 @@ namespace RAH2_NS
 
         struct min_fn
         {
-            template <class T, typename Comp = RAH2_NS::less>
+            template <class T, typename Comp = RAH2_NS::ranges::less>
             constexpr T const& operator()(T const& a, T const& b, Comp comp = {}) const
             {
                 return RAH2_INVOKE_2(comp, b, a) ? b : a;
             }
 
-            template <typename T, typename Comp = RAH2_NS::less>
+            template <typename T, typename Comp = RAH2_NS::ranges::less>
             constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
             {
                 return *RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp));
             }
 
-            template <typename R, typename Comp = RAH2_NS::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
                 return static_cast<V>(*RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp)));
             }
-            template <typename R, typename Comp = RAH2_NS::less, RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
+            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
             constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
             {
                 using V = range_value_t<R>;
@@ -1237,7 +1237,7 @@ namespace RAH2_NS
 
         struct minmax_fn
         {
-            template <class T, typename Comp = RAH2_NS::less>
+            template <class T, typename Comp = RAH2_NS::ranges::less>
             constexpr RAH2_NS::ranges::minmax_result<T const&>
             operator()(T const& a, T const& b, Comp comp = {}) const
             {
@@ -1247,11 +1247,11 @@ namespace RAH2_NS
                 return {a, b};
             }
 
-            template <class T, typename Comp = RAH2_NS::less>
+            template <class T, typename Comp = RAH2_NS::ranges::less>
             constexpr RAH2_NS::ranges::minmax_result<T const&>
             operator()(T&& a, T&& b, Comp comp = {}) const = delete;
 
-            template <typename T, typename Comp = RAH2_NS::less>
+            template <typename T, typename Comp = RAH2_NS::ranges::less>
             constexpr RAH2_NS::ranges::minmax_result<T>
             operator()(std::initializer_list<T> r, Comp comp = {}) const
             {
@@ -1259,7 +1259,7 @@ namespace RAH2_NS
                 return {*result.min, *result.max};
             }
 
-            template <typename R, typename Comp = RAH2_NS::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+            template <typename R, typename Comp = RAH2_NS::ranges::less, RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             // requires RAH2_STD::indirectly_copyable_storable<ranges::iterator_t<R>, ranges::range_value_t<R>*>
             constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
             operator()(R&& r, Comp comp = {}) const
@@ -1279,7 +1279,7 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                class Comp = RAH2_NS::less,
+                class Comp = RAH2_NS::ranges::less,
                 RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
             // requires RAH2_STD::sortable<I, Comp, Proj>
             constexpr RAH2_NS::ranges::prev_permutation_result<I>
@@ -1320,7 +1320,7 @@ namespace RAH2_NS
 
             template <
                 typename R, // RAH2_NS::bidirectional_range
-                class Comp = RAH2_NS::less,
+                class Comp = RAH2_NS::ranges::less,
                 RAH2_STD::enable_if_t<bidirectional_range<R>>* = nullptr>
             // requires RAH2_STD::sortable<RAH2_NS::ranges::iterator_t<R>, Comp, Proj>
             constexpr RAH2_NS::ranges::prev_permutation_result<RAH2_NS::ranges::borrowed_iterator_t<R>>

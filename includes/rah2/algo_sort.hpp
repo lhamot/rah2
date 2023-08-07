@@ -82,7 +82,7 @@ namespace RAH2_NS
                 typename I, // RAH2_STD::forward_iterator
                 typename S, // RAH2_STD::sentinel_for<I>
                 // class Proj = RAH2_STD::identity,
-                typename Comp = RAH2_NS::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I, Proj>>
+                typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I, Proj>>
                 RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
             constexpr bool operator()(I first, S last, Comp comp = {}) const
             {
@@ -92,7 +92,7 @@ namespace RAH2_NS
             template <
                 typename R, // ranges::forward_range
                 // class Proj = RAH2_STD::identity,
-                typename Comp = RAH2_NS::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
+                typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
                 RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
             constexpr bool operator()(R&& r, Comp comp = {}) const
             {
@@ -130,7 +130,7 @@ namespace RAH2_NS
             typename InputIterator2,
             typename Sentinel2,
             typename OutputIterator,
-            typename Compare = RAH2_NS::less>
+            typename Compare = RAH2_NS::ranges::less>
         merge_result<InputIterator1, InputIterator2, OutputIterator> merge(
             InputIterator1 first1,
             Sentinel1 last1,
@@ -174,7 +174,7 @@ namespace RAH2_NS
             }
         }
 
-        template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare = RAH2_NS::less>
+        template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare = RAH2_NS::ranges::less>
         merge_result<
             RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
             RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
