@@ -1082,7 +1082,7 @@ try
     // *********************************** algos **************************************************
 
     {
-        /// [RAH2_NS::to_container_pipeable]
+        /// [rah2::to_container_pipeable]
         RAH2_STD::vector<RAH2_STD::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
         RAH2_STD::map<int, char> map_4a_5b_6c_7d =
             in1 | RAH2_NS::ranges::to<RAH2_STD::map<int, char>>();
@@ -1091,10 +1091,10 @@ try
         RAH2_STD::list<int> in2{4, 5, 6, 7};
         RAH2_STD::vector<int> out = in2 | RAH2_NS::ranges::to<RAH2_STD::vector<int>>();
         assert(out == (RAH2_STD::vector<int>{4, 5, 6, 7}));
-        /// [RAH2_NS::to_container_pipeable]
+        /// [rah2::to_container_pipeable]
     }
     {
-        /// [RAH2_NS::to]
+        /// [rah2::to]
         RAH2_STD::vector<RAH2_STD::pair<int, char>> in1{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}};
         auto map_4a_5b_6c_7d = RAH2_NS::ranges::to<RAH2_STD::map<int, char>>(in1);
         assert(map_4a_5b_6c_7d == (RAH2_STD::map<int, char>{{4, 'a'}, {5, 'b'}, {6, 'c'}, {7, 'd'}}));
@@ -1102,20 +1102,20 @@ try
         RAH2_STD::list<int> in2{4, 5, 6, 7};
         auto out = RAH2_NS::ranges::to<RAH2_STD::vector<int>>(in2);
         assert(out == (RAH2_STD::vector<int>{4, 5, 6, 7}));
-        /// [RAH2_NS::to]
+        /// [rah2::to]
     }
 
     {
-        /// [RAH2_NS::size]
+        /// [rah2::size]
         RAH2_STD::vector<int> vec3{1, 2, 3};
         assert(RAH2_NS::ranges::size(vec3) == 3);
-        /// [RAH2_NS::size]
+        /// [rah2::size]
     }
 
-    /// [RAH2_NS::empty]
+    /// [rah2::empty]
     assert(not(RAH2_NS::ranges::empty(RAH2_STD::vector<int>{1, 2, 3})));
     assert(RAH2_NS::ranges::empty(RAH2_STD::vector<int>()));
-    /// [RAH2_NS::empty]
+    /// [rah2::empty]
 
     // ********************************* test return ref and non-ref ******************************
 

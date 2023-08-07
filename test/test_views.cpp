@@ -263,13 +263,13 @@ void test_transform_view()
     // Test transform
     {
         testSuite.test_case("sample");
-        /// [RAH2_NS::views::transform]
+        /// [rah2::views::transform]
         RAH2_STD::vector<int> vec{0, 1, 2, 3};
         RAH2_STD::vector<int> result;
         for (int const i : RAH2_NS::views::transform(vec, [](auto a) { return a * 2; }))
             result.push_back(i);
         assert(result == RAH2_STD::vector<int>({0, 2, 4, 6}));
-        /// [RAH2_NS::views::transform]
+        /// [rah2::views::transform]
     }
     testSuite.test_case("various");
     {
@@ -287,13 +287,13 @@ void test_transform_view()
         assert(max == 6); // 3 * 2
     }
     {
-        /// [RAH2_NS::views::transform_pipeable]
+        /// [rah2::views::transform_pipeable]
         RAH2_STD::vector<int> vec{0, 1, 2, 3};
         RAH2_STD::vector<int> result;
         for (int const i : vec | RAH2_NS::views::transform([](auto a) { return a * 2; }))
             result.push_back(i);
         assert(result == RAH2_STD::vector<int>({0, 2, 4, 6}));
-        /// [RAH2_NS::views::transform_pipeable]
+        /// [rah2::views::transform_pipeable]
     }
 
     testSuite.test_case("concept");
@@ -592,13 +592,13 @@ struct make_common_view
 void test_common_view()
 {
     testSuite.test_case("sample");
-    /// [RAH2_NS::views::common]
+    /// [rah2::views::common]
     auto c = RAH2_NS::views::iota(0, 5) | RAH2_NS::views::filter([](auto i) { return i % 2 == 0; });
     RAH2_STD::vector<int> result;
     for (auto&& i : c | RAH2_NS::views::common)
         result.push_back(i);
     assert(result == RAH2_STD::vector<int>({0, 2, 4}));
-    /// [RAH2_NS::views::common]
+    /// [rah2::views::common]
 
     testSuite.test_case("concepts");
     check_all_cat<RAH2_NS::forward_iterator_tag, RAH2_NS::forward_iterator_tag, make_common_view>();
