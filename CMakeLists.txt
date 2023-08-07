@@ -12,6 +12,10 @@ endif()
 
 enable_testing()
 
+if (${RAH2_INSIDE_EASTL})
+    set(RAH2_USE_EASTL 1)
+endif()
+
 if (${RAH2_USE_EASTL})
 
 	FIND_PATH(
