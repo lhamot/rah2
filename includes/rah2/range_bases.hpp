@@ -217,10 +217,8 @@ namespace RAH2_NS
         };
     } // namespace ranges
 
-#if RAH2_INSIDE_EASTL
     namespace details
     {
-#endif
         struct identity
         {
             template <class T>
@@ -230,8 +228,9 @@ namespace RAH2_NS
                 return static_cast<T&&>(t);
             }
         };
-#if RAH2_INSIDE_EASTL
     } // namespace details
+#if !RAH2_INSIDE_EASTL
+    using identity = details::identity;
 #endif
 
     // ***************************** <concepts> concept *******************************************
@@ -569,7 +568,7 @@ namespace RAH2_NS
         static constexpr bool value =
             compiles<Diagnostic, I, diff_is_signed_integer>
             // && is_true_v<Diagnostic, movable<I>>
-            && is_true_v<Diagnostic, is_move_constructible_v<I>> // eastl::back_inserter is not move_assignable
+            && is_true_v<Diagnostic, RAH2_STD::is_move_constructible<I>::value> // eastl::back_inserter is not move_assignable
             && compiles<Diagnostic, I, can_post_incr>;
     };
 
