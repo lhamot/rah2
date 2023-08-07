@@ -182,33 +182,35 @@ namespace RAH2_NS
     void as_const(T const&&) = delete;
 
     // **************************** <functional> Classes ******************************************
-    struct less
+    namespace ranges
     {
-        template <class T, class U>
-        constexpr bool operator()(T&& t, U&& u) const
+        struct less
         {
-            return t < u;
-        }
-    };
+            template <class T, class U>
+            constexpr bool operator()(T&& t, U&& u) const
+            {
+                return t < u;
+            }
+        };
 
-    struct greater
-    {
-        template <class T, class U>
-        constexpr bool operator()(T&& t, U&& u) const
+        struct greater
         {
-            return t > u;
-        }
-    };
+            template <class T, class U>
+            constexpr bool operator()(T&& t, U&& u) const
+            {
+                return t > u;
+            }
+        };
 
-    struct equal_to
-    {
-        template <class T, class U>
-        constexpr bool operator()(T&& t, U&& u) const
+        struct equal_to
         {
-            return t == u;
-        }
-    };
-
+            template <class T, class U>
+            constexpr bool operator()(T&& t, U&& u) const
+            {
+                return t == u;
+            }
+        };
+    } // namespace ranges
     struct identity
     {
         template <class T>
