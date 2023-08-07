@@ -655,13 +655,14 @@ struct test_one_range_setup_impl<false, Sentinel, Cat, ExpectedCat, Sized, MakeR
 template <
     CommonOrSent Sentinel,
     typename Cat2,
-    typename ExpectedCat,
+    // typename ExpectedCat,
     bool Sized,
     template <CommonOrSent, typename, bool>
     class Trait>
 void test_one_range_setup()
 {
     constexpr bool do_test = Trait<Sentinel, Cat2, Sized>::do_test;
+    using ExpectedCat = typename Trait<Sentinel, Cat2, Sized>::expected_cat;
     test_one_range_setup_impl<do_test, Sentinel, Cat2, ExpectedCat, Sized, Trait>::test();
 }
 
@@ -671,113 +672,113 @@ void check_all_cat()
     test_one_range_setup<
         Sentinel,
         RAH2_STD::input_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_STD::input_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_STD::input_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_STD::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_STD::forward_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_STD::forward_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
 
     test_one_range_setup<
         Common,
         RAH2_NS::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Common,
         RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     // Common random_access can't be not sized
     /*test_one_range_setup<
         Common,
         RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();
     test_one_range_setup<
         Common,
         RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
         false,
         MakeR>();*/
 
     test_one_range_setup<
         Sentinel,
         RAH2_NS::input_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::input_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::input_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Sentinel,
         RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
 
     test_one_range_setup<
         Common,
         RAH2_NS::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Common,
         RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Common,
         RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
     test_one_range_setup<
         Common,
         RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
+        // RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
         true,
         MakeR>();
 }
