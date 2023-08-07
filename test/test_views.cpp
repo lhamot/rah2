@@ -241,7 +241,7 @@ void test_filter_view()
     /// [filter]
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::bidirectional_iterator_tag, RAH2_STD::input_iterator_tag, make_filter_view>();
+    check_all_cat<make_filter_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -301,7 +301,7 @@ void test_transform_view()
     }
 
     testSuite.test_case("concept");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_transform_view>();
+    check_all_cat<make_transform_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -360,7 +360,7 @@ void test_take_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_take_view>();
+    check_all_cat<make_take_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -405,7 +405,7 @@ void test_drop_view()
         /// [drop_pipeable]
     }
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_drop_view>();
+    check_all_cat<make_drop_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -453,7 +453,7 @@ void test_drop_while_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_drop_while_view>();
+    check_all_cat<make_drop_while_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -520,7 +520,7 @@ void test_join_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::input_iterator_tag, RAH2_STD::input_iterator_tag, make_join_view>();
+    check_all_cat<make_join_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -555,7 +555,7 @@ void test_split_view()
     // TODO : Allow forward_iterator
     // TODO : Allow common_range
     // TODO : Check inner_range (reference_t)
-    check_all_cat<RAH2_NS::input_iterator_tag, RAH2_STD::input_iterator_tag, make_split_view>();
+    check_all_cat<make_split_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -589,7 +589,7 @@ void test_counted_view()
     /// [counted]
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_counted_view>();
+    check_all_cat<make_counted_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -619,7 +619,7 @@ void test_common_view()
     /// [rah2::views::common]
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::forward_iterator_tag, RAH2_NS::forward_iterator_tag, make_common_view>();
+    check_all_cat<make_common_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -662,7 +662,7 @@ void test_reverse_view()
         /// [reverse_pipeable]
     }
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_NS::input_iterator_tag, make_reverse_view>();
+    check_all_cat<make_reverse_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -707,7 +707,7 @@ void test_elements_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_elements_view>();
+    check_all_cat<make_elements_view>();
 }
 
 void test_values_view()
@@ -807,7 +807,7 @@ void test_enumerate_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_enumerate_view>();
+    check_all_cat<make_enumerate_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -888,8 +888,8 @@ void test_zip_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_zip_view1>();
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_zip_view2>();
+    check_all_cat<make_zip_view1>();
+    check_all_cat<make_zip_view2>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -963,7 +963,7 @@ void test_adjacent_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::forward_iterator_tag, make_adjacent_view>();
+    check_all_cat<make_adjacent_view>();
 }
 
 void test_zip_transform()
@@ -1283,7 +1283,7 @@ void test_stride_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::random_access_iterator_tag, RAH2_STD::input_iterator_tag, make_stride_view>();
+    check_all_cat<make_stride_view>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -1319,5 +1319,5 @@ void test_ref_view()
     }
 
     testSuite.test_case("concepts");
-    check_all_cat<RAH2_NS::contiguous_iterator_tag, RAH2_STD::input_iterator_tag, make_ref_view>();
+    check_all_cat<make_ref_view>();
 }

@@ -666,7 +666,7 @@ void test_one_range_setup()
     test_one_range_setup_impl<do_test, Sentinel, Cat2, ExpectedCat, Sized, Trait>::test();
 }
 
-template <typename MaxCat, typename MinCat = RAH2_STD::input_iterator_tag, template <CommonOrSent, typename, bool> class MakeR>
+template <template <CommonOrSent, typename, bool> class MakeR>
 void check_all_cat()
 {
     test_one_range_setup<
