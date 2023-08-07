@@ -63,6 +63,7 @@
 namespace RAH2_NS
 {
     // ***************************** <type_traits> traits *****************************************
+#if !RAH2_INSIDE_EASTL
     template <class Base, class Derived>
     constexpr bool is_base_of_v = RAH2_STD::is_base_of<Base, Derived>::value;
 
@@ -129,6 +130,7 @@ namespace RAH2_NS
     };
     template <class T>
     using remove_cvref_t = typename remove_cvref<T>::type;
+#endif
 
     struct view_base
     {
@@ -148,6 +150,7 @@ namespace RAH2_NS
     constexpr bool is_initializer_list = is_initializer_list_impl<remove_cvref_t<T>>::value;
 
     // ****************************** <utility> helpers *******************************************
+#if !RAH2_INSIDE_EASTL
     struct in_place_t
     {
         explicit in_place_t() = default;
@@ -181,6 +184,8 @@ namespace RAH2_NS
     template <class T>
     void as_const(T const&&) = delete;
 
+#endif
+
     // **************************** <functional> Classes ******************************************
     namespace ranges
     {
@@ -211,15 +216,23 @@ namespace RAH2_NS
             }
         };
     } // namespace ranges
-    struct identity
+
+#if RAH2_INSIDE_EASTL
+    namespace details
     {
-        template <class T>
-        constexpr T&& operator()(T&& t) const noexcept
+#endif
+        struct identity
         {
-            // Faster than forward in debug mode
-            return static_cast<T&&>(t);
-        }
-    };
+            template <class T>
+            constexpr T&& operator()(T&& t) const noexcept
+            {
+                // Faster than forward in debug mode
+                return static_cast<T&&>(t);
+            }
+        };
+#if RAH2_INSIDE_EASTL
+    } // namespace details
+#endif
 
     // ***************************** <concepts> concept *******************************************
     template <class Derived, class Base>
@@ -268,8 +281,10 @@ namespace RAH2_NS
 
     MAKE_CONCEPT(swappable, RAH2_STD::swap(RAH2_STD::declval<T&>(), RAH2_STD::declval<T&>()));
 
+#if !RAH2_INSIDE_EASTL
     template <class T>
     constexpr bool is_object_v = RAH2_STD::is_object<T>::value;
+#endif
 
     template <class T>
     constexpr bool movable = RAH2_NS::is_object_v<T> && RAH2_NS::move_constructible<T>
@@ -551,9 +566,11 @@ namespace RAH2_NS
         template <class T>
         using can_post_incr = decltype(RAH2_STD::declval<T&>()++);
 
-        static constexpr bool value = is_true_v<Diagnostic, movable<I>>
-                                      && compiles<Diagnostic, I, diff_is_signed_integer>
-                                      && compiles<Diagnostic, I, can_post_incr>;
+        static constexpr bool value =
+            compiles<Diagnostic, I, diff_is_signed_integer>
+            // && is_true_v<Diagnostic, movable<I>>
+            && is_true_v<Diagnostic, is_move_constructible_v<I>> // eastl::back_inserter is not move_assignable
+            && compiles<Diagnostic, I, can_post_incr>;
     };
 
     template <typename T>
@@ -1619,6 +1636,7 @@ namespace RAH2_NS
     };
     constexpr unreachable_sentinel_t unreachable_sentinel{};
 
+#if !RAH2_INSIDE_EASTL
     /// back_insert_iterator
     ///
     /// A back_insert_iterator is simply a class that acts like an iterator but when you
@@ -1690,7 +1708,7 @@ namespace RAH2_NS
     {
         return back_insert_iterator<Container>(x);
     }
-
+#endif
     // ***************************** algorithm replacement ****************************************
     namespace details
     {

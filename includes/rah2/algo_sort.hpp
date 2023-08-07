@@ -174,7 +174,11 @@ namespace RAH2_NS
             }
         }
 
-        template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare = RAH2_NS::ranges::less>
+        template <
+            typename InputRange1,
+            typename InputRange2,
+            typename OutputIterator,
+            typename Compare = RAH2_NS::ranges::less>
         merge_result<
             RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
             RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
