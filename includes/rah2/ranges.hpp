@@ -1842,6 +1842,7 @@ namespace RAH2_NS
             {
             }
 
+            // TODO : Move in RAH_NS for std::common_iterator
             class common_iterator
                 : public iterator_facade<common_iterator, void, iter_reference_t<base_iterator>, Cat>
             {
@@ -1961,6 +1962,34 @@ namespace RAH2_NS
                     return *this;
                 }
                 RAH2_POST_INCR(Cat)
+                template <
+                    typename C = Cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
+                common_iterator& operator--()
+                {
+                    --mpark::get<base_iterator>(var_);
+                    return *this;
+                }
+                template <
+                    typename C = Cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* =
+                        nullptr>
+                RAH2_POST_DECR;
+                template <
+                    typename C = Cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
+                bool operator<(common_iterator const& it2) const
+                {
+                    return mpark::get<base_iterator>(var_) < mpark::get<base_iterator>(it2.var_);
+                }
+                template <
+                    typename C = Cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
+                common_iterator& operator+=(RAH2_NS::ranges::range_difference_t<R> value)
+                {
+                    mpark::get<base_iterator>(var_) += value;
+                    return *this;
+                }
                 bool operator==(common_iterator const& it) const
                 {
                     return dispatch(equal(), *this, it);
