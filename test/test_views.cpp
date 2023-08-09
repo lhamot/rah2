@@ -128,6 +128,20 @@ void test_repeat_view()
     STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<decltype(range), true>::value));
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_owning_view
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    auto make()
+    {
+        return RAH2_NS::views::owning(BaseRange{});
+    }
+    static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = false;
+    using expected_cat = Tag;
+};
 void test_owning_view()
 {
     testSuite.test_case("sample");
@@ -140,9 +154,29 @@ void test_owning_view()
     }
     assert(out == (RAH2_STD::vector<int>{0, 1, 2, 2, 3}));
     /// [owning_view]
-    STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<decltype(owning), true>::value));
+
+    testSuite.test_case("concepts");
+    foreach_range_combination<test_range<make_owning_view>>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_all
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    BaseRange base;
+    auto make()
+    {
+        return RAH2_NS::views::all(base);
+    }
+    static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = RAH2_NS::ranges::view<BaseRange> ?
+                                            RAH2_NS::ranges::borrowed_range<BaseRange> :
+                                        (!RAH2_NS::is_rvalue_reference_v<BaseRange>) ? true :
+                                                                                       false;
+    using expected_cat = Tag;
+};
 void test_all_view()
 {
     // Test all
@@ -150,14 +184,14 @@ void test_all_view()
     // EQUAL_RANGE((il<int>{ 0, 1, 2, 3 } | RAH2_NS::views::all), (il<int>{ 0, 1, 2, 3 }));
     int intTab[] = {0, 1, 2, 3};
     testSuite.test_case("lvalue_container");
-    EQUAL_RANGE((intTab | RAH2_NS::ranges::all), (il<int>{0, 1, 2, 3}));
+    EQUAL_RANGE((intTab | RAH2_NS::views::all), (il<int>{0, 1, 2, 3}));
     testSuite.test_case("rvalue_container");
-    EQUAL_RANGE((RAH2_STD::vector<int>({0, 1, 2, 3}) | RAH2_NS::ranges::all), (il<int>{0, 1, 2, 3}));
+    EQUAL_RANGE((RAH2_STD::vector<int>({0, 1, 2, 3}) | RAH2_NS::views::all), (il<int>{0, 1, 2, 3}));
 
     testSuite.test_case("sample");
     /// [views::all]
     RAH2_STD::vector<int> out;
-    auto all = RAH2_NS::ranges::all(RAH2_STD::vector<int>{0, 1, 2, 2, 3});
+    auto all = RAH2_NS::views::all(RAH2_STD::vector<int>{0, 1, 2, 2, 3});
     for (auto&& val : all)
     {
         out.push_back(val);
@@ -166,7 +200,7 @@ void test_all_view()
     /// [views::all]
 
     testSuite.test_case("concepts");
-    STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<decltype(all), true>::value));
+    foreach_range_combination<test_range<make_all>>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -1281,4 +1315,41 @@ void test_ref_view()
 
     testSuite.test_case("concepts");
     foreach_range_combination<test_range<make_ref_view>>();
+}
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_subrange
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    BaseRange base;
+    auto make()
+    {
+        return RAH2_NS::ranges::make_subrange(base.begin(), base.end());
+    }
+    static constexpr bool is_sized = RAH2_NS::sized_sentinel_for<
+        RAH2_NS::ranges::sentinel_t<BaseRange>,
+        RAH2_NS::ranges::iterator_t<BaseRange>>;
+    static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = true;
+    using expected_cat = Tag;
+};
+void test_subrange()
+{
+    {
+        testSuite.test_case("sample");
+        /// [subrange]
+        RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
+        auto sub = RAH2_NS::ranges::make_subrange(vec.begin() + 1, vec.begin() + 4);
+        RAH2_STD::vector<int> out;
+        for (auto&& val : sub)
+        {
+            out.push_back(val);
+        }
+        assert(out == (RAH2_STD::vector<int>{1, 2, 2}));
+        /// [subrange]
+    }
+
+    testSuite.test_case("concepts");
+    foreach_range_combination<test_range<make_subrange>>();
 }

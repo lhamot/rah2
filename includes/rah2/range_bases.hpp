@@ -1259,7 +1259,7 @@ namespace RAH2_NS
         {
             template <typename T>
             using has_data = RAH2_STD::enable_if_t<RAH2_NS::is_same_v<
-                decltype(data(RAH2_STD::declval<T>())),
+                decltype(RAH2_NS::ranges::data(RAH2_STD::declval<T>())),
                 RAH2_STD::add_pointer_t<range_reference_t<T>>>>;
             template <typename T>
             using contiguous_iterator =
