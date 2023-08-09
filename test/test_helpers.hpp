@@ -586,11 +586,58 @@ template <typename R>
 constexpr bool is_contiguous_not_common =
     RAH2_NS::ranges::contiguous_range<R> && not RAH2_NS::ranges::common_range<R>;
 
+template <typename C, typename I>
+struct check_iterator_cat;
+
+template <typename I>
+struct check_iterator_cat<RAH2_STD::input_iterator_tag, I>
+{
+    STATIC_ASSERT(RAH2_NS::input_iterator<I>);
+    STATIC_ASSERT(
+        (RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::input_iterator_tag>));
+    STATIC_ASSERT(not RAH2_NS::forward_iterator<I>);
+};
+
+template <typename I>
+struct check_iterator_cat<RAH2_STD::forward_iterator_tag, I>
+{
+    STATIC_ASSERT(RAH2_NS::forward_iterator<I>);
+    STATIC_ASSERT(
+        (RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::forward_iterator_tag>));
+    STATIC_ASSERT(not RAH2_NS::bidirectional_iterator<I>);
+};
+
+template <typename I>
+struct check_iterator_cat<RAH2_NS::bidirectional_iterator_tag, I>
+{
+    STATIC_ASSERT(RAH2_NS::bidirectional_iterator<I>);
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::bidirectional_iterator_tag>));
+    STATIC_ASSERT(not RAH2_NS::random_access_iterator<I>);
+};
+
+template <typename I>
+struct check_iterator_cat<RAH2_NS::random_access_iterator_tag, I>
+{
+    STATIC_ASSERT(RAH2_NS::random_access_iterator<I>);
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::random_access_iterator_tag>));
+    STATIC_ASSERT(not RAH2_NS::contiguous_iterator<I>);
+};
+
+template <typename I>
+struct check_iterator_cat<RAH2_NS::contiguous_iterator_tag, I>
+{
+    STATIC_ASSERT(RAH2_NS::contiguous_iterator<I>);
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::contiguous_iterator_tag>));
+};
+
 template <typename C, typename R>
-struct check_cat_impl;
+struct check_range_cat;
 
 template <typename R>
-struct check_cat_impl<RAH2_STD::input_iterator_tag, R>
+struct check_range_cat<RAH2_STD::input_iterator_tag, R>
 {
     STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
     STATIC_ASSERT(
@@ -599,7 +646,7 @@ struct check_cat_impl<RAH2_STD::input_iterator_tag, R>
 };
 
 template <typename R>
-struct check_cat_impl<RAH2_STD::forward_iterator_tag, R>
+struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
     STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
@@ -609,7 +656,7 @@ struct check_cat_impl<RAH2_STD::forward_iterator_tag, R>
 };
 
 template <typename R>
-struct check_cat_impl<RAH2_NS::bidirectional_iterator_tag, R>
+struct check_range_cat<RAH2_NS::bidirectional_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<R, true>::value));
     STATIC_ASSERT((
@@ -618,7 +665,7 @@ struct check_cat_impl<RAH2_NS::bidirectional_iterator_tag, R>
 };
 
 template <typename R>
-struct check_cat_impl<RAH2_NS::random_access_iterator_tag, R>
+struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<R, true>::value));
     // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
@@ -627,7 +674,7 @@ struct check_cat_impl<RAH2_NS::random_access_iterator_tag, R>
 };
 
 template <typename R>
-struct check_cat_impl<RAH2_NS::contiguous_iterator_tag, R>
+struct check_range_cat<RAH2_NS::contiguous_iterator_tag, R>
 {
     STATIC_ASSERT((
         RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>));
@@ -702,7 +749,7 @@ struct test_range
             auto t1 = MakeR<Sentinel, Cat, Sized>();
             auto r1 = t1.make();
             using ExpectedCat = typename MakeR<Sentinel, Cat, Sized>::expected_cat;
-            check_cat_impl<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
+            check_range_cat<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
             AssertEqual<RAH2_NS::ranges::common_range<decltype(r1)>, t1.is_common>();
             AssertEqual<RAH2_NS::ranges::sized_range<decltype(r1)>, t1.is_sized>();
             AssertEqual<RAH2_NS::ranges::borrowed_range<decltype(r1)>, t1.is_borrowed>();
@@ -713,6 +760,29 @@ struct test_range
     {
         constexpr bool do_test = MakeRange<Sentinel, Cat, Sized>::do_test;
         call_on_range_if_true<do_test, Sentinel, Cat, Sized, MakeRange, CheckView>::test();
+    }
+};
+
+template <template <CommonOrSent, typename, bool> class MakeRange>
+struct test_iterator
+{
+    struct CheckIterator
+    {
+        template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeIter>
+        void call() const
+        {
+            using TestTrait = MakeIter<Sentinel, Cat, Sized>;
+            auto maker = TestTrait();
+            auto i1 = maker.make();
+            using ExpectedCat = typename TestTrait::expected_cat;
+            check_iterator_cat<ExpectedCat, std::remove_reference_t<decltype(i1)>>();
+        }
+    };
+    template <CommonOrSent Sentinel, typename Cat, bool Sized>
+    void call()
+    {
+        constexpr bool do_test = MakeRange<Sentinel, Cat, Sized>::do_test;
+        call_on_range_if_true<do_test, Sentinel, Cat, Sized, MakeRange, CheckIterator>::test();
     }
 };
 
