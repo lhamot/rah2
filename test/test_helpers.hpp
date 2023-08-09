@@ -109,6 +109,14 @@ struct AssertEqual<X, X>
 {
 };
 
+template <typename A, typename B>
+struct AssertSame;
+
+template <typename X>
+struct AssertSame<X, X>
+{
+};
+
 enum CommonOrSent
 {
     Common,
@@ -585,6 +593,8 @@ template <typename R>
 struct check_cat_impl<RAH2_STD::input_iterator_tag, R>
 {
     STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
+    STATIC_ASSERT(
+        (RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::ranges::forward_range<R>);
 };
 
@@ -593,13 +603,17 @@ struct check_cat_impl<RAH2_STD::forward_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
     STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
-    // STATIC_ASSERT(not RAH2_NS::bidirectional_range<R>);
+    STATIC_ASSERT(
+        (RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag>));
+    STATIC_ASSERT(not RAH2_NS::ranges::bidirectional_range<R>);
 };
 
 template <typename R>
 struct check_cat_impl<RAH2_NS::bidirectional_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<R, true>::value));
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::bidirectional_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::ranges::random_access_range<R>);
 };
 
@@ -607,180 +621,100 @@ template <typename R>
 struct check_cat_impl<RAH2_NS::random_access_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<R, true>::value));
+    // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
+    // AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag> checkSameType;
     STATIC_ASSERT(not RAH2_NS::ranges::contiguous_range<R>);
 };
 
 template <typename R>
 struct check_cat_impl<RAH2_NS::contiguous_iterator_tag, R>
 {
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>));
     STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
 };
-
-template <typename BaseCat, typename MinCat, typename MaxCat, typename R>
-void check_cat(R&&)
-{
-    using expected_cat = RAH2_NS::ranges::cap_iterator_tag<BaseCat, MinCat, MaxCat>;
-    check_cat_impl<expected_cat, std::remove_reference_t<R>>();
-}
 
 template <
     bool DoTest,
     CommonOrSent Sentinel,
     typename Cat,
-    typename ExpectedCat,
     bool Sized,
     template <CommonOrSent, typename, bool>
-    class MakeR>
-struct test_one_range_setup_impl
+    class MakeR,
+    typename Check>
+struct call_on_range_if_true
 {
     static void test()
     {
-        auto t1 = MakeR<Sentinel, Cat, Sized>();
-        auto r1 = t1.make();
-        check_cat_impl<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
-        AssertEqual<RAH2_NS::ranges::common_range<decltype(r1)>, t1.is_common>();
-        AssertEqual<RAH2_NS::ranges::sized_range<decltype(r1)>, t1.is_sized>();
-        AssertEqual<RAH2_NS::ranges::borrowed_range<decltype(r1)>, t1.is_borrowed>();
+        Check{}.template call<Sentinel, Cat, Sized, MakeR>();
     }
 };
 
-template <CommonOrSent Sentinel, typename Cat, typename ExpectedCat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
-struct test_one_range_setup_impl<false, Sentinel, Cat, ExpectedCat, Sized, MakeR>
+template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR, typename Check>
+struct call_on_range_if_true<false, Sentinel, Cat, Sized, MakeR, Check>
 {
     static void test()
     {
     }
 };
 
-template <
-    CommonOrSent Sentinel,
-    typename Cat2,
-    typename ExpectedCat,
-    bool Sized,
-    template <CommonOrSent, typename, bool>
-    class Trait>
+template <CommonOrSent Sentinel, typename Cat, bool Sized, class Func>
 void test_one_range_setup()
 {
-    constexpr bool do_test = Trait<Sentinel, Cat2, Sized>::do_test;
-    test_one_range_setup_impl<do_test, Sentinel, Cat2, ExpectedCat, Sized, Trait>::test();
+    Func{}.template call<Sentinel, Cat, Sized>();
 }
 
-template <typename MaxCat, typename MinCat = RAH2_STD::input_iterator_tag, template <CommonOrSent, typename, bool> class MakeR>
-void check_all_cat()
+template <class Func>
+void foreach_range_combination()
 {
-    test_one_range_setup<
-        Sentinel,
-        RAH2_STD::input_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_STD::input_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_STD::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_STD::forward_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
+    test_one_range_setup<Sentinel, RAH2_STD::input_iterator_tag, false, Func>();
+    test_one_range_setup<Sentinel, RAH2_STD::forward_iterator_tag, false, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::bidirectional_iterator_tag, false, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::random_access_iterator_tag, false, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::contiguous_iterator_tag, false, Func>();
 
-    test_one_range_setup<
-        Common,
-        RAH2_NS::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
-    test_one_range_setup<
-        Common,
-        RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
+    test_one_range_setup<Common, RAH2_NS::forward_iterator_tag, false, Func>();
+    test_one_range_setup<Common, RAH2_NS::bidirectional_iterator_tag, false, Func>();
     // Common random_access can't be not sized
-    /*test_one_range_setup<
-        Common,
-        RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();
-    test_one_range_setup<
-        Common,
-        RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
-        false,
-        MakeR>();*/
+    // test_one_range_setup<Common, AH2_NS::random_access_iterator_tag, false, MakeR, Check>();
+    // test_one_range_setup<Common, RAH2_NS::contiguous_iterator_tag, false, MakeR, Check>();
 
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::input_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::input_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Sentinel,
-        RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
+    test_one_range_setup<Sentinel, RAH2_NS::input_iterator_tag, true, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::forward_iterator_tag, true, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::bidirectional_iterator_tag, true, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::random_access_iterator_tag, true, Func>();
+    test_one_range_setup<Sentinel, RAH2_NS::contiguous_iterator_tag, true, Func>();
 
-    test_one_range_setup<
-        Common,
-        RAH2_NS::forward_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::forward_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Common,
-        RAH2_NS::bidirectional_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::bidirectional_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Common,
-        RAH2_NS::random_access_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::random_access_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
-    test_one_range_setup<
-        Common,
-        RAH2_NS::contiguous_iterator_tag,
-        RAH2_NS::ranges::cap_iterator_tag<RAH2_NS::contiguous_iterator_tag, MinCat, MaxCat>,
-        true,
-        MakeR>();
+    test_one_range_setup<Common, RAH2_NS::forward_iterator_tag, true, Func>();
+    test_one_range_setup<Common, RAH2_NS::bidirectional_iterator_tag, true, Func>();
+    test_one_range_setup<Common, RAH2_NS::random_access_iterator_tag, true, Func>();
+    test_one_range_setup<Common, RAH2_NS::contiguous_iterator_tag, true, Func>();
 }
+
+template <template <CommonOrSent, typename, bool> class MakeRange>
+struct test_range
+{
+    struct CheckView
+    {
+        template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
+        void call() const
+        {
+            auto t1 = MakeR<Sentinel, Cat, Sized>();
+            auto r1 = t1.make();
+            using ExpectedCat = typename MakeR<Sentinel, Cat, Sized>::expected_cat;
+            check_cat_impl<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
+            AssertEqual<RAH2_NS::ranges::common_range<decltype(r1)>, t1.is_common>();
+            AssertEqual<RAH2_NS::ranges::sized_range<decltype(r1)>, t1.is_sized>();
+            AssertEqual<RAH2_NS::ranges::borrowed_range<decltype(r1)>, t1.is_borrowed>();
+        }
+    };
+    template <CommonOrSent Sentinel, typename Cat, bool Sized>
+    void call()
+    {
+        constexpr bool do_test = MakeRange<Sentinel, Cat, Sized>::do_test;
+        call_on_range_if_true<do_test, Sentinel, Cat, Sized, MakeRange, CheckView>::test();
+    }
+};
 
 template <typename A, typename B, typename C, typename D>
 bool operator==(RAH2_STD::tuple<A, B> a, RAH2_STD::pair<D, C> b)
