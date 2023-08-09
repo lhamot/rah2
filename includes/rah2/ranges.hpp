@@ -874,7 +874,10 @@ namespace RAH2_NS
             {
                 return RAH2_NS::ranges::size(range_);
             }
-            bool data() const
+            template <
+                typename C = RAH2_NS::ranges::range_iter_categ_t<R>,
+                RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
+            auto data() const
             {
                 return RAH2_NS::ranges::data(range_);
             }
@@ -895,41 +898,44 @@ namespace RAH2_NS
             constexpr owning_raco owning;
         } // namespace views
         // ********************************** all *************************************************
-        struct all_raco : closure_object_facade<all_raco>
+        namespace views
         {
-            template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
-            auto operator()(R&& range) const -> decltype(RAH2_STD::forward<R>(range))
+            struct all_raco : closure_object_facade<all_raco>
             {
-                return RAH2_STD::forward<R>(range);
-            }
-            template <
-                typename R,
-                RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
-                RAH2_STD::enable_if_t<RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
-            auto operator()(R&& range) const
-            {
-                return views::ref(RAH2_STD::forward<R>(range));
-            }
+                template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
+                auto operator()(R&& range) const -> decltype(RAH2_STD::forward<R>(range))
+                {
+                    return RAH2_STD::forward<R>(range);
+                }
+                template <
+                    typename R,
+                    RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
+                    RAH2_STD::enable_if_t<RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    return views::ref(RAH2_STD::forward<R>(range));
+                }
 
-            template <
-                typename R,
-                RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
-                RAH2_STD::enable_if_t<not RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
-            auto operator()(R&& range) const
-            {
-                return owning_view<RAH2_STD::decay_t<R>>(RAH2_STD::forward<R>(range));
-            }
+                template <
+                    typename R,
+                    RAH2_STD::enable_if_t<not view<RAH2_STD::remove_reference_t<R>>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::is_lvalue_reference_v<R>>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    return owning_view<RAH2_STD::decay_t<R>>(RAH2_STD::forward<R>(range));
+                }
 
-            template <typename V>
-            auto operator()(std::initializer_list<V>& range) const
-            {
-                return views::ref(range);
-            }
-        };
-        constexpr all_raco all;
+                template <typename V>
+                auto operator()(std::initializer_list<V>& range) const
+                {
+                    return views::ref(range);
+                }
+            };
+            constexpr all_raco all;
 
-        template <typename R, RAH2_STD::enable_if_t<viewable_range<R>>* = nullptr>
-        using all_t = decltype(all(RAH2_STD::declval<R>()));
+            template <typename R, RAH2_STD::enable_if_t<viewable_range<R>>* = nullptr>
+            using all_t = decltype(all(RAH2_STD::declval<R>()));
+        } // namespace views
 
         // ***************************************** filter ***************************************
 
