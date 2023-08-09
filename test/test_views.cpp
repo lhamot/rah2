@@ -604,8 +604,14 @@ struct make_common_view
     static constexpr bool is_common = true;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
-    using expected_cat = RAH2_NS::ranges::range_iter_categ_t<BaseRange>;
-    // RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::forward_iterator_tag>;
+    using base_cat = RAH2_NS::ranges::range_iter_categ_t<BaseRange>;
+    using expected_cat = std::conditional_t<
+        RAH2_NS::ranges::common_range<BaseRange>,
+        base_cat,
+        std::conditional_t<
+            RAH2_NS::ranges::sized_range<BaseRange> && RAH2_NS::ranges::random_access_range<BaseRange>,
+            base_cat,
+            RAH2_NS::ranges::cap_iterator_tag<base_cat, RAH2_NS::forward_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
 };
 void test_common_view()
 {

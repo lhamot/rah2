@@ -1105,8 +1105,8 @@ namespace RAH2_NS
             R base_;
             RAH2_NS::details::optional<F> func_;
             constexpr static bool is_common_range = RAH2_NS::ranges::common_range<R>;
-            using category = RAH2_NS::ranges::
-                common_iterator_tag<RAH2_STD::random_access_iterator_tag, range_iter_categ_t<R>>;
+            using category =
+                cap_iterator_tag<range_iter_categ_t<R>, RAH2_STD::input_iterator_tag, RAH2_STD::random_access_iterator_tag>;
             constexpr static bool is_sized = sized_range<R>;
 
         public:
@@ -1128,7 +1128,6 @@ namespace RAH2_NS
                     decltype(RAH2_STD::declval<F>()(RAH2_STD::declval<range_reference_t<R>>()));
                 using pointer = typename details::pointer_type<reference>::type;
                 using value_type = RAH2_STD::remove_reference_t<reference>;
-                using iterator_category = range_iter_categ_t<R>;
 
                 iterator() = default;
                 iterator(iterator_t<R> iter, F func)
@@ -1828,9 +1827,12 @@ namespace RAH2_NS
             using base_sentinel = sentinel_t<R>;
             using input_iter_cat = range_iter_categ_t<R>;
             using Cat = RAH2_STD::conditional_t<
-                RAH2_NS::is_same_v<input_iter_cat, RAH2_STD::input_iterator_tag>,
-                RAH2_STD::forward_iterator_tag,
-                input_iter_cat>;
+                RAH2_NS::ranges::common_range<R>, // If common
+                input_iter_cat, // do not use common_iterator
+                std::conditional_t< // If sized random_access
+                    RAH2_NS::ranges::sized_range<R> && RAH2_NS::ranges::random_access_range<R>,
+                    input_iter_cat, // do not use common_iterator (move begin to end)
+                    RAH2_NS::ranges::cap_iterator_tag<input_iter_cat, RAH2_NS::forward_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
             static constexpr bool is_sized = RAH2_NS::ranges::sized_range<R>;
 
             static_assert(not common_range<R>, "expect not common_range<R>");
@@ -1998,17 +2000,60 @@ namespace RAH2_NS
                 template <
                     typename I = base_iterator,
                     typename S = base_sentinel,
-                    RAH2_STD::enable_if_t<sized_sentinel_for<I, S> && sized_sentinel_for<I, I>>* = nullptr>
+                    RAH2_STD::enable_if_t<sized_sentinel_for<S, I> && sized_sentinel_for<I, I>>* = nullptr>
                 common_iterator operator-(common_iterator const& it)
                 {
                     return dispatch(sub(), *this, it);
                 }
             };
 
+            template <typename R2 = R, RAH2_STD::enable_if_t<RAH2_NS::ranges::common_range<R2>>* = nullptr>
+            auto begin()
+            {
+                return RAH2_NS::ranges::begin(base_);
+            }
+
+            template <
+                typename R2 = R,
+                RAH2_STD::enable_if_t<
+                    !RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
+                    && RAH2_NS::ranges::sized_range<R2>>* = nullptr>
+            auto begin()
+            {
+                return RAH2_NS::ranges::begin(base_);
+            }
+
+            template <
+                typename R2 = R,
+                RAH2_STD::enable_if_t<
+                    !(!RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
+                      && RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
             auto begin()
             {
                 return common_iterator(RAH2_NS::ranges::begin(base_));
             }
+
+            template <typename R2 = R, RAH2_STD::enable_if_t<RAH2_NS::ranges::common_range<R2>>* = nullptr>
+            auto end()
+            {
+                return RAH2_NS::ranges::end(base_);
+            }
+
+            template <
+                typename R2 = R,
+                RAH2_STD::enable_if_t<
+                    !RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
+                    && RAH2_NS::ranges::sized_range<R2>>* = nullptr>
+            auto end()
+            {
+                return RAH2_NS::ranges::begin(base_) + RAH2_NS::ranges::size(base_);
+            }
+
+            template <
+                typename R2 = R,
+                RAH2_STD::enable_if_t<
+                    !(!RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
+                      && RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
 
             auto end()
             {
@@ -2143,7 +2188,8 @@ namespace RAH2_NS
 
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
-            using base_cat = range_iter_categ_t<R>;
+            using base_cat =
+                cap_iterator_tag<range_iter_categ_t<R>, input_iterator_tag, random_access_iterator_tag>;
             using reference =
                 typename RAH2_STD::tuple_element<N, RAH2_STD::remove_reference_t<range_reference_t<R>>>::type;
 
@@ -2745,7 +2791,8 @@ namespace RAH2_NS
             using IterTuple = decltype(details::transform_each(bases_, details::range_begin()));
             using SentinelTuple = decltype(details::transform_each(bases_, details::range_end()));
 
-            using base_cat = details::tuple_base_cat<RangeTuple>;
+            using base_cat =
+                cap_iterator_tag<details::tuple_base_cat<RangeTuple>, input_iterator_tag, random_access_iterator_tag>;
             struct is_sized_range
             {
                 template <typename Range>
@@ -3679,7 +3726,8 @@ namespace RAH2_NS
         {
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
-            using iter_cat = range_iter_categ_t<R>;
+            using iter_cat =
+                cap_iterator_tag<range_iter_categ_t<R>, input_iterator_tag, random_access_iterator_tag>;
             using base_diff_type = range_difference_t<R>;
             R base_;
             base_diff_type stride_;

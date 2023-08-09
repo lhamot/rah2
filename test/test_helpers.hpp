@@ -109,6 +109,14 @@ struct AssertEqual<X, X>
 {
 };
 
+template <typename A, typename B>
+struct AssertSame;
+
+template <typename X>
+struct AssertSame<X, X>
+{
+};
+
 enum CommonOrSent
 {
     Common,
@@ -585,6 +593,8 @@ template <typename R>
 struct check_cat_impl<RAH2_STD::input_iterator_tag, R>
 {
     STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
+    STATIC_ASSERT(
+        (RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::ranges::forward_range<R>);
 };
 
@@ -593,6 +603,8 @@ struct check_cat_impl<RAH2_STD::forward_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
     STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
+    STATIC_ASSERT(
+        (RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::ranges::bidirectional_range<R>);
 };
 
@@ -600,6 +612,8 @@ template <typename R>
 struct check_cat_impl<RAH2_NS::bidirectional_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<R, true>::value));
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::bidirectional_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::ranges::random_access_range<R>);
 };
 
@@ -607,12 +621,16 @@ template <typename R>
 struct check_cat_impl<RAH2_NS::random_access_iterator_tag, R>
 {
     STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<R, true>::value));
+    // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
+    // AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag> checkSameType;
     STATIC_ASSERT(not RAH2_NS::ranges::contiguous_range<R>);
 };
 
 template <typename R>
 struct check_cat_impl<RAH2_NS::contiguous_iterator_tag, R>
 {
+    STATIC_ASSERT((
+        RAH2_NS::is_same_v<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>));
     STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
 };
 
@@ -628,7 +646,7 @@ struct call_on_range_if_true
 {
     static void test()
     {
-        Check{}.call<Sentinel, Cat, Sized, MakeR>();
+        Check{}.template call<Sentinel, Cat, Sized, MakeR>();
     }
 };
 
@@ -643,7 +661,7 @@ struct call_on_range_if_true<false, Sentinel, Cat, Sized, MakeR, Check>
 template <CommonOrSent Sentinel, typename Cat, bool Sized, class Func>
 void test_one_range_setup()
 {
-    Func{}.call<Sentinel, Cat, Sized>();
+    Func{}.template call<Sentinel, Cat, Sized>();
 }
 
 template <class Func>
