@@ -16,67 +16,22 @@
 
 #include "test_helpers.hpp"
 
-auto inputSentView = make_test_view<Sentinel, RAH2_STD::input_iterator_tag, false>();
-auto fwdSentView = make_test_view<Sentinel, RAH2_STD::forward_iterator_tag, false>();
-auto fwdCommonView = make_test_view<Common, RAH2_STD::forward_iterator_tag, false>();
-auto bidirSentView = make_test_view<Sentinel, RAH2_STD::bidirectional_iterator_tag, false>();
-auto bidirCommonView = make_test_view<Common, RAH2_STD::bidirectional_iterator_tag, false>();
-auto rdmSentView = make_test_view<Sentinel, RAH2_STD::random_access_iterator_tag, true>();
-auto rdmCommonView = make_test_view<Common, RAH2_STD::random_access_iterator_tag, true>();
-auto contiSentView = make_test_view<Sentinel, RAH2_NS::contiguous_iterator_tag, true>();
-auto contiCommonView = make_test_view<Common, RAH2_NS::contiguous_iterator_tag, true>();
-
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_counted_iterator
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    BaseRange base;
+    auto make()
+    {
+        return RAH2_NS::make_counted_iterator(RAH2_NS::ranges::begin(base), 10);
+    }
+    static constexpr bool do_test = true;
+    using expected_cat = Tag;
+};
 void test_counted_iterator()
 {
-    testSuite.test_case("sample", "");
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(inputSentView), 10));
-        STATIC_ASSERT(RAH2_NS::input_iterator<Iter>);
-        STATIC_ASSERT(not RAH2_NS::forward_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(fwdSentView), 10));
-        STATIC_ASSERT(RAH2_NS::forward_iterator<Iter>);
-        STATIC_ASSERT(not RAH2_NS::bidirectional_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(fwdCommonView), 10));
-        STATIC_ASSERT(RAH2_NS::forward_iterator<Iter>);
-        STATIC_ASSERT(not RAH2_NS::bidirectional_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(bidirSentView), 10));
-        STATIC_ASSERT((RAH2_NS::bidirectional_iterator_impl<Iter, true>::value));
-        STATIC_ASSERT(not RAH2_NS::random_access_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(bidirCommonView), 10));
-        constexpr auto fsdkjfgqs = RAH2_NS::bidirectional_iterator_impl<Iter, true>::value;
-        STATIC_ASSERT(fsdkjfgqs);
-        STATIC_ASSERT(RAH2_NS::bidirectional_iterator<Iter>);
-        STATIC_ASSERT(not RAH2_NS::random_access_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(rdmSentView), 10));
-        // STATIC_ASSERT(RAH2_NS::totally_ordered<Iter>);
-        STATIC_ASSERT((RAH2_NS::random_access_iterator_impl<Iter, true>::value));
-        STATIC_ASSERT(RAH2_NS::random_access_iterator<Iter>);
-        STATIC_ASSERT(not RAH2_NS::contiguous_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(rdmCommonView), 10));
-        STATIC_ASSERT(RAH2_NS::random_access_iterator<Iter>);
-        STATIC_ASSERT(not RAH2_NS::contiguous_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(contiSentView), 10));
-        STATIC_ASSERT((RAH2_NS::contiguous_iterator_impl<Iter, true>::value));
-        STATIC_ASSERT(RAH2_NS::contiguous_iterator<Iter>);
-    }
-    {
-        using Iter = decltype(RAH2_NS::make_counted_iterator(begin(contiCommonView), 10));
-        STATIC_ASSERT(RAH2_NS::contiguous_iterator<Iter>);
-    }
+    testSuite.test_case("concepts");
+    foreach_range_combination<test_iterator<make_counted_iterator>>();
 }
 
 void test_empty_view()
