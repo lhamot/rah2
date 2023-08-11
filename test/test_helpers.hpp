@@ -137,7 +137,7 @@ public:
     };
 
     using ref_type =
-        std::conditional_t<RAH2_NS::is_same_v<Cat, RAH2_NS::output_iterator_tag>, int&, int const&>;
+        RAH2_STD::conditional_t<RAH2_NS::is_same_v<Cat, RAH2_NS::output_iterator_tag>, int&, int const&>;
 
     class iterator : public RAH2_NS::ranges::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
@@ -149,7 +149,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<
+            RAH2_STD::enable_if_t<
                 RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag>
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator(iterator&& other)
@@ -160,7 +160,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<
+            RAH2_STD::enable_if_t<
                 RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag>
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator& operator=(iterator&& other)
@@ -171,7 +171,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<
+            RAH2_STD::enable_if_t<
                 RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator(iterator const& other)
@@ -182,7 +182,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<
+            RAH2_STD::enable_if_t<
                 RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator& operator=(iterator const& other)
@@ -204,7 +204,7 @@ public:
         RAH2_POST_INCR(Cat)
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         iterator& operator+=(intptr_t value)
         {
             val_ += static_cast<int>(step_ * value);
@@ -213,7 +213,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
         iterator& operator--()
         {
             val_ -= step_;
@@ -221,18 +221,18 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
         RAH2_POST_DECR;
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         auto operator-(iterator const& other) const
         {
             return (val_ - other.val_) / step_;
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         iterator& operator-=(intptr_t value)
         {
             val_ -= static_cast<int>(step_ * value);
@@ -248,7 +248,7 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>>* = nullptr>
         friend constexpr bool operator==(iterator const& it1, iterator const& it2)
         {
             return it1.val_ == it2.val_;
@@ -263,7 +263,7 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         friend bool operator<(iterator const& it1, iterator const& it2)
         {
             return it1.val_ < it2.val_;
@@ -278,7 +278,7 @@ public:
     {
     }
 
-    template <bool IsSized = SizedRange, std::enable_if_t<IsSized>* = nullptr>
+    template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
     auto size() const
     {
         return (stop_ - start_) / step_;
@@ -288,25 +288,29 @@ public:
     {
         return iterator(start_, step_);
     }
-    template <CommonOrSent S = Sent, std::enable_if_t<S == Sentinel>* = nullptr>
+    template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
     {
         return RAH2_NS::default_sentinel_t{};
     }
-    template <CommonOrSent S = Sent, std::enable_if_t<S == Common>* = nullptr>
+    template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Common>* = nullptr>
     auto end()
     {
         auto const last_index = (stop_ - start_);
         auto const rounded_last = ((last_index + (step_ - 1)) / step_) * step_;
         return iterator(start_ + rounded_last, step_);
     }
-    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
     RAH2_STD::remove_reference_t<ref_type>* data()
     {
         return nullptr;
     }
 
-    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
     RAH2_STD::remove_reference_t<ref_type>* data() const
     {
         return nullptr;
@@ -341,7 +345,7 @@ public:
         RAH2_POST_INCR(Cat)
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         iterator& operator+=(intptr_t value)
         {
             iter_ += value;
@@ -350,7 +354,7 @@ public:
 
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
         iterator& operator--()
         {
             --iter_;
@@ -358,18 +362,18 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
         RAH2_POST_DECR;
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         auto operator-(iterator const& other) const
         {
             return iter_ - other.iter_;
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         iterator& operator-=(intptr_t value)
         {
             iter_ -= value;
@@ -385,7 +389,7 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
         friend constexpr bool operator==(iterator const& it1, iterator const& it2)
         {
             return it1.iter_ == it2.iter_;
@@ -400,7 +404,7 @@ public:
         }
         template <
             typename C = Cat,
-            std::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         friend bool operator<(iterator const& it1, iterator const& it2)
         {
             return it1.iter_ < it2.iter_;
@@ -417,23 +421,27 @@ public:
     {
         return iterator(RAH2_NS::ranges::begin(base_));
     }
-    template <CommonOrSent S = Sent, std::enable_if_t<S == Sentinel>* = nullptr>
+    template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
     {
         return RAH2_NS::default_sentinel_t{};
     }
-    template <CommonOrSent S = Sent, std::enable_if_t<S == Common>* = nullptr>
+    template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Common>* = nullptr>
     auto end()
     {
         return iterator(RAH2_NS::ranges::end(base_));
     }
-    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
     int* data()
     {
         return RAH2_NS::ranges::data(base_);
     }
 
-    template <typename C = Cat, std::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
+    template <
+        typename C = Cat,
+        RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
     int* data() const
     {
         return RAH2_NS::ranges::data(base_);
@@ -647,9 +655,9 @@ struct check_range_cat<RAH2_STD::input_iterator_tag, R>
 template <typename R>
 struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
 {
+    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag> checkSameType;
     STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
     STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
-    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag> checkSameType;
     STATIC_ASSERT(not RAH2_NS::ranges::bidirectional_range<R>);
 };
 
@@ -756,6 +764,16 @@ struct test_range
     {
         constexpr bool do_test = MakeRange<Sentinel, Cat, Sized>::do_test;
         call_on_range_if_true<do_test, Sentinel, Cat, Sized, MakeRange, CheckView>::test();
+    }
+};
+
+template <template <CommonOrSent, typename, bool> class MakeRange>
+struct test_range2 // When the adaptor take two ranges
+{
+    template <CommonOrSent Sentinel, typename Cat, bool Sized>
+    void call()
+    {
+        foreach_range_combination<test_range<MakeRange<Sentinel, Cat, Sized>::template type>>();
     }
 };
 
@@ -893,7 +911,7 @@ std::ostream& operator<<(std::ostream& os, RAH2_STD::tuple<Args...> tup)
     return os;
 }
 
-template <typename R, typename = std::enable_if_t<RAH2_NS::ranges::range<R>>>
+template <typename R, typename = RAH2_STD::enable_if_t<RAH2_NS::ranges::range<R>>>
 void toto(R&&)
 {
 }

@@ -3918,11 +3918,18 @@ namespace RAH2_NS
                     iter_ += off;
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --iter_;
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
                 friend intptr_t operator-(iterator const& it1, iterator const& it2)
                 {
                     return it1.iter_ - it2.iter_;
@@ -3932,6 +3939,14 @@ namespace RAH2_NS
                 {
                     return *iter_;
                 }
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
+                bool operator<(iterator const it2) const
+                {
+                    return iter_ < it2.iter_;
+                }
+
                 friend bool operator==(iterator const& it1, iterator const& it2)
                 {
                     return it1.iter_ == it2.iter_;
@@ -3958,7 +3973,17 @@ namespace RAH2_NS
             {
                 return false;
             }
+
+            template <typename I2 = I, RAH2_STD::enable_if_t<RAH2_NS::contiguous_iterator<I2>>* = nullptr>
+            auto data()
+            {
+                return &(*iter_);
+            }
         };
+
+        template <class I>
+        constexpr bool enable_borrowed_range<unbounded_view<I>> = true;
+
         namespace views
         {
             template <typename I>
@@ -4073,7 +4098,7 @@ namespace RAH2_NS
             }
         } // namespace views
 
-        // ********************************** cycle ********************************************************
+        // ********************************** cycle ***********************************************
 
         template <typename R>
         class cycle_view : public view_interface<cycle_view<R>>
@@ -4081,10 +4106,15 @@ namespace RAH2_NS
             R base_;
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
-            using base_cat = range_iter_categ_t<R>;
+            using max_tag = RAH2_STD::conditional_t<
+                assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<R>>, sentinel_t<R>>,
+                RAH2_NS::bidirectional_iterator_tag,
+                RAH2_NS::forward_iterator_tag>;
+            using base_cat =
+                cap_iterator_tag<range_iter_categ_t<R>, RAH2_NS::input_iterator_tag, max_tag>;
 
             static_assert(
-                RAH2_NS::ranges::forward_range<R>, "cycle_view require at leaset a forward_range");
+                RAH2_NS::ranges::forward_range<R>, "cycle_view require at least a forward_range");
 
         public:
             class iterator : public iterator_facade<
@@ -4200,6 +4230,7 @@ namespace RAH2_NS
             constexpr cycle_raco cycle;
 
         } // namespace views
+
         // ********************************** generate ****************************************************
         template <typename F>
         class generate_view : public view_interface<generate_view<F>>
@@ -4270,6 +4301,7 @@ namespace RAH2_NS
                 return generate(RAH2_STD::forward<F>(func)) | take(count);
             }
         } // namespace views
+
         // ******************************************* set_difference *************************************
 
         template <typename InputRng1, typename InputRng2>
@@ -4287,10 +4319,10 @@ namespace RAH2_NS
         public:
             class iterator : public iterator_facade<iterator, default_sentinel_t, reference, base_cat>
             {
-                inner_iterator1 first1_;
-                inner_sentinel1 last1_;
-                inner_iterator2 first2_;
-                inner_sentinel2 last2_;
+                inner_iterator1 first1_{};
+                inner_sentinel1 last1_{};
+                inner_iterator2 first2_{};
+                inner_sentinel2 last2_{};
 
                 void next_value()
                 {
@@ -4309,6 +4341,7 @@ namespace RAH2_NS
                 }
 
             public:
+                iterator() = default;
                 iterator(
                     inner_iterator1 first1,
                     inner_sentinel1 last1,
@@ -4332,6 +4365,10 @@ namespace RAH2_NS
                 auto operator*() const -> decltype(*first1_)
                 {
                     return *first1_;
+                }
+                friend bool operator==(iterator const& it, iterator const& it2)
+                {
+                    return it.first1_ == it2.first1_;
                 }
                 friend bool operator==(iterator const& it, default_sentinel_t)
                 {
@@ -4381,6 +4418,7 @@ namespace RAH2_NS
             };
             constexpr set_difference_raco set_difference;
         } // namespace views
+
         // ********************************** for_each ****************************************************
         namespace views
         {
@@ -4404,6 +4442,7 @@ namespace RAH2_NS
             };
             constexpr for_each_raco for_each;
         } // namespace views
+
         // ***************************************** slice ************************************************
 
         template <typename R>
@@ -4430,7 +4469,8 @@ namespace RAH2_NS
             auto begin()
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
-                iter += RAH2_NS::details::min(begin_idx_, RAH2_NS::ranges::ssize(base_));
+                iter +=
+                    RAH2_NS::details::min(begin_idx_, std::ptrdiff_t(RAH2_NS::ranges::size(base_)));
                 return iter;
             }
 
@@ -4472,6 +4512,16 @@ namespace RAH2_NS
                     RAH2_NS::details::min(end_idx_, base_size)
                     - RAH2_NS::details::min(begin_idx_, base_size));
             }
+            template <bool C = RAH2_NS::ranges::contiguous_range<R>, RAH2_STD::enable_if_t<C>* = nullptr>
+            auto data()
+            {
+                return &(*begin());
+            }
+            template <bool C = RAH2_NS::ranges::contiguous_range<R const>, RAH2_STD::enable_if_t<C>* = nullptr>
+            auto data() const
+            {
+                return &(*begin());
+            }
         };
         namespace views
         {
@@ -4511,7 +4561,9 @@ namespace RAH2_NS
             using r2_iterator = iterator_t<R2>;
             using r1_sentinel = sentinel_t<R1>;
             using r2_sentinel = sentinel_t<R2>;
-            using base_cat = RAH2_STD::forward_iterator_tag;
+            using base_cat = common_iterator_tag<
+                common_iterator_tag<range_iter_categ_t<R1>, range_iter_categ_t<R2>>,
+                RAH2_STD::forward_iterator_tag>;
 
         public:
             static_assert(
@@ -4521,13 +4573,14 @@ namespace RAH2_NS
 
             class iterator : public iterator_facade<iterator, default_sentinel_t, reference, base_cat>
             {
-                r1_iterator iter1_;
-                r1_sentinel sent1_;
-                r2_iterator iter2_;
-                r2_sentinel sent2_;
-                size_t range_index_;
+                r1_iterator iter1_{};
+                r1_sentinel sent1_{};
+                r2_iterator iter2_{};
+                r2_sentinel sent2_{};
+                size_t range_index_{};
 
             public:
+                iterator() = default;
                 iterator(r1_iterator iter1, r1_sentinel sent1, r2_iterator iter2, r2_sentinel sent2)
                     : iter1_(RAH2_STD::move(iter1))
                     , sent1_(RAH2_STD::move(sent1))
@@ -4604,6 +4657,19 @@ namespace RAH2_NS
             default_sentinel_t end()
             {
                 return {};
+            }
+
+            template <bool all_sized = sized_range<R1>&& sized_range<R2>, RAH2_STD::enable_if_t<all_sized>* = nullptr>
+            auto size()
+            {
+                return RAH2_NS::ranges::size(base1_) + RAH2_NS::ranges::size(base2_);
+            }
+            template <
+                bool all_sized = sized_range<R1 const>&& sized_range<R2 const>,
+                RAH2_STD::enable_if_t<all_sized>* = nullptr>
+            auto size() const
+            {
+                return RAH2_NS::ranges::size(base1_) + RAH2_NS::ranges::size(base2_);
             }
         };
         namespace views

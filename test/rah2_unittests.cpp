@@ -132,6 +132,13 @@ void test_slide_view();
 void test_chunk_view();
 void test_stride_view();
 void test_ref_view();
+void test_unbounded_view();
+void test_irange_view();
+void test_cycle_view();
+void test_generate_view();
+void test_slice_view();
+void test_concat_view();
+void test_set_difference_view();
 
 void test_all_of();
 void test_any_of();
@@ -404,6 +411,13 @@ try
     testSuite.addTest(range_adaptors, "ranges::chunk_view", test_chunk_view);
     testSuite.addTest(range_adaptors, "ranges::stride_view", test_stride_view);
     testSuite.addTest(range_adaptors, "ranges::ref_view", test_ref_view);
+    testSuite.addTest(range_adaptors, "ranges::unbounded_view", test_unbounded_view);
+    testSuite.addTest(range_adaptors, "ranges::irange_view", test_irange_view);
+    testSuite.addTest(range_adaptors, "ranges::cycle_view", test_cycle_view);
+    testSuite.addTest(range_adaptors, "ranges::generate_view", test_generate_view);
+    testSuite.addTest(range_adaptors, "ranges::slice_view", test_slice_view);
+    testSuite.addTest(range_adaptors, "ranges::concat_view", test_concat_view);
+    testSuite.addTest(range_adaptors, "ranges::set_difference_view", test_set_difference_view);
 
     auto algorithms = "Algorithms";
     testSuite.addTest(algorithms, "ranges::all_of", test_all_of);
@@ -678,127 +692,6 @@ try
     }
 
     {
-        /// [generate]
-        int y = 1;
-        auto gen = RAH2_NS::views::generate(
-            [&y]() mutable
-            {
-                auto const prev = y;
-                y *= 2;
-                return prev;
-            });
-        RAH2_STD::vector<int> gen_copy;
-        auto first = RAH2_NS::ranges::begin(gen);
-        auto result = RAH2_NS::back_inserter(gen_copy);
-        for (auto n = 4; n > 0; --n, ++result, ++first)
-            *result = *first;
-        assert(gen_copy == RAH2_STD::vector<int>({1, 2, 4, 8}));
-        /// [generate]
-        STATIC_ASSERT((RAH2_NS::ranges::input_range_impl<decltype(gen), true>::value));
-        STATIC_ASSERT(((RAH2_NS::is_same_v<
-                        RAH2_NS::ranges::range_iter_categ_t<decltype(gen)>,
-                        RAH2_STD::input_iterator_tag>)));
-        STATIC_ASSERT(not RAH2_NS::ranges::forward_range<decltype(gen)>);
-        STATIC_ASSERT(not RAH2_NS::ranges::common_range<decltype(gen)>);
-    }
-    {
-        /// [generate_n]
-        RAH2_STD::vector<int> result;
-        int y = 1;
-        auto gen = RAH2_NS::views::generate_n(
-            4,
-            [&y]() mutable
-            {
-                auto const prev = y;
-                y *= 2;
-                return prev;
-            });
-        auto i = RAH2_NS::ranges::begin(gen);
-        auto e = RAH2_NS::ranges::end(gen);
-        for (; i != e; ++i)
-            result.push_back(*i);
-        assert(result == RAH2_STD::vector<int>({1, 2, 4, 8}));
-        /// [generate_n]
-        STATIC_ASSERT(RAH2_NS::ranges::input_range<decltype(gen)>);
-        STATIC_ASSERT((RAH2_NS::is_same_v<
-                       RAH2_NS::ranges::range_iter_categ_t<decltype(gen)>,
-                       RAH2_STD::input_iterator_tag>));
-        STATIC_ASSERT(not RAH2_NS::ranges::forward_range<decltype(gen)>);
-        STATIC_ASSERT(not RAH2_NS::ranges::common_range<decltype(gen)>);
-    }
-
-    {
-        /// [cycle]
-        RAH2_STD::vector<int> in{0, 1, 2};
-        auto cy = RAH2_NS::views::cycle(in);
-        RAH2_STD::vector<int> out;
-        RAH2_STD::copy_n(cy.begin(), 8, RAH2_STD::back_inserter(out));
-        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
-        /// [cycle]
-        STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range<decltype(cy)>));
-        STATIC_ASSERT((not RAH2_NS::ranges::random_access_range<decltype(cy)>));
-    }
-    {
-        auto cyForwardSent =
-            RAH2_NS::views::cycle(make_test_view<Sentinel, RAH2_STD::forward_iterator_tag, false>());
-        STATIC_ASSERT(is_forward_not_common<decltype(cyForwardSent)>);
-    }
-    {
-        auto cyForwardCommon =
-            RAH2_NS::views::cycle(make_test_view<Common, RAH2_STD::forward_iterator_tag, false>());
-        STATIC_ASSERT(is_forward_not_common<decltype(cyForwardCommon)>);
-    }
-    { // Cycle can't be bidir if we can't assign sentinel to iterator
-        auto cyBidirSent = RAH2_NS::views::cycle(
-            make_test_view<Sentinel, RAH2_STD::bidirectional_iterator_tag, false>());
-        STATIC_ASSERT(is_forward_not_common<decltype(cyBidirSent)>);
-    }
-    {
-        auto cyBidirCommon = RAH2_NS::views::cycle(
-            make_test_view<Common, RAH2_STD::bidirectional_iterator_tag, false>());
-        STATIC_ASSERT(is_bidirectional_not_common<decltype(cyBidirCommon)>);
-    }
-    { // Cycle can't be bidir if we can't assign sentinel to iterator
-        auto cyRandomSent = RAH2_NS::views::cycle(
-            make_test_view<Sentinel, RAH2_STD::random_access_iterator_tag, true>());
-        STATIC_ASSERT(is_forward_not_common<decltype(cyRandomSent)>);
-    }
-    {
-        auto cyRandomCommon = RAH2_NS::views::cycle(
-            make_test_view<Common, RAH2_STD::random_access_iterator_tag, true>());
-        STATIC_ASSERT(is_bidirectional_not_common<decltype(cyRandomCommon)>);
-    }
-    { // Cycle can't be bidir if we can't assign sentinel to iterator
-        auto cyContiSent =
-            RAH2_NS::views::cycle(make_test_view<Sentinel, RAH2_NS::contiguous_iterator_tag, true>());
-        STATIC_ASSERT(is_forward_not_common<decltype(cyContiSent)>);
-    }
-    {
-        auto cyContiCommon =
-            RAH2_NS::views::cycle(make_test_view<Common, RAH2_NS::contiguous_iterator_tag, true>());
-        STATIC_ASSERT(is_bidirectional_not_common<decltype(cyContiCommon)>);
-    }
-
-    {
-        /// [cycle_pipeable]
-        RAH2_STD::vector<int> in{0, 1, 2};
-        auto cy = in | RAH2_NS::views::cycle;
-        RAH2_STD::vector<int> out;
-        RAH2_STD::copy_n(cy.begin(), 8, RAH2_STD::back_inserter(out));
-        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
-        /// [cycle_pipeable]
-    }
-
-    {
-        RAH2_STD::vector<int> in{0, 1, 2};
-        auto cy = RAH2_NS::views::cycle(in) | RAH2_NS::views::take(8);
-        RAH2_STD::vector<int> out;
-        // static_assert(RAH2_NS::range<decltype(RAH2_NS::back_inserter(out))>, "dkjh");
-        RAH2_NS::ranges::copy(cy, RAH2_NS::back_inserter(out));
-        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
-    }
-
-    {
         RAH2_STD::vector<int> in{0, 1, 2};
         auto range = RAH2_NS::views::drop(in, 6);
         RAH2_STD::vector<int> out;
@@ -832,44 +725,6 @@ try
         RAH2_STD::vector<int> out;
         RAH2_NS::ranges::copy(range, RAH2_NS::back_inserter(out));
         assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4}));
-    }
-
-    {
-        /// [counted_pipeable]
-        RAH2_STD::vector<int> in{0, 1, 2, 3, 4, 5};
-        auto range = in | RAH2_NS::views::take(9);
-        RAH2_STD::vector<int> out;
-        auto a = RAH2_NS::ranges::begin(range);
-        auto b = RAH2_NS::ranges::end(range);
-        auto volatile dist = RAH2_STD::distance(a, b);
-        (void)dist;
-        RAH2_STD::copy(
-            RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::back_inserter(out));
-        assert(out == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5}));
-        /// [counted_pipeable]
-    }
-
-    {
-        /// [slice]
-        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
-        RAH2_STD::vector<int> result;
-        for (int i : RAH2_NS::views::slice(vec, 2, 6))
-            result.push_back(i);
-        assert(result == RAH2_STD::vector<int>({2, 3, 4, 5}));
-        RAH2_STD::vector<int> result2;
-        for (int i : RAH2_NS::views::slice(vec, 2, 6))
-            result2.push_back(i);
-        assert(result2 == RAH2_STD::vector<int>({2, 3, 4, 5}));
-        /// [slice]
-    }
-    {
-        /// [slice_pipeable]
-        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
-        RAH2_STD::vector<int> result;
-        for (int i : vec | RAH2_NS::views::slice(2, 6))
-            result.push_back(i);
-        assert(result == RAH2_STD::vector<int>({2, 3, 4, 5}));
-        /// [slice_pipeable]
     }
 
     {
@@ -977,106 +832,6 @@ try
                            | RAH2_NS::views::filter([](auto&& val) { return val % 2 == 0; });
                 });
         assert(RAH2_NS::ranges::none_of(range3, [](auto v) { return (v % 2) == 1; }));
-    }
-
-    {
-        /// [concat]
-        RAH2_STD::vector<int> inputA{0, 1, 2, 3};
-        RAH2_STD::vector<int> inputB{4, 5, 6};
-        RAH2_STD::vector<int> inputC{7, 8, 9, 10, 11};
-        {
-            RAH2_STD::vector<int> result;
-            for (int i : RAH2_NS::views::concat(inputA))
-                result.push_back(i);
-            assert(result == RAH2_STD::vector<int>({0, 1, 2, 3}));
-        }
-        {
-            RAH2_STD::vector<int> result;
-            for (int i : RAH2_NS::views::concat(inputA, inputB) | RAH2_NS::views::common)
-                result.push_back(i);
-            assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6}));
-        }
-        {
-            RAH2_STD::vector<int> result;
-            for (int i : RAH2_NS::views::concat(inputA, inputB, inputC) | RAH2_NS::views::common)
-                result.push_back(i);
-            assert(result == RAH2_STD::vector<int>({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}));
-        }
-        /// [concat]
-    }
-    {
-        RAH2_STD::vector<int> inputA{};
-        RAH2_STD::vector<int> inputB{1, 2, 3, 4};
-        {
-            RAH2_STD::vector<int> result;
-            for (int i : RAH2_NS::views::concat(inputA, inputB) | RAH2_NS::views::common)
-                result.push_back(i);
-            assert(result == RAH2_STD::vector<int>({1, 2, 3, 4}));
-        }
-        {
-            RAH2_STD::vector<int> result;
-            for (int i : RAH2_NS::views::concat(inputA, inputB) | RAH2_NS::views::common)
-                result.push_back(i);
-            assert(result == RAH2_STD::vector<int>({1, 2, 3, 4}));
-        }
-        {
-            RAH2_STD::vector<int> result;
-            for (int i : RAH2_NS::views::concat(inputA, inputA) | RAH2_NS::views::common)
-                result.push_back(i);
-            assert(result == RAH2_STD::vector<int>({}));
-        }
-    }
-
-    {
-        /// [views::set_difference]
-        RAH2_STD::vector<int> in1 = {1, 2, 3, 4, 5, 6};
-        RAH2_STD::vector<int> in2 = {2, 4, 6, 7, 8, 9, 10};
-        RAH2_STD::vector<int> out;
-        for (int val : RAH2_NS::views::set_difference(in1, in2) | RAH2_NS::views::common)
-            out.push_back(val);
-        assert(out == RAH2_STD::vector<int>({1, 3, 5}));
-        /// [views::set_difference]
-    }
-
-    {
-        /// views::set_difference
-        auto test_set_difference = [](RAH2_STD::vector<int> const& in1,
-                                      RAH2_STD::vector<int> const& in2,
-                                      RAH2_STD::vector<int> const& expected)
-        {
-            RAH2_STD::vector<int> out;
-            for (int const val : RAH2_NS::views::set_difference(in1, in2) | RAH2_NS::views::common)
-                out.push_back(val);
-            assert(out == expected);
-        };
-
-        test_set_difference({}, {2, 4, 6, 7, 8, 9, 10}, {});
-        test_set_difference({1, 2, 3, 4, 5, 6}, {}, {1, 2, 3, 4, 5, 6});
-        test_set_difference({1, 2, 3, 4, 5, 6, 7}, {2, 4, 6}, {1, 3, 5, 7});
-        test_set_difference({1, 2, 4, 6}, {3, 5, 7}, {1, 2, 4, 6});
-        test_set_difference({1, 2, 4, 6}, {1, 2, 4, 6}, {});
-        test_set_difference({1, 2, 4, 6, 7, 8, 9}, {1, 2, 4, 6}, {7, 8, 9});
-
-        for (int x = 0; x < 100; ++x)
-        {
-            RAH2_STD::vector<int> in1;
-            RAH2_STD::vector<int> in2;
-            auto const size1 = static_cast<size_t>(rand() % 100);
-            auto const size2 = static_cast<size_t>(rand() % 100);
-            for (size_t i = 0; i < size1; ++i)
-                in1.push_back(rand() % 100);
-            for (size_t i = 0; i < size2; ++i)
-                in2.push_back(rand() % 100);
-            RAH2_NS::ranges::sort(in1);
-            RAH2_NS::ranges::sort(in2);
-            RAH2_STD::vector<int> outRef;
-            RAH2_STD::set_difference(
-                begin(in1), end(in1), begin(in2), end(in2), RAH2_STD::back_inserter(outRef));
-            RAH2_STD::vector<int> out;
-            for (int val : in1 | RAH2_NS::views::set_difference(in2) | RAH2_NS::views::common)
-                out.push_back(val);
-            assert(out == outRef);
-        }
     }
 
     // *********************************** algos **************************************************

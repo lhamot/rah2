@@ -337,7 +337,9 @@ namespace RAH2_NS
     constexpr bool equality_comparable = details::weakly_equality_comparable_with<T, T, Diagnostic>;
 
     template <class T, bool Diagnostic = false>
-    constexpr bool regular = semiregular<T, Diagnostic> && equality_comparable<T, Diagnostic>;
+    constexpr bool regular = //
+        semiregular<T, Diagnostic> //
+        && equality_comparable<T, Diagnostic>;
 
     template <class T>
     constexpr bool destructible = RAH2_NS::is_nothrow_destructible_v<T>;
@@ -1050,9 +1052,9 @@ namespace RAH2_NS
             struct ssize_impl
             {
                 template <typename R>
-                std::ptrdiff_t operator()(R const& range) const
+                std::ptrdiff_t operator()(R&& range) const
                 {
-                    return static_cast<std::ptrdiff_t>(size_impl{}(range));
+                    return static_cast<std::ptrdiff_t>(size_impl{}(RAH2_STD::forward<R>(range)));
                 }
             };
 

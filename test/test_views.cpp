@@ -594,10 +594,10 @@ struct make_common_view
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
     using base_cat = RAH2_NS::ranges::range_iter_categ_t<BaseRange>;
-    using expected_cat = std::conditional_t<
+    using expected_cat = RAH2_STD::conditional_t<
         RAH2_NS::ranges::common_range<BaseRange>,
         base_cat,
-        std::conditional_t<
+        RAH2_STD::conditional_t<
             RAH2_NS::ranges::sized_range<BaseRange> && RAH2_NS::ranges::random_access_range<BaseRange>,
             base_cat,
             RAH2_NS::ranges::cap_iterator_tag<base_cat, RAH2_NS::forward_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
@@ -1352,4 +1352,213 @@ void test_subrange()
 
     testSuite.test_case("concepts");
     foreach_range_combination<test_range<make_subrange>>();
+}
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_unbounded_view
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    BaseRange base;
+    auto make()
+    {
+        return RAH2_NS::views::unbounded(RAH2_NS::ranges::begin(base));
+    }
+    static constexpr bool is_sized = false;
+    static constexpr bool is_common = false;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = true;
+    using expected_cat =
+        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::contiguous_iterator_tag>;
+};
+void test_unbounded_view()
+{
+    {
+        testSuite.test_case("sample");
+        /// [unbounded_view]
+        RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
+        RAH2_STD::vector<int> out;
+        auto v = RAH2_NS::views::unbounded(RAH2_NS::ranges::begin(vec));
+        for (auto&& val : v | RAH2_NS::views::take(5) | RAH2_NS::views::common)
+        {
+            out.push_back(val);
+        }
+        assert(out == (RAH2_STD::vector<int>{0, 1, 2, 2, 3}));
+        /// [unbounded_view]
+    }
+
+    testSuite.test_case("concepts");
+    foreach_range_combination<test_range<make_unbounded_view>>();
+}
+
+void test_irange_view()
+{
+    {
+        testSuite.test_case("sample");
+        /// [irange]
+        RAH2_STD::vector<int> result;
+        for (int const i : RAH2_NS::views::irange(10, 25, 3))
+            result.push_back(i);
+        assert(result == RAH2_STD::vector<int>({10, 13, 16, 19, 22}));
+        /// [irange]
+        STATIC_ASSERT(
+            RAH2_NS::ranges::random_access_range<decltype(RAH2_NS::views::irange(10, 25, 3))>);
+    }
+
+    {
+        RAH2_STD::vector<int> result;
+        for (int const i : RAH2_NS::views::irange(10, 26, 3) | RAH2_NS::views::slice(2, 5)
+                               | RAH2_NS::views::common)
+            result.push_back(i);
+        assert(result == RAH2_STD::vector<int>({16, 19, 22}));
+    }
+}
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_cycle_view
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    auto make()
+    {
+        return RAH2_NS::views::cycle(make_test_view<CS, Tag, Sized>());
+    }
+    static constexpr bool is_sized = false;
+    static constexpr bool is_common = false;
+    static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
+    static constexpr bool is_borrowed = false;
+    using expected_cat = RAH2_STD::conditional_t<
+        CS == CommonOrSent::Common,
+        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>,
+        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::forward_iterator_tag>>;
+};
+void test_cycle_view()
+{
+    {
+        testSuite.test_case("sample");
+        /// [cycle]
+        RAH2_STD::vector<int> in{0, 1, 2};
+        auto cy = RAH2_NS::views::cycle(in);
+        RAH2_STD::vector<int> out;
+        RAH2_STD::copy_n(cy.begin(), 8, RAH2_STD::back_inserter(out));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
+        /// [cycle]
+        STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range<decltype(cy)>));
+        STATIC_ASSERT((not RAH2_NS::ranges::random_access_range<decltype(cy)>));
+    }
+
+    {
+        /// [cycle_pipeable]
+        RAH2_STD::vector<int> in{0, 1, 2};
+        auto cy = in | RAH2_NS::views::cycle;
+        RAH2_STD::vector<int> out;
+        RAH2_STD::copy_n(cy.begin(), 8, RAH2_STD::back_inserter(out));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
+        /// [cycle_pipeable]
+    }
+
+    {
+        RAH2_STD::vector<int> in{0, 1, 2};
+        auto cy = RAH2_NS::views::cycle(in) | RAH2_NS::views::take(8);
+        RAH2_STD::vector<int> out;
+        // static_assert(RAH2_NS::range<decltype(RAH2_NS::back_inserter(out))>, "dkjh");
+        RAH2_NS::ranges::copy(cy, RAH2_NS::back_inserter(out));
+        assert(out == RAH2_STD::vector<int>({0, 1, 2, 0, 1, 2, 0, 1}));
+    }
+
+    testSuite.test_case("concepts");
+    foreach_range_combination<test_range<make_cycle_view>>();
+}
+
+void test_generate_view()
+{
+    {
+        testSuite.test_case("sample");
+        /// [generate]
+        int y = 1;
+        auto gen = RAH2_NS::views::generate(
+            [&y]() mutable
+            {
+                auto const prev = y;
+                y *= 2;
+                return prev;
+            });
+        RAH2_STD::vector<int> gen_copy;
+        auto first = RAH2_NS::ranges::begin(gen);
+        auto result = RAH2_NS::back_inserter(gen_copy);
+        for (auto n = 4; n > 0; --n, ++result, ++first)
+            *result = *first;
+        assert(gen_copy == RAH2_STD::vector<int>({1, 2, 4, 8}));
+        /// [generate]
+        STATIC_ASSERT((RAH2_NS::ranges::input_range_impl<decltype(gen), true>::value));
+        STATIC_ASSERT(((RAH2_NS::is_same_v<
+                        RAH2_NS::ranges::range_iter_categ_t<decltype(gen)>,
+                        RAH2_STD::input_iterator_tag>)));
+        STATIC_ASSERT(not RAH2_NS::ranges::forward_range<decltype(gen)>);
+        STATIC_ASSERT(not RAH2_NS::ranges::common_range<decltype(gen)>);
+    }
+    {
+        /// [generate_n]
+        RAH2_STD::vector<int> result;
+        int y = 1;
+        auto gen = RAH2_NS::views::generate_n(
+            4,
+            [&y]() mutable
+            {
+                auto const prev = y;
+                y *= 2;
+                return prev;
+            });
+        auto i = RAH2_NS::ranges::begin(gen);
+        auto e = RAH2_NS::ranges::end(gen);
+        for (; i != e; ++i)
+            result.push_back(*i);
+        assert(result == RAH2_STD::vector<int>({1, 2, 4, 8}));
+        /// [generate_n]
+        testSuite.test_case("concepts");
+        (void)check_range_cat<RAH2_STD::input_iterator_tag, decltype(gen)>{};
+    }
+}
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct make_slice_view
+{
+    using BaseRange = test_view<CS, Tag, Sized>;
+    auto make()
+    {
+        return RAH2_NS::views::slice(make_test_view<CS, Tag, Sized>(), 1, 6);
+    }
+    static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
+    static constexpr bool is_common =
+        RAH2_NS::ranges::random_access_range<BaseRange> && RAH2_NS::ranges::sized_range<BaseRange>;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = false;
+    using expected_cat = Tag;
+};
+void test_slice_view()
+{
+    {
+        testSuite.test_case("sample");
+        /// [slice]
+        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        RAH2_STD::vector<int> result;
+        for (int i : RAH2_NS::views::slice(vec, 2, 6))
+            result.push_back(i);
+        assert(result == RAH2_STD::vector<int>({2, 3, 4, 5}));
+        RAH2_STD::vector<int> result2;
+        for (int i : RAH2_NS::views::slice(vec, 2, 6))
+            result2.push_back(i);
+        assert(result2 == RAH2_STD::vector<int>({2, 3, 4, 5}));
+        /// [slice]
+    }
+    {
+        /// [slice_pipeable]
+        RAH2_STD::vector<int> vec{0, 1, 2, 3, 4, 5, 6, 7};
+        RAH2_STD::vector<int> result;
+        for (int i : vec | RAH2_NS::views::slice(2, 6))
+            result.push_back(i);
+        assert(result == RAH2_STD::vector<int>({2, 3, 4, 5}));
+        /// [slice_pipeable]
+    }
+
+    testSuite.test_case("concepts");
+    foreach_range_combination<test_range<make_slice_view>>();
 }
