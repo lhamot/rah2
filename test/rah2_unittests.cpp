@@ -123,6 +123,7 @@ void test_elements_view();
 void test_values_view();
 void test_keys_view();
 void test_zip_view();
+void test_zip_transform_view();
 void test_adjacent_view();
 void test_common_view();
 void test_reverse_view();
@@ -384,6 +385,9 @@ try
     testSuite.addTest(range_factories, "ranges::iota_view", test_iota_view);
     testSuite.addTest(range_factories, "ranges::basic_istream_view", test_istream_view);
     testSuite.addTest(range_factories, "ranges::repeat_view", test_repeat_view);
+    testSuite.addTest(range_factories, "ranges::irange_view", test_irange_view);
+    testSuite.addTest(range_factories, "ranges::generate_view", test_generate_view);
+
     // testSuite.addTest("ranges::cartesian_product_view", test_cartesian_product_view);
 
     // Range_Adaptors
@@ -399,9 +403,10 @@ try
     testSuite.addTest(range_adaptors, "ranges::split_view", test_split_view);
     testSuite.addTest(range_adaptors, "ranges::enumerate_view", test_enumerate_view);
     testSuite.addTest(range_adaptors, "ranges::elements_view", test_elements_view);
-    testSuite.addTest(range_adaptors, "ranges::values_view", test_elements_view);
-    testSuite.addTest(range_adaptors, "ranges::keys_view", test_elements_view);
+    testSuite.addTest(range_adaptors, "ranges::values_view", test_values_view);
+    testSuite.addTest(range_adaptors, "ranges::keys_view", test_keys_view);
     testSuite.addTest(range_adaptors, "ranges::zip_view", test_zip_view);
+    testSuite.addTest(range_adaptors, "ranges::test_zip_transform_view", test_zip_transform_view);
     testSuite.addTest(range_adaptors, "ranges::adjacent_view", test_adjacent_view);
     testSuite.addTest(range_adaptors, "ranges::common_view", test_common_view);
     testSuite.addTest(range_adaptors, "ranges::reverse_view", test_reverse_view);
@@ -412,9 +417,7 @@ try
     testSuite.addTest(range_adaptors, "ranges::stride_view", test_stride_view);
     testSuite.addTest(range_adaptors, "ranges::ref_view", test_ref_view);
     testSuite.addTest(range_adaptors, "ranges::unbounded_view", test_unbounded_view);
-    testSuite.addTest(range_adaptors, "ranges::irange_view", test_irange_view);
     testSuite.addTest(range_adaptors, "ranges::cycle_view", test_cycle_view);
-    testSuite.addTest(range_adaptors, "ranges::generate_view", test_generate_view);
     testSuite.addTest(range_adaptors, "ranges::slice_view", test_slice_view);
     testSuite.addTest(range_adaptors, "ranges::concat_view", test_concat_view);
     testSuite.addTest(range_adaptors, "ranges::set_difference_view", test_set_difference_view);
