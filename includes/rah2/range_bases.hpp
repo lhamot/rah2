@@ -1114,13 +1114,13 @@ namespace RAH2_NS
         //using iterator_t = decltype(RAH2_NS::ranges::begin(RAH2_STD::declval<T>()));
 
         template <typename T>
-        using const_iterator_t = decltype(cbegin(RAH2_STD::declval<T>()));
+        using const_iterator_t = decltype(RAH2_NS::ranges::cbegin(RAH2_STD::declval<T>()));
 
         template <typename T>
-        using const_sentinel_t = decltype(cend(RAH2_STD::declval<T>()));
+        using const_sentinel_t = decltype(RAH2_NS::ranges::cend(RAH2_STD::declval<T>()));
 
         template <typename R>
-        using range_size_t = decltype(size(RAH2_STD::declval<R&>()));
+        using range_size_t = decltype(RAH2_NS::ranges::size(RAH2_STD::declval<R&>()));
 
         template <typename R>
         using range_difference_t = RAH2_NS::iter_difference_t<iterator_t<R>>;

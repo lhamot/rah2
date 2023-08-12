@@ -20,6 +20,6 @@ rem 2 = c++ version (14/17/20)
 rem 3 = arch
 rem 4 = optim
 del %~1_rah2_%~2_%~3_%~4.exe
-%~1++ -O%~4 -m%~3 -ftemplate-backtrace-limit=0 -o%~1_rah2_%~2_%~3_%~4.exe rah2_unittests.cpp test_algo.cpp test_views.cpp test_concat_view.cpp test_set_difference_view.cpp -std=c++%~2 -I../includes -Wall -Wextra -Werror
+%~1++ -O%~4 -m%~3 -ftemplate-backtrace-limit=0 -o%~1_rah2_%~2_%~3_%~4.exe rah2_unittests.cpp test_algo.cpp test_views.cpp test_concat_view.cpp test_set_difference_view.cpp test_zip_view.cpp test_zip_transform_view.cpp -std=c++%~2 -I../includes -Wall -Wextra -Werror
 %~1_rah2_%~2_%~3_%~4.exe
 exit /b

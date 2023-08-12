@@ -2986,36 +2986,48 @@ namespace RAH2_NS
             using IterTuple = decltype(details::transform_each(bases_, details::range_begin()));
             using SentinelTuple = decltype(details::transform_each(bases_, details::range_end()));
 
-            using base_cat = details::tuple_base_cat<RangeTuple>;
+            using base_cat =
+                common_iterator_tag<details::tuple_base_cat<RangeTuple>, RAH2_NS::random_access_iterator_tag>;
+            static constexpr size_t tuple_size = RAH2_STD::tuple_size<RangeTuple>::value;
             struct is_sized_range
             {
                 template <typename Range>
                 static constexpr bool value = RAH2_NS::ranges::sized_range<Range>;
             };
+            struct is_const_sized_range
+            {
+                template <typename Range>
+                static constexpr bool value = RAH2_NS::ranges::sized_range<Range const>;
+            };
+            struct is_borrowed_range_impl
+            {
+                template <typename Range>
+                static constexpr bool value = RAH2_NS::ranges::borrowed_range<Range const>;
+            };
             static constexpr bool common_one_range =
-                RAH2_STD::tuple_size<RangeTuple>::value == 1
+                tuple_size == 1
                 && RAH2_NS::ranges::common_range<RAH2_STD::tuple_element_t<0, RangeTuple>>;
             static constexpr bool all_sized = details::all_type<RangeTuple, is_sized_range>();
+            static constexpr bool all_const_sized =
+                details::all_type<RangeTuple, is_const_sized_range>();
             static constexpr bool common_all_sized_random_access =
                 details::all_type<RangeTuple, details::range_has_cat<RAH2_NS::random_access_iterator_tag>>()
                 && all_sized;
+            using reference_t = decltype(details::deref_call_impl(
+                func_, RAH2_STD::declval<IterTuple&>(), RAH2_STD::make_index_sequence<tuple_size>{}));
 
         public:
+            static constexpr bool is_borrowed_range =
+                details::all_type<RangeTuple, is_borrowed_range_impl>();
             struct sentinel
             {
                 SentinelTuple sentinels;
             };
 
-            class iterator
-                : public iterator_facade<
-                      iterator,
-                      sentinel,
-                      decltype(details::zip_range_reference(RAH2_STD::declval<IterTuple&>())),
-                      base_cat>
+            class iterator : public iterator_facade<iterator, sentinel, reference_t, base_cat>
             {
                 IterTuple iters_;
                 zip_transform_view* parent_ = nullptr;
-                static constexpr size_t tuple_size = RAH2_STD::tuple_size<RangeTuple>::value;
 
             public:
                 iterator() = default;
@@ -3048,7 +3060,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* =
                         nullptr>
                 RAH2_POST_DECR;
-                auto operator*()
+                reference_t operator*()
                 {
                     return details::deref_call_impl(
                         parent_->func_, iters_, RAH2_STD::make_index_sequence<tuple_size>{});
@@ -3128,7 +3140,25 @@ namespace RAH2_NS
             {
                 return sentinel{details::transform_each(bases_, details::range_end())};
             }
+
+            template <bool AllSized = all_const_sized, RAH2_STD::enable_if_t<AllSized>* = nullptr>
+            size_t size() const
+            {
+                auto sizes = details::transform_each(
+                    bases_, [](auto&& r) { return RAH2_NS::ranges::size(r); });
+                return details::apply(details::compute_min_size(), sizes);
+            }
+            template <bool IsSized = all_sized, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            size_t size()
+            {
+                auto sizes = details::transform_each(
+                    bases_, [](auto&& r) { return RAH2_NS::ranges::size(r); });
+                return details::apply(details::compute_min_size(), sizes);
+            }
         };
+        template <class... Views>
+        constexpr bool enable_borrowed_range<zip_transform_view<Views...>> =
+            zip_transform_view<Views...>::is_borrowed_range;
         namespace views
         {
             template <typename F, typename... R>
@@ -3345,7 +3375,10 @@ namespace RAH2_NS
             using adjacent_iterator = iterator_t<inner_adjacent_view>;
             using adjacent_reference = range_reference_t<inner_adjacent_view>;
             using adjacent_sentinel = sentinel_t<inner_adjacent_view>;
-            using base_cat = RAH2_STD::forward_iterator_tag;
+            using base_cat = cap_iterator_tag<
+                RAH2_NS::ranges::range_iter_categ_t<R>,
+                RAH2_STD::forward_iterator_tag,
+                RAH2_STD::random_access_iterator_tag>;
 
         public:
             using reference =
@@ -3376,10 +3409,51 @@ namespace RAH2_NS
                     return *this;
                 }
                 RAH2_POST_INCR(base_cat)
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                iterator& operator--()
+                {
+                    --iter_;
+                    return *this;
+                }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
+
                 auto operator*()
                 {
                     return details::apply(view_->func_, *iter_, RAH2_STD::make_index_sequence<N>{});
                 }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator<(iterator const& i) const
+                {
+                    return iter_ < i.iter_;
+                }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                iterator& operator+=(range_difference_t<R> diff)
+                {
+                    iter_ += diff;
+                    return *this;
+                }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator-(iterator const& i) const
+                {
+                    return iter_ - i.iter_;
+                }
+
                 friend bool operator==(iterator const& i, iterator const& i2)
                 {
                     return i.iter_ == i2.iter_;
@@ -3405,9 +3479,27 @@ namespace RAH2_NS
                 return iterator(this, RAH2_NS::ranges::begin(inner_));
             }
 
+            template <bool IsCommon = RAH2_NS::ranges::common_range<R>, RAH2_STD::enable_if_t<IsCommon>* = nullptr>
+            auto end()
+            {
+                return iterator{this, RAH2_NS::ranges::end(inner_)};
+            }
+
+            template <bool IsCommon = RAH2_NS::ranges::common_range<R>, RAH2_STD::enable_if_t<!IsCommon>* = nullptr>
             auto end()
             {
                 return sentinel{RAH2_NS::ranges::end(inner_)};
+            }
+
+            template <bool IsSized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            auto size() const
+            {
+                return range_size_t<R>(RAH2_NS::ranges::size(inner_) - (N - 1));
+            }
+            template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return range_size_t<R>(RAH2_NS::ranges::size(inner_) - (N - 1));
             }
         };
         namespace views
@@ -3452,7 +3544,8 @@ namespace RAH2_NS
 
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
-            using base_cat = RAH2_NS::ranges::range_iter_categ_t<R>;
+            using base_cat =
+                common_iterator_tag<RAH2_NS::ranges::range_iter_categ_t<R>, random_access_iterator_tag>;
 
         public:
             struct sentinel
@@ -3484,22 +3577,42 @@ namespace RAH2_NS
                     return *this;
                 }
                 RAH2_POST_INCR(base_cat)
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
                 iterator& operator+=(intptr_t off)
                 {
                     subRangeBegin_ += off;
                     subRangeLast_ += off;
                     return *this;
                 }
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
                 iterator& operator--()
                 {
                     --subRangeBegin_;
                     --subRangeLast_;
                     return *this;
                 }
-                template <typename U = R, RAH2_STD::enable_if_t<random_access_range<U>>* = nullptr>
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
                 auto operator-(iterator const& r) const
                 {
                     return subRangeBegin_ - r.subRangeBegin_;
+                }
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator<(iterator const& r) const
+                {
+                    return subRangeBegin_ < r.subRangeBegin_;
                 }
                 auto operator*() const
                 {
@@ -3568,6 +3681,19 @@ namespace RAH2_NS
             {
                 return sentinel{RAH2_NS::ranges::end(input_view)};
             }
+
+            template <bool Sized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<Sized>* = nullptr>
+            auto size()
+            {
+                auto const sz = RAH2_NS::ranges::size(input_view) - count_ + 1;
+                return RAH2_NS::ranges::range_size_t<R>(sz < 0 ? 0 : sz);
+            }
+            template <bool Sized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<Sized>* = nullptr>
+            auto size() const
+            {
+                auto const sz = RAH2_NS::ranges::size(input_view) - count_ + 1;
+                return RAH2_NS::ranges::range_size_t<R const>(sz < 0 ? 0 : sz);
+            }
         };
         namespace views
         {
@@ -3603,7 +3729,8 @@ namespace RAH2_NS
             base_diff_type step_;
             using inner_iterator = iterator_t<R>;
             using inner_sentinel = sentinel_t<R>;
-            using base_cat = RAH2_STD::forward_iterator_tag;
+            using base_cat =
+                common_iterator_tag<range_iter_categ_t<R>, RAH2_STD::random_access_iterator_tag>;
 
         public:
             struct sentinel
@@ -3614,18 +3741,21 @@ namespace RAH2_NS
             class iterator
                 : public iterator_facade<iterator, sentinel, subrange<iterator_t<R>, iterator_t<R>>, base_cat>
             {
-                iterator_t<R> iter_;
-                iterator_t<R> iter2_;
-                sentinel_t<R> end_;
-                base_diff_type step_;
+                iterator_t<R> begin_{};
+                iterator_t<R> iter_{};
+                iterator_t<R> iter2_{};
+                sentinel_t<R> end_{};
+                base_diff_type step_{};
 
             public:
+                iterator() = default;
                 iterator(
                     iterator_t<R> const& iter,
                     iterator_t<R> const& iter2,
                     sentinel_t<R> const& end,
                     base_diff_type step = 0)
-                    : iter_(iter)
+                    : begin_(iter)
+                    , iter_(iter)
                     , iter2_(iter2)
                     , end_(end)
                     , step_(step)
@@ -3639,10 +3769,55 @@ namespace RAH2_NS
                     return *this;
                 }
                 RAH2_POST_INCR(base_cat)
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                iterator& operator--()
+                {
+                    iter2_ = iter_;
+                    RAH2_NS::ranges::advance(iter_, -step_, begin_);
+                    return *this;
+                }
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
+                RAH2_POST_DECR;
+
                 auto operator*() const
                 {
                     return make_subrange(iter_, iter2_);
                 }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                iterator& operator+=(range_difference_t<R> diff)
+                {
+                    iter_ += diff * step_;
+                    iter2_ += diff * step_;
+                    return *this;
+                }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator-(iterator const& it) const
+                {
+                    assert(((iter_ - it.iter_) % step_) == 0);
+                    assert(step_ == it.step_);
+                    return (iter_ - it.iter_) / step_;
+                }
+
+                template <
+                    typename C = base_cat,
+                    RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
+                auto operator<(iterator const& it) const
+                {
+                    assert(((iter_ - it.iter_) % step_) == 0);
+                    assert(step_ == it.step_);
+                    return iter_ < it.iter_;
+                }
+
                 friend bool operator==(iterator const& it, iterator const& it2)
                 {
                     return it.iter_ == it2.iter_;
@@ -3701,12 +3876,24 @@ namespace RAH2_NS
                 iter = sent;
                 return iterator{iter, iter, sent, step_};
             }
+
+            template <bool Sized = sized_range<R>, RAH2_STD::enable_if_t<Sized>* = nullptr>
+            auto size()
+            {
+                return RAH2_NS::ranges::size(base_) / step_;
+            }
+
+            template <bool Sized = sized_range<R const>, RAH2_STD::enable_if_t<Sized>* = nullptr>
+            auto size() const
+            {
+                return RAH2_NS::ranges::size(base_) / step_;
+            }
         };
         namespace views
         {
             struct chunk_raco
             {
-                template <typename R, RAH2_STD::enable_if_t<not RAH2_NS::is_rvalue_reference_v<R&&>, int> = 0>
+                template <typename R>
                 auto operator()(R&& range, range_difference_t<R> step) const
                 {
                     auto ref = all(RAH2_STD::forward<R>(range));
