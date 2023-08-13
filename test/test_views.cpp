@@ -600,7 +600,7 @@ struct make_common_view
         RAH2_STD::conditional_t<
             RAH2_NS::ranges::sized_range<BaseRange> && RAH2_NS::ranges::random_access_range<BaseRange>,
             base_cat,
-            RAH2_NS::ranges::cap_iterator_tag<base_cat, RAH2_NS::forward_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
+            RAH2_NS::ranges::cap_iterator_tag<base_cat, RAH2_NS::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
 };
 void test_common_view()
 {
@@ -663,15 +663,14 @@ void test_reverse_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_elements_view
 {
-    RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
-        {true, 'a', 1000},
-        {false, 'b', 1001},
-        {true, 'c', 1002},
-        {false, 'd', 1003},
-    };
-
     auto make()
     {
+        static RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
+            {true, 'a', 1000},
+            {false, 'b', 1001},
+            {true, 'c', 1002},
+            {false, 'd', 1003},
+        };
         return RAH2_NS::views::elements<2>(make_test_view_adapter<CS, Tag, Sized>(vec));
     }
     using BaseRange =
@@ -708,15 +707,14 @@ void test_elements_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_values_view
 {
-    RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
-        {12, "aaa"},
-        {19, "bbb"},
-        {25, "ccc"},
-        {5, "ddd"},
-    };
-
     auto make()
     {
+        static RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
+            {12, "aaa"},
+            {19, "bbb"},
+            {25, "ccc"},
+            {5, "ddd"},
+        };
         return RAH2_NS::views::values(make_test_view_adapter<CS, Tag, Sized>(m));
     }
     using BaseRange =
@@ -752,15 +750,14 @@ void test_values_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_keys_view
 {
-    RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
-        {12, "aaa"},
-        {19, "bbb"},
-        {25, "ccc"},
-        {5, "ddd"},
-    };
-
     auto make()
     {
+        static RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
+            {12, "aaa"},
+            {19, "bbb"},
+            {25, "ccc"},
+            {5, "ddd"},
+        };
         return RAH2_NS::views::keys(make_test_view_adapter<CS, Tag, Sized>(m));
     }
     using BaseRange =
@@ -865,7 +862,7 @@ struct make_adjacent_view
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
     static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
-    static constexpr bool do_test = true;
+    static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
     using expected_cat =
         RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::random_access_iterator_tag>;
@@ -952,7 +949,7 @@ struct make_adjacent_transform_view
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
     static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
-    static constexpr bool do_test = true;
+    static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
     using expected_cat =
         RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::random_access_iterator_tag>;
@@ -1225,7 +1222,7 @@ void test_chunk_view()
         {
             result.emplace_back();
             auto& back = result.back();
-            for (auto i : elts)
+            for (auto i : elts | RAH2_NS::views::common)
             {
                 back.emplace_back(i);
             }

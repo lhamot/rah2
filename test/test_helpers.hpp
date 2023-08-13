@@ -101,6 +101,39 @@ struct TestSuite
     }
 };
 
+// #define TEST_DISPLAY_ALL
+#define TEST_DISPLAY_FAILED
+// #define TEST_DISPLAY_NONE
+
+extern TestSuite testSuite;
+inline void assert_impl(int line, char const* condition, bool value)
+{
+    ++testSuite.test_count;
+#if defined(TEST_DISPLAY_ALL)
+    std::cout << line << " assert : " << condition << std::endl;
+#endif
+    if (value)
+    {
+#if defined(TEST_DISPLAY_ALL)
+        std::cout << "OK" << std::endl;
+#endif
+    }
+    else
+    {
+#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
+        std::cout << line << " assert : " << condition << std::endl;
+#endif
+#if defined(TEST_DISPLAY_FAILED)
+        std::cout << "NOT OK (line:" << line << ")" << std::endl;
+#endif
+        // abort();
+        testSuite.current_test_status = false;
+    }
+}
+
+#undef assert
+#define assert(CONDITION) assert_impl(__LINE__, #CONDITION, (CONDITION))
+
 template <bool A, bool B>
 struct AssertEqual;
 
@@ -126,9 +159,7 @@ enum CommonOrSent
 template <CommonOrSent Sent, typename Cat, bool SizedRange>
 class test_view : public RAH2_NS::ranges::view_interface<test_view<Sent, Cat, SizedRange>>
 {
-    int start_ = 0;
-    int stop_ = 0;
-    int step_ = 1;
+    RAH2_STD::vector<int> vec = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 public:
     class iterator;
@@ -141,8 +172,8 @@ public:
 
     class iterator : public RAH2_NS::ranges::iterator_facade<iterator, sentinel, ref_type, Cat>
     {
-        int val_ = int();
-        int step_ = static_cast<int>(1);
+        RAH2_STD::vector<int>::iterator iter_;
+        RAH2_STD::vector<int>::iterator end_;
 
     public:
         iterator() = default;
@@ -153,8 +184,7 @@ public:
                 RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag>
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator(iterator&& other)
-            : val_(other.val_)
-            , step_(other.step_)
+            : iter_(other.iter_)
         {
         }
 
@@ -165,8 +195,7 @@ public:
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator& operator=(iterator&& other)
         {
-            val_ = other.val_;
-            step_ = other.step_;
+            iter_ = other.iter_;
         }
 
         template <
@@ -175,8 +204,7 @@ public:
                 RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator(iterator const& other)
-            : val_(other.val_)
-            , step_(other.step_)
+            : iter_(other.iter_)
         {
         }
 
@@ -187,18 +215,17 @@ public:
                 || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator& operator=(iterator const& other)
         {
-            val_ = other.val_;
-            step_ = other.step_;
+            iter_ = other.iter_;
         }
-        iterator(int val, int step)
-            : val_(val)
-            , step_(step)
+        iterator(RAH2_STD::vector<int>::iterator iter, RAH2_STD::vector<int>::iterator end)
+            : iter_(iter)
+            , end_(end)
         {
         }
 
         iterator& operator++()
         {
-            val_ += step_;
+            ++iter_;
             return *this;
         }
         RAH2_POST_INCR(Cat)
@@ -207,7 +234,7 @@ public:
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         iterator& operator+=(intptr_t value)
         {
-            val_ += static_cast<int>(step_ * value);
+            iter_ += value;
             return *this;
         }
 
@@ -216,7 +243,7 @@ public:
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
         iterator& operator--()
         {
-            val_ -= step_;
+            --iter_;
             return *this;
         }
         template <
@@ -228,65 +255,59 @@ public:
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         auto operator-(iterator const& other) const
         {
-            return (val_ - other.val_) / step_;
+            return iter_ - other.iter_;
         }
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         iterator& operator-=(intptr_t value)
         {
-            val_ -= static_cast<int>(step_ * value);
+            iter_ -= value;
             return *this;
         }
         auto& operator*() const
         {
-            return val_;
+            return *iter_;
         }
         ref_type operator*()
         {
-            return val_;
+            return *iter_;
         }
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>>* = nullptr>
         friend constexpr bool operator==(iterator const& it1, iterator const& it2)
         {
-            return it1.val_ == it2.val_;
+            return it1.iter_ == it2.iter_;
         }
-        friend constexpr bool operator==(RAH2_NS::default_sentinel_t const&, iterator const&)
+        friend constexpr bool operator==(RAH2_NS::default_sentinel_t const&, iterator const& it)
         {
-            return false;
+            return it.iter_ == it.end_;
         }
-        friend constexpr bool operator==(iterator const&, RAH2_NS::default_sentinel_t const&)
+        friend constexpr bool operator==(iterator const& it, RAH2_NS::default_sentinel_t const&)
         {
-            return false;
+            return it.iter_ == it.end_;
         }
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
         friend bool operator<(iterator const& it1, iterator const& it2)
         {
-            return it1.val_ < it2.val_;
+            return it1.iter_ < it2.iter_;
         }
     };
 
     test_view() = default;
-    test_view(int start, int stop, int step)
-        : start_(start)
-        , stop_(stop)
-        , step_(step)
-    {
-    }
 
     template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
     auto size() const
     {
-        return (stop_ - start_) / step_;
+        return vec.size();
     }
 
     auto begin()
     {
-        return iterator(start_, step_);
+        return iterator(vec.begin(), vec.end());
     }
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
@@ -296,16 +317,14 @@ public:
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Common>* = nullptr>
     auto end()
     {
-        auto const last_index = (stop_ - start_);
-        auto const rounded_last = ((last_index + (step_ - 1)) / step_) * step_;
-        return iterator(start_ + rounded_last, step_);
+        return iterator(vec.end(), vec.end());
     }
     template <
         typename C = Cat,
         RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
     RAH2_STD::remove_reference_t<ref_type>* data()
     {
-        return nullptr;
+        return vec.data();
     }
 
     template <
@@ -313,7 +332,7 @@ public:
         RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
     RAH2_STD::remove_reference_t<ref_type>* data() const
     {
-        return nullptr;
+        return vec.data();
     }
 };
 
@@ -329,11 +348,13 @@ public:
         : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::ranges::sentinel_iterator, int&, Cat>
     {
         base_iterator iter_;
+        base_iterator end_;
 
     public:
         iterator() = default;
-        explicit iterator(base_iterator it)
+        explicit iterator(base_iterator it, base_iterator end)
             : iter_(it)
+            , end_(end)
         {
         }
 
@@ -394,13 +415,13 @@ public:
         {
             return it1.iter_ == it2.iter_;
         }
-        friend constexpr bool operator==(RAH2_NS::default_sentinel_t const&, iterator const&)
+        friend constexpr bool operator==(RAH2_NS::default_sentinel_t const&, iterator const& it)
         {
-            return false;
+            return it.iter_ == it.end_;
         }
-        friend constexpr bool operator==(iterator const&, RAH2_NS::default_sentinel_t const&)
+        friend constexpr bool operator==(iterator const& it, RAH2_NS::default_sentinel_t const&)
         {
-            return false;
+            return it.iter_ == it.end_;
         }
         template <
             typename C = Cat,
@@ -419,7 +440,7 @@ public:
 
     auto begin()
     {
-        return iterator(RAH2_NS::ranges::begin(base_));
+        return iterator(RAH2_NS::ranges::begin(base_), RAH2_NS::ranges::end(base_));
     }
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
@@ -429,7 +450,7 @@ public:
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Common>* = nullptr>
     auto end()
     {
-        return iterator(RAH2_NS::ranges::end(base_));
+        return iterator(RAH2_NS::ranges::end(base_), RAH2_NS::ranges::end(base_));
     }
     template <
         typename C = Cat,
@@ -449,15 +470,9 @@ public:
 };
 
 template <CommonOrSent Sent, typename Cat, bool Sized>
-auto make_test_view(int start, int stop, int step)
-{
-    return test_view<Sent, Cat, Sized>(start, stop, step);
-}
-
-template <CommonOrSent Sent, typename Cat, bool Sized>
 auto make_test_view()
 {
-    return test_view<Sent, Cat, Sized>(0, 10, 1);
+    return test_view<Sent, Cat, Sized>();
 }
 
 template <CommonOrSent Sent, typename Cat, bool Sized, typename Range>
@@ -647,42 +662,161 @@ struct check_range_cat;
 template <typename R>
 struct check_range_cat<RAH2_STD::input_iterator_tag, R>
 {
-    STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
-    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag> checkSameType;
-    STATIC_ASSERT(not RAH2_NS::ranges::forward_range<R>);
+    static void test(R& r)
+    {
+        auto e = RAH2_NS::ranges::end(r);
+        size_t counter = 0;
+        for (auto i = RAH2_NS::ranges::begin(r); i != e && counter != 100; ++i, ++counter)
+        {
+            (void)*i;
+        }
+        STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
+        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag>();
+        STATIC_ASSERT(not RAH2_NS::ranges::forward_range<R>);
+    }
 };
 
 template <typename R>
 struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
 {
-    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag> checkSameType;
-    STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
-    STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
-    STATIC_ASSERT(not RAH2_NS::ranges::bidirectional_range<R>);
+    static void test(R& r)
+    {
+        auto e = RAH2_NS::ranges::end(r);
+        auto i = RAH2_NS::ranges::begin(r);
+        auto u = i;
+        if (not(u == i))
+        {
+            assert(u == i);
+        }
+        ++u;
+        assert(u != i);
+        size_t counter = 0;
+        for (; i != e && counter != 100; ++i, ++counter)
+        {
+            (void)*i;
+        }
+        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag>();
+        STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
+        STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
+        STATIC_ASSERT(not RAH2_NS::ranges::bidirectional_range<R>);
+    }
 };
 
 template <typename R>
 struct check_range_cat<RAH2_NS::bidirectional_iterator_tag, R>
 {
-    STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<R, true>::value));
-    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::bidirectional_iterator_tag> checkSameType;
-    STATIC_ASSERT(not RAH2_NS::ranges::random_access_range<R>);
+    static void test(R& r)
+    {
+        auto e = RAH2_NS::ranges::end(r);
+        auto i = RAH2_NS::ranges::begin(r);
+        auto u = i;
+        assert(u == i);
+        intptr_t counter = 0;
+        for (; i != e && counter != 100; ++i, ++counter)
+        {
+            (void)*i;
+        }
+        for (; i != RAH2_NS::ranges::begin(r); --i, --counter)
+        {
+            assert(counter >= 0);
+            if (counter == 0)
+            {
+                assert(i == RAH2_NS::ranges::begin(r));
+            }
+        }
+        STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<R, true>::value));
+        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::bidirectional_iterator_tag>();
+        STATIC_ASSERT(not RAH2_NS::ranges::random_access_range<R>);
+    }
 };
 
 template <typename R>
 struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
 {
-    STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<R, true>::value));
-    // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
-    // AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag> checkSameType;
-    STATIC_ASSERT(not RAH2_NS::ranges::contiguous_range<R>);
+    static void test(R& r)
+    {
+        auto e = RAH2_NS::ranges::end(r);
+        auto i = RAH2_NS::ranges::begin(r);
+        auto u = i;
+        u += 2;
+        decltype(i[2]) ref = i[2];
+        AssertSame<decltype(ref), RAH2_NS::ranges::range_reference_t<R>>();
+        if (not(u > i))
+        {
+            assert(u > i);
+        }
+        if (u < i)
+        {
+            assert(not(u < i));
+        }
+        if (not(u != i))
+        {
+            assert(u != i);
+        }
+        if (u == i)
+        {
+            assert(not(u == i));
+        }
+        if (not(i < u))
+        {
+            assert(u > i);
+            assert(not(u < i));
+            assert(not(u == i));
+            assert(i < u);
+        }
+        if (not(((u - i) == 2)))
+        {
+            assert((u - i) == 2);
+        }
+        intptr_t counter = 0;
+        for (; i != e && counter != 100; ++i, ++counter)
+        {
+            (void)*i;
+        }
+        for (; i != RAH2_NS::ranges::begin(r); --i, --counter)
+        {
+            assert(counter >= 0);
+            assert(i >= RAH2_NS::ranges::begin(r));
+        }
+        STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<R, true>::value));
+        // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
+        // AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag>();
+        STATIC_ASSERT(not RAH2_NS::ranges::contiguous_range<R>);
+    }
 };
 
 template <typename R>
 struct check_range_cat<RAH2_NS::contiguous_iterator_tag, R>
 {
-    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag> checkSameType;
-    STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
+    static void test(R& r)
+    {
+        auto e = RAH2_NS::ranges::end(r);
+        auto i = RAH2_NS::ranges::begin(r);
+        auto u = i;
+        u += 2;
+        assert(&(i[2]) == &(*u));
+        auto& ref = i[2];
+        AssertSame<decltype(ref), RAH2_NS::ranges::range_reference_t<R>>();
+        assert(!(u < i));
+        assert(i < u);
+        assert((u - i) == 2);
+        intptr_t counter = 0;
+        for (; i != e && counter != 100; ++i, ++counter)
+        {
+            (void)*i;
+        }
+        for (; i != RAH2_NS::ranges::begin(r); --i)
+        {
+            assert(counter >= 0);
+            assert(i >= RAH2_NS::ranges::begin(r));
+        }
+        auto* d = r.data();
+        auto* d2 = &(*r.begin());
+        assert(d == d2);
+        assert(d == &(*i));
+        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>();
+        STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
+    }
 };
 
 template <
@@ -753,7 +887,7 @@ struct test_range
             auto t1 = MakeR<Sentinel, Cat, Sized>();
             auto r1 = t1.make();
             using ExpectedCat = typename MakeR<Sentinel, Cat, Sized>::expected_cat;
-            check_range_cat<ExpectedCat, std::remove_reference_t<decltype(r1)>>();
+            check_range_cat<ExpectedCat, std::remove_reference_t<decltype(r1)>>::test(r1);
             AssertEqual<RAH2_NS::ranges::common_range<decltype(r1)>, t1.is_common>();
             AssertEqual<RAH2_NS::ranges::sized_range<decltype(r1)>, t1.is_sized>();
             AssertEqual<RAH2_NS::ranges::borrowed_range<decltype(r1)>, t1.is_borrowed>();
@@ -827,39 +961,6 @@ struct PairEqualImpl
 };
 
 static constexpr PairEqualImpl PairEqual;
-
-// #define TEST_DISPLAY_ALL
-#define TEST_DISPLAY_FAILED
-// #define TEST_DISPLAY_NONE
-
-extern TestSuite testSuite;
-inline void assert_impl(int line, char const* condition, bool value)
-{
-    ++testSuite.test_count;
-#if defined(TEST_DISPLAY_ALL)
-    std::cout << line << " assert : " << condition << std::endl;
-#endif
-    if (value)
-    {
-#if defined(TEST_DISPLAY_ALL)
-        std::cout << "OK" << std::endl;
-#endif
-    }
-    else
-    {
-#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
-        std::cout << line << " assert : " << condition << std::endl;
-#endif
-#if defined(TEST_DISPLAY_FAILED)
-        std::cout << "NOT OK (line:" << line << ")" << std::endl;
-#endif
-        // abort();
-        testSuite.current_test_status = false;
-    }
-}
-
-#undef assert
-#define assert(CONDITION) assert_impl(__LINE__, #CONDITION, (CONDITION))
 
 template <typename R, typename I>
 void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)

@@ -29,7 +29,7 @@ struct make_set_difference_view
         static constexpr bool is_borrowed = false;
         using expected_cat = RAH2_NS::ranges::cap_iterator_tag<
             RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
-            RAH2_STD::forward_iterator_tag,
+            RAH2_STD::input_iterator_tag,
             RAH2_NS::forward_iterator_tag>;
     };
 };
