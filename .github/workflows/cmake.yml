@@ -13,10 +13,10 @@ jobs:
         BUILD_TYPE: [Debug, Release]
         cppstd: [14, 20]
         compiler: [ 
-            {os: windows-latest, cpp: msvc, c: msvc }, 
-            {os: macos-latest, cpp: clang++, c: clang} ,
-            {os: ubuntu-latest, cpp: clang++, c: clang},
-            {os: ubuntu-latest, cpp: g++, c: gcc} 
+            {os: windows-latest, cpp: msvc, c: msvc, toolset: "-T host=x64" }, 
+            {os: macos-latest, cpp: clang++, c: clang, toolset: ""} ,
+            {os: ubuntu-latest, cpp: clang++, c: clang, toolset: ""},
+            {os: ubuntu-latest, cpp: g++, c: gcc, toolset: ""} 
         ]
         
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -30,7 +30,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -T host=x64 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}}
+      run: cmake -B ${{github.workspace}}/build ${{matrix.compiler.toolset}} -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}}
 
     - name: Build
       # Build your program with the given configuration
