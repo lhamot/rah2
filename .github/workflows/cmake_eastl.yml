@@ -42,7 +42,7 @@ jobs:
     
     - name: Configure CMake RAH2
       working-directory: ${{github.workspace}}
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}} -D RAH2_INSIDE_EASTL=1 -DEASTL_DIR="${{github.workspace}}/eastl"
+      run: cmake -B ${{github.workspace}}/build -T host=x64 -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}} -D RAH2_INSIDE_EASTL=1 -DEASTL_DIR="${{github.workspace}}/eastl"
 
     - name: Build RAH2
       working-directory: ${{github.workspace}}
