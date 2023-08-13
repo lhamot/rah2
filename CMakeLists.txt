@@ -43,7 +43,7 @@ endif()
 if (${RAH2_INSIDE_EASTL})
     set(RAH2_NS eastl)
 	set(RAH2_INSIDE_EASTL 1)
-elseif()
+else()
 	set(RAH2_INSIDE_EASTL 0)
 endif()
 
