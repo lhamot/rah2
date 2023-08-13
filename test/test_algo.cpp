@@ -2407,12 +2407,12 @@ void test_destroy()
     auto const ptr = reinterpret_cast<tracer*>(buffer);
 
     RAH2_NS::ranges::destroy(ptr, ptr + 8);
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
     RAH2_EXT_WARNING_PUSH
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
     assert(RAH2_NS::ranges::all_of(ptr, ptr + 8, [](tracer const& t) { return t.value == 42; }));
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
     RAH2_EXT_WARNING_POP
 #endif
     /// [rah2::ranges::destroy]
@@ -2439,12 +2439,12 @@ void test_destroy_n()
     auto const ptr = reinterpret_cast<tracer*>(buffer);
 
     RAH2_NS::ranges::destroy_n(ptr, 8);
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
     RAH2_EXT_WARNING_PUSH
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
     assert(RAH2_NS::ranges::all_of(ptr, ptr + 8, [](tracer& t) { return t.value == 42; }));
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
     RAH2_EXT_WARNING_POP
 #endif
     /// [rah2::ranges::destroy_n]
@@ -2472,12 +2472,12 @@ void test_destroy_at()
 
     for (int i = 0; i < 8; ++i)
         RAH2_NS::ranges::destroy_at(ptr + i);
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
     RAH2_EXT_WARNING_PUSH
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
     assert(RAH2_NS::ranges::all_of(ptr, ptr + 8, [](tracer& t) { return t.value == 42; }));
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
     RAH2_EXT_WARNING_POP
 #endif
     /// [rah2::ranges::destroy_at]
