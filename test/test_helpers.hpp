@@ -159,9 +159,18 @@ enum CommonOrSent
 template <CommonOrSent Sent, typename Cat, bool SizedRange>
 class test_view : public RAH2_NS::ranges::view_interface<test_view<Sent, Cat, SizedRange>>
 {
-    RAH2_STD::vector<int> vec = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    RAH2_STD::vector<int> vec;
 
 public:
+    test_view()
+    {
+        vec.reserve(103);
+        for (int i = 0; i < 103; ++i)
+        {
+            vec.push_back(i);
+        }
+    }
+
     class iterator;
     struct sentinel
     {
@@ -296,8 +305,6 @@ public:
             return it1.iter_ < it2.iter_;
         }
     };
-
-    test_view() = default;
 
     template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
     auto size() const

@@ -550,10 +550,9 @@ void test_split_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_counted_view
 {
-    RAH2_STD::array<int, 2> delim = {3, 4};
     auto make()
     {
-        auto r = make_test_view<CS, Tag, Sized>();
+        static auto r = make_test_view<CS, Tag, Sized>();
         return RAH2_NS::views::counted(r.begin(), 8);
     }
     using BaseRange = test_view<CS, Tag, Sized>;
