@@ -27,7 +27,8 @@ void test_empty_view()
     /// [empty]
 
     testSuite.test_case("concept");
-    check_range_cat<RAH2_NS::contiguous_iterator_tag, decltype(RAH2_NS::views::empty<int>)>();
+    auto r = RAH2_NS::views::empty<int>;
+    check_range_cat<RAH2_NS::contiguous_iterator_tag, decltype(r)>::test(r);
 }
 
 void test_single_view()
@@ -41,7 +42,8 @@ void test_single_view()
     /// [single]
 
     testSuite.test_case("concept");
-    check_range_cat<RAH2_NS::contiguous_iterator_tag, decltype(RAH2_NS::views::single(20))>();
+    auto r = RAH2_NS::views::single(20);
+    check_range_cat<RAH2_NS::contiguous_iterator_tag, decltype(r)>::test(r);
 }
 
 void test_iota_view()
@@ -73,7 +75,8 @@ void test_iota_view()
     }
 
     testSuite.test_case("concept");
-    check_range_cat<RAH2_NS::contiguous_iterator_tag, decltype(RAH2_NS::views::iota())>();
+    auto r = RAH2_NS::views::iota();
+    check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(r)>::test(r);
 }
 
 void test_istream_view()
@@ -92,12 +95,10 @@ void test_istream_view()
             == RAH2_STD::vector<std::string>(
                 {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}));
         /// [views::istream]
+        testSuite.test_case("concepts");
+        auto r = RAH2_NS::views::istream<std::string>(ss);
+        check_range_cat<RAH2_NS::input_iterator_tag, decltype(r)>::test(r);
     }
-
-    testSuite.test_case("concepts");
-    check_range_cat<
-        RAH2_NS::input_iterator_tag,
-        decltype(RAH2_NS::views::istream<std::string>(RAH2_STD::declval<std::stringstream&>()))>();
 }
 
 void test_repeat_view()
@@ -111,7 +112,8 @@ void test_repeat_view()
     /// [repeat]
 
     testSuite.test_case("concepts");
-    check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(RAH2_NS::views::repeat(42))>();
+    auto r = RAH2_NS::views::repeat(42);
+    check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(r)>::test(r);
 }
 
 void test_generate_view()
@@ -159,9 +161,17 @@ void test_generate_view()
             result.push_back(*i);
         assert(result == RAH2_STD::vector<int>({1, 2, 4, 8}));
         /// [generate_n]
-        testSuite.test_case("concepts");
-        check_range_cat<RAH2_STD::input_iterator_tag, decltype(gen)>();
     }
+    testSuite.test_case("concepts");
+    auto gen2 = RAH2_NS::views::generate_n(
+        4,
+        [y = 1]() mutable
+        {
+            auto const prev = y;
+            y *= 2;
+            return prev;
+        });
+    check_range_cat<RAH2_STD::input_iterator_tag, decltype(gen2)>::test(gen2);
 }
 
 void test_irange_view()
@@ -184,5 +194,6 @@ void test_irange_view()
         assert(result == RAH2_STD::vector<int>({16, 19, 22}));
     }
     testSuite.test_case("concepts");
-    check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(RAH2_NS::views::irange(10, 25, 3))>();
+    auto r = RAH2_NS::views::irange(10, 25, 3);
+    check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(r)>::test(r);
 }
