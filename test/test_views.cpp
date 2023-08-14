@@ -662,14 +662,15 @@ void test_reverse_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_elements_view
 {
+    RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
+        {true, 'a', 1000},
+        {false, 'b', 1001},
+        {true, 'c', 1002},
+        {false, 'd', 1003},
+    };
+
     auto make()
     {
-        static RAH2_STD::vector<RAH2_STD::tuple<bool, char, int>> vec{
-            {true, 'a', 1000},
-            {false, 'b', 1001},
-            {true, 'c', 1002},
-            {false, 'd', 1003},
-        };
         return RAH2_NS::views::elements<2>(make_test_view_adapter<CS, Tag, Sized>(vec));
     }
     using BaseRange =
@@ -706,14 +707,15 @@ void test_elements_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_values_view
 {
+    RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
+        {12, "aaa"},
+        {19, "bbb"},
+        {25, "ccc"},
+        {5, "ddd"},
+    };
+
     auto make()
     {
-        static RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
-            {12, "aaa"},
-            {19, "bbb"},
-            {25, "ccc"},
-            {5, "ddd"},
-        };
         return RAH2_NS::views::values(make_test_view_adapter<CS, Tag, Sized>(m));
     }
     using BaseRange =
@@ -749,14 +751,15 @@ void test_values_view()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_keys_view
 {
+    RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
+        {12, "aaa"},
+        {19, "bbb"},
+        {25, "ccc"},
+        {5, "ddd"},
+    };
+
     auto make()
     {
-        static RAH2_STD::vector<RAH2_STD::pair<int, std::string>> m{
-            {12, "aaa"},
-            {19, "bbb"},
-            {25, "ccc"},
-            {5, "ddd"},
-        };
         return RAH2_NS::views::keys(make_test_view_adapter<CS, Tag, Sized>(m));
     }
     using BaseRange =
