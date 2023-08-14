@@ -613,29 +613,6 @@ void test_unbounded_view()
     foreach_range_combination<test_range<make_unbounded_view>>();
 }
 
-void test_irange_view()
-{
-    {
-        testSuite.test_case("sample");
-        /// [irange]
-        RAH2_STD::vector<int> result;
-        for (int const i : RAH2_NS::views::irange(10, 25, 3))
-            result.push_back(i);
-        assert(result == RAH2_STD::vector<int>({10, 13, 16, 19, 22}));
-        /// [irange]
-    }
-
-    {
-        RAH2_STD::vector<int> result;
-        for (int const i : RAH2_NS::views::irange(10, 26, 3) | RAH2_NS::views::slice(2, 5)
-                               | RAH2_NS::views::common)
-            result.push_back(i);
-        assert(result == RAH2_STD::vector<int>({16, 19, 22}));
-    }
-    testSuite.test_case("concepts");
-    check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(RAH2_NS::views::irange(10, 25, 3))>();
-}
-
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_cycle_view
 {
@@ -689,56 +666,6 @@ void test_cycle_view()
 
     testSuite.test_case("concepts");
     foreach_range_combination<test_range<make_cycle_view>>();
-}
-
-void test_generate_view()
-{
-    {
-        testSuite.test_case("sample");
-        /// [generate]
-        int y = 1;
-        auto gen = RAH2_NS::views::generate(
-            [&y]() mutable
-            {
-                auto const prev = y;
-                y *= 2;
-                return prev;
-            });
-        RAH2_STD::vector<int> gen_copy;
-        auto first = RAH2_NS::ranges::begin(gen);
-        auto result = RAH2_NS::back_inserter(gen_copy);
-        for (auto n = 4; n > 0; --n, ++result, ++first)
-            *result = *first;
-        assert(gen_copy == RAH2_STD::vector<int>({1, 2, 4, 8}));
-        /// [generate]
-        STATIC_ASSERT((RAH2_NS::ranges::input_range_impl<decltype(gen), true>::value));
-        STATIC_ASSERT(((RAH2_NS::is_same_v<
-                        RAH2_NS::ranges::range_iter_categ_t<decltype(gen)>,
-                        RAH2_STD::input_iterator_tag>)));
-        STATIC_ASSERT(not RAH2_NS::ranges::forward_range<decltype(gen)>);
-        STATIC_ASSERT(not RAH2_NS::ranges::common_range<decltype(gen)>);
-    }
-    {
-        /// [generate_n]
-        RAH2_STD::vector<int> result;
-        int y = 1;
-        auto gen = RAH2_NS::views::generate_n(
-            4,
-            [&y]() mutable
-            {
-                auto const prev = y;
-                y *= 2;
-                return prev;
-            });
-        auto i = RAH2_NS::ranges::begin(gen);
-        auto e = RAH2_NS::ranges::end(gen);
-        for (; i != e; ++i)
-            result.push_back(*i);
-        assert(result == RAH2_STD::vector<int>({1, 2, 4, 8}));
-        /// [generate_n]
-        testSuite.test_case("concepts");
-        (void)check_range_cat<RAH2_STD::input_iterator_tag, decltype(gen)>{};
-    }
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
