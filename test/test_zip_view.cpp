@@ -1,4 +1,4 @@
-#include "test_helpers.hpp"
+#include "test_helpers_zip.hpp"
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view1
@@ -17,11 +17,10 @@ struct make_zip_view1
     using expected_cat =
         RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
-template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view2
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    struct type
+    template <CommonOrSent CS, typename Tag, bool Sized, CommonOrSent CS2, typename Tag2, bool Sized2>
+    struct impl
     {
         auto make()
         {
@@ -84,5 +83,5 @@ void test_zip_view()
 
     testSuite.test_case("concepts");
     foreach_range_combination<test_range<make_zip_view1>>();
-    foreach_range_combination<test_range2<make_zip_view2>>();
+    foreach_range_combination2<test_2_inputs_adaptor<make_zip_view2>>();
 }

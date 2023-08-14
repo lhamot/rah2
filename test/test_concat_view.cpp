@@ -1,10 +1,9 @@
-#include "test_helpers.hpp"
+#include "test_helpers_zip.hpp"
 
-template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_concat_view
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    struct type
+    template <CommonOrSent CS, typename Tag, bool Sized, CommonOrSent CS2, typename Tag2, bool Sized2>
+    struct impl
     {
         using BaseRange1 = test_view<CS, Tag, Sized>;
         using BaseRange2 = test_view<CS2, Tag2, Sized2>;
@@ -16,7 +15,6 @@ struct make_concat_view
         static constexpr bool is_sized =
             RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
         static constexpr bool is_common = false;
-        static constexpr bool do_test = true;
         static constexpr bool is_borrowed = false;
         using expected_cat = RAH2_NS::ranges::common_iterator_tag<
             RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
@@ -75,5 +73,5 @@ void test_concat_view()
     }
 
     testSuite.test_case("concepts");
-    foreach_range_combination<test_range2<make_concat_view>>();
+    foreach_range_combination2<test_2_inputs_adaptor<make_concat_view>>();
 }
