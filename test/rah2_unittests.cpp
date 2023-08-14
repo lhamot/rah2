@@ -104,6 +104,31 @@ auto customGenerate()
     return RAH2_NS::ranges::subrange<CustomGenerator, CustomGenerator>{};
 }
 
+void assert_impl(char const* file, int line, char const* condition, bool value)
+{
+    ++testSuite.test_count;
+#if defined(TEST_DISPLAY_ALL)
+    std::cout << line << " assert : " << condition << std::endl;
+#endif
+    if (value)
+    {
+#if defined(TEST_DISPLAY_ALL)
+        std::cout << "OK" << std::endl;
+#endif
+    }
+    else
+    {
+#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
+        std::cout << line << " assert : " << condition << std::endl;
+#endif
+#if defined(TEST_DISPLAY_FAILED)
+        std::cout << "NOT OK (" << file << ":" << line << ")" << std::endl;
+#endif
+        // abort();
+        testSuite.current_test_status = false;
+    }
+}
+
 void test_empty_view();
 void test_single_view();
 void test_iota_view();

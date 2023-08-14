@@ -106,30 +106,7 @@ struct TestSuite
 // #define TEST_DISPLAY_NONE
 
 extern TestSuite testSuite;
-inline void assert_impl(char const* file, int line, char const* condition, bool value)
-{
-    ++testSuite.test_count;
-#if defined(TEST_DISPLAY_ALL)
-    std::cout << line << " assert : " << condition << std::endl;
-#endif
-    if (value)
-    {
-#if defined(TEST_DISPLAY_ALL)
-        std::cout << "OK" << std::endl;
-#endif
-    }
-    else
-    {
-#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
-        std::cout << line << " assert : " << condition << std::endl;
-#endif
-#if defined(TEST_DISPLAY_FAILED)
-        std::cout << "NOT OK (" << file << ":" << line << ")" << std::endl;
-#endif
-        // abort();
-        testSuite.current_test_status = false;
-    }
-}
+inline void assert_impl(char const* file, int line, char const* condition, bool value);
 
 #undef assert
 #define assert(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
@@ -691,10 +668,7 @@ struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
         auto e = RAH2_NS::ranges::end(r);
         auto i = RAH2_NS::ranges::begin(r);
         auto u = i;
-        if (not(u == i))
-        {
-            assert(u == i);
-        }
+        assert(u == i);
         ++u;
         assert(u != i);
         size_t counter = 0;
@@ -748,33 +722,11 @@ struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
         u += 2;
         decltype(i[2]) ref = i[2];
         AssertSame<decltype(ref), RAH2_NS::ranges::range_reference_t<R>>();
-        if (not(u > i))
-        {
-            assert(u > i);
-        }
-        if (u < i)
-        {
-            assert(not(u < i));
-        }
-        if (not(u != i))
-        {
-            assert(u != i);
-        }
-        if (u == i)
-        {
-            assert(not(u == i));
-        }
-        if (not(i < u))
-        {
-            assert(u > i);
-            assert(not(u < i));
-            assert(not(u == i));
-            assert(i < u);
-        }
-        if (not(((u - i) == 2)))
-        {
-            assert((u - i) == 2);
-        }
+        assert(u > i);
+        assert(not(u < i));
+        assert(u != i);
+        assert(not(u == i));
+        assert((u - i) == 2);
         intptr_t counter = 0;
         for (; i != e && counter != 100; ++i, ++counter)
         {

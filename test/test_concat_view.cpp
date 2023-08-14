@@ -1,23 +1,25 @@
 #include "test_helpers_zip.hpp"
 
-template <CommonOrSent CS, typename Tag, bool Sized, CommonOrSent CS2, typename Tag2, bool Sized2>
 struct make_concat_view
 {
-    using BaseRange1 = test_view<CS, Tag, Sized>;
-    using BaseRange2 = test_view<CS2, Tag2, Sized2>;
-    auto make()
+    template <CommonOrSent CS, typename Tag, bool Sized, CommonOrSent CS2, typename Tag2, bool Sized2>
+    struct impl
     {
-        return RAH2_NS::views::concat(
-            make_test_view<CS, Tag, Sized>(), make_test_view<CS2, Tag2, Sized2>());
-    }
-    static constexpr bool is_sized =
-        RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
-    static constexpr bool is_common = false;
-    static constexpr bool do_test = true;
-    static constexpr bool is_borrowed = false;
-    using expected_cat = RAH2_NS::ranges::common_iterator_tag<
-        RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
-        RAH2_NS::forward_iterator_tag>;
+        using BaseRange1 = test_view<CS, Tag, Sized>;
+        using BaseRange2 = test_view<CS2, Tag2, Sized2>;
+        auto make()
+        {
+            return RAH2_NS::views::concat(
+                make_test_view<CS, Tag, Sized>(), make_test_view<CS2, Tag2, Sized2>());
+        }
+        static constexpr bool is_sized =
+            RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
+        static constexpr bool is_common = false;
+        static constexpr bool is_borrowed = false;
+        using expected_cat = RAH2_NS::ranges::common_iterator_tag<
+            RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
+            RAH2_NS::forward_iterator_tag>;
+    };
 };
 void test_concat_view()
 {
@@ -71,5 +73,5 @@ void test_concat_view()
     }
 
     testSuite.test_case("concepts");
-    foreach_range_combination2<test_zip_range<make_concat_view>>();
+    foreach_range_combination2<test_2_inputs_adaptor<make_concat_view>>();
 }
