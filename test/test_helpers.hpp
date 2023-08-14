@@ -663,6 +663,38 @@ struct check_iterator_cat<RAH2_NS::contiguous_iterator_tag, I>
         RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::contiguous_iterator_tag>));
 };
 
+template <bool sized>
+struct check_size
+{
+    template <typename S, typename R>
+    static void check(S size, R&& range)
+    {
+        if (size != S(RAH2_NS::ranges::size(range)))
+        {
+            std::cout << "real size :" << size
+                      << " - expected size:" << RAH2_NS::ranges::size(range) << std::endl;
+            assert(size == S(RAH2_NS::ranges::size(range)));
+        }
+    }
+    static intptr_t get_stop_iter()
+    {
+        return std::numeric_limits<intptr_t>::max();
+    }
+};
+
+template <>
+struct check_size<false>
+{
+    template <typename S, typename R>
+    static void check(S, R&&)
+    {
+    }
+    static intptr_t get_stop_iter()
+    {
+        return 100;
+    }
+};
+
 template <typename C, typename R>
 struct check_range_cat;
 
@@ -672,11 +704,13 @@ struct check_range_cat<RAH2_STD::input_iterator_tag, R>
     static void test(R& r)
     {
         auto e = RAH2_NS::ranges::end(r);
-        size_t counter = 0;
-        for (auto i = RAH2_NS::ranges::begin(r); i != e && counter != 100; ++i, ++counter)
+        intptr_t const max_iter = check_size<RAH2_NS::ranges::sized_range<R>>::get_stop_iter();
+        intptr_t counter = 0;
+        for (auto i = RAH2_NS::ranges::begin(r); i != e && counter != max_iter; ++i, ++counter)
         {
             (void)*i;
         }
+        check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
         STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
         AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag>();
         STATIC_ASSERT(not RAH2_NS::ranges::forward_range<R>);
@@ -694,11 +728,13 @@ struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
         assert(u == i);
         ++u;
         assert(u != i);
-        size_t counter = 0;
-        for (; i != e && counter != 100; ++i, ++counter)
+        intptr_t const max_iter = check_size<RAH2_NS::ranges::sized_range<R>>::get_stop_iter();
+        intptr_t counter = 0;
+        for (; i != e && counter != max_iter; ++i, ++counter)
         {
             (void)*i;
         }
+        check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
         AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag>();
         STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
         STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
@@ -715,11 +751,13 @@ struct check_range_cat<RAH2_NS::bidirectional_iterator_tag, R>
         auto i = RAH2_NS::ranges::begin(r);
         auto u = i;
         assert(u == i);
+        intptr_t const max_iter = check_size<RAH2_NS::ranges::sized_range<R>>::get_stop_iter();
         intptr_t counter = 0;
-        for (; i != e && counter != 100; ++i, ++counter)
+        for (; i != e && counter != max_iter; ++i, ++counter)
         {
             (void)*i;
         }
+        check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
         for (; i != RAH2_NS::ranges::begin(r); --i, --counter)
         {
             assert(counter >= 0);
@@ -750,11 +788,13 @@ struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
         assert(u != i);
         assert(not(u == i));
         assert((u - i) == 2);
+        intptr_t const max_iter = check_size<RAH2_NS::ranges::sized_range<R>>::get_stop_iter();
         intptr_t counter = 0;
-        for (; i != e && counter != 100; ++i, ++counter)
+        for (; i != e && counter != max_iter; ++i, ++counter)
         {
             (void)*i;
         }
+        check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
         for (; i != RAH2_NS::ranges::begin(r); --i, --counter)
         {
             assert(counter >= 0);
@@ -782,12 +822,14 @@ struct check_range_cat<RAH2_NS::contiguous_iterator_tag, R>
         assert(!(u < i));
         assert(i < u);
         assert((u - i) == 2);
+        intptr_t const max_iter = check_size<RAH2_NS::ranges::sized_range<R>>::get_stop_iter();
         intptr_t counter = 0;
-        for (; i != e && counter != 100; ++i, ++counter)
+        for (; i != e && counter != max_iter; ++i, ++counter)
         {
             (void)*i;
         }
-        for (; i != RAH2_NS::ranges::begin(r); --i)
+        check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
+        for (; i != RAH2_NS::ranges::begin(r); --i, --counter)
         {
             assert(counter >= 0);
             assert(i >= RAH2_NS::ranges::begin(r));

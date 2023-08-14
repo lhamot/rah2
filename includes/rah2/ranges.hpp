@@ -498,7 +498,7 @@ namespace RAH2_NS
             }
             static size_t size()
             {
-                return 0;
+                return 1;
             }
             T* data()
             {
@@ -3236,6 +3236,7 @@ namespace RAH2_NS
             R input_view_;
 
             static_assert(forward_range<R>, "adjacent_view expect at least a forward_range");
+            static_assert(N != 0, "In adjacent_view N should be greater than zero");
 
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
@@ -3244,6 +3245,7 @@ namespace RAH2_NS
             using iterator_category =
                 cap_iterator_tag<range_iter_categ_t<R>, forward_iterator_tag, random_access_iterator_tag>;
             static constexpr bool is_sized = sized_range<R>;
+            static constexpr bool is_common = common_range<R> && bidirectional_range<R>;
 
             template <size_t I>
             struct GetType
@@ -3362,15 +3364,17 @@ namespace RAH2_NS
                 return iterator(RAH2_STD::move(sub_range_begin), RAH2_STD::move(range_end));
             }
 
-            template <typename R2 = R, RAH2_STD::enable_if_t<common_range<R2>>* = nullptr>
+            template <bool IsCommon = is_common, RAH2_STD::enable_if_t<IsCommon>* = nullptr>
             auto end()
             {
-                auto const range_end = RAH2_NS::ranges::end(input_view_);
-                auto sub_range_begin = RAH2_NS::ranges::begin(input_view_);
-                RAH2_NS::ranges::advance(sub_range_begin, N + 1, range_end);
-                return iterator{RAH2_STD::move(sub_range_begin), RAH2_STD::move(range_end)};
+                auto sub_range_begin = RAH2_NS::ranges::end(input_view_);
+                RAH2_NS::ranges::advance(
+                    sub_range_begin,
+                    -RAH2_NS::ranges::range_difference_t<R>(N - 1),
+                    RAH2_NS::ranges::begin(input_view_));
+                return iterator{RAH2_STD::move(sub_range_begin), RAH2_NS::ranges::end(input_view_)};
             }
-            template <typename R2 = R, RAH2_STD::enable_if_t<!common_range<R2>>* = nullptr>
+            template <bool IsCommon = is_common, RAH2_STD::enable_if_t<not IsCommon>* = nullptr>
             auto end()
             {
                 return sentinel{RAH2_NS::ranges::end(input_view_)};
@@ -3379,12 +3383,16 @@ namespace RAH2_NS
             template <bool IsSized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return range_size_t<R>(RAH2_NS::ranges::size(input_view_) - (N - 1));
+                auto base_size = RAH2_NS::ranges::size(input_view_);
+                auto missing = N - 1;
+                return range_size_t<R>(base_size - missing);
             }
             template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return range_size_t<R>(RAH2_NS::ranges::size(input_view_) - (N - 1));
+                auto base_size = RAH2_NS::ranges::size(input_view_);
+                auto missing = N - 1;
+                return range_size_t<R>(base_size - missing);
             }
         };
         template <class V, size_t N>
@@ -3542,27 +3550,35 @@ namespace RAH2_NS
                 return iterator(this, RAH2_NS::ranges::begin(inner_));
             }
 
-            template <bool IsCommon = RAH2_NS::ranges::common_range<R>, RAH2_STD::enable_if_t<IsCommon>* = nullptr>
+            template <
+                bool IsCommon = RAH2_NS::ranges::common_range<inner_adjacent_view>,
+                RAH2_STD::enable_if_t<IsCommon>* = nullptr>
             auto end()
             {
-                return iterator{this, RAH2_NS::ranges::end(inner_)};
+                return iterator(this, RAH2_NS::ranges::end(inner_));
             }
 
-            template <bool IsCommon = RAH2_NS::ranges::common_range<R>, RAH2_STD::enable_if_t<!IsCommon>* = nullptr>
+            template <
+                bool IsCommon = RAH2_NS::ranges::common_range<inner_adjacent_view>,
+                RAH2_STD::enable_if_t<!IsCommon>* = nullptr>
             auto end()
             {
                 return sentinel{RAH2_NS::ranges::end(inner_)};
             }
 
-            template <bool IsSized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            template <
+                bool IsSized = RAH2_NS::ranges::sized_range<inner_adjacent_view const>,
+                RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size() const
             {
-                return range_size_t<R>(RAH2_NS::ranges::size(inner_) - (N - 1));
+                return range_size_t<R>(RAH2_NS::ranges::size(inner_));
             }
-            template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            template <
+                bool IsSized = RAH2_NS::ranges::sized_range<inner_adjacent_view>,
+                RAH2_STD::enable_if_t<IsSized>* = nullptr>
             auto size()
             {
-                return range_size_t<R>(RAH2_NS::ranges::size(inner_) - (N - 1));
+                return range_size_t<R>(RAH2_NS::ranges::size(inner_));
             }
         };
         namespace views
@@ -4110,7 +4126,7 @@ namespace RAH2_NS
             template <typename Base = R, RAH2_STD::enable_if_t<sized_range<Base>>* = nullptr>
             auto size()
             {
-                return range_size_t<R>(RAH2_NS::ranges::size(base_) / stride_);
+                return range_size_t<R>((RAH2_NS::ranges::size(base_) + (stride_ - 1)) / stride_);
             }
         };
         template <class V>

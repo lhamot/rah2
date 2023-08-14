@@ -1138,8 +1138,7 @@ namespace RAH2_NS
         using range_rvalue_reference_t = RAH2_NS::iter_rvalue_reference_t<iterator_t<R>>;
 
         template <typename R>
-        using range_iter_categ_t =
-            typename RAH2_STD::iterator_traits<iterator_t<R>>::iterator_category;
+        using range_iter_categ_t = RAH2_NS::details::iterator_category<iterator_t<R>>;
 
         // ******************************** <ranges> concepts *****************************************
         template <class R>
