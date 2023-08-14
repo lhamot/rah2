@@ -21,6 +21,6 @@ rem 3 = arch
 rem 4 = optim
 rem 5 = config  (_DEGUG or NDEBUG)
 del %~1_rah2_%~2_%~3_%~5.exe
-%~1++ -O%~4 -m%~3 -ftemplate-backtrace-limit=0 -o%~1_rah2_%~2_%~3_%~5.exe rah2_unittests.cpp test_algo.cpp test_views.cpp test_concat_view.cpp test_set_difference_view.cpp test_zip_view.cpp test_zip_transform_view.cpp -std=c++%~2 -I../includes -D%~5 -Wall -Wextra -Werror
+%~1++ -O%~4 -m%~3 -ftemplate-backtrace-limit=0 -o%~1_rah2_%~2_%~3_%~5.exe rah2_unittests.cpp test_algo.cpp test_views2.cpp test_views.cpp test_concat_view.cpp test_set_difference_view.cpp test_zip_view.cpp test_zip_transform_view.cpp -std=c++%~2 -I../includes -D%~5 -Wall -Wextra -Werror
 %~1_rah2_%~2_%~3_%~5.exe
 exit /b
