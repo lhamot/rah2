@@ -3605,10 +3605,13 @@ namespace RAH2_NS
             R input_view;
             intptr_t count_;
 
+            static_assert(forward_range<R>, "slide_view expect a forward_range");
+
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
             using base_cat =
-                common_iterator_tag<RAH2_NS::ranges::range_iter_categ_t<R>, random_access_iterator_tag>;
+                cap_iterator_tag<RAH2_NS::ranges::range_iter_categ_t<R>, forward_iterator_tag, random_access_iterator_tag>;
+            constexpr static bool is_common = common_range<R> && bidirectional_range<R>;
 
         public:
             struct sentinel
@@ -3720,7 +3723,7 @@ namespace RAH2_NS
                 return iterator(sub_range_begin, sub_range_last);
             }
 
-            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NS::ranges::common_range<U>>* = nullptr>
+            template <bool IsCommon = is_common, RAH2_STD::enable_if_t<IsCommon>* = nullptr>
             auto end()
             {
                 auto const range_end = RAH2_NS::ranges::end(input_view);
@@ -3739,7 +3742,7 @@ namespace RAH2_NS
                 return iterator(sub_range_first, range_end);
             }
 
-            template <typename U = R, RAH2_STD::enable_if_t<not RAH2_NS::ranges::common_range<U>>* = nullptr>
+            template <bool IsCommon = is_common, RAH2_STD::enable_if_t<not IsCommon>* = nullptr>
             auto end()
             {
                 return sentinel{RAH2_NS::ranges::end(input_view)};

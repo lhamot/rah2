@@ -20,8 +20,10 @@ struct make_set_difference_view
         using BaseRange2 = test_view<CS2, Tag2, Sized2>;
         auto make()
         {
+            static RAH2_STD::vector<int> in2 = {0, 1, 6, 7, 8, 9, 10, 11, 12, 13};
+
             return RAH2_NS::views::set_difference(
-                make_test_view<CS, Tag, Sized>(), make_test_view<CS2, Tag2, Sized2>());
+                make_test_view<CS, Tag, Sized>(), make_test_view_adapter<CS2, Tag2, Sized2>(in2));
         }
         static constexpr bool is_sized = false;
         static constexpr bool is_common = false;

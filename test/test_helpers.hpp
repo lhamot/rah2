@@ -106,7 +106,7 @@ struct TestSuite
 // #define TEST_DISPLAY_NONE
 
 extern TestSuite testSuite;
-inline void assert_impl(int line, char const* condition, bool value)
+inline void assert_impl(char const* file, int line, char const* condition, bool value)
 {
     ++testSuite.test_count;
 #if defined(TEST_DISPLAY_ALL)
@@ -124,7 +124,7 @@ inline void assert_impl(int line, char const* condition, bool value)
         std::cout << line << " assert : " << condition << std::endl;
 #endif
 #if defined(TEST_DISPLAY_FAILED)
-        std::cout << "NOT OK (line:" << line << ")" << std::endl;
+        std::cout << "NOT OK (" << file << ":" << line << ")" << std::endl;
 #endif
         // abort();
         testSuite.current_test_status = false;
@@ -132,7 +132,7 @@ inline void assert_impl(int line, char const* condition, bool value)
 }
 
 #undef assert
-#define assert(CONDITION) assert_impl(__LINE__, #CONDITION, (CONDITION))
+#define assert(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
 
 template <bool A, bool B>
 struct AssertEqual;

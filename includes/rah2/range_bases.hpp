@@ -1499,12 +1499,12 @@ namespace RAH2_NS
             RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
         constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
         {
+            RAH2_ASSERT(n >= 0);
             while (n > 0 && i != bound)
             {
                 --n;
                 ++i;
             }
-
             return n;
         }
 
@@ -1514,6 +1514,7 @@ namespace RAH2_NS
             RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
         constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
         {
+            RAH2_ASSERT(n >= 0);
             while (n > 0)
             {
                 --n;

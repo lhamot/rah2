@@ -1021,8 +1021,9 @@ struct make_slide_view
     }
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
-    static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
-    static constexpr bool do_test = true;
+    static constexpr bool is_common =
+        RAH2_NS::ranges::common_range<BaseRange> && RAH2_NS::ranges::bidirectional_range<BaseRange>;
+    static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
     static constexpr bool is_borrowed = false;
     using expected_cat =
         RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
