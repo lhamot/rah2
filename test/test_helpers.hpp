@@ -106,7 +106,7 @@ struct TestSuite
 // #define TEST_DISPLAY_NONE
 
 extern TestSuite testSuite;
-inline void assert_impl(char const* file, int line, char const* condition, bool value);
+void assert_impl(char const* file, int line, char const* condition, bool value);
 
 #undef assert
 #define assert(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
