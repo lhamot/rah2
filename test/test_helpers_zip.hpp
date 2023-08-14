@@ -50,7 +50,8 @@ struct test_2_inputs_adaptor
     template <CommonOrSent Sentinel, typename Cat, bool Sized, CommonOrSent Sentinel2, typename Cat2, bool Sized2>
     void call()
     {
-        using MakeR = MakeRange::impl<Sentinel, Cat, Sized, Sentinel2, Cat2, Sized2>;
+        using MakeR =
+            typename MakeRange::template impl<Sentinel, Cat, Sized, Sentinel2, Cat2, Sized2>;
         auto t1 = MakeR();
         auto r1 = t1.make();
         using ExpectedCat = typename MakeR::expected_cat;
