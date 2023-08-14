@@ -1,4 +1,4 @@
-#include "test_helpers.hpp"
+#include "test_helpers_zip.hpp"
 
 #ifdef RAH2_USE_EASTL
 
@@ -10,30 +10,26 @@
 
 #endif
 
-template <CommonOrSent CS, typename Tag, bool Sized>
+template <CommonOrSent CS, typename Tag, bool Sized, CommonOrSent CS2, typename Tag2, bool Sized2>
 struct make_set_difference_view
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    struct type
+    using BaseRange1 = test_view<CS, Tag, Sized>;
+    using BaseRange2 = test_view<CS2, Tag2, Sized2>;
+    auto make()
     {
-        using BaseRange1 = test_view<CS, Tag, Sized>;
-        using BaseRange2 = test_view<CS2, Tag2, Sized2>;
-        auto make()
-        {
-            static RAH2_STD::vector<int> in2 = {0, 1, 6, 7, 8, 9, 10, 11, 12, 13};
+        static RAH2_STD::vector<int> in2 = {0, 1, 6, 7, 8, 9, 10, 11, 12, 13};
 
-            return RAH2_NS::views::set_difference(
-                make_test_view<CS, Tag, Sized>(), make_test_view_adapter<CS2, Tag2, Sized2>(in2));
-        }
-        static constexpr bool is_sized = false;
-        static constexpr bool is_common = false;
-        static constexpr bool do_test = true;
-        static constexpr bool is_borrowed = false;
-        using expected_cat = RAH2_NS::ranges::cap_iterator_tag<
-            RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
-            RAH2_STD::input_iterator_tag,
-            RAH2_NS::forward_iterator_tag>;
-    };
+        return RAH2_NS::views::set_difference(
+            make_test_view<CS, Tag, Sized>(), make_test_view_adapter<CS2, Tag2, Sized2>(in2));
+    }
+    static constexpr bool is_sized = false;
+    static constexpr bool is_common = false;
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = false;
+    using expected_cat = RAH2_NS::ranges::cap_iterator_tag<
+        RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
+        RAH2_STD::input_iterator_tag,
+        RAH2_NS::forward_iterator_tag>;
 };
 void test_set_difference_view()
 {
@@ -91,5 +87,5 @@ void test_set_difference_view()
     }
 
     testSuite.test_case("concepts");
-    foreach_range_combination<test_range2<make_set_difference_view>>();
+    foreach_range_combination2<test_zip_range<make_set_difference_view>>();
 }

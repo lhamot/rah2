@@ -850,37 +850,31 @@ struct call_on_range_if_true<false, Sentinel, Cat, Sized, MakeR, Check>
     }
 };
 
-template <CommonOrSent Sentinel, typename Cat, bool Sized, class Func>
-void test_one_range_setup()
-{
-    Func{}.template call<Sentinel, Cat, Sized>();
-}
-
 template <class Func>
 void foreach_range_combination()
 {
-    test_one_range_setup<Sentinel, RAH2_STD::input_iterator_tag, false, Func>();
-    test_one_range_setup<Sentinel, RAH2_STD::forward_iterator_tag, false, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::bidirectional_iterator_tag, false, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::random_access_iterator_tag, false, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::contiguous_iterator_tag, false, Func>();
+    Func{}.template call<Sentinel, RAH2_STD::input_iterator_tag, false>();
+    Func{}.template call<Sentinel, RAH2_STD::forward_iterator_tag, false>();
+    Func{}.template call<Sentinel, RAH2_NS::bidirectional_iterator_tag, false>();
+    Func{}.template call<Sentinel, RAH2_NS::random_access_iterator_tag, false>();
+    Func{}.template call<Sentinel, RAH2_NS::contiguous_iterator_tag, false>();
 
-    test_one_range_setup<Common, RAH2_NS::forward_iterator_tag, false, Func>();
-    test_one_range_setup<Common, RAH2_NS::bidirectional_iterator_tag, false, Func>();
+    Func{}.template call<Common, RAH2_NS::forward_iterator_tag, false>();
+    Func{}.template call<Common, RAH2_NS::bidirectional_iterator_tag, false>();
     // Common random_access can't be not sized
-    // test_one_range_setup<Common, AH2_NS::random_access_iterator_tag, false, MakeR, Check>();
-    // test_one_range_setup<Common, RAH2_NS::contiguous_iterator_tag, false, MakeR, Check>();
+    // Func{}.template call<Common, AH2_NS::random_access_iterator_tag, false>();
+    // Func{}.template call<Common, RAH2_NS::contiguous_iterator_tag, false>();
 
-    test_one_range_setup<Sentinel, RAH2_NS::input_iterator_tag, true, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::forward_iterator_tag, true, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::bidirectional_iterator_tag, true, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::random_access_iterator_tag, true, Func>();
-    test_one_range_setup<Sentinel, RAH2_NS::contiguous_iterator_tag, true, Func>();
+    Func{}.template call<Sentinel, RAH2_NS::input_iterator_tag, true>();
+    Func{}.template call<Sentinel, RAH2_NS::forward_iterator_tag, true>();
+    Func{}.template call<Sentinel, RAH2_NS::bidirectional_iterator_tag, true>();
+    Func{}.template call<Sentinel, RAH2_NS::random_access_iterator_tag, true>();
+    Func{}.template call<Sentinel, RAH2_NS::contiguous_iterator_tag, true>();
 
-    test_one_range_setup<Common, RAH2_NS::forward_iterator_tag, true, Func>();
-    test_one_range_setup<Common, RAH2_NS::bidirectional_iterator_tag, true, Func>();
-    test_one_range_setup<Common, RAH2_NS::random_access_iterator_tag, true, Func>();
-    test_one_range_setup<Common, RAH2_NS::contiguous_iterator_tag, true, Func>();
+    Func{}.template call<Common, RAH2_NS::forward_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::bidirectional_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::random_access_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::contiguous_iterator_tag, true>();
 }
 
 template <template <CommonOrSent, typename, bool> class MakeRange>

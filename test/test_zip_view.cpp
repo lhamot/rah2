@@ -1,4 +1,4 @@
-#include "test_helpers.hpp"
+#include "test_helpers_zip.hpp"
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct make_zip_view1
@@ -17,33 +17,29 @@ struct make_zip_view1
     using expected_cat =
         RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
-template <CommonOrSent CS, typename Tag, bool Sized>
+template <CommonOrSent CS, typename Tag, bool Sized, CommonOrSent CS2, typename Tag2, bool Sized2>
 struct make_zip_view2
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    struct type
+    auto make()
     {
-        auto make()
-        {
-            return RAH2_NS::views::zip(
-                make_test_view<CS, Tag, Sized>(), make_test_view<CS2, Tag2, Sized2>());
-        }
-        using BaseRange1 = test_view<CS, Tag, Sized>;
-        using BaseRange2 = test_view<CS2, Tag2, Sized2>;
-        static constexpr bool is_sized =
-            RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
-        static constexpr bool is_common =
-            (RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::random_access_range<BaseRange1>)&&(
-                RAH2_NS::ranges::sized_range<BaseRange2>
-                && RAH2_NS::ranges::random_access_range<BaseRange2>);
-        static constexpr bool do_test = true;
-        static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange1>
-                                            && RAH2_NS::ranges::enable_borrowed_range<BaseRange2>;
-        using expected_cat = RAH2_NS::ranges::cap_iterator_tag<
-            RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
-            RAH2_STD::input_iterator_tag,
-            RAH2_NS::random_access_iterator_tag>;
-    };
+        return RAH2_NS::views::zip(
+            make_test_view<CS, Tag, Sized>(), make_test_view<CS2, Tag2, Sized2>());
+    }
+    using BaseRange1 = test_view<CS, Tag, Sized>;
+    using BaseRange2 = test_view<CS2, Tag2, Sized2>;
+    static constexpr bool is_sized =
+        RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
+    static constexpr bool is_common =
+        (RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::random_access_range<BaseRange1>)&&(
+            RAH2_NS::ranges::sized_range<BaseRange2>
+            && RAH2_NS::ranges::random_access_range<BaseRange2>);
+    static constexpr bool do_test = true;
+    static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange1>
+                                        && RAH2_NS::ranges::enable_borrowed_range<BaseRange2>;
+    using expected_cat = RAH2_NS::ranges::cap_iterator_tag<
+        RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
+        RAH2_STD::input_iterator_tag,
+        RAH2_NS::random_access_iterator_tag>;
 };
 void test_zip_view()
 {
@@ -84,5 +80,5 @@ void test_zip_view()
 
     testSuite.test_case("concepts");
     foreach_range_combination<test_range<make_zip_view1>>();
-    foreach_range_combination<test_range2<make_zip_view2>>();
+    foreach_range_combination2<test_zip_range<make_zip_view2>>();
 }
