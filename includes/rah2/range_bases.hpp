@@ -788,6 +788,7 @@ namespace RAH2_NS
             MAKE_CONCEPT(has_size_ADL, size(RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>()))
             MAKE_CONCEPT(has_data_member, RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>().data())
             MAKE_CONCEPT(has_data_ADL, data(RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>()))
+            MAKE_CONCEPT(has_empty_member, RAH2_STD::declval<RAH2_STD::remove_reference_t<T>>().empty())
 
             struct begin_impl
             {
@@ -1060,10 +1061,30 @@ namespace RAH2_NS
 
             struct empty_impl
             {
-                template <typename R>
-                auto operator()(R const& range) const
+                template <typename R, std::enable_if_t<has_empty_member<R>>* = nullptr>
+                auto operator()(R&& range) const
                 {
                     return range.empty();
+                }
+
+                template <typename T2>
+                using has_ranges_size =
+                    decltype(size_impl{}(RAH2_STD::declval<RAH2_STD::remove_reference_t<T2>>()));
+
+                template <
+                    typename R,
+                    std::enable_if_t<!has_empty_member<R> && compiles<false, R, has_ranges_size>>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    return size_impl{}(range);
+                }
+
+                template <
+                    typename R,
+                    std::enable_if_t<!has_empty_member<R> && !compiles<false, R, has_ranges_size>>* = nullptr>
+                auto operator()(R&& range) const
+                {
+                    return begin_impl{}(range) == end_impl{}(range);
                 }
             };
 

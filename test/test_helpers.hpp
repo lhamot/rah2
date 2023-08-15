@@ -704,6 +704,7 @@ struct check_range_cat<RAH2_STD::input_iterator_tag, R>
     static void test(R& r)
     {
         auto e = RAH2_NS::ranges::end(r);
+        assert(not RAH2_NS::ranges::empty(r));
         intptr_t const max_iter = check_size<RAH2_NS::ranges::sized_range<R>>::get_stop_iter();
         intptr_t counter = 0;
         for (auto i = RAH2_NS::ranges::begin(r); i != e && counter != max_iter; ++i, ++counter)
@@ -723,6 +724,7 @@ struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
     static void test(R& r)
     {
         auto e = RAH2_NS::ranges::end(r);
+        assert(not RAH2_NS::ranges::empty(r));
         auto i = RAH2_NS::ranges::begin(r);
         auto u = i;
         assert(u == i);
@@ -748,6 +750,7 @@ struct check_range_cat<RAH2_NS::bidirectional_iterator_tag, R>
     static void test(R& r)
     {
         auto e = RAH2_NS::ranges::end(r);
+        assert(not RAH2_NS::ranges::empty(r));
         auto i = RAH2_NS::ranges::begin(r);
         auto u = i;
         assert(u == i);
@@ -778,6 +781,7 @@ struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
     static void test(R& r)
     {
         auto e = RAH2_NS::ranges::end(r);
+        assert(not RAH2_NS::ranges::empty(r));
         auto i = RAH2_NS::ranges::begin(r);
         auto u = i;
         u += 2;
@@ -813,6 +817,7 @@ struct check_range_cat<RAH2_NS::contiguous_iterator_tag, R>
     static void test(R& r)
     {
         auto e = RAH2_NS::ranges::end(r);
+        assert(not RAH2_NS::ranges::empty(r));
         auto i = RAH2_NS::ranges::begin(r);
         auto u = i;
         u += 2;
