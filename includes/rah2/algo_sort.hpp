@@ -1262,8 +1262,9 @@ namespace RAH2_NS
         void stable_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
         {
 #ifdef RAH2_USE_EASTL
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
-                first, last, *RAH2_STD::get_default_allocator(0), compare);
+            RAH2_NS::ranges::details::
+                merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
+                    first, last, *RAH2_STD::get_default_allocator(0), compare);
 #else
             using Allocator =
                 RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
@@ -1292,7 +1293,7 @@ namespace RAH2_NS
         void stable_sort(RandomAccessIterator first, Sentinel last)
         {
 #ifdef RAH2_USE_EASTL
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+            RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
                 first, last, *RAH2_STD::get_default_allocator(0));
 #else
             using Allocator =
