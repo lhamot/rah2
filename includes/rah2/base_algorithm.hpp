@@ -6,11 +6,13 @@
 
 #include <EASTL/string.h>
 #include <EASTL/utility.h>
+#include <EASTL/functional.h>
 
 #else
 
 #include <string.h> // memcmp
 #include <utility> // std::move
+#include <functional> // std::ref
 
 #endif
 
