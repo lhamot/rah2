@@ -16,8 +16,8 @@ struct make_concat_view
             RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
         static constexpr bool is_common = false;
         static constexpr bool is_borrowed = false;
-        using expected_cat = RAH2_NS::ranges::common_iterator_tag<
-            RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
+        using expected_cat = RAH2_NS::ranges::details::common_iterator_tag<
+            RAH2_NS::ranges::details::common_iterator_tag<Tag, Tag2>,
             RAH2_NS::forward_iterator_tag>;
     };
 };

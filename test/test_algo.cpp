@@ -84,7 +84,7 @@ void test_for_each()
     RAH2_NS::ranges::for_each(testFE, [](auto& value) { return ++value; });
     assert(RAH2_NS::ranges::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
     /// [rah2::ranges::for_each]
-    STATIC_ASSERT((RAH2_NS::ranges::input_range_impl<decltype(testFE), true>::value));
+    STATIC_ASSERT((RAH2_NS::ranges::details::input_range_impl<decltype(testFE), true>::value));
     testSuite.test_case("iter");
     RAH2_NS::ranges::for_each(testFE.begin(), testFE.end(), [](auto& value) { return ++value; });
     assert(RAH2_NS::ranges::equal(testFE, std::initializer_list<int>({6, 6, 6, 6})));

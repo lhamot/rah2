@@ -520,7 +520,9 @@ static_assert(
     "Should be input");
 static_assert(RAH2_NS::ranges::input_range<ForwardCommonView>, "Should be input");
 static_assert(not RAH2_NS::ranges::output_range<ForwardCommonView, int>, "Should not be output");
-static_assert(RAH2_NS::ranges::forward_range_impl<ForwardCommonView, true>::value, "Should be Forward");
+static_assert(
+    RAH2_NS::ranges::details::forward_range_impl<ForwardCommonView, true>::value,
+    "Should be Forward");
 static_assert(!RAH2_NS::ranges::bidirectional_range<ForwardCommonView>, "Should not be bidirectional");
 static_assert(!RAH2_NS::ranges::random_access_range<ForwardCommonView>, "Should not be random");
 static_assert(not RAH2_NS::ranges::contiguous_range<ForwardCommonView>, "Should not be contiguous");
@@ -533,7 +535,7 @@ static_assert(
 static_assert(RAH2_NS::ranges::input_range<BidirCommonView>, "Should be input");
 static_assert(not RAH2_NS::ranges::output_range<BidirCommonView, int>, "Should not be outnput");
 static_assert(RAH2_NS::ranges::forward_range<BidirCommonView>, "Should be Forward");
-STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<BidirCommonView, true>::value));
+STATIC_ASSERT((RAH2_NS::ranges::details::bidirectional_range_impl<BidirCommonView, true>::value));
 static_assert(!RAH2_NS::ranges::random_access_range<BidirCommonView>, "Should not be random");
 static_assert(not RAH2_NS::ranges::contiguous_range<BidirCommonView>, "Should not be contiguous");
 
@@ -546,13 +548,13 @@ static_assert(RAH2_NS::ranges::input_range<RandomCommonView>, "Should be input")
 static_assert(not RAH2_NS::ranges::output_range<RandomCommonView, int>, "Should not be output");
 static_assert(RAH2_NS::ranges::forward_range<RandomCommonView>, "Should be Forward");
 using It = RAH2_NS::ranges::iterator_t<RandomCommonView>;
-using cat = RAH2_NS::ranges::range_iter_categ_t<RandomCommonView>;
+using cat = RAH2_NS::ranges::details::range_iter_categ_t<RandomCommonView>;
 static_assert(RAH2_NS::forward_iterator<It>, "");
 static_assert(RAH2_NS::is_same_v<decltype(--std::declval<It>()), It&>, "");
-STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<RandomCommonView, true>::value));
+STATIC_ASSERT((RAH2_NS::ranges::details::bidirectional_range_impl<RandomCommonView, true>::value));
 static_assert(RAH2_NS::ranges::bidirectional_range<RandomCommonView>, "Should be bidirectional");
 using RandomCommonViewIter = RAH2_NS::ranges::iterator_t<RandomCommonView>;
-STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<RandomCommonView, true>::value));
+STATIC_ASSERT((RAH2_NS::ranges::details::random_access_range_impl<RandomCommonView, true>::value));
 static_assert(not RAH2_NS::ranges::contiguous_range<RandomCommonView>, "Should not be contiguous");
 
 // contiguous
@@ -565,7 +567,7 @@ static_assert(not RAH2_NS::ranges::output_range<ContiCommonView, int>, "Should n
 static_assert(RAH2_NS::ranges::forward_range<ContiCommonView>, "Should be Forward");
 static_assert(RAH2_NS::ranges::bidirectional_range<ContiCommonView>, "Should be bidirectional");
 static_assert(RAH2_NS::ranges::random_access_range<ContiCommonView>, "Should be random");
-STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<ContiCommonView, true>::value));
+STATIC_ASSERT((RAH2_NS::ranges::details::contiguous_range_impl<ContiCommonView, true>::value));
 static_assert(RAH2_NS::ranges::contiguous_range<ContiCommonView>, "Should be contiguous");
 
 template <typename R>
@@ -713,7 +715,7 @@ struct check_range_cat<RAH2_STD::input_iterator_tag, R>
         }
         check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
         STATIC_ASSERT(RAH2_NS::ranges::input_range<R>);
-        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag>();
+        AssertSame<RAH2_NS::ranges::details::range_iter_categ_t<R>, RAH2_NS::input_iterator_tag>();
         STATIC_ASSERT(not RAH2_NS::ranges::forward_range<R>);
     }
 };
@@ -737,8 +739,9 @@ struct check_range_cat<RAH2_STD::forward_iterator_tag, R>
             (void)*i;
         }
         check_size<RAH2_NS::ranges::sized_range<R>>::check(counter, r);
-        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag>();
-        STATIC_ASSERT((RAH2_NS::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
+        AssertSame<RAH2_NS::ranges::details::range_iter_categ_t<R>, RAH2_NS::forward_iterator_tag>();
+        STATIC_ASSERT(
+            (RAH2_NS::details::forward_iterator_impl<RAH2_NS::ranges::iterator_t<R>, true>::value));
         STATIC_ASSERT(RAH2_NS::ranges::forward_range<R>);
         STATIC_ASSERT(not RAH2_NS::ranges::bidirectional_range<R>);
     }
@@ -769,8 +772,8 @@ struct check_range_cat<RAH2_NS::bidirectional_iterator_tag, R>
                 assert(i == RAH2_NS::ranges::begin(r));
             }
         }
-        STATIC_ASSERT((RAH2_NS::ranges::bidirectional_range_impl<R, true>::value));
-        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::bidirectional_iterator_tag>();
+        STATIC_ASSERT((RAH2_NS::ranges::details::bidirectional_range_impl<R, true>::value));
+        AssertSame<RAH2_NS::ranges::details::range_iter_categ_t<R>, RAH2_NS::bidirectional_iterator_tag>();
         STATIC_ASSERT(not RAH2_NS::ranges::random_access_range<R>);
     }
 };
@@ -804,7 +807,7 @@ struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
             assert(counter >= 0);
             assert(i >= RAH2_NS::ranges::begin(r));
         }
-        STATIC_ASSERT((RAH2_NS::ranges::random_access_range_impl<R, true>::value));
+        STATIC_ASSERT((RAH2_NS::ranges::details::random_access_range_impl<R, true>::value));
         // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
         // AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag>();
         STATIC_ASSERT(not RAH2_NS::ranges::contiguous_range<R>);
@@ -843,8 +846,8 @@ struct check_range_cat<RAH2_NS::contiguous_iterator_tag, R>
         auto* d2 = &(*r.begin());
         assert(d == d2);
         assert(d == &(*i));
-        AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>();
-        STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
+        AssertSame<RAH2_NS::ranges::details::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>();
+        STATIC_ASSERT((RAH2_NS::ranges::details::contiguous_range_impl<R, true>::value));
     }
 };
 

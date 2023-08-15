@@ -244,7 +244,7 @@ namespace RAH2_NS
 
         } // insertion_sort
 
-        namespace Internal
+        namespace details
         {
             // Sorts a range whose initial (start - first) entries are already sorted.
             // This function is a useful helper to the tim_sort function.
@@ -282,267 +282,275 @@ namespace RAH2_NS
                     }
                 }
             }
-        } // namespace Internal
+        } // namespace details
 
-        /// merge_sort_buffer
-        ///
-        /// Implements the MergeSort algorithm with a user-supplied buffer.
-        /// The input buffer must be able to hold a number of items equal to 'last - first'.
-        /// Note that merge_sort_buffer requires a random access iterator, which usually means
-        /// an array (eg. vector, deque).
-        ///
-        /// The algorithm used for merge sort is not the standard merge sort.  It has been modified
-        /// to improve performance for data that is already partially sorted.  In fact, if data
-        /// is completely sorted, then performance is O(n), but even data with partially sorted
-        /// regions can benefit from the modifications.
-        ///
-        /// 'InsertionSortLimit' specifies a size limit for which the algorithm will use insertion sort.
-        /// Due to the overhead of merge sort, it is often faster to use insertion sort once the size of a region
-        /// is fairly small.  However, insertion sort is not as efficient (in terms of assignments orcomparisons)
-        /// so choosing a value that is too large will reduce performance.  Generally a value of 16 to 32 is reasonable,
-        /// but the best choose will depend on the data being sorted.
-        template <
-            typename RandomAccessIterator,
-            typename Sentinel,
-            typename T,
-            typename StrictWeakOrdering,
-            typename difference_type,
-            int InsertionSortLimit>
-        class MergeSorter
+        namespace details
         {
-        public:
-            static void
-            sort(RandomAccessIterator first, Sentinel last, T* pBuffer, StrictWeakOrdering compare)
+            /// merge_sort_buffer
+            ///
+            /// Implements the MergeSort algorithm with a user-supplied buffer.
+            /// The input buffer must be able to hold a number of items equal to 'last - first'.
+            /// Note that merge_sort_buffer requires a random access iterator, which usually means
+            /// an array (eg. vector, deque).
+            ///
+            /// The algorithm used for merge sort is not the standard merge sort.  It has been modified
+            /// to improve performance for data that is already partially sorted.  In fact, if data
+            /// is completely sorted, then performance is O(n), but even data with partially sorted
+            /// regions can benefit from the modifications.
+            ///
+            /// 'InsertionSortLimit' specifies a size limit for which the algorithm will use insertion sort.
+            /// Due to the overhead of merge sort, it is often faster to use insertion sort once the size of a region
+            /// is fairly small.  However, insertion sort is not as efficient (in terms of assignments orcomparisons)
+            /// so choosing a value that is too large will reduce performance.  Generally a value of 16 to 32 is reasonable,
+            /// but the best choose will depend on the data being sorted.
+            template <
+                typename RandomAccessIterator,
+                typename Sentinel,
+                typename T,
+                typename StrictWeakOrdering,
+                typename difference_type,
+                int InsertionSortLimit>
+            class MergeSorter
             {
-                if (sort_impl(first, last, pBuffer, difference_type(0), compare) == RL_Buffer)
+            public:
+                static void
+                sort(RandomAccessIterator first, Sentinel last, T* pBuffer, StrictWeakOrdering compare)
                 {
-                    difference_type const nCount = last - first;
-                    RAH2_NS::ranges::copy(pBuffer, pBuffer + nCount, first);
-                }
-                RAH2_DEV_ASSERT((RAH2_NS::ranges::is_sorted.
-                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                     first, last, compare)));
-            }
-
-        private:
-            static_assert(
-                InsertionSortLimit > 1,
-                "Sequences of length 1 are already sorted.  Use a larger value for "
-                "InsertionSortLimit");
-
-            enum ResultLocation
-            {
-                RL_SourceRange, // i.e. result is in the range defined by [first, last)
-                RL_Buffer, // i.e. result is in pBuffer
-            };
-
-            // sort_impl
-            //
-            // This sort routine sorts the data in [first, last) and places the result in pBuffer or in the original range of the input.  The actual
-            // location of the data is indicated by the enum returned.
-            //
-            // lastSortedEnd is used to specify a that data in the range [first, first + lastSortedEnd] is already sorted.  This information is used
-            // to avoid unnecessary merge sorting of already sorted data.  lastSortedEnd is a hint, and can be an under estimate of the sorted elements
-            // (i.e. it is legal to pass 0).
-            static ResultLocation sort_impl(
-                RandomAccessIterator first,
-                Sentinel last,
-                T* pBuffer,
-                difference_type lastSortedEnd,
-                StrictWeakOrdering compare)
-            {
-                difference_type const nCount = last - first;
-
-                if (lastSortedEnd < 1)
-                {
-                    lastSortedEnd =
-                        RAH2_NS::ranges::is_sorted_until<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                            first, last, compare)
-                        - first;
-                }
-
-                // Sort the region unless lastSortedEnd indicates it is already sorted.
-                if (lastSortedEnd < nCount)
-                {
-                    // If the size is less than or equal to InsertionSortLimit use insertion sort instead of recursing further.
-                    if (nCount <= InsertionSortLimit)
+                    if (sort_impl(first, last, pBuffer, difference_type(0), compare) == RL_Buffer)
                     {
-                        RAH2_NS::ranges::Internal::
-                            insertion_sort_already_started<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                first, last, first + lastSortedEnd, compare);
-                        return RL_SourceRange;
+                        difference_type const nCount = last - first;
+                        RAH2_NS::ranges::copy(pBuffer, pBuffer + nCount, first);
                     }
-                    else
-                    {
-                        difference_type const nMid = nCount / 2;
-
-                        ResultLocation firstHalfLocation = RL_SourceRange;
-                        // Don't sort the first half if it is already sorted.
-                        if (lastSortedEnd < nMid)
-                        {
-                            firstHalfLocation =
-                                sort_impl(first, first + nMid, pBuffer, lastSortedEnd, compare);
-                        }
-
-                        ResultLocation const secondHalfLocation = sort_impl(
-                            first + nMid, last, pBuffer + nMid, lastSortedEnd - nMid, compare);
-
-                        return MergeSorter::merge_halves(
-                            first, last, nMid, pBuffer, firstHalfLocation, secondHalfLocation, compare);
-                    }
-                }
-                else
-                {
                     RAH2_DEV_ASSERT((RAH2_NS::ranges::is_sorted.
                                      operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
                                          first, last, compare)));
-                    return RL_SourceRange;
                 }
+
+            private:
+                static_assert(
+                    InsertionSortLimit > 1,
+                    "Sequences of length 1 are already sorted.  Use a larger value for "
+                    "InsertionSortLimit");
+
+                enum ResultLocation
+                {
+                    RL_SourceRange, // i.e. result is in the range defined by [first, last)
+                    RL_Buffer, // i.e. result is in pBuffer
+                };
+
+                // sort_impl
+                //
+                // This sort routine sorts the data in [first, last) and places the result in pBuffer or in the original range of the input.  The actual
+                // location of the data is indicated by the enum returned.
+                //
+                // lastSortedEnd is used to specify a that data in the range [first, first + lastSortedEnd] is already sorted.  This information is used
+                // to avoid unnecessary merge sorting of already sorted data.  lastSortedEnd is a hint, and can be an under estimate of the sorted elements
+                // (i.e. it is legal to pass 0).
+                static ResultLocation sort_impl(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    T* pBuffer,
+                    difference_type lastSortedEnd,
+                    StrictWeakOrdering compare)
+                {
+                    difference_type const nCount = last - first;
+
+                    if (lastSortedEnd < 1)
+                    {
+                        lastSortedEnd =
+                            RAH2_NS::ranges::is_sorted_until<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                first, last, compare)
+                            - first;
+                    }
+
+                    // Sort the region unless lastSortedEnd indicates it is already sorted.
+                    if (lastSortedEnd < nCount)
+                    {
+                        // If the size is less than or equal to InsertionSortLimit use insertion sort instead of recursing further.
+                        if (nCount <= InsertionSortLimit)
+                        {
+                            RAH2_NS::ranges::details::insertion_sort_already_started<
+                                RandomAccessIterator,
+                                Sentinel,
+                                StrictWeakOrdering>(first, last, first + lastSortedEnd, compare);
+                            return RL_SourceRange;
+                        }
+                        else
+                        {
+                            difference_type const nMid = nCount / 2;
+
+                            ResultLocation firstHalfLocation = RL_SourceRange;
+                            // Don't sort the first half if it is already sorted.
+                            if (lastSortedEnd < nMid)
+                            {
+                                firstHalfLocation =
+                                    sort_impl(first, first + nMid, pBuffer, lastSortedEnd, compare);
+                            }
+
+                            ResultLocation const secondHalfLocation = sort_impl(
+                                first + nMid, last, pBuffer + nMid, lastSortedEnd - nMid, compare);
+
+                            return MergeSorter::merge_halves(
+                                first, last, nMid, pBuffer, firstHalfLocation, secondHalfLocation, compare);
+                        }
+                    }
+                    else
+                    {
+                        RAH2_DEV_ASSERT(
+                            (RAH2_NS::ranges::is_sorted.
+                             operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                 first, last, compare)));
+                        return RL_SourceRange;
+                    }
+                }
+
+                // merge_halves
+                //
+                // Merge two sorted regions of elements.
+                // The inputs to this method effectively define two large buffers.  The variables 'firstHalfLocation' and 'secondHalfLocation' define where the data to be
+                // merged is located within the two buffers.  It is entirely possible that the two areas to be merged could be entirely located in either of the larger buffers.
+                // Upon returning the merged results will be in one of the two buffers (indicated by the return result).
+                static ResultLocation merge_halves(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    difference_type nMid,
+                    T* pBuffer,
+                    ResultLocation firstHalfLocation,
+                    ResultLocation secondHalfLocation,
+                    StrictWeakOrdering compare)
+                {
+                    difference_type const nCount = last - first;
+                    if (firstHalfLocation == RL_SourceRange)
+                    {
+                        if (secondHalfLocation == RL_SourceRange)
+                        {
+                            RAH2_NS::ranges::merge<
+                                RandomAccessIterator,
+                                RandomAccessIterator,
+                                RandomAccessIterator,
+                                Sentinel,
+                                T*,
+                                StrictWeakOrdering>(
+                                first, first + nMid, first + nMid, last, pBuffer, compare);
+                            RAH2_DEV_ASSERT(
+                                (RAH2_NS::ranges::is_sorted.operator()<T*, T*, StrictWeakOrdering>(
+                                    pBuffer, pBuffer + nCount, compare)));
+                            return RL_Buffer;
+                        }
+                        else
+                        {
+                            RAH2_NS::ranges::copy(first, first + nMid, pBuffer);
+                            RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                                pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
+                            RAH2_DEV_ASSERT(
+                                (RAH2_NS::ranges::is_sorted.
+                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                     first, last, compare)));
+                            return RL_SourceRange;
+                        }
+                    }
+                    else
+                    {
+                        if (secondHalfLocation == RL_SourceRange)
+                        {
+                            RAH2_NS::ranges::copy(first + nMid, last, pBuffer + nMid);
+                            RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                                pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
+                            RAH2_DEV_ASSERT(
+                                (RAH2_NS::ranges::is_sorted.
+                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                     first, last, compare)));
+                            return RL_SourceRange;
+                        }
+                        else
+                        {
+                            RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                                pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
+                            RAH2_DEV_ASSERT(
+                                (RAH2_NS::ranges::is_sorted.
+                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                     first, last, compare)));
+                            return RL_SourceRange;
+                        }
+                    }
+                }
+            };
+
+            template <typename RandomAccessIterator, typename Sentinel, typename T, typename StrictWeakOrdering>
+            void merge_sort_buffer(
+                RandomAccessIterator first, Sentinel last, T* pBuffer, StrictWeakOrdering compare)
+            {
+                using difference_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+                MergeSorter<RandomAccessIterator, Sentinel, T, StrictWeakOrdering, difference_type, 16>::sort(
+                    first, last, pBuffer, compare);
             }
 
-            // merge_halves
-            //
-            // Merge two sorted regions of elements.
-            // The inputs to this method effectively define two large buffers.  The variables 'firstHalfLocation' and 'secondHalfLocation' define where the data to be
-            // merged is located within the two buffers.  It is entirely possible that the two areas to be merged could be entirely located in either of the larger buffers.
-            // Upon returning the merged results will be in one of the two buffers (indicated by the return result).
-            static ResultLocation merge_halves(
+            template <typename RandomAccessIterator, typename Sentinel, typename T>
+            void merge_sort_buffer(RandomAccessIterator first, Sentinel last, T* pBuffer)
+            {
+                using Less =
+                    RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
+
+                merge_sort_buffer<RandomAccessIterator, T, Less>(first, last, pBuffer, Less());
+            }
+
+            /// merge_sort
+            ///
+            /// Implements the MergeSort algorithm.
+            /// This algorithm allocates memory via the user-supplied allocator. Use merge_sort_buffer
+            /// function if you want a version which doesn't allocate memory.
+            /// Note that merge_sort requires a random access iterator, which usually means
+            /// an array (eg. vector, deque).
+            ///
+            template <typename RandomAccessIterator, typename Sentinel, typename Allocator, typename StrictWeakOrdering>
+            void merge_sort(
                 RandomAccessIterator first,
                 Sentinel last,
-                difference_type nMid,
-                T* pBuffer,
-                ResultLocation firstHalfLocation,
-                ResultLocation secondHalfLocation,
+                Allocator& allocator,
                 StrictWeakOrdering compare)
             {
+                using difference_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+                using value_type =
+                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
+
                 difference_type const nCount = last - first;
-                if (firstHalfLocation == RL_SourceRange)
+
+                if (nCount > 1)
                 {
-                    if (secondHalfLocation == RL_SourceRange)
-                    {
-                        RAH2_NS::ranges::merge<
-                            RandomAccessIterator,
-                            RandomAccessIterator,
-                            RandomAccessIterator,
-                            Sentinel,
-                            T*,
-                            StrictWeakOrdering>(
-                            first, first + nMid, first + nMid, last, pBuffer, compare);
-                        RAH2_DEV_ASSERT(
-                            (RAH2_NS::ranges::is_sorted.operator()<T*, T*, StrictWeakOrdering>(
-                                pBuffer, pBuffer + nCount, compare)));
-                        return RL_Buffer;
-                    }
-                    else
-                    {
-                        RAH2_NS::ranges::copy(first, first + nMid, pBuffer);
-                        RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
-                            pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                        RAH2_DEV_ASSERT(
-                            (RAH2_NS::ranges::is_sorted.
-                             operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                 first, last, compare)));
-                        return RL_SourceRange;
-                    }
-                }
-                else
-                {
-                    if (secondHalfLocation == RL_SourceRange)
-                    {
-                        RAH2_NS::ranges::copy(first + nMid, last, pBuffer + nMid);
-                        RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
-                            pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                        RAH2_DEV_ASSERT(
-                            (RAH2_NS::ranges::is_sorted.
-                             operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                 first, last, compare)));
-                        return RL_SourceRange;
-                    }
-                    else
-                    {
-                        RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
-                            pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                        RAH2_DEV_ASSERT(
-                            (RAH2_NS::ranges::is_sorted.
-                             operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                 first, last, compare)));
-                        return RL_SourceRange;
-                    }
+                    // We need to allocate an array of nCount value_type objects as a temporary buffer.
+#ifdef RAH2_USE_EASTL
+                    value_type* const pBuffer = (value_type*)allocate_memory(
+                        allocator, nCount * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
+#else
+                    value_type* const pBuffer = allocator.allocate(static_cast<size_t>(nCount));
+#endif
+
+                    RAH2_STD::uninitialized_fill(pBuffer, pBuffer + nCount, value_type());
+
+                    merge_sort_buffer<RandomAccessIterator, Sentinel, value_type, StrictWeakOrdering>(
+                        first, last, pBuffer, compare);
+
+                    RAH2_NS::ranges::destroy(pBuffer, pBuffer + nCount);
+#ifdef RAH2_USE_EASTL
+                    EASTLFree(allocator, pBuffer, nCount * sizeof(value_type));
+#else
+                    allocator.deallocate(pBuffer, static_cast<size_t>(nCount));
+#endif
                 }
             }
-        };
 
-        template <typename RandomAccessIterator, typename Sentinel, typename T, typename StrictWeakOrdering>
-        void merge_sort_buffer(
-            RandomAccessIterator first, Sentinel last, T* pBuffer, StrictWeakOrdering compare)
-        {
-            using difference_type =
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-            MergeSorter<RandomAccessIterator, Sentinel, T, StrictWeakOrdering, difference_type, 16>::sort(
-                first, last, pBuffer, compare);
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename T>
-        void merge_sort_buffer(RandomAccessIterator first, Sentinel last, T* pBuffer)
-        {
-            using Less =
-                RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
-
-            RAH2_NS::ranges::merge_sort_buffer<RandomAccessIterator, T, Less>(
-                first, last, pBuffer, Less());
-        }
-
-        /// merge_sort
-        ///
-        /// Implements the MergeSort algorithm.
-        /// This algorithm allocates memory via the user-supplied allocator. Use merge_sort_buffer
-        /// function if you want a version which doesn't allocate memory.
-        /// Note that merge_sort requires a random access iterator, which usually means
-        /// an array (eg. vector, deque).
-        ///
-        template <typename RandomAccessIterator, typename Sentinel, typename Allocator, typename StrictWeakOrdering>
-        void merge_sort(
-            RandomAccessIterator first, Sentinel last, Allocator& allocator, StrictWeakOrdering compare)
-        {
-            using difference_type =
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-            difference_type const nCount = last - first;
-
-            if (nCount > 1)
+            template <typename RandomAccessIterator, typename Sentinel, typename Allocator>
+            void merge_sort(RandomAccessIterator first, Sentinel last, Allocator& allocator)
             {
-                // We need to allocate an array of nCount value_type objects as a temporary buffer.
-#ifdef RAH2_USE_EASTL
-                value_type* const pBuffer = (value_type*)allocate_memory(
-                    allocator, nCount * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
-#else
-                value_type* const pBuffer = allocator.allocate(static_cast<size_t>(nCount));
-#endif
+                using Less =
+                    RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
 
-                RAH2_STD::uninitialized_fill(pBuffer, pBuffer + nCount, value_type());
-
-                RAH2_NS::ranges::merge_sort_buffer<RandomAccessIterator, Sentinel, value_type, StrictWeakOrdering>(
-                    first, last, pBuffer, compare);
-
-                RAH2_NS::ranges::destroy(pBuffer, pBuffer + nCount);
-#ifdef RAH2_USE_EASTL
-                EASTLFree(allocator, pBuffer, nCount * sizeof(value_type));
-#else
-                allocator.deallocate(pBuffer, static_cast<size_t>(nCount));
-#endif
+                merge_sort<RandomAccessIterator, Sentinel, Allocator, Less>(
+                    first, last, allocator, Less());
             }
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename Allocator>
-        void merge_sort(RandomAccessIterator first, Sentinel last, Allocator& allocator)
-        {
-            using Less =
-                RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
-
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, Allocator, Less>(
-                first, last, allocator, Less());
-        }
+        } // namespace details
 
         /// partition
         ///
@@ -675,7 +683,7 @@ namespace RAH2_NS
         static int const kQuickSortLimit =
             28; // For sorts of random arrays over 100 items, 28 - 32 have been found to be good numbers on x86.
 
-        namespace Internal
+        namespace details
         {
             template <typename Size>
             Size Log2(Size n)
@@ -685,7 +693,7 @@ namespace RAH2_NS
                     n >>= 1;
                 return i - 1;
             }
-        } // namespace Internal
+        } // namespace details
 
         template <typename RandomAccessIterator, typename Sentinel, typename T>
         RandomAccessIterator get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue)
@@ -787,7 +795,7 @@ namespace RAH2_NS
                 first, last, RAH2_STD::forward<T>(pivotValue), compare);
         }
 
-        namespace Internal
+        namespace details
         {
             // This function is used by quick_sort and is not intended to be used by itself.
             // This is because the implementation below makes an assumption about the input
@@ -844,7 +852,7 @@ namespace RAH2_NS
                     *it_end = RAH2_STD::forward<value_type>(value);
                 }
             }
-        } // namespace Internal
+        } // namespace details
 
         template <typename RandomAccessIterator, typename Sentinel>
         void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
@@ -1003,7 +1011,7 @@ namespace RAH2_NS
                 RAH2_STD::move(compare));
         }
 
-        namespace Internal
+        namespace details
         {
             template <typename RandomAccessIterator, typename Sentinel, typename Size, typename PivotValueType>
             void quick_sort_impl_helper(RandomAccessIterator first, Sentinel last, Size kRecursionCount)
@@ -1022,7 +1030,7 @@ namespace RAH2_NS
                                 RAH2_STD::forward<value_type>(*(first + (last - first) / 2)),
                                 RAH2_STD::forward<value_type>(*(last - 1))))));
 
-                    RAH2_NS::ranges::Internal::
+                    RAH2_NS::ranges::details::
                         quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, PivotValueType>(
                             position, last, --kRecursionCount);
                     last = position;
@@ -1053,7 +1061,7 @@ namespace RAH2_NS
                                     compare)),
                             compare));
 
-                    RAH2_NS::ranges::Internal::
+                    RAH2_NS::ranges::details::
                         quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, PivotValueType>(
                             position, last, --kRecursionCount, compare);
                     last = position;
@@ -1137,7 +1145,7 @@ namespace RAH2_NS
                 quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type>(
                     first, last, kRecursionCount, compare);
             }
-        } // namespace Internal
+        } // namespace details
 
         /// quick_sort
         ///
@@ -1167,14 +1175,14 @@ namespace RAH2_NS
 
             if (first != last)
             {
-                RAH2_NS::ranges::Internal::quick_sort_impl<RandomAccessIterator, Sentinel, difference_type>(
-                    first, last, 2 * Internal::Log2(last - first));
+                RAH2_NS::ranges::details::quick_sort_impl<RandomAccessIterator, Sentinel, difference_type>(
+                    first, last, 2 * details::Log2(last - first));
 
                 if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
                 {
                     RAH2_NS::ranges::insertion_sort<RandomAccessIterator, RandomAccessIterator>(
                         first, first + kQuickSortLimit);
-                    RAH2_NS::ranges::Internal::insertion_sort_simple<RandomAccessIterator, Sentinel>(
+                    RAH2_NS::ranges::details::insertion_sort_simple<RandomAccessIterator, Sentinel>(
                         first + kQuickSortLimit, last);
                 }
                 else
@@ -1190,15 +1198,15 @@ namespace RAH2_NS
 
             if (first != last)
             {
-                RAH2_NS::ranges::Internal::
+                RAH2_NS::ranges::details::
                     quick_sort_impl<RandomAccessIterator, Sentinel, difference_type, Compare>(
-                        first, last, 2 * Internal::Log2(last - first), compare);
+                        first, last, 2 * details::Log2(last - first), compare);
 
                 if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
                 {
                     RAH2_NS::ranges::insertion_sort<RandomAccessIterator, RandomAccessIterator, Compare>(
                         first, first + kQuickSortLimit, compare);
-                    RAH2_NS::ranges::Internal::insertion_sort_simple<RandomAccessIterator, Sentinel, Compare>(
+                    RAH2_NS::ranges::details::insertion_sort_simple<RandomAccessIterator, Sentinel, Compare>(
                         first + kQuickSortLimit, last, compare);
                 }
                 else
@@ -1254,13 +1262,14 @@ namespace RAH2_NS
         void stable_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
         {
 #ifdef RAH2_USE_EASTL
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
-                first, last, *RAH2_STD::get_default_allocator(0), compare);
+            RAH2_NS::ranges::details::
+                merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
+                    first, last, *RAH2_STD::get_default_allocator(0), compare);
 #else
             using Allocator =
                 RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
             Allocator allocator;
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
+            details::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
                 first, last, allocator, compare);
 #endif
         }
@@ -1284,12 +1293,12 @@ namespace RAH2_NS
         void stable_sort(RandomAccessIterator first, Sentinel last)
         {
 #ifdef RAH2_USE_EASTL
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+            RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
                 first, last, *RAH2_STD::get_default_allocator(0));
 #else
             using Allocator =
                 RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Allocator>(first, last, Allocator());
+            details::merge_sort<RandomAccessIterator, Allocator>(first, last, Allocator());
 #endif
         }
 
@@ -1303,7 +1312,7 @@ namespace RAH2_NS
         void stable_sort(
             RandomAccessIterator first, Sentinel last, Allocator& allocator, StrictWeakOrdering compare)
         {
-            RAH2_NS::ranges::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
+            details::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
                 first, last, allocator, compare);
         }
     } // namespace ranges
