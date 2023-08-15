@@ -270,9 +270,9 @@ struct concept_test_impl
         RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<T2>().b()), int>>;
 
     constexpr static bool value =
-        RAH2_NS::is_true_v<Diagnostic, !RAH2_STD::has_virtual_destructor<T>::value>
-        && RAH2_NS::compiles<Diagnostic, T, check_build>
-        && RAH2_NS::compiles<Diagnostic, T, check_true>;
+        RAH2_NS::concepts::is_true_v<Diagnostic, !RAH2_STD::has_virtual_destructor<T>::value>
+        && RAH2_NS::concepts::compiles<Diagnostic, T, check_build>
+        && RAH2_NS::concepts::compiles<Diagnostic, T, check_true>;
 };
 
 template <typename T>
