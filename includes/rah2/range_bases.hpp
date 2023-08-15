@@ -1159,18 +1159,15 @@ namespace RAH2_NS
 
         } // namespace details
 
-        inline namespace customization_point_objects
-        {
-            constexpr auto rbegin = details::rbegin_impl();
-            constexpr auto rend = details::rend_impl();
-            constexpr auto crbegin = details::crbegin_impl();
-            constexpr auto crend = details::crend_impl();
-            constexpr auto size = details::size_impl();
-            constexpr auto ssize = details::ssize_impl();
-            constexpr auto empty = details::empty_impl();
-            constexpr auto data = details::data_impl();
-            constexpr auto cdata = details::cdata_impl();
-        } // namespace customization_point_objects
+        constexpr auto rbegin = details::rbegin_impl();
+        constexpr auto rend = details::rend_impl();
+        constexpr auto crbegin = details::crbegin_impl();
+        constexpr auto crend = details::crend_impl();
+        constexpr auto size = details::size_impl();
+        constexpr auto ssize = details::ssize_impl();
+        constexpr auto empty = details::empty_impl();
+        constexpr auto data = details::data_impl();
+        constexpr auto cdata = details::cdata_impl();
 
         // **************************** <ranges> traits ***********************************************
         namespace details

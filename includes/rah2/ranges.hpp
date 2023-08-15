@@ -512,11 +512,18 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename V>
-            auto single(V&& value)
+            namespace customization_point_objects
             {
-                return single_view<RAH2_NS::remove_cvref_t<V>>{RAH2_STD::forward<V>(value)};
-            }
+                struct single
+                {
+                    template <typename V>
+                    auto operator()(V&& value) const
+                    {
+                        return single_view<RAH2_NS::remove_cvref_t<V>>{RAH2_STD::forward<V>(value)};
+                    }
+                };
+            } // namespace customization_point_objects
+            constexpr customization_point_objects::single single;
         } // namespace views
         // ********************************** iota ************************************************
 
@@ -583,19 +590,26 @@ namespace RAH2_NS
         };
         namespace views
         {
-            // TODO : Create a iota_view
-            template <typename W = size_t>
-            constexpr auto iota(W start, W stop)
+            namespace customization_point_objects
             {
+                struct iota
+                {
+                    // TODO : Create a iota_view
+                    template <typename W, typename B>
+                    constexpr auto operator()(W start, B stop) const
+                    {
 
-                return make_subrange(iota_iterator<W>(start), iota_iterator<W>(stop));
-            }
+                        return make_subrange(iota_iterator<W>(start), iota_iterator<W>(W(stop)));
+                    }
 
-            template <typename W = size_t>
-            constexpr auto iota(W start = 0)
-            {
-                return make_subrange(iota_iterator<W>(start), default_sentinel_t{});
-            }
+                    template <typename W>
+                    constexpr auto operator()(W start) const
+                    {
+                        return make_subrange(iota_iterator<W>(start), default_sentinel_t{});
+                    }
+                };
+            } // namespace customization_point_objects
+            constexpr customization_point_objects::iota iota;
         } // namespace views
         // ******************************* istream_view ******************************************************
 
@@ -675,12 +689,21 @@ namespace RAH2_NS
 
         namespace views
         {
-            template <class Val, typename S>
-            auto istream(S& stream)
+            namespace customization_point_objects
             {
-                return basic_istream_view<Val, typename S::char_type, typename S::traits_type>(
-                    &stream);
-            }
+                template <class Val>
+                struct istream
+                {
+                    template <typename S>
+                    auto operator()(S& stream) const
+                    {
+                        return basic_istream_view<Val, typename S::char_type, typename S::traits_type>(
+                            &stream);
+                    }
+                };
+            } // namespace customization_point_objects
+            template <class Val>
+            constexpr customization_point_objects::istream<Val> istream;
         } // namespace views
 
         // ********************************** repeat ******************************************************
@@ -771,11 +794,18 @@ namespace RAH2_NS
         };
         namespace views
         {
-            template <typename V>
-            auto repeat(V&& value)
+            namespace customization_point_objects
             {
-                return repeat_view<remove_cvref_t<V>>(RAH2_STD::forward<V>(value));
-            }
+                struct repeat
+                {
+                    template <typename V>
+                    auto operator()(V&& value) const
+                    {
+                        return repeat_view<remove_cvref_t<V>>(RAH2_STD::forward<V>(value));
+                    }
+                };
+            } // namespace customization_point_objects
+            constexpr customization_point_objects::repeat repeat;
         } // namespace views
         // ********************************* ref_view *********************************************
 
@@ -1889,20 +1919,26 @@ namespace RAH2_NS
         // ******************************************* counted ************************************
         namespace views
         {
-
-            template <typename I, RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<I>>* = nullptr>
-            auto counted(I&& it, iter_difference_t<I> n)
+            namespace customization_point_objects
             {
-                using iterator = RAH2_STD::remove_reference_t<I>;
-                return make_subrange(iterator(it), iterator(it + n));
-            }
+                struct counted
+                {
+                    template <typename I, RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<I>>* = nullptr>
+                    auto operator()(I&& it, iter_difference_t<I> n) const
+                    {
+                        using iterator = RAH2_STD::remove_reference_t<I>;
+                        return make_subrange(iterator(it), iterator(it + n));
+                    }
 
-            template <typename I, RAH2_STD::enable_if_t<!RAH2_NS::random_access_iterator<I>>* = nullptr>
-            auto counted(I&& it, iter_difference_t<I> n)
-            {
-                using iterator = counted_iterator<RAH2_STD::remove_reference_t<I>>;
-                return make_subrange(iterator(it, n), default_sentinel_t{});
-            }
+                    template <typename I, RAH2_STD::enable_if_t<!RAH2_NS::random_access_iterator<I>>* = nullptr>
+                    auto operator()(I&& it, iter_difference_t<I> n) const
+                    {
+                        using iterator = counted_iterator<RAH2_STD::remove_reference_t<I>>;
+                        return make_subrange(iterator(it, n), default_sentinel_t{});
+                    }
+                };
+            } // namespace customization_point_objects
+            constexpr customization_point_objects::counted counted;
         } // namespace views
 
         // ******************************************* common_view ********************************
@@ -2875,8 +2911,7 @@ namespace RAH2_NS
             struct range_has_cat
             {
                 template <typename Range>
-                static constexpr bool value =
-                    RAH2_NS::derived_from<range_iter_categ_t<Range>, Cat>;
+                static constexpr bool value = RAH2_NS::derived_from<range_iter_categ_t<Range>, Cat>;
             };
             template <typename RangeTuple>
             using tuple_base_cat = RAH2_STD::conditional_t<
@@ -3077,12 +3112,19 @@ namespace RAH2_NS
             zip_view<Views...>::is_borrowed_range;
         namespace views
         {
-            template <typename... R>
-            auto zip(R&&... ranges)
+            namespace customization_point_objects
             {
-                auto refTuple = RAH2_STD::make_tuple(all(RAH2_STD::forward<R>(ranges))...);
-                return zip_view<decltype(refTuple)>(RAH2_STD::move(refTuple));
-            }
+                struct zip
+                {
+                    template <typename... R>
+                    auto operator()(R&&... ranges) const
+                    {
+                        auto refTuple = RAH2_STD::make_tuple(all(RAH2_STD::forward<R>(ranges))...);
+                        return zip_view<decltype(refTuple)>(RAH2_STD::move(refTuple));
+                    }
+                };
+            } // namespace customization_point_objects
+            constexpr customization_point_objects::zip zip;
         } // namespace views
 
         // ************************************ zip_transform *************************************
@@ -3270,13 +3312,20 @@ namespace RAH2_NS
             zip_transform_view<Views...>::is_borrowed_range;
         namespace views
         {
-            template <typename F, typename... R>
-            auto zip_transform(F&& func, R&&... ranges)
+            namespace customization_point_objects
             {
-                auto ref_tuple = RAH2_STD::make_tuple(all(RAH2_STD::forward<R>(ranges))...);
-                return zip_transform_view<RAH2_STD::remove_reference_t<F>, decltype(ref_tuple)>(
-                    RAH2_STD::forward<F>(func), RAH2_STD::move(ref_tuple));
-            }
+                struct zip_transform
+                {
+                    template <typename F, typename... R>
+                    auto operator()(F&& func, R&&... ranges) const
+                    {
+                        auto ref_tuple = RAH2_STD::make_tuple(all(RAH2_STD::forward<R>(ranges))...);
+                        return zip_transform_view<RAH2_STD::remove_reference_t<F>, decltype(ref_tuple)>(
+                            RAH2_STD::forward<F>(func), RAH2_STD::move(ref_tuple));
+                    }
+                };
+            } // namespace customization_point_objects
+            constexpr customization_point_objects::zip_transform zip_transform;
         } // namespace views
 
         // ******************************************* adjacent ***********************************
@@ -3684,9 +3733,8 @@ namespace RAH2_NS
 
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
-            using base_cat = details::cap_iterator_tag<details::range_iter_categ_t<R>,
-                forward_iterator_tag,
-                random_access_iterator_tag>;
+            using base_cat =
+                details::cap_iterator_tag<details::range_iter_categ_t<R>, forward_iterator_tag, random_access_iterator_tag>;
             constexpr static bool is_common = common_range<R> && bidirectional_range<R>;
 
         public:
