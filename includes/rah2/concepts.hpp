@@ -95,7 +95,10 @@ namespace RAH2_NS
 } // namespace RAH2_NS
 
 #define RAH2_MAKE_CONCEPT(NAME, NEED_COMPILE)                                                      \
+    namespace details                                                                              \
+    {                                                                                              \
+        template <typename T>                                                                      \
+        using __##NAME##_impl = decltype(NEED_COMPILE);                                            \
+    }                                                                                              \
     template <typename T>                                                                          \
-    using __##NAME##_impl = decltype(NEED_COMPILE);                                                \
-    template <typename T>                                                                          \
-    constexpr bool NAME = ::RAH2_NS::concepts::compiles<false, T, __##NAME##_impl>;
+    constexpr bool NAME = ::RAH2_NS::concepts::compiles<false, T, details::__##NAME##_impl>;

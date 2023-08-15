@@ -29,8 +29,8 @@ struct make_enumerate_view
         RAH2_NS::ranges::common_range<BaseRange> && RAH2_NS::ranges::sized_range<BaseRange>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 void test_enumerate_view()
 {
@@ -91,8 +91,8 @@ struct make_adjacent_view
         RAH2_NS::ranges::common_range<BaseRange> && RAH2_NS::ranges::bidirectional_range<BaseRange>;
     static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 void test_adjacent_view()
 {
@@ -179,8 +179,8 @@ struct make_adjacent_transform_view
         RAH2_NS::ranges::common_range<BaseRange> && RAH2_NS::ranges::bidirectional_range<BaseRange>;
     static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::forward_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 void test_adjacent_transform()
 {
@@ -253,8 +253,8 @@ struct make_slide_view
         RAH2_NS::ranges::common_range<BaseRange> && RAH2_NS::ranges::bidirectional_range<BaseRange>;
     static constexpr bool do_test = RAH2_NS::ranges::forward_range<BaseRange>;
     static constexpr bool is_borrowed = false;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 void test_slide_view()
 {
@@ -417,8 +417,8 @@ struct make_chunk_view
     static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = false;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 void test_chunk_view()
 {
@@ -476,8 +476,8 @@ struct make_stride_view
                                           || !RAH2_NS::ranges::bidirectional_range<BaseRange>);
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 void test_stride_view()
 {
@@ -519,8 +519,8 @@ struct make_ref_view
     static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = true;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::contiguous_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::contiguous_iterator_tag>;
 };
 void test_ref_view()
 {
@@ -592,8 +592,8 @@ struct make_unbounded_view
     static constexpr bool is_common = false;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = true;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::contiguous_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::contiguous_iterator_tag>;
 };
 void test_unbounded_view()
 {
@@ -629,8 +629,8 @@ struct make_cycle_view
     static constexpr bool is_borrowed = false;
     using expected_cat = RAH2_STD::conditional_t<
         CS == CommonOrSent::Common,
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>,
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::forward_iterator_tag>>;
+        RAH2_NS::ranges::details::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>,
+        RAH2_NS::ranges::details::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::forward_iterator_tag>>;
 };
 void test_cycle_view()
 {

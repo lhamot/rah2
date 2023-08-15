@@ -37,8 +37,8 @@ void test_empty_view()
     assert(!(i < u));
     assert(i == u);
     assert(i == e);
-    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>();
-    STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
+    AssertSame<RAH2_NS::ranges::details::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>();
+    STATIC_ASSERT((RAH2_NS::ranges::details::contiguous_range_impl<R, true>::value));
 }
 
 void test_single_view()
@@ -147,9 +147,9 @@ void test_generate_view()
             *result = *first;
         assert(gen_copy == RAH2_STD::vector<int>({1, 2, 4, 8}));
         /// [generate]
-        STATIC_ASSERT((RAH2_NS::ranges::input_range_impl<decltype(gen), true>::value));
+        STATIC_ASSERT((RAH2_NS::ranges::details::input_range_impl<decltype(gen), true>::value));
         STATIC_ASSERT(((RAH2_NS::is_same_v<
-                        RAH2_NS::ranges::range_iter_categ_t<decltype(gen)>,
+                        RAH2_NS::ranges::details::range_iter_categ_t<decltype(gen)>,
                         RAH2_STD::input_iterator_tag>)));
         STATIC_ASSERT(not RAH2_NS::ranges::forward_range<decltype(gen)>);
         STATIC_ASSERT(not RAH2_NS::ranges::common_range<decltype(gen)>);

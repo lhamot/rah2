@@ -130,39 +130,46 @@ namespace RAH2_NS
                 first, topPosition, position, RAH2_STD::forward<T>(value), compare);
         }
 
-        ///////////////////////////////////////////////////////////////////////
-        // adjust_heap (internal function)
-        ///////////////////////////////////////////////////////////////////////
-
-        template <typename RandomAccessIterator, typename Distance, typename T, typename ValueType>
-        void adjust_heap_impl(
-            RandomAccessIterator first, Distance topPosition, Distance heapSize, Distance position, T value)
+        namespace details
         {
-            // We do the conventional approach of moving the position down to the
-            // bottom then inserting the value at the back and moving it up.
-            Distance childPosition = (2 * position) + 2;
+            ///////////////////////////////////////////////////////////////////////
+            // adjust_heap (internal function)
+            ///////////////////////////////////////////////////////////////////////
 
-            for (; childPosition < heapSize; childPosition = (2 * childPosition) + 2)
+            template <typename RandomAccessIterator, typename Distance, typename T, typename ValueType>
+            void adjust_heap_impl(
+                RandomAccessIterator first,
+                Distance topPosition,
+                Distance heapSize,
+                Distance position,
+                T value)
             {
-                if (RAH2_STD::less<ValueType>()(
-                        *(first + childPosition),
-                        *(first + (childPosition - 1)))) // Choose the larger of the two children.
-                    --childPosition;
-                *(first + position) = RAH2_STD::forward<ValueType>(
-                    *(first + childPosition)); // Swap positions with this child.
-                position = childPosition;
+                // We do the conventional approach of moving the position down to the
+                // bottom then inserting the value at the back and moving it up.
+                Distance childPosition = (2 * position) + 2;
+
+                for (; childPosition < heapSize; childPosition = (2 * childPosition) + 2)
+                {
+                    if (RAH2_STD::less<ValueType>()(
+                            *(first + childPosition),
+                            *(first + (childPosition - 1)))) // Choose the larger of the two children.
+                        --childPosition;
+                    *(first + position) = RAH2_STD::forward<ValueType>(
+                        *(first + childPosition)); // Swap positions with this child.
+                    position = childPosition;
+                }
+
+                if (childPosition == heapSize) // If we are at the very last index of the bottom...
+                {
+                    *(first + position) =
+                        RAH2_STD::forward<ValueType>(*(first + (childPosition - 1)));
+                    position = childPosition - 1;
+                }
+
+                RAH2_NS::ranges::promote_heap<RandomAccessIterator, Distance, T>(
+                    first, topPosition, position, RAH2_STD::forward<ValueType>(value));
             }
-
-            if (childPosition == heapSize) // If we are at the very last index of the bottom...
-            {
-                *(first + position) = RAH2_STD::forward<ValueType>(*(first + (childPosition - 1)));
-                position = childPosition - 1;
-            }
-
-            RAH2_NS::ranges::promote_heap<RandomAccessIterator, Distance, T>(
-                first, topPosition, position, RAH2_STD::forward<ValueType>(value));
-        }
-
+        } // namespace details
         /// adjust_heap
         ///
         /// Given a position that has just been vacated, this function moves
@@ -182,7 +189,7 @@ namespace RAH2_NS
             T const& value)
         {
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            adjust_heap_impl<RandomAccessIterator, Distance, T const&, value_type const>(
+            details::adjust_heap_impl<RandomAccessIterator, Distance, T const&, value_type const>(
                 first, topPosition, heapSize, position, RAH2_STD::forward<T const&>(value));
         }
 
@@ -205,44 +212,47 @@ namespace RAH2_NS
             T&& value)
         {
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            adjust_heap_impl<RandomAccessIterator, Distance, T&&, value_type>(
+            details::adjust_heap_impl<RandomAccessIterator, Distance, T&&, value_type>(
                 first, topPosition, heapSize, position, RAH2_STD::forward<T>(value));
         }
 
-        template <typename RandomAccessIterator, typename Distance, typename T, typename Compare, typename ValueType>
-        void adjust_heap_impl(
-            RandomAccessIterator first,
-            Distance topPosition,
-            Distance heapSize,
-            Distance position,
-            T value,
-            Compare compare)
+        namespace details
         {
-            // We do the conventional approach of moving the position down to the
-            // bottom then inserting the value at the back and moving it up.
-            Distance childPosition = (2 * position) + 2;
-
-            for (; childPosition < heapSize; childPosition = (2 * childPosition) + 2)
+            template <typename RandomAccessIterator, typename Distance, typename T, typename Compare, typename ValueType>
+            void adjust_heap_impl(
+                RandomAccessIterator first,
+                Distance topPosition,
+                Distance heapSize,
+                Distance position,
+                T value,
+                Compare compare)
             {
-                if (compare(
-                        *(first + childPosition),
-                        *(first + (childPosition - 1)))) // Choose the larger of the two children.
-                    --childPosition;
-                *(first + position) = RAH2_STD::forward<ValueType>(
-                    *(first + childPosition)); // Swap positions with this child.
-                position = childPosition;
+                // We do the conventional approach of moving the position down to the
+                // bottom then inserting the value at the back and moving it up.
+                Distance childPosition = (2 * position) + 2;
+
+                for (; childPosition < heapSize; childPosition = (2 * childPosition) + 2)
+                {
+                    if (compare(
+                            *(first + childPosition),
+                            *(first + (childPosition - 1)))) // Choose the larger of the two children.
+                        --childPosition;
+                    *(first + position) = RAH2_STD::forward<ValueType>(
+                        *(first + childPosition)); // Swap positions with this child.
+                    position = childPosition;
+                }
+
+                if (childPosition == heapSize) // If we are at the bottom...
+                {
+                    *(first + position) =
+                        RAH2_STD::forward<ValueType>(*(first + (childPosition - 1)));
+                    position = childPosition - 1;
+                }
+
+                RAH2_NS::ranges::promote_heap<RandomAccessIterator, Distance, T, Compare>(
+                    first, topPosition, position, RAH2_STD::forward<ValueType>(value), compare);
             }
-
-            if (childPosition == heapSize) // If we are at the bottom...
-            {
-                *(first + position) = RAH2_STD::forward<ValueType>(*(first + (childPosition - 1)));
-                position = childPosition - 1;
-            }
-
-            RAH2_NS::ranges::promote_heap<RandomAccessIterator, Distance, T, Compare>(
-                first, topPosition, position, RAH2_STD::forward<ValueType>(value), compare);
-        }
-
+        } // namespace details
         /// adjust_heap
         ///
         /// The Compare function must work equivalently to the compare function used
@@ -261,7 +271,7 @@ namespace RAH2_NS
             Compare compare)
         {
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            adjust_heap_impl<RandomAccessIterator, Distance, T const&, Compare, value_type const>(
+            details::adjust_heap_impl<RandomAccessIterator, Distance, T const&, Compare, value_type const>(
                 first, topPosition, heapSize, position, RAH2_STD::forward<T const&>(value), compare);
         }
 
@@ -283,7 +293,7 @@ namespace RAH2_NS
             Compare compare)
         {
             using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            adjust_heap_impl<RandomAccessIterator, Distance, T&&, Compare, value_type>(
+            details::adjust_heap_impl<RandomAccessIterator, Distance, T&&, Compare, value_type>(
                 first, topPosition, heapSize, position, RAH2_STD::forward<T>(value), compare);
         }
 

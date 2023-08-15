@@ -14,8 +14,8 @@ struct make_zip_view1
                                           && RAH2_NS::ranges::random_access_range<BaseRange>);
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
-    using expected_cat =
-        RAH2_NS::ranges::cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+    using expected_cat = RAH2_NS::ranges::details::
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
 };
 struct make_zip_view2
 {
@@ -38,8 +38,8 @@ struct make_zip_view2
         static constexpr bool do_test = true;
         static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange1>
                                             && RAH2_NS::ranges::enable_borrowed_range<BaseRange2>;
-        using expected_cat = RAH2_NS::ranges::cap_iterator_tag<
-            RAH2_NS::ranges::common_iterator_tag<Tag, Tag2>,
+        using expected_cat = RAH2_NS::ranges::details::cap_iterator_tag<
+            RAH2_NS::ranges::details::common_iterator_tag<Tag, Tag2>,
             RAH2_STD::input_iterator_tag,
             RAH2_NS::random_access_iterator_tag>;
     };
