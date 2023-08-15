@@ -14,31 +14,32 @@
 
 #include <EASTL/tuple.h>
 #include <EASTL/utility.h>
+#include <EASTL/variant.h>
 
 #else
 
 #include <tuple>
 #include <utility>
 
-#endif
-
-#ifdef _MSC_VER
-#define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
-#define RAH2_EXT_WARNING_POP __pragma(warning(pop))
-#elif defined(__GNUC__) || defined(__clang__)
-#define RAH2_EXT_WARNING_PUSH _Pragma("GCC diagnostic push")
-#define RAH2_EXT_WARNING_POP _Pragma("GCC diagnostic pop")
+#if RAH2_CPP17
+#include <variant>
 #else
-#define RAH2_EXT_WARNING_PUSH
-#define RAH2_EXT_WARNING_POP
-#endif
-
 RAH2_EXT_WARNING_PUSH
 #include "mpark/variant.hpp"
 RAH2_EXT_WARNING_POP
+#endif
+
+#endif
 
 namespace RAH2_NS
 {
+#if defined(RAH2_USE_EASTL)
+#define RAH2_VARIANT_NS RAH2_STD
+#elif RAH2_CPP17
+#define RAH2_VARIANT_NS RAH2_STD
+#else
+#define RAH2_VARIANT_NS mpark
+#endif
     namespace ranges
     {
         // **************************** Range conversions *********************************************
@@ -1909,7 +1910,7 @@ namespace RAH2_NS
                     "RAH2_NS::input_or_output_iterator<I>");
                 static_assert(!RAH2_NS::same_as<base_iterator, base_sentinel>, "!RAH2_NS::same_as<I, S>");
                 static_assert(RAH2_NS::copyable<base_iterator>, "RAH2_NS::copyable<I>");
-                mpark::variant<base_iterator, base_sentinel> var_;
+                RAH2_VARIANT_NS::variant<base_iterator, base_sentinel> var_;
 
                 struct lesser
                 {
@@ -1984,17 +1985,21 @@ namespace RAH2_NS
                 static auto
                 dispatch(Apply&& apply, common_iterator const& it1, common_iterator const& it2)
                 {
-                    if (mpark::holds_alternative<base_sentinel>(it2.var_))
+                    if (RAH2_VARIANT_NS::holds_alternative<base_sentinel>(it2.var_))
                     {
-                        if (mpark::holds_alternative<base_sentinel>(it1.var_))
-                            return apply(mpark::get<1>(it1.var_), mpark::get<1>(it2.var_));
+                        if (RAH2_VARIANT_NS::holds_alternative<base_sentinel>(it1.var_))
+                            return apply(
+                                RAH2_VARIANT_NS::get<1>(it1.var_), RAH2_VARIANT_NS::get<1>(it2.var_));
                         else
-                            return apply(mpark::get<0>(it1.var_), mpark::get<1>(it2.var_));
+                            return apply(
+                                RAH2_VARIANT_NS::get<0>(it1.var_), RAH2_VARIANT_NS::get<1>(it2.var_));
                     }
-                    else if (mpark::holds_alternative<base_sentinel>(it1.var_))
-                        return apply(mpark::get<1>(it1.var_), mpark::get<0>(it2.var_));
+                    else if (RAH2_VARIANT_NS::holds_alternative<base_sentinel>(it1.var_))
+                        return apply(
+                            RAH2_VARIANT_NS::get<1>(it1.var_), RAH2_VARIANT_NS::get<0>(it2.var_));
                     else
-                        return apply(mpark::get<0>(it1.var_), mpark::get<0>(it2.var_));
+                        return apply(
+                            RAH2_VARIANT_NS::get<0>(it1.var_), RAH2_VARIANT_NS::get<0>(it2.var_));
                 }
 
             public:
@@ -2011,12 +2016,12 @@ namespace RAH2_NS
 
                 iter_reference_t<base_iterator> operator*()
                 {
-                    return *mpark::get<base_iterator>(var_);
+                    return *RAH2_VARIANT_NS::get<base_iterator>(var_);
                 }
 
                 common_iterator& operator++()
                 {
-                    ++mpark::get<base_iterator>(var_);
+                    ++RAH2_VARIANT_NS::get<base_iterator>(var_);
                     return *this;
                 }
                 RAH2_POST_INCR(Cat)
@@ -2025,7 +2030,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 common_iterator& operator--()
                 {
-                    --mpark::get<base_iterator>(var_);
+                    --RAH2_VARIANT_NS::get<base_iterator>(var_);
                     return *this;
                 }
                 template <
@@ -2038,14 +2043,15 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 bool operator<(common_iterator const& it2) const
                 {
-                    return mpark::get<base_iterator>(var_) < mpark::get<base_iterator>(it2.var_);
+                    return RAH2_VARIANT_NS::get<base_iterator>(var_)
+                           < RAH2_VARIANT_NS::get<base_iterator>(it2.var_);
                 }
                 template <
                     typename C = Cat,
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 common_iterator& operator+=(RAH2_NS::ranges::range_difference_t<R> value)
                 {
-                    mpark::get<base_iterator>(var_) += value;
+                    RAH2_VARIANT_NS::get<base_iterator>(var_) += value;
                     return *this;
                 }
                 bool operator==(common_iterator const& it) const

@@ -60,6 +60,17 @@
 #include <ciso646>
 #endif
 
+#ifdef _MSC_VER
+#define RAH2_EXT_WARNING_PUSH __pragma(warning(push, 0))
+#define RAH2_EXT_WARNING_POP __pragma(warning(pop))
+#elif defined(__GNUC__) || defined(__clang__)
+#define RAH2_EXT_WARNING_PUSH _Pragma("GCC diagnostic push")
+#define RAH2_EXT_WARNING_POP _Pragma("GCC diagnostic pop")
+#else
+#define RAH2_EXT_WARNING_PUSH
+#define RAH2_EXT_WARNING_POP
+#endif
+
 namespace RAH2_NS
 {
     // ***************************** <type_traits> traits *****************************************
