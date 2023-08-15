@@ -10,7 +10,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_BUILD_TYPE Release)
 else ()
     message(STATUS "  Diag: Build type specified as '${CMAKE_BUILD_TYPE}'")
-    set(CMAKE_BUILD_TYPE Debug)
 endif ()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
