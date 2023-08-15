@@ -405,7 +405,7 @@ void test_join_view()
     {
         testSuite.test_case("rvalue_input");
         // Test join on a range of rvalue
-        auto range = RAH2_NS::views::iota<size_t>(0, 6)
+        auto range = RAH2_NS::views::iota(0llu, 6llu)
                      | RAH2_NS::views::transform(
                          [](auto i) { return RAH2_NS::views::repeat(1) | RAH2_NS::views::take(i); })
                      | RAH2_NS::views::join;

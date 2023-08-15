@@ -79,13 +79,13 @@ void test_iota_view()
     {
         RAH2_STD::vector<size_t> result;
         for (size_t const i :
-             RAH2_NS::views::iota() | RAH2_NS::views::slice(2, 5) | RAH2_NS::views::common)
+             RAH2_NS::views::iota(0) | RAH2_NS::views::slice(2, 5) | RAH2_NS::views::common)
             result.push_back(i);
         assert(result == RAH2_STD::vector<size_t>({2, 3, 4}));
     }
 
     testSuite.test_case("concept");
-    auto r = RAH2_NS::views::iota();
+    auto r = RAH2_NS::views::iota(0);
     check_range_cat<RAH2_NS::random_access_iterator_tag, decltype(r)>::test(r);
 }
 

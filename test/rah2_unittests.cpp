@@ -593,7 +593,7 @@ try
         {
             return RAH2_NS::views::repeat(static_cast<char>('a' + i)) | RAH2_NS::views::take(i);
         };
-        auto range = RAH2_NS::views::for_each(RAH2_NS::views::iota<size_t>(0, 5), createRange);
+        auto range = RAH2_NS::views::for_each(RAH2_NS::views::iota(0llu, 5llu), createRange);
         RAH2_STD::string result;
         RAH2_NS::ranges::copy(range, RAH2_NS::back_inserter(result));
         assert(result == "bccdddeeee");
@@ -657,10 +657,9 @@ try
         size_t ySize = 3;
         auto xyIndexes = [=](size_t y)
         {
-            return RAH2_NS::views::zip(
-                RAH2_NS::views::repeat(y), RAH2_NS::views::iota<size_t>(0, xSize));
+            return RAH2_NS::views::zip(RAH2_NS::views::repeat(y), RAH2_NS::views::iota(0llu, xSize));
         };
-        auto range = RAH2_NS::views::iota<size_t>(0, ySize) | RAH2_NS::views::for_each(xyIndexes);
+        auto range = RAH2_NS::views::iota(0llu, ySize) | RAH2_NS::views::for_each(xyIndexes);
         RAH2_STD::vector<RAH2_STD::tuple<size_t, size_t>> result;
         RAH2_NS::ranges::copy(range, RAH2_NS::back_inserter(result));
         assert(
@@ -673,14 +672,14 @@ try
         {
             return RAH2_NS::views::zip(
                 RAH2_NS::views::repeat(z),
-                RAH2_NS::views::iota<size_t>(0, ySize) | RAH2_NS::views::for_each(xyIndexes));
+                RAH2_NS::views::iota(0llu, ySize) | RAH2_NS::views::for_each(xyIndexes));
         };
         auto flattenTuple = [](auto&& z_yx)
         {
             using namespace RAH2_STD;
             return RAH2_STD::make_tuple(get<0>(z_yx), get<0>(get<1>(z_yx)), get<1>(get<1>(z_yx)));
         };
-        auto rangeZYX = RAH2_NS::views::iota<size_t>(0, zSize) | RAH2_NS::views::for_each(xyzIndexes)
+        auto rangeZYX = RAH2_NS::views::iota(0llu, zSize) | RAH2_NS::views::for_each(xyzIndexes)
                         | RAH2_NS::views::transform(flattenTuple);
         RAH2_STD::vector<RAH2_STD::tuple<size_t, size_t, size_t>> resultZYX;
         RAH2_NS::ranges::copy(rangeZYX, RAH2_NS::back_inserter(resultZYX));
@@ -974,10 +973,10 @@ try
     {
         auto genRange = [](size_t i)
         {
-            return zip(repeat(i), RAH2_NS::views::iota<size_t>(0, 3));
+            return zip(repeat(i), RAH2_NS::views::iota(0llu, 3llu));
         };
         auto globalRange =
-            RAH2_NS::views::iota<size_t>(0, 4) | RAH2_NS::views::transform(genRange) | join;
+            RAH2_NS::views::iota(0llu, 4llu) | RAH2_NS::views::transform(genRange) | join;
 
         EQUAL_RANGE(
             globalRange,
