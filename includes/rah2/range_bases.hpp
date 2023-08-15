@@ -1061,7 +1061,7 @@ namespace RAH2_NS
 
             struct empty_impl
             {
-                template <typename R, std::enable_if_t<has_empty_member<R>>* = nullptr>
+                template <typename R, RAH2_STD::enable_if_t<has_empty_member<R>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return range.empty();
@@ -1073,7 +1073,7 @@ namespace RAH2_NS
 
                 template <
                     typename R,
-                    std::enable_if_t<!has_empty_member<R> && compiles<false, R, has_ranges_size>>* = nullptr>
+                    RAH2_STD::enable_if_t<!has_empty_member<R> && compiles<false, R, has_ranges_size>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return size_impl{}(range);
@@ -1081,7 +1081,7 @@ namespace RAH2_NS
 
                 template <
                     typename R,
-                    std::enable_if_t<!has_empty_member<R> && !compiles<false, R, has_ranges_size>>* = nullptr>
+                    RAH2_STD::enable_if_t<!has_empty_member<R> && !compiles<false, R, has_ranges_size>>* = nullptr>
                 auto operator()(R&& range) const
                 {
                     return begin_impl{}(range) == end_impl{}(range);
