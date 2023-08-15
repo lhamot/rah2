@@ -3037,7 +3037,7 @@ namespace RAH2_NS
         // ************************************ zip_transform *************************************
 
         template <typename Func, typename RangeTuple>
-        class zip_transform_view : public view_interface<zip_view<RangeTuple>>
+        class zip_transform_view : public view_interface<zip_transform_view<Func, RangeTuple>>
         {
             Func func_;
             RangeTuple bases_;

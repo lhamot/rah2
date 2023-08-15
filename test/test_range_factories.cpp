@@ -27,8 +27,18 @@ void test_empty_view()
     /// [empty]
 
     testSuite.test_case("concept");
+    using R = RAH2_NS::ranges::empty_view<int>;
     auto r = RAH2_NS::views::empty<int>;
-    check_range_cat<RAH2_NS::contiguous_iterator_tag, decltype(r)>::test(r);
+    auto e = RAH2_NS::ranges::end(r);
+    assert(RAH2_NS::ranges::empty(r));
+    auto i = RAH2_NS::ranges::begin(r);
+    auto u = i;
+    assert(!(u < i));
+    assert(!(i < u));
+    assert(i == u);
+    assert(i == e);
+    AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::contiguous_iterator_tag>();
+    STATIC_ASSERT((RAH2_NS::ranges::contiguous_range_impl<R, true>::value));
 }
 
 void test_single_view()
@@ -96,7 +106,8 @@ void test_istream_view()
                 {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"}));
         /// [views::istream]
         testSuite.test_case("concepts");
-        auto r = RAH2_NS::views::istream<std::string>(ss);
+        std::stringstream ss2("a b c d e f g h i j k l");
+        auto r = RAH2_NS::views::istream<std::string>(ss2);
         check_range_cat<RAH2_NS::input_iterator_tag, decltype(r)>::test(r);
     }
 }
