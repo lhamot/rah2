@@ -125,7 +125,7 @@ namespace RAH2_NS
             template <class Reference>
             struct pointer_type
             {
-                using type = RAH2_NS::details::optional<Reference>;
+                using type = RAH2_NS::details::movable_box<Reference>;
                 template <typename Ref>
                 static type to_pointer(Ref&& ref)
                 {
@@ -969,9 +969,9 @@ namespace RAH2_NS
                 template <typename It>
                 static auto get(It&& iter)
                 {
-                    return RAH2_NS::details::optional<Ref>(*iter);
+                    return RAH2_NS::details::movable_box<Ref>(*iter);
                 }
-                using type = RAH2_NS::details::optional<Ref>;
+                using type = RAH2_NS::details::movable_box<Ref>;
             };
 
             template <class Ref>
@@ -1120,7 +1120,7 @@ namespace RAH2_NS
         class transform_view : public view_interface<transform_view<R, F>>
         {
             R base_;
-            RAH2_NS::details::optional<F> func_;
+            RAH2_NS::details::movable_box<F> func_;
             constexpr static bool is_common_range = RAH2_NS::ranges::common_range<R>;
             using category =
                 cap_iterator_tag<range_iter_categ_t<R>, RAH2_STD::input_iterator_tag, RAH2_STD::random_access_iterator_tag>;
@@ -1137,7 +1137,7 @@ namespace RAH2_NS
             class iterator : public iterator_facade<iterator, sentinel, reference, category>
             {
                 iterator_t<R> iter_;
-                RAH2_NS::details::optional<F> func_;
+                RAH2_NS::details::movable_box<F> func_;
 
             public:
                 using difference_type = intptr_t;
@@ -1712,7 +1712,7 @@ namespace RAH2_NS
             P pattern_;
             using inner_iterator = RAH2_NS::ranges::iterator_t<R>;
             using inner_sentinel = RAH2_NS::ranges::sentinel_t<R>;
-            RAH2_NS::details::optional<subrange<inner_iterator, inner_iterator>> cached_begin_;
+            RAH2_NS::details::movable_box<subrange<inner_iterator, inner_iterator>> cached_begin_;
             using base_cat = RAH2_STD::input_iterator_tag;
 
             template <typename I1, typename S1, typename I2, typename S2>
@@ -4519,7 +4519,7 @@ namespace RAH2_NS
             class iterator : public iterator_facade<iterator, default_sentinel_t, value, base_cat>
             {
                 generate_view* parent_ = nullptr;
-                RAH2_NS::details::optional<value> value_;
+                RAH2_NS::details::movable_box<value> value_;
 
             public:
                 iterator() = default;

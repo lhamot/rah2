@@ -1745,16 +1745,16 @@ namespace RAH2_NS
             return a > b ? a : b;
         }
     } // namespace details
-    // ************************************** optional ********************************************
+    // ************************************** movable_box ********************************************
     namespace details
     {
 
-        // Small optional impl for C++14 compilers
+        // Small optional but move copyable event if T is only move constructible
         template <typename T>
-        struct optional
+        struct movable_box
         {
-            optional() = default;
-            optional(optional const& other)
+            movable_box() = default;
+            movable_box(movable_box const& other)
             {
                 if (other.has_value())
                 {
@@ -1762,11 +1762,11 @@ namespace RAH2_NS
                     is_allocated_ = true;
                 }
             }
-            optional(optional&& other) noexcept
+            movable_box(movable_box&& other) noexcept
             {
                 (*this) = RAH2_STD::move(other);
             }
-            optional& operator=(optional const& other)
+            movable_box& operator=(movable_box const& other)
             {
                 if (has_value())
                 {
@@ -1790,12 +1790,13 @@ namespace RAH2_NS
                 }
                 return *this;
             }
-            optional& operator=(optional&& other) noexcept
+            movable_box& operator=(movable_box&& other) noexcept
             {
                 if (has_value())
                 {
                     if (other.has_value())
                     {
+                        // TODO : move copy when possible
                         // A lambda with const capture is not move assignable
                         reset();
                         new (get_ptr()) T(RAH2_STD::move(other.value()));
@@ -1814,37 +1815,37 @@ namespace RAH2_NS
                 }
                 return *this;
             }
-            optional(T const& other)
+            movable_box(T const& other)
                 : is_allocated_(true)
             {
                 new (get_ptr()) T(other);
             }
-            optional(T&& other)
+            movable_box(T&& other)
                 : is_allocated_(true)
             {
                 new (get_ptr()) T(RAH2_STD::move(other));
             }
             template <typename... Args>
-            explicit optional(RAH2_NS::in_place_t, Args&&... args)
+            explicit movable_box(RAH2_NS::in_place_t, Args&&... args)
                 : is_allocated_(true)
             {
                 new (get_ptr()) T(RAH2_STD::forward<Args>(args)...);
             }
-            optional& operator=(T const& other)
+            movable_box& operator=(T const& other)
             {
                 reset();
                 new (get_ptr()) T(other);
                 is_allocated_ = true;
                 return *this;
             }
-            optional& operator=(T&& other)
+            movable_box& operator=(T&& other)
             {
                 reset();
                 new (get_ptr()) T(RAH2_STD::move(other));
                 is_allocated_ = true;
                 return *this;
             }
-            ~optional()
+            ~movable_box()
             {
                 reset();
             }

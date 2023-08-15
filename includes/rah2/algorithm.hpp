@@ -57,8 +57,8 @@ namespace RAH2_NS
                 using U = decltype(RAH2_NS::ranges::fold_left(
                     RAH2_STD::move(first), last, RAH2_NS::iter_value_t<I>(*first), f));
                 if (first == last)
-                    return RAH2_NS::details::optional<U>();
-                RAH2_NS::details::optional<U> init(RAH2_STD::move(*first));
+                    return RAH2_NS::details::movable_box<U>();
+                RAH2_NS::details::movable_box<U> init(RAH2_STD::move(*first));
                 for (++first; first != last; ++first)
                     *init = RAH2_INVOKE_2(f, RAH2_STD::move(*init), *first);
                 return init;
@@ -128,9 +128,9 @@ namespace RAH2_NS
                     first, last, RAH2_NS::iter_value_t<I>(*first), f));
 
                 if (first == last)
-                    return RAH2_NS::details::optional<U>();
+                    return RAH2_NS::details::movable_box<U>();
                 I tail = RAH2_STD::prev(RAH2_NS::ranges::next(first, RAH2_STD::move(last)));
-                return RAH2_NS::details::optional<U>(RAH2_NS::ranges::fold_right(
+                return RAH2_NS::details::movable_box<U>(RAH2_NS::ranges::fold_right(
                     RAH2_STD::move(first), tail, RAH2_NS::iter_value_t<I>(*tail), RAH2_STD::move(f)));
             }
 
@@ -210,10 +210,10 @@ namespace RAH2_NS
                 using U = decltype(RAH2_NS::ranges::fold_left(
                     RAH2_STD::forward<I>(first), last, RAH2_NS::iter_value_t<I>(*first), f));
                 using Ret =
-                    RAH2_NS::ranges::fold_left_first_with_iter_result<O, RAH2_NS::details::optional<U>>;
+                    RAH2_NS::ranges::fold_left_first_with_iter_result<O, RAH2_NS::details::movable_box<U>>;
                 if (first == last)
-                    return Ret{O(RAH2_STD::forward<I>(first)), RAH2_NS::details::optional<U>()};
-                RAH2_NS::details::optional<U> init(RAH2_NS::in_place, *first);
+                    return Ret{O(RAH2_STD::forward<I>(first)), RAH2_NS::details::movable_box<U>()};
+                RAH2_NS::details::movable_box<U> init(RAH2_NS::in_place, *first);
                 for (++first; first != last; ++first)
                     *init = RAH2_INVOKE_2(f, RAH2_STD::move(*init), *first);
                 return Ret{O(RAH2_STD::forward<I>(first)), RAH2_STD::move(init)};
