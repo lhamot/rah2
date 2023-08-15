@@ -4,24 +4,12 @@ cmake_minimum_required(VERSION 3.5)
 project(rah2)
 set(CXX_STANDARD_REQUIRED 14)
 
-if (CMAKE_BUILD_TYPE STREQUAL "")
-    # Build type is not set eg. command was "cmake .."
-    message(STATUS "  Diag: Build type was unspecified, set to Release")
-    set(CMAKE_BUILD_TYPE Release)
-else ()
-    message(STATUS "  Diag: Build type specified as '${CMAKE_BUILD_TYPE}'")
-endif ()
-
-if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "_DEBUG")
-else ()
-    set_directory_properties(PROPERTIES COMPILE_DEFINITIONS "NDEBUG")
-endif ()
-
 if(MSVC)
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /bigobj /Wall /WX /wd\"5214\" /wd\"5220\" /wd\"5246\" /wd\"5027\" /wd\"4626\" /wd\"4623\" /wd\"4514\" /wd\"5045\" /wd\"4868\" /wd\"4711\" /wd\"4710\" /wd\"4820\" /wd\"4625\" /wd\"4365\" /wd\"4371\"  ")
+    set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} /D \"_DEBUG\"")
 else()
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+    set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 endif()
 
 enable_testing()
