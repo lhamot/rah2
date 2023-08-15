@@ -599,7 +599,7 @@ namespace RAH2_NS
         // ******************************* istream_view ******************************************************
 
         template <typename Val, class CharT, class Traits = std::char_traits<CharT>>
-        class basic_istream_view : view_interface<basic_istream_view<Val, CharT, Traits>>
+        class basic_istream_view : public view_interface<basic_istream_view<Val, CharT, Traits>>
         {
             std::istream* stream_ = nullptr;
             Val value_;
@@ -841,7 +841,7 @@ namespace RAH2_NS
         // ********************************* owning_view ******************************************
 
         template <typename R>
-        class owning_view : view_interface<ref_view<R>>
+        class owning_view : public view_interface<ref_view<R>>
         {
             R range_;
 
@@ -871,7 +871,7 @@ namespace RAH2_NS
             {
                 return range_.end();
             }
-            bool empty() const
+            bool empty()
             {
                 return RAH2_NS::ranges::empty(range_);
             }
@@ -1419,7 +1419,7 @@ namespace RAH2_NS
         // ******************************************* drop ***********************************************
 
         template <typename R>
-        class drop_view : view_interface<drop_view<R>>
+        class drop_view : public view_interface<drop_view<R>>
         {
             R base_;
             using base_diff_t = range_difference_t<R>;
@@ -1504,7 +1504,7 @@ namespace RAH2_NS
         // ******************************************* drop_while *********************************
 
         template <typename R, typename F>
-        class drop_while_view : view_interface<drop_while_view<R, F>>
+        class drop_while_view : public view_interface<drop_while_view<R, F>>
         {
             R base_;
             F pred_;
@@ -1661,7 +1661,7 @@ namespace RAH2_NS
             {
             }
 
-            bool empty() const
+            bool empty()
             {
                 return RAH2_NS::ranges::empty(base_);
             }
@@ -3037,7 +3037,7 @@ namespace RAH2_NS
         // ************************************ zip_transform *************************************
 
         template <typename Func, typename RangeTuple>
-        class zip_transform_view : public view_interface<zip_view<RangeTuple>>
+        class zip_transform_view : public view_interface<zip_transform_view<Func, RangeTuple>>
         {
             Func func_;
             RangeTuple bases_;
@@ -3995,7 +3995,7 @@ namespace RAH2_NS
         } // namespace views
         // ***************************************** stride ***********************************************
         template <typename R>
-        class stride_view : view_interface<stride_view<R>>
+        class stride_view : public view_interface<stride_view<R>>
         {
             using base_iterator = iterator_t<R>;
             using base_sentinel = sentinel_t<R>;
@@ -4245,7 +4245,7 @@ namespace RAH2_NS
             {
                 return default_sentinel_t();
             }
-            static bool empty()
+            bool empty() const
             {
                 return false;
             }
