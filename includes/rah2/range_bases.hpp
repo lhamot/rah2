@@ -1497,208 +1497,234 @@ namespace RAH2_NS
             RAH2_NS::ranges::dangling>;
 
         // ***************************** <iterator> functions *****************************************
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<
-                !RAH2_NS::sized_sentinel_for<S, I>
-                && RAH2_NS::details::weakly_equality_comparable_with<S, I>>* = nullptr>
-        RAH2_NS::iter_difference_t<I> distance(I first, S last)
+        namespace niebloids
         {
-            iter_difference_t<I> len = 0;
-            for (; first != last; ++first, ++len)
+            struct distance
             {
-            }
-            return len;
-        }
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<
+                        !RAH2_NS::sized_sentinel_for<S, I>
+                        && RAH2_NS::details::weakly_equality_comparable_with<S, I>>* = nullptr>
+                RAH2_NS::iter_difference_t<I> operator()(I first, S last) const
+                {
+                    iter_difference_t<I> len = 0;
+                    for (; first != last; ++first, ++len)
+                    {
+                    }
+                    return len;
+                }
 
-        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-        auto distance(I first, S last)
-        {
-            return last - first;
-        }
-        template <typename R>
-        auto distance(R&& r)
-        {
-            return RAH2_NS::ranges::distance(begin(r), end(r));
-        }
-
-        template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-        constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
-        {
-            // RAH2_STD::abs is not constexpr until C++23
-            auto abs = [](intptr_t const x)
-            {
-                return x < 0 ? -x : x;
+                template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                auto operator()(I first, S last) const
+                {
+                    return last - first;
+                }
+                template <typename R>
+                auto operator()(R&& r) const
+                {
+                    return (*this)(begin(r), end(r));
+                }
             };
+        } // namespace niebloids
+        constexpr niebloids::distance distance;
 
-            auto const distToBound = bound - i;
-            if (distToBound == 0)
+        namespace niebloids
+        {
+            struct advance
             {
-                return n;
-            }
+                template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                constexpr intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                {
+                    // RAH2_STD::abs is not constexpr until C++23
+                    auto abs = [](intptr_t const x)
+                    {
+                        return x < 0 ? -x : x;
+                    };
 
-            if ((n * distToBound) > 0) // Same side
-            {
-                auto const dist = abs(n) - abs(distToBound);
-                if (dist > 0) // bound is lower
+                    auto const distToBound = bound - i;
+                    if (distToBound == 0)
+                    {
+                        return n;
+                    }
+
+                    if ((n * distToBound) > 0) // Same side
+                    {
+                        auto const dist = abs(n) - abs(distToBound);
+                        if (dist > 0) // bound is lower
+                        {
+                            i = RAH2_STD::move(bound);
+                            return n - distToBound;
+                        }
+                    }
+                    RAH2_STD::advance(i, n);
+                    return 0;
+                }
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
+                    RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr>
+                constexpr intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                {
+                    while (n > 0 && i != bound)
+                    {
+                        --n;
+                        ++i;
+                    }
+
+                    while (n < 0 && i != bound)
+                    {
+                        ++n;
+                        --i;
+                    }
+
+                    return n;
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
+                constexpr intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                {
+                    RAH2_ASSERT(n >= 0);
+                    while (n > 0 && i != bound)
+                    {
+                        --n;
+                        ++i;
+                    }
+                    return n;
+                }
+
+                template <
+                    typename I,
+                    RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
+                constexpr void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
+                {
+                    RAH2_ASSERT(n >= 0);
+                    while (n > 0)
+                    {
+                        --n;
+                        ++i;
+                    }
+                }
+
+                template <
+                    typename I,
+                    RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::random_access_iterator<I>>* = nullptr>
+                constexpr void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
+                {
+                    while (n > 0)
+                    {
+                        --n;
+                        ++i;
+                    }
+
+                    while (n < 0)
+                    {
+                        ++n;
+                        --i;
+                    }
+                }
+
+                template <typename I, RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<I>>* = nullptr>
+                constexpr void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
+                {
+                    i += n;
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
+                    RAH2_STD::enable_if_t<RAH2_NS::assignable_from<I&, S>>* = nullptr>
+                constexpr void operator()(I& i, S bound) const
                 {
                     i = RAH2_STD::move(bound);
-                    return n - distToBound;
                 }
-            }
-            RAH2_STD::advance(i, n);
-            return 0;
-        }
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-        constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
+
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
+                    RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                constexpr void operator()(I& i, S bound) const
+                {
+                    advance(i, bound - i);
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
+                    RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                constexpr void operator()(I& i, S bound) const
+                {
+                    while (i != bound)
+                        ++i;
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::advance advance;
+
+        namespace niebloids
         {
-            while (n > 0 && i != bound)
+            struct next
             {
-                --n;
-                ++i;
-            }
+                template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
+                constexpr I operator()(I i) const
+                {
+                    ++i;
+                    return i;
+                }
 
-            while (n < 0 && i != bound)
-            {
-                ++n;
-                --i;
-            }
+                template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
+                constexpr I operator()(I i, RAH2_NS::iter_difference_t<I> n) const
+                {
+                    RAH2_NS::ranges::advance(i, n);
+                    return i;
+                }
 
-            return n;
-        }
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
+                constexpr I operator()(I i, S const& bound) const
+                {
+                    static_assert(RAH2_NS::semiregular<S>, "RAH2_NS::semiregular<S>");
+                    static_assert(
+                        RAH2_NS::input_or_output_iterator<I>, "RAH2_NS::input_or_output_iterator<I>");
+                    static_assert(
+                        RAH2_NS::details::weakly_equality_comparable_with<I, S>,
+                        "weakly_equality_comparable_with<I, S>");
+                    RAH2_NS::ranges::advance(i, bound);
+                    return i;
+                }
 
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-        constexpr intptr_t advance(I& i, iter_difference_t<I> n, S const& bound)
-        {
-            RAH2_ASSERT(n >= 0);
-            while (n > 0 && i != bound)
-            {
-                --n;
-                ++i;
-            }
-            return n;
-        }
-
-        template <
-            typename I,
-            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-        constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
-        {
-            RAH2_ASSERT(n >= 0);
-            while (n > 0)
-            {
-                --n;
-                ++i;
-            }
-        }
-
-        template <
-            typename I,
-            RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::random_access_iterator<I>>* = nullptr>
-        constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
-        {
-            while (n > 0)
-            {
-                --n;
-                ++i;
-            }
-
-            while (n < 0)
-            {
-                ++n;
-                --i;
-            }
-        }
-
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<I>>* = nullptr>
-        constexpr void advance(I& i, RAH2_NS::iter_difference_t<I> n)
-        {
-            i += n;
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NS::assignable_from<I&, S>>* = nullptr>
-        constexpr void advance(I& i, S bound)
-        {
-            i = RAH2_STD::move(bound);
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
-            RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-        constexpr void advance(I& i, S bound)
-        {
-            advance(i, bound - i);
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
-            RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-        constexpr void advance(I& i, S bound)
-        {
-            while (i != bound)
-                ++i;
-        }
-
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
-        constexpr I next(I i)
-        {
-            ++i;
-            return i;
-        }
-
-        template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
-        constexpr I next(I i, RAH2_NS::iter_difference_t<I> n)
-        {
-            RAH2_NS::ranges::advance(i, n);
-            return i;
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
-        constexpr I next(I i, S bound)
-        {
-            static_assert(RAH2_NS::semiregular<S>, "RAH2_NS::semiregular<S>");
-            static_assert(
-                RAH2_NS::input_or_output_iterator<I>, "RAH2_NS::input_or_output_iterator<I>");
-            static_assert(
-                RAH2_NS::details::weakly_equality_comparable_with<I, S>,
-                "weakly_equality_comparable_with<I, S>");
-            RAH2_NS::ranges::advance(i, bound);
-            return i;
-        }
-
-        template <
-            typename I,
-            typename S,
-            RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
-        constexpr I next(I i, RAH2_NS::iter_difference_t<I> n, S bound)
-        {
-            RAH2_NS::ranges::advance(i, n, bound);
-            return i;
-        }
+                template <
+                    typename I,
+                    typename S,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
+                constexpr I operator()(I i, RAH2_NS::iter_difference_t<I> n, S bound) const
+                {
+                    RAH2_NS::ranges::advance(i, n, bound);
+                    return i;
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::next next;
 
     } // namespace ranges
 

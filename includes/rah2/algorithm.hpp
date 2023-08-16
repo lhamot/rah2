@@ -1884,63 +1884,71 @@ namespace RAH2_NS
         } // namespace niebloids
         constexpr niebloids::uninitialized_value_construct_n_fn uninitialized_value_construct_n{};
 
-        /// shuffle
-        ///
-        /// New for C++11
-        /// Randomizes a sequence of values via a user-supplied UniformRandomNumberGenerator.
-        /// The difference between this and the original random_shuffle function is that this uses the more
-        /// advanced and flexible UniformRandomNumberGenerator interface as opposed to the more
-        /// limited RandomNumberGenerator interface of random_shuffle.
-        ///
-        /// Effects: Shuffles the elements in the range [first, last) with uniform distribution.
-        ///
-        /// Complexity: Exactly '(last - first) - 1' swaps.
-        ///
-        /// Example usage:
-        ///     struct Rand{ size_t operator()(size_t n) { return (size_t)(rand() % n); } }; // Note: The C rand function is poor and slow.
-        ///     Rand randInstance;
-        ///     shuffle(pArrayBegin, pArrayEnd, randInstance);
-        ///
-        // See the C++11 Standard, 26.5.1.3, Uniform random number generator requirements.
-        // Also http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
-        template <typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
-        void shuffle(RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng)
+        namespace niebloids
         {
-            if (first != last)
+            struct shuffle
             {
+                /// shuffle
+                ///
+                /// New for C++11
+                /// Randomizes a sequence of values via a user-supplied UniformRandomNumberGenerator.
+                /// The difference between this and the original random_shuffle function is that this uses the more
+                /// advanced and flexible UniformRandomNumberGenerator interface as opposed to the more
+                /// limited RandomNumberGenerator interface of random_shuffle.
+                ///
+                /// Effects: Shuffles the elements in the range [first, last) with uniform distribution.
+                ///
+                /// Complexity: Exactly '(last - first) - 1' swaps.
+                ///
+                /// Example usage:
+                ///     struct Rand{ size_t operator()(size_t n) { return (size_t)(rand() % n); } }; // Note: The C rand function is poor and slow.
+                ///     Rand randInstance;
+                ///     shuffle(pArrayBegin, pArrayEnd, randInstance);
+                ///
+                // See the C++11 Standard, 26.5.1.3, Uniform random number generator requirements.
+                // Also http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+                template <typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
+                void operator()(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    if (first != last)
+                    {
 #ifdef RAH2_USE_EASTL
-                using unsigned_difference_type = uint32_t;
+                        using unsigned_difference_type = uint32_t;
 #else
-                using difference_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-                using unsigned_difference_type =
-                    typename RAH2_STD::make_unsigned<difference_type>::type;
+                        using difference_type =
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+                        using unsigned_difference_type =
+                            typename RAH2_STD::make_unsigned<difference_type>::type;
 #endif
-                using uniform_int_distribution =
-                    RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
-                using uniform_int_distribution_param_type =
-                    typename uniform_int_distribution::param_type;
+                        using uniform_int_distribution =
+                            RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                        using uniform_int_distribution_param_type =
+                            typename uniform_int_distribution::param_type;
 
-                uniform_int_distribution uid;
+                        uniform_int_distribution uid;
 
-                for (RandomAccessIterator i = first + 1; i != last; ++i)
-                    RAH2_NS::ranges::iter_swap(
-                        i,
-                        first
-                            + static_cast<iter_difference_t<RandomAccessIterator>>(
-                                uid(urng,
-                                    uniform_int_distribution_param_type(
-                                        0u, unsigned_difference_type(i - first)))));
-            }
-        }
+                        for (RandomAccessIterator i = first + 1; i != last; ++i)
+                            RAH2_NS::ranges::iter_swap(
+                                i,
+                                first
+                                    + static_cast<iter_difference_t<RandomAccessIterator>>(
+                                        uid(urng,
+                                            uniform_int_distribution_param_type(
+                                                0u, unsigned_difference_type(i - first)))));
+                    }
+                }
 
-        template <typename RandomRange, typename UniformRandomNumberGenerator>
-        void shuffle(RandomRange&& range, UniformRandomNumberGenerator&& urng)
-        {
-            RAH2_NS::ranges::shuffle(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::forward<UniformRandomNumberGenerator>(urng));
-        }
+                template <typename RandomRange, typename UniformRandomNumberGenerator>
+                void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
+                {
+                    (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::forward<UniformRandomNumberGenerator>(urng));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::shuffle shuffle;
     } // namespace ranges
 } // namespace RAH2_NS
