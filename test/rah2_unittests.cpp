@@ -617,7 +617,7 @@ try
                                               { return RAH2_NS::views::single(x + y * 3 + z * 9); });
                                });
                 });
-        assert(rah2::ranges::equal(range, RAH2_NS::views::iota(15, 42)));
+        assert(RAH2_NS::ranges::equal(range, RAH2_NS::views::iota(15, 42)));
         /// [for_each_pipeable]
     }
 
@@ -646,7 +646,7 @@ try
                                });
                 });
 
-        assert(rah2::ranges::equal(range, RAH2_NS::views::iota(15, 42)));
+        assert(RAH2_NS::ranges::equal(range, RAH2_NS::views::iota(15, 42)));
         assert(count == 3);
         assert(count2 == 9);
         assert(count3 == 27);
@@ -1090,9 +1090,10 @@ try
             RAH2_NS::ranges::for_each(rng, updateRaw);
         }
 
-        assert(rah2::ranges::all_of(test_ | slice(0, start), [](auto&& val) { return val == 0; }));
-        assert(rah2::ranges::all_of(test_ | slice(start, end), [](auto&& val) { return val == 1; }));
-        assert(rah2::ranges::all_of(
+        assert(RAH2_NS::ranges::all_of(test_ | slice(0, start), [](auto&& val) { return val == 0; }));
+        assert(RAH2_NS::ranges::all_of(
+            test_ | slice(start, end), [](auto&& val) { return val == 1; }));
+        assert(RAH2_NS::ranges::all_of(
             test_ | slice(end, test_.size()), [](auto&& val) { return val == 0; }));
     }
 
