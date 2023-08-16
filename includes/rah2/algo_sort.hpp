@@ -14,92 +14,104 @@ namespace RAH2_NS
 {
     namespace ranges
     {
-        /// is_sorted_until
-        ///
-        /// Returns an iterator to the first element in the range [first,last) which does not follow an ascending order.
-        /// The range between first and the iterator returned is sorted.
-        /// If the entire range is sorted, the function returns last.
-        /// The elements are compared using operator< for the first version, and comp for the second.
-        template <
-            typename ForwardIterator,
-            typename Sentinel,
-            RAH2_STD::enable_if_t<
-                forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-        ForwardIterator is_sorted_until(ForwardIterator first, Sentinel last)
+        namespace niebloids
         {
-            if (first != last)
+            struct is_sorted_until
             {
-                ForwardIterator next = first;
-
-                while (++next != last)
+                /// is_sorted_until
+                ///
+                /// Returns an iterator to the first element in the range [first,last) which does not follow an ascending order.
+                /// The range between first and the iterator returned is sorted.
+                /// If the entire range is sorted, the function returns last.
+                /// The elements are compared using operator< for the first version, and comp for the second.
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
+                ForwardIterator operator()(ForwardIterator first, Sentinel last) const
                 {
-                    if (*next < *first)
-                        return next;
+                    if (first != last)
+                    {
+                        ForwardIterator next = first;
 
-                    first = next;
+                        while (++next != last)
+                        {
+                            if (*next < *first)
+                                return next;
+
+                            first = next;
+                        }
+                    }
+
+                    return last;
                 }
-            }
 
-            return last;
-        }
-
-        template <typename ForwardIterator, typename Sentinel, typename Compare>
-        ForwardIterator is_sorted_until(ForwardIterator first, Sentinel last, Compare compare)
-        {
-            if (first != last)
-            {
-                ForwardIterator next = first;
-
-                while (++next != last)
+                template <typename ForwardIterator, typename Sentinel, typename Compare>
+                ForwardIterator operator()(ForwardIterator first, Sentinel last, Compare compare) const
                 {
-                    if (compare(*next, *first))
-                        return next;
+                    if (first != last)
+                    {
+                        ForwardIterator next = first;
 
-                    first = next;
+                        while (++next != last)
+                        {
+                            if (compare(*next, *first))
+                                return next;
+
+                            first = next;
+                        }
+                    }
+
+                    return last;
                 }
-            }
 
-            return last;
-        }
+                template <
+                    typename ForwardRange,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                auto operator()(ForwardRange&& r, Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(compare));
+                }
 
-        template <typename ForwardRange, typename Compare, RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-        auto is_sorted_until(ForwardRange&& r, Compare compare)
+                template <typename ForwardRange>
+                auto operator()(ForwardRange&& r) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::is_sorted_until is_sorted_until;
+
+        namespace niebloids
         {
-            return RAH2_NS::ranges::is_sorted_until(
-                RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(compare));
-        }
-
-        template <typename ForwardRange>
-        auto is_sorted_until(ForwardRange&& r)
-        {
-            return RAH2_NS::ranges::is_sorted_until(
-                RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
-        }
-
-        struct is_sorted_fn
-        {
-            template <
-                typename I, // RAH2_STD::forward_iterator
-                typename S, // RAH2_STD::sentinel_for<I>
-                // class Proj = RAH2_STD::identity,
-                typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I, Proj>>
-                RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
-            constexpr bool operator()(I first, S last, Comp comp = {}) const
+            struct is_sorted_fn
             {
-                return RAH2_NS::ranges::is_sorted_until(first, last, comp) == last;
-            }
+                template <
+                    typename I, // RAH2_STD::forward_iterator
+                    typename S, // RAH2_STD::sentinel_for<I>
+                    // class Proj = RAH2_STD::identity,
+                    typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I, Proj>>
+                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr bool operator()(I first, S last, Comp comp = {}) const
+                {
+                    return RAH2_NS::ranges::is_sorted_until(first, last, comp) == last;
+                }
 
-            template <
-                typename R, // ranges::forward_range
-                // class Proj = RAH2_STD::identity,
-                typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
-                RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-            constexpr bool operator()(R&& r, Comp comp = {}) const
-            {
-                return (*this)(
-                    RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(comp));
-            }
-        };
+                template <
+                    typename R, // ranges::forward_range
+                    // class Proj = RAH2_STD::identity,
+                    typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
+                    RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
+                constexpr bool operator()(R&& r, Comp comp = {}) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(comp));
+                }
+            };
+        } // namespace niebloids
 
         /// is_sorted
         ///
@@ -113,139 +125,155 @@ namespace RAH2_NS
         ///    bool bIsSorted        = is_sorted(intArray.begin(), intArray.end());
         ///    bool bIsReverseSorted = is_sorted(intArray.begin(), intArray.end(), greater<int>());
         ///
-        constexpr is_sorted_fn is_sorted;
+        constexpr niebloids::is_sorted_fn is_sorted;
 
         template <class I1, class I2, class O>
         using merge_result = RAH2_NS::ranges::in_in_out_result<I1, I2, O>;
 
-        /// merge
-        ///
-        /// This function merges two sorted input sorted ranges into a result sorted range.
-        /// This merge is stable in that no element from the first range will be changed
-        /// in order relative to other elements from the first range.
-        ///
-        template <
-            typename InputIterator1,
-            typename Sentinel1,
-            typename InputIterator2,
-            typename Sentinel2,
-            typename OutputIterator,
-            typename Compare = RAH2_NS::ranges::less>
-        merge_result<InputIterator1, InputIterator2, OutputIterator> merge(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result,
-            Compare compare = {})
+        namespace niebloids
         {
-            while ((first1 != last1) && (first2 != last2))
+            struct merge
             {
-                if (compare(*first2, *first1))
+
+                /// merge
+                ///
+                /// This function merges two sorted input sorted ranges into a result sorted range.
+                /// This merge is stable in that no element from the first range will be changed
+                /// in order relative to other elements from the first range.
+                ///
+                template <
+                    typename InputIterator1,
+                    typename Sentinel1,
+                    typename InputIterator2,
+                    typename Sentinel2,
+                    typename OutputIterator,
+                    typename Compare = RAH2_NS::ranges::less>
+                merge_result<InputIterator1, InputIterator2, OutputIterator> operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result,
+                    Compare compare = {}) const
                 {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first1, *first2)); // Validate that the compare function is sane.
-                    *result = *first2;
-                    ++first2;
-                }
-                else
-                {
-                    *result = *first1;
-                    ++first1;
-                }
-                ++result;
-            }
-
-            // Check which list is empty and explicitly copy remaining items from the other list.
-            // For performance reasons, only a single copy operation is invoked to avoid the potential overhead
-            // introduced by chaining two copy operations together.  Even if a copy is of zero size there can
-            // be overhead from calling memmove with a zero size copy.
-            if (first1 == last1)
-            {
-                auto ret = RAH2_NS::ranges::copy(
-                    RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(result));
-                return {RAH2_STD::move(first1), RAH2_STD::move(ret.in), RAH2_STD::move(ret.out)};
-            }
-            else
-            {
-                auto ret = RAH2_NS::ranges::copy(
-                    RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
-                return {RAH2_STD::move(ret.in), RAH2_STD::move(first2), RAH2_STD::move(ret.out)};
-            }
-        }
-
-        template <
-            typename InputRange1,
-            typename InputRange2,
-            typename OutputIterator,
-            typename Compare = RAH2_NS::ranges::less>
-        merge_result<
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
-            OutputIterator>
-        merge(InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare = {})
-        {
-            return RAH2_NS::ranges::merge(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result),
-                RAH2_STD::move(compare));
-        }
-
-        //////////////////////////////////////////////////////////////////////////////
-        /// insertion_sort
-        ///
-        /// insertion_sort is an O(n^2) stable sorting algorithm that starts at the
-        /// (k + 1) element and assumes the first (k) elements are sorted.
-        /// Then copy_backwards from (k + 1) to the begining any elements where the
-        /// (k + 1) element is less than [0, k] elements. The position of k when
-        /// (k + 1) element is not less than k is the sorted position of the (k + 1) element.
-        ///
-        /// Example With Intermediate Steps:
-        /// (k + 1) == 2 : [3, 2, 1] -> [3, 3, 1] -> [2, 3, 1]
-        /// (k + 1) == 1 : [2, 3, 1] -> [2, 3, 3] -> [2, 2, 3] -> [1, 2, 3]
-        ///              : [1, 2, 3]
-        template <typename BidirectionalIterator, typename Sentinel, typename StrictWeakOrdering>
-        void insertion_sort(BidirectionalIterator first, Sentinel last, StrictWeakOrdering compare)
-        {
-            using value_type = typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type;
-
-            if (first != last)
-            {
-                BidirectionalIterator i = first;
-
-                for (++i; i != last; ++i)
-                {
-                    value_type insertValue(RAH2_STD::move(*i));
-                    BidirectionalIterator insertPosition = i;
-
-                    for (BidirectionalIterator movePosition = i;
-                         movePosition != first && compare(insertValue, *(--movePosition));
-                         --insertPosition)
+                    while ((first1 != last1) && (first2 != last2))
                     {
-                        RAH2_VALIDATE_COMPARE(!compare(*movePosition, insertValue));
-                        *insertPosition = RAH2_STD::move(*movePosition);
+                        if (compare(*first2, *first1))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first1, *first2)); // Validate that the compare function is sane.
+                            *result = *first2;
+                            ++first2;
+                        }
+                        else
+                        {
+                            *result = *first1;
+                            ++first1;
+                        }
+                        ++result;
                     }
 
-                    *insertPosition = RAH2_STD::move(insertValue);
+                    // Check which list is empty and explicitly copy remaining items from the other list.
+                    // For performance reasons, only a single copy operation is invoked to avoid the potential overhead
+                    // introduced by chaining two copy operations together.  Even if a copy is of zero size there can
+                    // be overhead from calling memmove with a zero size copy.
+                    if (first1 == last1)
+                    {
+                        auto ret = RAH2_NS::ranges::copy(
+                            RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(result));
+                        return {
+                            RAH2_STD::move(first1), RAH2_STD::move(ret.in), RAH2_STD::move(ret.out)};
+                    }
+                    else
+                    {
+                        auto ret = RAH2_NS::ranges::copy(
+                            RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
+                        return {
+                            RAH2_STD::move(ret.in), RAH2_STD::move(first2), RAH2_STD::move(ret.out)};
+                    }
                 }
-            }
-        } // insertion_sort
 
-        template <typename BidirectionalIterator, typename Sentinel>
-        void insertion_sort(BidirectionalIterator first, Sentinel last)
-        {
-            using Less =
-                RAH2_STD::less<typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type>;
-
-            insertion_sort<BidirectionalIterator>(first, last, Less());
-
-        } // insertion_sort
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename OutputIterator,
+                    typename Compare = RAH2_NS::ranges::less>
+                merge_result<
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
+                    OutputIterator>
+                operator()(
+                    InputRange1&& range1,
+                    InputRange2&& range2,
+                    OutputIterator result,
+                    Compare compare = {}) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::merge merge;
 
         namespace details
         {
+
+            //////////////////////////////////////////////////////////////////////////////
+            /// insertion_sort
+            ///
+            /// insertion_sort is an O(n^2) stable sorting algorithm that starts at the
+            /// (k + 1) element and assumes the first (k) elements are sorted.
+            /// Then copy_backwards from (k + 1) to the begining any elements where the
+            /// (k + 1) element is less than [0, k] elements. The position of k when
+            /// (k + 1) element is not less than k is the sorted position of the (k + 1) element.
+            ///
+            /// Example With Intermediate Steps:
+            /// (k + 1) == 2 : [3, 2, 1] -> [3, 3, 1] -> [2, 3, 1]
+            /// (k + 1) == 1 : [2, 3, 1] -> [2, 3, 3] -> [2, 2, 3] -> [1, 2, 3]
+            ///              : [1, 2, 3]
+            template <typename BidirectionalIterator, typename Sentinel, typename StrictWeakOrdering>
+            void insertion_sort(BidirectionalIterator first, Sentinel last, StrictWeakOrdering compare)
+            {
+                using value_type =
+                    typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type;
+
+                if (first != last)
+                {
+                    BidirectionalIterator i = first;
+
+                    for (++i; i != last; ++i)
+                    {
+                        value_type insertValue(RAH2_STD::move(*i));
+                        BidirectionalIterator insertPosition = i;
+
+                        for (BidirectionalIterator movePosition = i;
+                             movePosition != first && compare(insertValue, *(--movePosition));
+                             --insertPosition)
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(*movePosition, insertValue));
+                            *insertPosition = RAH2_STD::move(*movePosition);
+                        }
+
+                        *insertPosition = RAH2_STD::move(insertValue);
+                    }
+                }
+            } // insertion_sort
+
+            template <typename BidirectionalIterator, typename Sentinel>
+            void insertion_sort(BidirectionalIterator first, Sentinel last)
+            {
+                using Less =
+                    RAH2_STD::less<typename RAH2_STD::iterator_traits<BidirectionalIterator>::value_type>;
+
+                insertion_sort<BidirectionalIterator>(first, last, Less());
+
+            } // insertion_sort
+
             // Sorts a range whose initial (start - first) entries are already sorted.
             // This function is a useful helper to the tim_sort function.
             // This is the same as insertion_sort except that it has a start parameter which indicates
@@ -282,10 +310,7 @@ namespace RAH2_NS
                     }
                 }
             }
-        } // namespace details
 
-        namespace details
-        {
             /// merge_sort_buffer
             ///
             /// Implements the MergeSort algorithm with a user-supplied buffer.
@@ -358,9 +383,7 @@ namespace RAH2_NS
                     if (lastSortedEnd < 1)
                     {
                         lastSortedEnd =
-                            RAH2_NS::ranges::is_sorted_until<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                first, last, compare)
-                            - first;
+                            RAH2_NS::ranges::is_sorted_until(first, last, compare) - first;
                     }
 
                     // Sort the region unless lastSortedEnd indicates it is already sorted.
@@ -424,13 +447,7 @@ namespace RAH2_NS
                     {
                         if (secondHalfLocation == RL_SourceRange)
                         {
-                            RAH2_NS::ranges::merge<
-                                RandomAccessIterator,
-                                RandomAccessIterator,
-                                RandomAccessIterator,
-                                Sentinel,
-                                T*,
-                                StrictWeakOrdering>(
+                            RAH2_NS::ranges::merge(
                                 first, first + nMid, first + nMid, last, pBuffer, compare);
                             RAH2_DEV_ASSERT(
                                 (RAH2_NS::ranges::is_sorted.operator()<T*, T*, StrictWeakOrdering>(
@@ -440,7 +457,7 @@ namespace RAH2_NS
                         else
                         {
                             RAH2_NS::ranges::copy(first, first + nMid, pBuffer);
-                            RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                            RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
                             RAH2_DEV_ASSERT(
                                 (RAH2_NS::ranges::is_sorted.
@@ -454,7 +471,7 @@ namespace RAH2_NS
                         if (secondHalfLocation == RL_SourceRange)
                         {
                             RAH2_NS::ranges::copy(first + nMid, last, pBuffer + nMid);
-                            RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                            RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
                             RAH2_DEV_ASSERT(
                                 (RAH2_NS::ranges::is_sorted.
@@ -464,7 +481,7 @@ namespace RAH2_NS
                         }
                         else
                         {
-                            RAH2_NS::ranges::merge<T*, T*, T*, T*, RandomAccessIterator, StrictWeakOrdering>(
+                            RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
                             RAH2_DEV_ASSERT(
                                 (RAH2_NS::ranges::is_sorted.
@@ -552,120 +569,142 @@ namespace RAH2_NS
             }
         } // namespace details
 
-        /// partition
-        ///
-        /// Implements the partition algorithm.
-        /// Rearranges the elements in the range [first, last), in such a way that all the elements
-        /// for which pred returns true precede all those for which it returns false. The iterator
-        /// returned points to the first element of the second group.
-        /// The relative ordering within each group is not necessarily the same as before the call.
-        /// See function stable_partition for a function with a similar behavior and stability in
-        /// the ordering.
-        ///
-        /// To do: Implement a version that uses a faster BidirectionalIterator algorithm for the
-        ///        case that the iterator range is a bidirectional iterator instead of just an
-        ///        input iterator (one direction).
-        ///
-        template <typename InputIterator, typename Sentinel, typename Predicate>
-        subrange<InputIterator, Sentinel>
-        partition(InputIterator begin, Sentinel end, Predicate predicate)
+        namespace niebloids
         {
-            if (begin != end)
+            struct partition
             {
-                while (predicate(*begin))
-                {
-                    if (++begin == end)
-                        return {begin, end};
-                }
 
-                InputIterator middle = begin;
-
-                while (++middle != end)
+                /// partition
+                ///
+                /// Implements the partition algorithm.
+                /// Rearranges the elements in the range [first, last), in such a way that all the elements
+                /// for which pred returns true precede all those for which it returns false. The iterator
+                /// returned points to the first element of the second group.
+                /// The relative ordering within each group is not necessarily the same as before the call.
+                /// See function stable_partition for a function with a similar behavior and stability in
+                /// the ordering.
+                ///
+                /// To do: Implement a version that uses a faster BidirectionalIterator algorithm for the
+                ///        case that the iterator range is a bidirectional iterator instead of just an
+                ///        input iterator (one direction).
+                ///
+                template <typename InputIterator, typename Sentinel, typename Predicate>
+                subrange<InputIterator, Sentinel>
+                operator()(InputIterator begin, Sentinel end, Predicate predicate) const
                 {
-                    if (predicate(*middle))
+                    if (begin != end)
                     {
-                        RAH2_STD::swap(*begin, *middle);
-                        ++begin;
+                        while (predicate(*begin))
+                        {
+                            if (++begin == end)
+                                return {begin, end};
+                        }
+
+                        InputIterator middle = begin;
+
+                        while (++middle != end)
+                        {
+                            if (predicate(*middle))
+                            {
+                                RAH2_STD::swap(*begin, *middle);
+                                ++begin;
+                            }
+                        }
                     }
+
+                    return {begin, end};
                 }
-            }
 
-            return {begin, end};
-        }
+                template <typename InputRange, typename Predicate>
+                auto operator()(InputRange&& range, Predicate predicate) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(predicate));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::partition partition;
 
-        template <typename InputRange, typename Predicate>
-        auto partition(InputRange&& range, Predicate predicate)
+        namespace niebloids
         {
-            return RAH2_NS::ranges::partition(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(predicate));
-        }
+            struct stable_partition
+            {
 
-        /// stable_partition
-        ///
-        /// Performs the same function as @p partition() with the additional
-        /// guarantee that the relative ordering of elements in each group is
-        /// preserved.
-        template <typename ForwardIterator, typename ForwardSentinel, typename Predicate>
-        subrange<ForwardIterator>
-        stable_partition(ForwardIterator first, ForwardSentinel last, Predicate pred)
-        {
-            first = RAH2_NS::ranges::find_if_not(first, last, pred);
+                /// stable_partition
+                ///
+                /// Performs the same function as @p partition() with the additional
+                /// guarantee that the relative ordering of elements in each group is
+                /// preserved.
+                template <typename ForwardIterator, typename ForwardSentinel, typename Predicate>
+                subrange<ForwardIterator>
+                operator()(ForwardIterator first, ForwardSentinel last, Predicate pred) const
+                {
+                    first = RAH2_NS::ranges::find_if_not(first, last, pred);
 
-            if (first == last)
-                return {first, last};
+                    if (first == last)
+                        return {first, last};
 
-            using value_type = typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
+                    using value_type =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
-            auto const requested_size = RAH2_NS::ranges::distance(first, last);
+                    auto const requested_size = RAH2_NS::ranges::distance(first, last);
 
 #ifdef RAH2_USE_EASTL
-            auto allocator = *RAH2_STD::get_default_allocator(0);
-            value_type* const buffer = (value_type*)allocate_memory(
-                allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
+                    auto allocator = *RAH2_STD::get_default_allocator(0);
+                    value_type* const buffer = (value_type*)allocate_memory(
+                        allocator, requested_size * sizeof(value_type), EASTL_ALIGN_OF(value_type), 0);
 #else
-            auto allocator = RAH2_STD::allocator<value_type>();
-            value_type* const buffer = allocator.allocate(static_cast<size_t>(requested_size));
+                    auto allocator = RAH2_STD::allocator<value_type>();
+                    value_type* const buffer =
+                        allocator.allocate(static_cast<size_t>(requested_size));
 #endif
-            RAH2_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
+                    RAH2_STD::uninitialized_fill(buffer, buffer + requested_size, value_type());
 
-            ForwardIterator result1 = first;
-            value_type* result2 = buffer;
+                    ForwardIterator result1 = first;
+                    value_type* result2 = buffer;
 
-            *result2 = RAH2_STD::move(*first);
-            ++result2;
-            ++first;
-            for (; first != last; ++first)
-            {
-                if (pred(*first))
-                {
-                    *result1 = RAH2_STD::move(*first);
-                    ++result1;
-                }
-                else
-                {
                     *result2 = RAH2_STD::move(*first);
                     ++result2;
-                }
-            }
+                    ++first;
+                    for (; first != last; ++first)
+                    {
+                        if (pred(*first))
+                        {
+                            *result1 = RAH2_STD::move(*first);
+                            ++result1;
+                        }
+                        else
+                        {
+                            *result2 = RAH2_STD::move(*first);
+                            ++result2;
+                        }
+                    }
 
-            RAH2_NS::ranges::copy(buffer, result2, result1);
+                    RAH2_NS::ranges::copy(buffer, result2, result1);
 
-            RAH2_NS::ranges::destroy(buffer, buffer + requested_size);
+                    RAH2_NS::ranges::destroy(buffer, buffer + requested_size);
 #ifdef RAH2_USE_EASTL
-            EASTLFree(allocator, buffer, requested_size * sizeof(value_type));
+                    EASTLFree(allocator, buffer, requested_size * sizeof(value_type));
 #else
-            allocator.deallocate(buffer, requested_size * sizeof(value_type));
+                    allocator.deallocate(buffer, requested_size * sizeof(value_type));
 #endif
 
-            return {result1, last};
-        }
+                    return {result1, last};
+                }
 
-        template <typename ForwardRange, typename Predicate>
-        auto stable_partition(ForwardRange&& range, Predicate pred)
-        {
-            return RAH2_NS::ranges::stable_partition(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(pred));
-        }
+                template <typename ForwardRange, typename Predicate>
+                auto operator()(ForwardRange&& range, Predicate pred) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(pred));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::stable_partition stable_partition;
 
         /////////////////////////////////////////////////////////////////////
         // quick_sort
@@ -680,11 +719,11 @@ namespace RAH2_NS
         // a simple insertion sort.
         /////////////////////////////////////////////////////////////////////
 
-        static int const kQuickSortLimit =
-            28; // For sorts of random arrays over 100 items, 28 - 32 have been found to be good numbers on x86.
-
         namespace details
         {
+            static int const kQuickSortLimit =
+                28; // For sorts of random arrays over 100 items, 28 - 32 have been found to be good numbers on x86.
+
             template <typename Size>
             Size Log2(Size n)
             {
@@ -695,625 +734,668 @@ namespace RAH2_NS
             }
         } // namespace details
 
-        template <typename RandomAccessIterator, typename Sentinel, typename T>
-        RandomAccessIterator get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue)
+        namespace niebloids
         {
-            using PureT = RAH2_STD::decay_t<T>;
 
-            for (;; ++first)
+            struct get_partition
             {
-                while (RAH2_STD::less<PureT>()(*first, pivotValue))
+
+                template <typename RandomAccessIterator, typename Sentinel, typename T>
+                static RandomAccessIterator
+                get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue)
                 {
-                    RAH2_VALIDATE_COMPARE(!RAH2_STD::less<PureT>()(
-                        pivotValue, *first)); // Validate that the compare function is sane.
-                    ++first;
-                }
-                --last;
+                    using PureT = RAH2_STD::decay_t<T>;
 
-                while (RAH2_STD::less<PureT>()(pivotValue, *last))
+                    for (;; ++first)
+                    {
+                        while (RAH2_STD::less<PureT>()(*first, pivotValue))
+                        {
+                            RAH2_VALIDATE_COMPARE(!RAH2_STD::less<PureT>()(
+                                pivotValue, *first)); // Validate that the compare function is sane.
+                            ++first;
+                        }
+                        --last;
+
+                        while (RAH2_STD::less<PureT>()(pivotValue, *last))
+                        {
+                            RAH2_VALIDATE_COMPARE(!RAH2_STD::less<PureT>()(
+                                *last, pivotValue)); // Validate that the compare function is sane.
+                            --last;
+                        }
+
+                        if (first >= last) // Random access iterators allow operator >=
+                            return first;
+
+                        RAH2_NS::ranges::iter_swap(first, last);
+                    }
+                }
+
+                /// get_partition
+                ///
+                /// This function takes const T& instead of T because T may have special alignment
+                /// requirements and some compilers (e.g. VC++) are don't respect alignment requirements
+                /// for function arguments.
+                ///
+                template <typename RandomAccessIterator, typename Sentinel, typename T>
+                RandomAccessIterator
+                operator()(RandomAccessIterator first, Sentinel last, T const& pivotValue) const
                 {
-                    RAH2_VALIDATE_COMPARE(!RAH2_STD::less<PureT>()(
-                        *last, pivotValue)); // Validate that the compare function is sane.
-                    --last;
+                    // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
+                    T const pivotCopy(
+                        pivotValue); // Need to make a temporary because the sequence below is mutating.
+                    return get_partition_impl<RandomAccessIterator, Sentinel, T const&>(
+                        first, last, pivotCopy);
                 }
 
-                if (first >= last) // Random access iterators allow operator >=
-                    return first;
+                template <typename RandomAccessIterator, typename Sentinel, typename T>
+                RandomAccessIterator
+                operator()(RandomAccessIterator first, Sentinel last, T&& pivotValue) const
+                {
+                    // Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
+                    return get_partition_impl<RandomAccessIterator, Sentinel, T&&>(
+                        first, last, RAH2_STD::move(pivotValue));
+                }
 
-                RAH2_NS::ranges::iter_swap(first, last);
-            }
-        }
+                template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
+                RandomAccessIterator static get_partition_impl(
+                    RandomAccessIterator first, Sentinel last, T&& pivotValue, Compare compare)
+                {
+                    for (;; ++first)
+                    {
+                        while (compare(*first, pivotValue))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                pivotValue, *first)); // Validate that the compare function is sane.
+                            ++first;
+                        }
+                        --last;
 
-        /// get_partition
-        ///
-        /// This function takes const T& instead of T because T may have special alignment
-        /// requirements and some compilers (e.g. VC++) are don't respect alignment requirements
-        /// for function arguments.
-        ///
-        template <typename RandomAccessIterator, typename Sentinel, typename T>
-        RandomAccessIterator get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue)
+                        while (compare(pivotValue, *last))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *last, pivotValue)); // Validate that the compare function is sane.
+                            --last;
+                        }
+
+                        if (first >= last) // Random access iterators allow operator >=
+                            return first;
+
+                        RAH2_NS::ranges::iter_swap(first, last);
+                    }
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first, Sentinel last, T const& pivotValue, Compare compare) const
+                {
+                    T const pivotCopy(
+                        pivotValue); // Need to make a temporary because the sequence below is mutating.
+                    return get_partition_impl<RandomAccessIterator, Sentinel, T const&, Compare>(
+                        first, last, pivotCopy, compare);
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first, Sentinel last, T&& pivotValue, Compare compare) const
+                {
+                    // Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
+                    return get_partition_impl<RandomAccessIterator, Sentinel, T&&, Compare>(
+                        first, last, RAH2_STD::forward<T>(pivotValue), compare);
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::get_partition get_partition;
+
+        namespace niebloids
         {
-            // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
-            T const pivotCopy(
-                pivotValue); // Need to make a temporary because the sequence below is mutating.
-            return get_partition_impl<RandomAccessIterator, Sentinel, T const&>(
-                first, last, pivotCopy);
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename T>
-        RandomAccessIterator get_partition(RandomAccessIterator first, Sentinel last, T&& pivotValue)
-        {
-            // Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
-            return get_partition_impl<RandomAccessIterator, T&&>(
-                first, last, RAH2_STD::move(pivotValue));
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
-        RandomAccessIterator
-        get_partition_impl(RandomAccessIterator first, Sentinel last, T&& pivotValue, Compare compare)
-        {
-            for (;; ++first)
+            struct partial_sort
             {
-                while (compare(*first, pivotValue))
+                template <typename RandomAccessIterator, typename Sentinel>
+                void operator()(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last) const
                 {
-                    RAH2_VALIDATE_COMPARE(!compare(
-                        pivotValue, *first)); // Validate that the compare function is sane.
-                    ++first;
-                }
-                --last;
-
-                while (compare(pivotValue, *last))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*last, pivotValue)); // Validate that the compare function is sane.
-                    --last;
-                }
-
-                if (first >= last) // Random access iterators allow operator >=
-                    return first;
-
-                RAH2_NS::ranges::iter_swap(first, last);
-            }
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
-        RandomAccessIterator
-        get_partition(RandomAccessIterator first, Sentinel last, T const& pivotValue, Compare compare)
-        {
-            T const pivotCopy(
-                pivotValue); // Need to make a temporary because the sequence below is mutating.
-            return get_partition_impl<RandomAccessIterator, Sentinel, T const&, Compare>(
-                first, last, pivotCopy, compare);
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename T, typename Compare>
-        RandomAccessIterator
-        get_partition(RandomAccessIterator first, Sentinel last, T&& pivotValue, Compare compare)
-        {
-            // Note: unlike the copy-constructible variant of get_partition... we can't create a temporary const move-constructible object
-            return get_partition_impl<RandomAccessIterator, T&&, Compare>(
-                first, last, RAH2_STD::forward<T>(pivotValue), compare);
-        }
-
-        namespace details
-        {
-            // This function is used by quick_sort and is not intended to be used by itself.
-            // This is because the implementation below makes an assumption about the input
-            // data that quick_sort satisfies but arbitrary data may not.
-            // There is a standalone insertion_sort function.
-            template <typename RandomAccessIterator, typename Sentinel>
-            void insertion_sort_simple(RandomAccessIterator first, Sentinel last)
-            {
-                for (RandomAccessIterator current = first; current != last; ++current)
-                {
+                    using difference_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                    RandomAccessIterator it_end(current), prev(current);
-                    value_type value(RAH2_STD::forward<value_type>(*current));
+                    RAH2_NS::ranges::make_heap(first, middle);
 
-                    for (--prev; RAH2_STD::less<value_type>()(value, *prev);
-                         --it_end,
-                         --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
+                    for (RandomAccessIterator i = middle; i < last; ++i)
                     {
-                        RAH2_VALIDATE_COMPARE(!RAH2_STD::less<value_type>()(
-                            *prev, value)); // Validate that the compare function is sane.
-                        *it_end = RAH2_STD::forward<value_type>(*prev);
+                        if (RAH2_STD::less<value_type>()(*i, *first))
+                        {
+                            RAH2_VALIDATE_COMPARE(!RAH2_STD::less<value_type>()(
+                                *first, *i)); // Validate that the compare function is sane.
+                            value_type temp(RAH2_STD::forward<value_type>(*i));
+                            *i = RAH2_STD::forward<value_type>(*first);
+                            details::adjust_heap<RandomAccessIterator, difference_type, value_type>(
+                                first,
+                                difference_type(0),
+                                difference_type(middle - first),
+                                difference_type(0),
+                                RAH2_STD::forward<value_type>(temp));
+                        }
                     }
 
-                    *it_end = RAH2_STD::forward<value_type>(value);
+                    RAH2_NS::ranges::sort_heap(first, middle);
                 }
-            }
 
-            // This function is used by quick_sort and is not intended to be used by itself.
-            // This is because the implementation below makes an assumption about the input
-            // data that quick_sort satisfies but arbitrary data may not.
-            // There is a standalone insertion_sort function.
-            template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-            void insertion_sort_simple(RandomAccessIterator first, Sentinel last, Compare compare)
-            {
-                for (RandomAccessIterator current = first; current != last; ++current)
+                template <typename RandomAccessRange, typename RandomAccessIterator>
+                void operator()(RandomAccessRange&& range, RandomAccessIterator middle) const
                 {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range), middle, RAH2_NS::ranges::end(range));
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+                void operator()(
+                    RandomAccessIterator first,
+                    RandomAccessIterator middle,
+                    Sentinel last,
+                    Compare compare) const
+                {
+                    using difference_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                    RandomAccessIterator it_end(current), prev(current);
-                    value_type value(RAH2_STD::forward<value_type>(*current));
+                    RAH2_NS::ranges::make_heap(first, middle, compare);
 
-                    for (--prev; compare(value, *prev);
-                         --it_end,
-                         --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
+                    for (RandomAccessIterator i = middle; i < last; ++i)
                     {
-                        RAH2_VALIDATE_COMPARE(
-                            !compare(*prev, value)); // Validate that the compare function is sane.
-                        *it_end = RAH2_STD::forward<value_type>(*prev);
+                        if (compare(*i, *first))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first, *i)); // Validate that the compare function is sane.
+                            value_type temp(RAH2_STD::forward<value_type>(*i));
+                            *i = RAH2_STD::forward<value_type>(*first);
+                            details::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+                                first,
+                                difference_type(0),
+                                difference_type(middle - first),
+                                difference_type(0),
+                                RAH2_STD::forward<value_type>(temp),
+                                compare);
+                        }
                     }
 
-                    *it_end = RAH2_STD::forward<value_type>(value);
+                    RAH2_NS::ranges::sort_heap(first, middle, compare);
                 }
-            }
-        } // namespace details
 
-        template <typename RandomAccessIterator, typename Sentinel>
-        void partial_sort(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
-        {
-            using difference_type =
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-            RAH2_NS::ranges::make_heap<RandomAccessIterator, RandomAccessIterator>(first, middle);
-
-            for (RandomAccessIterator i = middle; i < last; ++i)
-            {
-                if (RAH2_STD::less<value_type>()(*i, *first))
+                template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>
+                void operator()(
+                    RandomAccessRange&& range, RandomAccessIterator middle, Compare compare) const
                 {
-                    RAH2_VALIDATE_COMPARE(!RAH2_STD::less<value_type>()(
-                        *first, *i)); // Validate that the compare function is sane.
-                    value_type temp(RAH2_STD::forward<value_type>(*i));
-                    *i = RAH2_STD::forward<value_type>(*first);
-                    RAH2_NS::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type>(
-                        first,
-                        difference_type(0),
-                        difference_type(middle - first),
-                        difference_type(0),
-                        RAH2_STD::forward<value_type>(temp));
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        middle,
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
                 }
-            }
+            };
+        } // namespace niebloids
+        constexpr niebloids::partial_sort partial_sort;
 
-            RAH2_NS::ranges::sort_heap<RandomAccessIterator, RandomAccessIterator>(first, middle);
-        }
-
-        template <typename RandomAccessRange, typename RandomAccessIterator>
-        void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle)
+        namespace niebloids
         {
-            return RAH2_NS::ranges::partial_sort(
-                RAH2_NS::ranges::begin(range), middle, RAH2_NS::ranges::end(range));
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-        void partial_sort(
-            RandomAccessIterator first, RandomAccessIterator middle, Sentinel last, Compare compare)
-        {
-            using difference_type =
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-            RAH2_NS::ranges::make_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
-                first, middle, compare);
-
-            for (RandomAccessIterator i = middle; i < last; ++i)
+            struct nth_element
             {
-                if (compare(*i, *first))
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                RandomAccessIterator
+                operator()(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last) const
                 {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first, *i)); // Validate that the compare function is sane.
-                    value_type temp(RAH2_STD::forward<value_type>(*i));
-                    *i = RAH2_STD::forward<value_type>(*first);
-                    RAH2_NS::ranges::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
-                        first,
-                        difference_type(0),
-                        difference_type(middle - first),
-                        difference_type(0),
-                        RAH2_STD::forward<value_type>(temp),
-                        compare);
+                    auto result = RAH2_NS::ranges::next(first, last);
+                    auto lasti = result;
+                    while ((lasti - first) > 5)
+                    {
+                        auto const midValue(RAH2_NS::ranges::median(
+                            *first, *(first + (lasti - first) / 2), *(lasti - 1)));
+                        RandomAccessIterator const midPos(
+                            RAH2_NS::ranges::get_partition(first, lasti, midValue));
+
+                        if (midPos <= nth)
+                            first = midPos;
+                        else
+                            lasti = midPos;
+                    }
+
+                    details::insertion_sort<RandomAccessIterator>(first, lasti);
+                    return result;
                 }
-            }
 
-            RAH2_NS::ranges::sort_heap<RandomAccessIterator, RandomAccessIterator, Compare>(
-                first, middle, compare);
-        }
-
-        template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>
-        void partial_sort(RandomAccessRange&& range, RandomAccessIterator middle, Compare compare)
-        {
-            return RAH2_NS::ranges::partial_sort(
-                RAH2_NS::ranges::begin(range),
-                middle,
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::move(compare));
-        }
-
-        template <
-            typename RandomAccessIterator,
-            typename Sentinel,
-            RAH2_STD::enable_if_t<
-                random_access_iterator<RandomAccessIterator>
-                && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-        RandomAccessIterator
-        nth_element(RandomAccessIterator first, RandomAccessIterator nth, Sentinel last)
-        {
-            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            auto result = RAH2_NS::ranges::next(first, last);
-            auto lasti = result;
-            while ((lasti - first) > 5)
-            {
-                value_type const midValue(RAH2_NS::ranges::median<value_type>(
-                    *first, *(first + (lasti - first) / 2), *(lasti - 1)));
-                RandomAccessIterator const midPos(
-                    RAH2_NS::ranges::get_partition<RandomAccessIterator, Sentinel, value_type>(
-                        first, lasti, midValue));
-
-                if (midPos <= nth)
-                    first = midPos;
-                else
-                    lasti = midPos;
-            }
-
-            RAH2_NS::ranges::insertion_sort<RandomAccessIterator>(first, lasti);
-            return result;
-        }
-
-        template <typename RandomAccessRange>
-        iterator_t<RandomAccessRange>
-        nth_element(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth)
-        {
-            return RAH2_NS::ranges::nth_element(
-                RAH2_NS::ranges::begin(range), RAH2_STD::move(nth), RAH2_NS::ranges::end(range));
-        }
-
-        template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-        RandomAccessIterator nth_element(
-            RandomAccessIterator first, RandomAccessIterator nth, Sentinel last, Compare compare)
-        {
-            using value_type = typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-            auto result = RAH2_NS::ranges::next(first, last);
-            auto lasti = result;
-            while ((lasti - first) > 5)
-            {
-                value_type const midValue(RAH2_NS::ranges::median<value_type, Compare>(
-                    *first, *(first + (lasti - first) / 2), *(lasti - 1), compare));
-                RandomAccessIterator const midPos(
-                    RAH2_NS::ranges::get_partition<RandomAccessIterator, Sentinel, value_type, Compare>(
-                        first, lasti, midValue, compare));
-
-                if (midPos <= nth)
-                    first = midPos;
-                else
-                    lasti = midPos;
-            }
-
-            RAH2_NS::ranges::insertion_sort<RandomAccessIterator, Sentinel, Compare>(
-                first, lasti, compare);
-            return result;
-        }
-
-        template <
-            typename RandomAccessRange,
-            typename Compare,
-            RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-        iterator_t<RandomAccessRange>
-        nth_element(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth, Compare compare)
-        {
-            return RAH2_NS::ranges::nth_element(
-                RAH2_NS::ranges::begin(range),
-                RAH2_STD::move(nth),
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::move(compare));
-        }
-
-        namespace details
-        {
-            template <typename RandomAccessIterator, typename Sentinel, typename Size, typename PivotValueType>
-            void quick_sort_impl_helper(RandomAccessIterator first, Sentinel last, Size kRecursionCount)
-            {
-                using value_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-                while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
+                template <typename RandomAccessRange>
+                iterator_t<RandomAccessRange>
+                operator()(RandomAccessRange&& range, iterator_t<RandomAccessRange> nth) const
                 {
-                    RandomAccessIterator const position(
-                        RAH2_NS::ranges::get_partition<RandomAccessIterator, Sentinel, value_type>(
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_STD::move(nth),
+                        RAH2_NS::ranges::end(range));
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first,
+                    RandomAccessIterator nth,
+                    Sentinel last,
+                    Compare compare) const
+                {
+                    auto result = RAH2_NS::ranges::next(first, last);
+                    auto lasti = result;
+                    while ((lasti - first) > 5)
+                    {
+                        auto const midValue(RAH2_NS::ranges::median(
+                            *first, *(first + (lasti - first) / 2), *(lasti - 1), compare));
+                        RandomAccessIterator const midPos(
+                            RAH2_NS::ranges::get_partition(first, lasti, midValue, compare));
+
+                        if (midPos <= nth)
+                            first = midPos;
+                        else
+                            lasti = midPos;
+                    }
+
+                    details::insertion_sort<RandomAccessIterator, Sentinel, Compare>(
+                        first, lasti, compare);
+                    return result;
+                }
+
+                template <
+                    typename RandomAccessRange,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+                iterator_t<RandomAccessRange> operator()(
+                    RandomAccessRange&& range, iterator_t<RandomAccessRange> nth, Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_STD::move(nth),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::nth_element nth_element;
+
+        namespace niebloids
+        {
+            struct quick_sort
+            {
+            private:
+                template <typename RandomAccessIterator, typename Sentinel, typename Size, typename PivotValueType>
+                static void quick_sort_impl_helper(
+                    RandomAccessIterator first, Sentinel last, Size kRecursionCount)
+                {
+                    while (((last - first) > details::kQuickSortLimit) && (kRecursionCount > 0))
+                    {
+                        RandomAccessIterator const position(RAH2_NS::ranges::get_partition(
                             first,
                             last,
-                            RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median<value_type>(
-                                RAH2_STD::forward<value_type>(*first),
-                                RAH2_STD::forward<value_type>(*(first + (last - first) / 2)),
-                                RAH2_STD::forward<value_type>(*(last - 1))))));
+                            RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median(
+                                *first, *(first + (last - first) / 2), *(last - 1)))));
 
-                    RAH2_NS::ranges::details::
                         quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, PivotValueType>(
                             position, last, --kRecursionCount);
-                    last = position;
+                        last = position;
+                    }
+
+                    if (kRecursionCount == 0)
+                        RAH2_NS::ranges::partial_sort(first, last, last);
                 }
 
-                if (kRecursionCount == 0)
-                    RAH2_NS::ranges::partial_sort<RandomAccessIterator>(first, last, last);
-            }
-
-            template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare, typename PivotValueType>
-            void quick_sort_impl_helper(
-                RandomAccessIterator first, Sentinel last, Size kRecursionCount, Compare compare)
-            {
-                using value_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-                while (((last - first) > kQuickSortLimit) && (kRecursionCount > 0))
+                template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare, typename PivotValueType>
+                static void quick_sort_impl_helper(
+                    RandomAccessIterator first, Sentinel last, Size kRecursionCount, Compare compare)
                 {
-                    RandomAccessIterator const position(
-                        RAH2_NS::ranges::get_partition<RandomAccessIterator, Sentinel, value_type, Compare>(
+                    while (((last - first) > details::kQuickSortLimit) && (kRecursionCount > 0))
+                    {
+                        RandomAccessIterator const position(RAH2_NS::ranges::get_partition(
                             first,
                             last,
-                            RAH2_STD::forward<PivotValueType>(
-                                RAH2_NS::ranges::median<value_type, Compare>(
-                                    RAH2_STD::forward<value_type>(*first),
-                                    RAH2_STD::forward<value_type>(*(first + (last - first) / 2)),
-                                    RAH2_STD::forward<value_type>(*(last - 1)),
-                                    compare)),
+                            RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median(
+                                *first, *(first + (last - first) / 2), *(last - 1), compare)),
                             compare));
 
-                    RAH2_NS::ranges::details::
                         quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, PivotValueType>(
                             position, last, --kRecursionCount, compare);
-                    last = position;
+                        last = position;
+                    }
+
+                    if (kRecursionCount == 0)
+                        RAH2_NS::ranges::partial_sort(first, last, last, compare);
                 }
 
-                if (kRecursionCount == 0)
-                    RAH2_NS::ranges::partial_sort<RandomAccessIterator, Sentinel, Compare>(
-                        first, last, last, compare);
-            }
-
-            template <typename RandomAccessIterator, typename Sentinel, typename Size>
-            void quick_sort_impl(
-                RandomAccessIterator first,
-                Sentinel last,
-                Size kRecursionCount,
-                typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
-                    nullptr)
-            {
-                using value_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-                // copy constructors require const value_type
-                quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, value_type const>(
-                    first, last, kRecursionCount);
-            }
-
-            template <typename RandomAccessIterator, typename Sentinel, typename Size>
-            void quick_sort_impl(
-                RandomAccessIterator first,
-                Sentinel last,
-                Size kRecursionCount,
-                typename RAH2_STD::enable_if<
-                    RAH2_STD::is_move_constructible<
-                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
-                    && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
-                        RandomAccessIterator>::value_type>::value>::type* = nullptr)
-            {
-                using value_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-                // move constructors require non-const value_type
-                quick_sort_impl_helper<RandomAccessIterator, Size, value_type>(
-                    first, last, kRecursionCount);
-            }
-
-            template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare>
-            void quick_sort_impl(
-                RandomAccessIterator first,
-                Sentinel last,
-                Size kRecursionCount,
-                Compare compare,
-                typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
-                    nullptr)
-            {
-                using value_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-                // copy constructors require const value_type
-                quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, value_type const>(
-                    first, last, kRecursionCount, compare);
-            }
-
-            template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare>
-            void quick_sort_impl(
-                RandomAccessIterator first,
-                Sentinel last,
-                Size kRecursionCount,
-                Compare compare,
-                typename RAH2_STD::enable_if<
-                    RAH2_STD::is_move_constructible<
-                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
-                    && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
-                        RandomAccessIterator>::value_type>::value>::type* = nullptr)
-            {
-                using value_type =
-                    typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
-
-                // move constructors require non-const value_type
-                quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type>(
-                    first, last, kRecursionCount, compare);
-            }
-        } // namespace details
-
-        /// quick_sort
-        ///
-        /// This is an unstable sort.
-        /// quick_sort sorts the elements in [first, last) into ascending order,
-        /// meaning that if i and j are any two valid iterators in [first, last)
-        /// such that i precedes j, then *j is not less than *i. quick_sort is not
-        /// guaranteed to be stable. That is, suppose that *i and *j are equivalent:
-        /// neither one is less than the other. It is not guaranteed that the
-        /// relative order of these two elements will be preserved by sort.
-        ///
-        /// We implement the "introspective" variation of quick-sort. This is
-        /// considered to be the best general-purpose variant, as it avoids
-        /// worst-case behaviour and optimizes the final sorting stage by
-        /// switching to an insertion sort.
-        ///
-        template <
-            typename RandomAccessIterator,
-            typename Sentinel,
-            RAH2_STD::enable_if_t<
-                random_access_iterator<RandomAccessIterator>
-                && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-        void quick_sort(RandomAccessIterator first, Sentinel last)
-        {
-            using difference_type =
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-
-            if (first != last)
-            {
-                RAH2_NS::ranges::details::quick_sort_impl<RandomAccessIterator, Sentinel, difference_type>(
-                    first, last, 2 * details::Log2(last - first));
-
-                if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
+                template <typename RandomAccessIterator, typename Sentinel, typename Size>
+                static void quick_sort_impl(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    Size kRecursionCount,
+                    typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                        nullptr)
                 {
-                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, RandomAccessIterator>(
-                        first, first + kQuickSortLimit);
-                    RAH2_NS::ranges::details::insertion_sort_simple<RandomAccessIterator, Sentinel>(
-                        first + kQuickSortLimit, last);
+                    using value_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
+
+                    // copy constructors require const value_type
+                    quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, value_type const>(
+                        first, last, kRecursionCount);
                 }
-                else
-                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, Sentinel>(first, last);
-            }
-        }
 
-        template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-        void quick_sort(RandomAccessIterator first, Sentinel last, Compare compare)
-        {
-            using difference_type =
-                typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-
-            if (first != last)
-            {
-                RAH2_NS::ranges::details::
-                    quick_sort_impl<RandomAccessIterator, Sentinel, difference_type, Compare>(
-                        first, last, 2 * details::Log2(last - first), compare);
-
-                if ((last - first) > static_cast<difference_type>(kQuickSortLimit))
+                template <typename RandomAccessIterator, typename Sentinel, typename Size>
+                static void quick_sort_impl(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    Size kRecursionCount,
+                    typename RAH2_STD::enable_if<
+                        RAH2_STD::is_move_constructible<
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
+                        && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
+                            RandomAccessIterator>::value_type>::value>::type* = nullptr)
                 {
-                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, RandomAccessIterator, Compare>(
-                        first, first + kQuickSortLimit, compare);
-                    RAH2_NS::ranges::details::insertion_sort_simple<RandomAccessIterator, Sentinel, Compare>(
-                        first + kQuickSortLimit, last, compare);
+                    using value_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
+
+                    // move constructors require non-const value_type
+                    quick_sort_impl_helper<RandomAccessIterator, Size, value_type>(
+                        first, last, kRecursionCount);
                 }
-                else
-                    RAH2_NS::ranges::insertion_sort<RandomAccessIterator, Sentinel, Compare>(
-                        first, last, compare);
-            }
-        }
 
-        /// sort
-        ///
-        /// We use quick_sort by default. See quick_sort for details.
-        ///
-        template <
-            typename RandomAccessIterator,
-            typename Sentinel,
-            RAH2_STD::enable_if_t<
-                random_access_iterator<RandomAccessIterator>
-                && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-        void sort(RandomAccessIterator first, Sentinel last)
-        {
-            RAH2_NS::ranges::quick_sort(first, last);
-        }
-        template <typename RandomAccessRange>
-        void sort(RandomAccessRange&& range)
-        {
-            sort(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
-        }
+                template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare>
+                static void quick_sort_impl(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    Size kRecursionCount,
+                    Compare compare,
+                    typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                        nullptr)
+                {
+                    using value_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-        template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-        void sort(RandomAccessIterator first, Sentinel last, Compare compare)
-        {
-            RAH2_NS::ranges::quick_sort<RandomAccessIterator, Sentinel, Compare>(
-                first, last, compare);
-        }
+                    // copy constructors require const value_type
+                    quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, value_type const>(
+                        first, last, kRecursionCount, compare);
+                }
 
-        template <
-            typename RandomAccessRange,
-            typename Compare,
-            RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-        void sort(RandomAccessRange&& range, Compare compare)
-        {
-            sort(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
-        }
+                template <typename RandomAccessIterator, typename Sentinel, typename Size, typename Compare>
+                static void quick_sort_impl(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    Size kRecursionCount,
+                    Compare compare,
+                    typename RAH2_STD::enable_if<
+                        RAH2_STD::is_move_constructible<
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
+                        && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
+                            RandomAccessIterator>::value_type>::value>::type* = nullptr)
+                {
+                    using value_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-        /// stable_sort
-        ///
-        /// We use merge_sort by default. See merge_sort for details.
-        /// Beware that the used merge_sort -- and thus stable_sort -- allocates
-        /// memory during execution. Try using merge_sort_buffer if you want
-        /// to avoid memory allocation.
-        ///
-        template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
-        void stable_sort(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare)
+                    // move constructors require non-const value_type
+                    quick_sort_impl_helper<RandomAccessIterator, Size, Compare, value_type>(
+                        first, last, kRecursionCount, compare);
+                }
+
+                // This function is used by quick_sort and is not intended to be used by itself.
+                // This is because the implementation below makes an assumption about the input
+                // data that quick_sort satisfies but arbitrary data may not.
+                // There is a standalone insertion_sort function.
+                template <typename RandomAccessIterator, typename Sentinel>
+                static void insertion_sort_simple(RandomAccessIterator first, Sentinel last)
+                {
+                    for (RandomAccessIterator current = first; current != last; ++current)
+                    {
+                        using value_type =
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
+
+                        RandomAccessIterator it_end(current), prev(current);
+                        value_type value(RAH2_STD::forward<value_type>(*current));
+
+                        for (--prev; RAH2_STD::less<value_type>()(value, *prev);
+                             --it_end,
+                             --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
+                        {
+                            RAH2_VALIDATE_COMPARE(!RAH2_STD::less<value_type>()(
+                                *prev, value)); // Validate that the compare function is sane.
+                            *it_end = RAH2_STD::forward<value_type>(*prev);
+                        }
+
+                        *it_end = RAH2_STD::forward<value_type>(value);
+                    }
+                }
+
+                // This function is used by quick_sort and is not intended to be used by itself.
+                // This is because the implementation below makes an assumption about the input
+                // data that quick_sort satisfies but arbitrary data may not.
+                // There is a standalone insertion_sort function.
+                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+                static void
+                insertion_sort_simple(RandomAccessIterator first, Sentinel last, Compare compare)
+                {
+                    for (RandomAccessIterator current = first; current != last; ++current)
+                    {
+                        using value_type =
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
+
+                        RandomAccessIterator it_end(current), prev(current);
+                        value_type value(RAH2_STD::forward<value_type>(*current));
+
+                        for (--prev; compare(value, *prev);
+                             --it_end,
+                             --prev) // We skip checking for (prev >= first) because quick_sort (our caller) makes this unnecessary.
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *prev, value)); // Validate that the compare function is sane.
+                            *it_end = RAH2_STD::forward<value_type>(*prev);
+                        }
+
+                        *it_end = RAH2_STD::forward<value_type>(value);
+                    }
+                }
+
+            public:
+                /// quick_sort
+                ///
+                /// This is an unstable sort.
+                /// quick_sort sorts the elements in [first, last) into ascending order,
+                /// meaning that if i and j are any two valid iterators in [first, last)
+                /// such that i precedes j, then *j is not less than *i. quick_sort is not
+                /// guaranteed to be stable. That is, suppose that *i and *j are equivalent:
+                /// neither one is less than the other. It is not guaranteed that the
+                /// relative order of these two elements will be preserved by sort.
+                ///
+                /// We implement the "introspective" variation of quick-sort. This is
+                /// considered to be the best general-purpose variant, as it avoids
+                /// worst-case behaviour and optimizes the final sorting stage by
+                /// switching to an insertion sort.
+                ///
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(RandomAccessIterator first, Sentinel last) const
+                {
+                    using difference_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+
+                    if (first != last)
+                    {
+                        quick_sort_impl<RandomAccessIterator, Sentinel, difference_type>(
+                            first, last, 2 * details::Log2(last - first));
+
+                        if ((last - first) > static_cast<difference_type>(details::kQuickSortLimit))
+                        {
+                            details::insertion_sort<RandomAccessIterator, RandomAccessIterator>(
+                                first, first + details::kQuickSortLimit);
+                            insertion_sort_simple<RandomAccessIterator, Sentinel>(
+                                first + details::kQuickSortLimit, last);
+                        }
+                        else
+                            details::insertion_sort<RandomAccessIterator, Sentinel>(first, last);
+                    }
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+                void operator()(RandomAccessIterator first, Sentinel last, Compare compare) const
+                {
+                    using difference_type =
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
+
+                    if (first != last)
+                    {
+                        quick_sort_impl<RandomAccessIterator, Sentinel, difference_type, Compare>(
+                            first, last, 2 * details::Log2(last - first), compare);
+
+                        if ((last - first) > static_cast<difference_type>(details::kQuickSortLimit))
+                        {
+                            details::insertion_sort<RandomAccessIterator, RandomAccessIterator, Compare>(
+                                first, first + details::kQuickSortLimit, compare);
+                            insertion_sort_simple<RandomAccessIterator, Sentinel, Compare>(
+                                first + details::kQuickSortLimit, last, compare);
+                        }
+                        else
+                            details::insertion_sort<RandomAccessIterator, Sentinel, Compare>(
+                                first, last, compare);
+                    }
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::quick_sort quick_sort;
+
+        namespace niebloids
         {
+            struct sort
+            {
+
+                /// sort
+                ///
+                /// We use quick_sort by default. See quick_sort for details.
+                ///
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(RandomAccessIterator first, Sentinel last) const
+                {
+                    RAH2_NS::ranges::quick_sort(first, last);
+                }
+                template <typename RandomAccessRange>
+                void operator()(RandomAccessRange&& range) const
+                {
+                    (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+                void operator()(RandomAccessIterator first, Sentinel last, Compare compare) const
+                {
+                    RAH2_NS::ranges::quick_sort(first, last, compare);
+                }
+
+                template <
+                    typename RandomAccessRange,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+                void operator()(RandomAccessRange&& range, Compare compare) const
+                {
+                    (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::sort sort;
+
+        namespace niebloids
+        {
+            struct stable_sort
+            {
+
+                /// stable_sort
+                ///
+                /// We use merge_sort by default. See merge_sort for details.
+                /// Beware that the used merge_sort -- and thus stable_sort -- allocates
+                /// memory during execution. Try using merge_sort_buffer if you want
+                /// to avoid memory allocation.
+                ///
+                template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
+                void operator()(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare) const
+                {
 #ifdef RAH2_USE_EASTL
-            RAH2_NS::ranges::details::
-                merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
-                    first, last, *RAH2_STD::get_default_allocator(0), compare);
+                    RAH2_NS::ranges::details::
+                        merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
+                            first, last, *RAH2_STD::get_default_allocator(0), compare);
 #else
-            using Allocator =
-                RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
-            Allocator allocator;
-            details::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
-                first, last, allocator, compare);
+                    using Allocator = RAH2_STD::allocator<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
+                    Allocator allocator;
+                    details::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
+                        first, last, allocator, compare);
 #endif
-        }
+                }
 
-        template <
-            typename RandomAccessRange,
-            typename StrictWeakOrdering,
-            RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-        void stable_sort(RandomAccessRange&& range, StrictWeakOrdering compare)
-        {
-            RAH2_NS::ranges::stable_sort(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
-        }
+                template <
+                    typename RandomAccessRange,
+                    typename StrictWeakOrdering,
+                    RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+                void operator()(RandomAccessRange&& range, StrictWeakOrdering compare) const
+                {
+                    (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
+                }
 
-        template <
-            typename RandomAccessIterator,
-            typename Sentinel,
-            RAH2_STD::enable_if_t<
-                random_access_iterator<RandomAccessIterator>
-                && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-        void stable_sort(RandomAccessIterator first, Sentinel last)
-        {
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(RandomAccessIterator first, Sentinel last) const
+                {
 #ifdef RAH2_USE_EASTL
-            RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
-                first, last, *RAH2_STD::get_default_allocator(0));
+                    RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+                        first, last, *RAH2_STD::get_default_allocator(0));
 #else
-            using Allocator =
-                RAH2_STD::allocator<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
-            details::merge_sort<RandomAccessIterator, Allocator>(first, last, Allocator());
+                    using Allocator = RAH2_STD::allocator<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
+                    Allocator allocator;
+                    details::merge_sort<RandomAccessIterator, Sentinel, Allocator>(
+                        first, last, allocator);
 #endif
-        }
+                }
 
-        template <typename RandomAccessRange>
-        void stable_sort(RandomAccessRange&& range)
-        {
-            stable_sort(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
-        }
+                template <typename RandomAccessRange>
+                void operator()(RandomAccessRange&& range) const
+                {
+                    (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
+                }
 
-        template <typename RandomAccessIterator, typename Sentinel, typename Allocator, typename StrictWeakOrdering>
-        void stable_sort(
-            RandomAccessIterator first, Sentinel last, Allocator& allocator, StrictWeakOrdering compare)
-        {
-            details::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
-                first, last, allocator, compare);
-        }
+                template <typename RandomAccessIterator, typename Sentinel, typename Allocator, typename StrictWeakOrdering>
+                void operator()(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    Allocator& allocator,
+                    StrictWeakOrdering compare) const
+                {
+                    details::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
+                        first, last, allocator, compare);
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::stable_sort stable_sort;
     } // namespace ranges
 } // namespace RAH2_NS

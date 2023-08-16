@@ -1828,10 +1828,10 @@ namespace RAH2_NS
                 iterator(
                     split_view* parent,
                     inner_iterator cur,
-                    subrange<inner_iterator, inner_iterator> next)
+                    subrange<inner_iterator, inner_iterator> next_sub)
                     : parent_(parent)
                     , cur_(RAH2_STD::move(cur))
-                    , next_(RAH2_STD::move(next))
+                    , next_(RAH2_STD::move(next_sub))
                 {
                 }
 

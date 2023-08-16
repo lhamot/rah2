@@ -92,35 +92,37 @@ namespace RAH2_NS
         template <class I, class O>
         using move_result = RAH2_NS::ranges::in_out_result<I, O>;
 
-        struct move_fn
+        namespace niebloids
         {
-            template <
-                typename I,
-                typename S,
-                typename O,
-                RAH2_STD::enable_if_t<
-                    RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
-                    && RAH2_NS::weakly_incrementable<O>>* = nullptr>
-            constexpr RAH2_NS::ranges::move_result<I, O> operator()(I first, S last, O result) const
+            struct move_fn
             {
-                for (; first != last; ++first, ++result)
-                    *result = RAH2_NS::ranges::iter_move(first);
-                return {RAH2_STD::move(first), RAH2_STD::move(result)};
-            }
-            template <
-                typename R,
-                typename O,
-                RAH2_STD::enable_if_t<
-                    RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
-            constexpr RAH2_NS::ranges::move_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
-            operator()(R&& r, O result) const
-            {
-                return (*this)(
-                    RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(result));
-            }
-        };
-
-        constexpr move_fn move{};
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
+                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<I, O> operator()(I first, S last, O result) const
+                {
+                    for (; first != last; ++first, ++result)
+                        *result = RAH2_NS::ranges::iter_move(first);
+                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                }
+                template <
+                    typename R,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
+                operator()(R&& r, O result) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(result));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::move_fn move{};
 
         template <class I, class O>
         using copy_result = RAH2_NS::ranges::in_out_result<I, O>;
@@ -194,6 +196,69 @@ namespace RAH2_NS
         } // namespace niebloids
         constexpr niebloids::copy_if_fn copy_if;
 
+        namespace niebloids
+        {
+            struct min_element
+            {
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
+                ForwardIterator operator()(ForwardIterator first, Sentinel last) const
+                {
+                    if (first != last)
+                    {
+                        ForwardIterator currentMin = first;
+
+                        while (++first != last)
+                        {
+                            if (*first < *currentMin)
+                                currentMin = first;
+                        }
+                        return currentMin;
+                    }
+                    return first;
+                }
+
+                template <typename ForwardRange>
+                auto operator()(ForwardRange&& range) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
+                }
+
+                template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
+                ForwardIterator
+                operator()(ForwardIterator first, ForwardSentinel last, Compare compare) const
+                {
+                    if (first != last)
+                    {
+                        ForwardIterator currentMin = first;
+
+                        while (++first != last)
+                        {
+                            if (compare(*first, *currentMin))
+                                currentMin = first;
+                        }
+                        return currentMin;
+                    }
+                    return first;
+                }
+
+                template <
+                    typename ForwardRange,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                auto operator()(ForwardRange&& range, Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+
         /// min_element
         ///
         /// min_element finds the smallest element in the range [first, last).
@@ -208,400 +273,387 @@ namespace RAH2_NS
         /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
         /// corresponding comparisons.
         ///
-        template <
-            typename ForwardIterator,
-            typename Sentinel,
-            RAH2_STD::enable_if_t<
-                forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-        ForwardIterator min_element(ForwardIterator first, Sentinel last)
+        constexpr niebloids::min_element min_element;
+
+        namespace niebloids
         {
-            if (first != last)
+            struct max_element
             {
-                ForwardIterator currentMin = first;
-
-                while (++first != last)
+                /// max_element
+                ///
+                /// max_element finds the largest element in the range [first, last).
+                /// It returns the first iterator i in [first, last) such that no other
+                /// iterator in [first, last) points to a value greater than *i.
+                /// The return value is last if and only if [first, last) is an empty range.
+                ///
+                /// Returns: The first iterator i in the range [first, last) such that
+                /// for any iterator j in the range [first, last) the following corresponding
+                /// condition holds: !(*i < *j).
+                ///
+                /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
+                /// corresponding comparisons.
+                ///
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator>
+                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                ForwardIterator operator()(ForwardIterator first, ForwardSentinel last) const
                 {
-                    if (*first < *currentMin)
-                        currentMin = first;
+                    if (first != last)
+                    {
+                        ForwardIterator currentMax = first;
+
+                        while (++first != last)
+                        {
+                            if (*currentMax < *first)
+                                currentMax = first;
+                        }
+                        return currentMax;
+                    }
+                    return first;
                 }
-                return currentMin;
-            }
-            return first;
-        }
 
-        template <typename ForwardRange>
-        auto min_element(ForwardRange&& range)
-        {
-            return RAH2_NS::ranges::min_element(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
-        }
-
-        /// min_element
-        ///
-        /// min_element finds the smallest element in the range [first, last).
-        /// It returns the first iterator i in [first, last) such that no other
-        /// iterator in [first, last) points to a value smaller than *i.
-        /// The return value is last if and only if [first, last) is an empty range.
-        ///
-        /// Returns: The first iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, last) the following corresponding
-        /// conditions hold: compare(*j, *i) == false.
-        ///
-        /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
-        /// corresponding comparisons.
-        ///
-        template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
-        ForwardIterator min_element(ForwardIterator first, ForwardSentinel last, Compare compare)
-        {
-            if (first != last)
-            {
-                ForwardIterator currentMin = first;
-
-                while (++first != last)
+                template <typename ForwardRange>
+                iterator_t<ForwardRange> operator()(ForwardRange&& range) const
                 {
-                    if (compare(*first, *currentMin))
-                        currentMin = first;
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
                 }
-                return currentMin;
-            }
-            return first;
-        }
 
-        template <typename ForwardRange, typename Compare, RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-        auto min_element(ForwardRange&& range, Compare compare)
-        {
-            return RAH2_NS::ranges::min_element(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
-        }
-
-        /// max_element
-        ///
-        /// max_element finds the largest element in the range [first, last).
-        /// It returns the first iterator i in [first, last) such that no other
-        /// iterator in [first, last) points to a value greater than *i.
-        /// The return value is last if and only if [first, last) is an empty range.
-        ///
-        /// Returns: The first iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, last) the following corresponding
-        /// condition holds: !(*i < *j).
-        ///
-        /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
-        /// corresponding comparisons.
-        ///
-        template <
-            typename ForwardIterator,
-            typename ForwardSentinel,
-            RAH2_STD::enable_if_t<
-                forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
-        ForwardIterator max_element(ForwardIterator first, ForwardSentinel last)
-        {
-            if (first != last)
-            {
-                ForwardIterator currentMax = first;
-
-                while (++first != last)
+                /// max_element
+                ///
+                /// max_element finds the largest element in the range [first, last).
+                /// It returns the first iterator i in [first, last) such that no other
+                /// iterator in [first, last) points to a value greater than *i.
+                /// The return value is last if and only if [first, last) is an empty range.
+                ///
+                /// Returns: The first iterator i in the range [first, last) such that
+                /// for any iterator j in the range [first, last) the following corresponding
+                /// condition holds: compare(*i, *j) == false.
+                ///
+                /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
+                /// corresponding comparisons.
+                ///
+                template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
+                ForwardIterator
+                operator()(ForwardIterator first, ForwardSentinel last, Compare compare) const
                 {
-                    if (*currentMax < *first)
-                        currentMax = first;
+                    if (first != last)
+                    {
+                        ForwardIterator currentMax = first;
+
+                        while (++first != last)
+                        {
+                            if (compare(*currentMax, *first))
+                                currentMax = first;
+                        }
+                        return currentMax;
+                    }
+                    return first;
                 }
-                return currentMax;
-            }
-            return first;
-        }
 
-        template <typename ForwardRange>
-        iterator_t<ForwardRange> max_element(ForwardRange&& range)
-        {
-            return RAH2_NS::ranges::max_element(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
-        }
-
-        /// max_element
-        ///
-        /// max_element finds the largest element in the range [first, last).
-        /// It returns the first iterator i in [first, last) such that no other
-        /// iterator in [first, last) points to a value greater than *i.
-        /// The return value is last if and only if [first, last) is an empty range.
-        ///
-        /// Returns: The first iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, last) the following corresponding
-        /// condition holds: compare(*i, *j) == false.
-        ///
-        /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
-        /// corresponding comparisons.
-        ///
-        template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
-        ForwardIterator max_element(ForwardIterator first, ForwardSentinel last, Compare compare)
-        {
-            if (first != last)
-            {
-                ForwardIterator currentMax = first;
-
-                while (++first != last)
+                template <
+                    typename ForwardRange,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                iterator_t<ForwardRange> operator()(ForwardRange&& range, Compare compare) const
                 {
-                    if (compare(*currentMax, *first))
-                        currentMax = first;
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
                 }
-                return currentMax;
-            }
-            return first;
-        }
-
-        template <typename ForwardRange, typename Compare, RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-        iterator_t<ForwardRange> max_element(ForwardRange&& range, Compare compare)
-        {
-            return RAH2_NS::ranges::max_element(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
-        }
+            };
+        } // namespace niebloids
+        constexpr niebloids::max_element max_element;
 
         template <class I>
         using minmax_element_result = RAH2_NS::ranges::min_max_result<I>;
 
-        /// minmax_element
-        ///
-        /// Returns: make_pair(first, first) if [first, last) is empty, otherwise make_pair(m, M),
-        /// where m is the first iterator in [first,last) such that no iterator in the range
-        /// refers to a smaller element, and where M is the last iterator in [first,last) such
-        /// that no iterator in the range refers to a larger element.
-        ///
-        /// Complexity: At most max([(3/2)*(N - 1)], 0) applications of the corresponding predicate,
-        /// where N is distance(first, last).
-        ///
-        template <
-            typename ForwardIterator,
-            typename ForwardSentinel,
-            typename Compare = RAH2_NS::ranges::less,
-            RAH2_STD::enable_if_t<
-                forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
-        constexpr minmax_element_result<ForwardIterator>
-        minmax_element(ForwardIterator first, ForwardSentinel last, Compare compare = {})
+        namespace niebloids
         {
-            minmax_element_result<ForwardIterator> result{first, first};
-
-            if (!(first == last) && !(++first == last))
+            struct minmax_element
             {
-                if (compare(*first, *result.min))
+                /// minmax_element
+                ///
+                /// Returns: make_pair(first, first) if [first, last) is empty, otherwise make_pair(m, M),
+                /// where m is the first iterator in [first,last) such that no iterator in the range
+                /// refers to a smaller element, and where M is the last iterator in [first,last) such
+                /// that no iterator in the range refers to a larger element.
+                ///
+                /// Complexity: At most max([(3/2)*(N - 1)], 0) applications of the corresponding predicate,
+                /// where N is distance(first, last).
+                ///
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename Compare = RAH2_NS::ranges::less,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator>
+                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                constexpr minmax_element_result<ForwardIterator>
+                operator()(ForwardIterator first, ForwardSentinel last, Compare compare = {}) const
                 {
-                    result.max = result.min;
-                    result.min = first;
-                }
-                else
-                    result.max = first;
+                    minmax_element_result<ForwardIterator> result{first, first};
 
-                while (++first != last)
-                {
-                    ForwardIterator i = first;
-
-                    if (++first == last)
+                    if (!(first == last) && !(++first == last))
                     {
-                        if (compare(*i, *result.min))
-                            result.min = i;
-                        else if (!compare(*i, *result.max))
-                            result.max = i;
-                        break;
-                    }
-                    else
-                    {
-                        if (compare(*first, *i))
+                        if (compare(*first, *result.min))
                         {
-                            if (compare(*first, *result.min))
-                                result.min = first;
-
-                            if (!compare(*i, *result.max))
-                                result.max = i;
+                            result.max = result.min;
+                            result.min = first;
                         }
                         else
-                        {
-                            if (compare(*i, *result.min))
-                                result.min = i;
+                            result.max = first;
 
-                            if (!compare(*first, *result.max))
-                                result.max = first;
+                        while (++first != last)
+                        {
+                            ForwardIterator i = first;
+
+                            if (++first == last)
+                            {
+                                if (compare(*i, *result.min))
+                                    result.min = i;
+                                else if (!compare(*i, *result.max))
+                                    result.max = i;
+                                break;
+                            }
+                            else
+                            {
+                                if (compare(*first, *i))
+                                {
+                                    if (compare(*first, *result.min))
+                                        result.min = first;
+
+                                    if (!compare(*i, *result.max))
+                                        result.max = i;
+                                }
+                                else
+                                {
+                                    if (compare(*i, *result.min))
+                                        result.min = i;
+
+                                    if (!compare(*first, *result.max))
+                                        result.max = first;
+                                }
+                            }
                         }
                     }
+
+                    return result;
                 }
-            }
 
-            return result;
-        }
-
-        template <
-            typename ForwardRange,
-            typename Compare = RAH2_NS::ranges::less,
-            RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-        constexpr minmax_element_result<borrowed_iterator_t<ForwardRange>>
-        minmax_element(ForwardRange&& range, Compare compare = {})
-        {
-            return RAH2_NS::ranges::minmax_element(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
-        }
-
-        namespace details
-        {
-            template <typename T>
-            T&& median_impl(T&& a, T&& b, T&& c)
-            {
-                if (RAH2_STD::less<T>()(a, b))
+                template <
+                    typename ForwardRange,
+                    typename Compare = RAH2_NS::ranges::less,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                constexpr minmax_element_result<borrowed_iterator_t<ForwardRange>>
+                operator()(ForwardRange&& range, Compare compare = {}) const
                 {
-                    if (RAH2_STD::less<T>()(b, c))
-                        return RAH2_STD::forward<T>(b);
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::minmax_element minmax_element;
+
+        namespace niebloids
+        {
+            struct median
+            {
+                template <typename T>
+                T&& median_impl(T&& a, T&& b, T&& c) const
+                {
+                    if (RAH2_STD::less<T>()(a, b))
+                    {
+                        if (RAH2_STD::less<T>()(b, c))
+                            return RAH2_STD::forward<T>(b);
+                        else if (RAH2_STD::less<T>()(a, c))
+                            return RAH2_STD::forward<T>(c);
+                        else
+                            return RAH2_STD::forward<T>(a);
+                    }
                     else if (RAH2_STD::less<T>()(a, c))
-                        return RAH2_STD::forward<T>(c);
-                    else
                         return RAH2_STD::forward<T>(a);
+                    else if (RAH2_STD::less<T>()(b, c))
+                        return RAH2_STD::forward<T>(c);
+                    return RAH2_STD::forward<T>(b);
                 }
-                else if (RAH2_STD::less<T>()(a, c))
-                    return RAH2_STD::forward<T>(a);
-                else if (RAH2_STD::less<T>()(b, c))
-                    return RAH2_STD::forward<T>(c);
-                return RAH2_STD::forward<T>(b);
-            }
 
-            template <typename T, typename Compare>
-            T&& median_impl(T&& a, T&& b, T&& c, Compare compare)
-            {
-                if (compare(a, b))
+                template <typename T, typename Compare>
+                T&& median_impl(T&& a, T&& b, T&& c, Compare compare) const
                 {
-                    if (compare(b, c))
-                        return RAH2_STD::forward<T>(b);
+                    if (compare(a, b))
+                    {
+                        if (compare(b, c))
+                            return RAH2_STD::forward<T>(b);
+                        else if (compare(a, c))
+                            return RAH2_STD::forward<T>(c);
+                        else
+                            return RAH2_STD::forward<T>(a);
+                    }
                     else if (compare(a, c))
-                        return RAH2_STD::forward<T>(c);
-                    else
                         return RAH2_STD::forward<T>(a);
+                    else if (compare(b, c))
+                        return RAH2_STD::forward<T>(c);
+                    return RAH2_STD::forward<T>(b);
                 }
-                else if (compare(a, c))
-                    return RAH2_STD::forward<T>(a);
-                else if (compare(b, c))
-                    return RAH2_STD::forward<T>(c);
-                return RAH2_STD::forward<T>(b);
-            }
-        } // namespace details
 
-        /// median
-        ///
-        /// median finds which element of three (a, b, d) is in-between the other two.
-        /// If two or more elements are equal, the first (e.g. a before b) is chosen.
-        ///
-        /// Complexity: Either two or three comparisons will be required, depending
-        /// on the values.
-        ///
-        template <typename T>
-        T const& median(T const& a, T const& b, T const& c)
-        {
-            return details::median_impl(a, b, c);
-        }
+                /// median
+                ///
+                /// median finds which element of three (a, b, d) is in-between the other two.
+                /// If two or more elements are equal, the first (e.g. a before b) is chosen.
+                ///
+                /// Complexity: Either two or three comparisons will be required, depending
+                /// on the values.
+                ///
+                template <typename T>
+                T const& operator()(T const& a, T const& b, T const& c) const
+                {
+                    return median_impl(a, b, c);
+                }
 
-        /// median
-        ///
-        /// median finds which element of three (a, b, d) is in-between the other two.
-        /// If two or more elements are equal, the first (e.g. a before b) is chosen.
-        ///
-        /// Complexity: Either two or three comparisons will be required, depending
-        /// on the values.
-        ///
-        template <typename T>
-        T&& median(T&& a, T&& b, T&& c)
-        {
-            return RAH2_STD::forward<T>(details::median_impl(
-                RAH2_STD::forward<T>(a), RAH2_STD::forward<T>(b), RAH2_STD::forward<T>(c)));
-        }
+                /// median
+                ///
+                /// median finds which element of three (a, b, d) is in-between the other two.
+                /// If two or more elements are equal, the first (e.g. a before b) is chosen.
+                ///
+                /// Complexity: Either two or three comparisons will be required, depending
+                /// on the values.
+                ///
+                template <typename T>
+                T&& operator()(T&& a, T&& b, T&& c) const
+                {
+                    return RAH2_STD::forward<T>(median_impl(
+                        RAH2_STD::forward<T>(a), RAH2_STD::forward<T>(b), RAH2_STD::forward<T>(c)));
+                }
 
-        /// median
-        ///
-        /// median finds which element of three (a, b, d) is in-between the other two.
-        /// If two or more elements are equal, the first (e.g. a before b) is chosen.
-        ///
-        /// Complexity: Either two or three comparisons will be required, depending
-        /// on the values.
-        ///
-        template <typename T, typename Compare>
-        T const& median(T const& a, T const& b, T const& c, Compare compare)
-        {
-            return details::median_impl<T const&, Compare>(a, b, c, compare);
-        }
+                /// median
+                ///
+                /// median finds which element of three (a, b, d) is in-between the other two.
+                /// If two or more elements are equal, the first (e.g. a before b) is chosen.
+                ///
+                /// Complexity: Either two or three comparisons will be required, depending
+                /// on the values.
+                ///
+                template <typename T, typename Compare>
+                T const& operator()(T const& a, T const& b, T const& c, Compare compare) const
+                {
+                    return median_impl<T const&, Compare>(a, b, c, compare);
+                }
 
-        /// median
-        ///
-        /// median finds which element of three (a, b, d) is in-between the other two.
-        /// If two or more elements are equal, the first (e.g. a before b) is chosen.
-        ///
-        /// Complexity: Either two or three comparisons will be required, depending
-        /// on the values.
-        ///
-        template <typename T, typename Compare>
-        T&& median(T&& a, T&& b, T&& c, Compare compare)
-        {
-            return RAH2_STD::forward<T>(details::median_impl<T&&, Compare>(
-                RAH2_STD::forward<T>(a), RAH2_STD::forward<T>(b), RAH2_STD::forward<T>(c), compare));
-        }
+                /// median
+                ///
+                /// median finds which element of three (a, b, d) is in-between the other two.
+                /// If two or more elements are equal, the first (e.g. a before b) is chosen.
+                ///
+                /// Complexity: Either two or three comparisons will be required, depending
+                /// on the values.
+                ///
+                template <typename T, typename Compare>
+                T&& operator()(T&& a, T&& b, T&& c, Compare compare) const
+                {
+                    return RAH2_STD::forward<T>(median_impl<T&&, Compare>(
+                        RAH2_STD::forward<T>(a),
+                        RAH2_STD::forward<T>(b),
+                        RAH2_STD::forward<T>(c),
+                        compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::median median;
 
-        /// all_of
-        ///
-        /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
-        ///
-        template <typename InputIterator, typename InputSentinel, typename Predicate>
-        bool all_of(InputIterator first, InputSentinel last, Predicate p)
+        namespace niebloids
         {
-            for (; first != last; ++first)
+            struct all_of
             {
-                if (!p(*first))
-                    return false;
-            }
-            return true;
-        }
-
-        template <typename InputRange, typename Predicate>
-        bool all_of(InputRange&& range, Predicate p)
-        {
-            return RAH2_NS::ranges::all_of(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
-        }
-
-        /// any_of
-        ///
-        /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
-        ///
-        template <typename InputIterator, typename InputSentinel, typename Predicate>
-        bool any_of(InputIterator first, InputSentinel last, Predicate p)
-        {
-            for (; first != last; ++first)
-            {
-                if (p(*first))
+                /// all_of
+                ///
+                /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Predicate>
+                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                {
+                    for (; first != last; ++first)
+                    {
+                        if (!p(*first))
+                            return false;
+                    }
                     return true;
-            }
-            return false;
-        }
+                }
 
-        template <typename InputRange, typename Predicate>
-        bool any_of(InputRange&& range, Predicate p)
-        {
-            return RAH2_NS::ranges::any_of(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
-        }
+                template <typename InputRange, typename Predicate>
+                bool operator()(InputRange&& range, Predicate p) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::all_of all_of;
 
-        /// none_of
-        ///
-        /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
-        ///
-        template <typename InputIterator, typename InputSentinel, typename Predicate>
-        bool none_of(InputIterator first, InputSentinel last, Predicate p)
+        namespace niebloids
         {
-            for (; first != last; ++first)
+            struct any_of
             {
-                if (p(*first))
+                /// any_of
+                ///
+                /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Predicate>
+                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                {
+                    for (; first != last; ++first)
+                    {
+                        if (p(*first))
+                            return true;
+                    }
                     return false;
-            }
-            return true;
-        }
+                }
 
-        template <typename InputRange, typename Predicate>
-        bool none_of(InputRange&& range, Predicate&& p)
+                template <typename InputRange, typename Predicate>
+                bool operator()(InputRange&& range, Predicate p) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::any_of any_of;
+
+        namespace niebloids
         {
-            return none_of(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::forward<Predicate>(p));
-        }
+            struct none_of
+            {
+                /// none_of
+                ///
+                /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Predicate>
+                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                {
+                    for (; first != last; ++first)
+                    {
+                        if (p(*first))
+                            return false;
+                    }
+                    return true;
+                }
+
+                template <typename InputRange, typename Predicate>
+                bool operator()(InputRange&& range, Predicate&& p) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::forward<Predicate>(p));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::none_of none_of;
 
         namespace niebloids
         {
@@ -788,6 +840,7 @@ namespace RAH2_NS
                 }
             };
         } // namespace niebloids
+
         /// copy_backward
         ///
         /// copies memory in the range of [first, last) to the range *ending* with result.
@@ -861,6 +914,7 @@ namespace RAH2_NS
                 }
             };
         } // namespace niebloids
+
         /// count
         ///
         /// Counts the number of items in the range of [first, last) which equal the input value.
@@ -1148,34 +1202,43 @@ namespace RAH2_NS
         ///
         constexpr niebloids::find_first_of_fn find_first_of{};
 
-        /// for_each
-        ///
-        /// Calls the Function function for each value in the range [first, last).
-        /// Function takes a single parameter: the current value.
-        ///
-        /// Effects: Applies function to the result of dereferencing every iterator in
-        /// the range [first, last), starting from first and proceeding to last 1.
-        ///
-        /// Returns: function.
-        ///
-        /// Complexity: Applies function exactly 'last - first' times.
-        ///
-        /// Note: If function returns a result, the result is ignored.
-        ///
-        template <typename InputIterator, typename InputSentinel, typename Function>
-        Function for_each(InputIterator first, InputSentinel last, Function function)
+        namespace niebloids
         {
-            for (; first != last; ++first)
-                function(*first);
-            return function;
-        }
+            struct for_each
+            {
+                /// for_each
+                ///
+                /// Calls the Function function for each value in the range [first, last).
+                /// Function takes a single parameter: the current value.
+                ///
+                /// Effects: Applies function to the result of dereferencing every iterator in
+                /// the range [first, last), starting from first and proceeding to last 1.
+                ///
+                /// Returns: function.
+                ///
+                /// Complexity: Applies function exactly 'last - first' times.
+                ///
+                /// Note: If function returns a result, the result is ignored.
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Function>
+                Function operator()(InputIterator first, InputSentinel last, Function function) const
+                {
+                    for (; first != last; ++first)
+                        function(*first);
+                    return function;
+                }
 
-        template <typename InputRange, typename Function>
-        auto for_each(InputRange&& range, Function function)
-        {
-            return RAH2_NS::ranges::for_each(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(function));
-        }
+                template <typename InputRange, typename Function>
+                auto operator()(InputRange&& range, Function function) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(function));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::for_each for_each;
 
         template <class I, class F>
         using for_each_n_result = in_fun_result<I, F>;
@@ -1280,194 +1343,217 @@ namespace RAH2_NS
         template <class I1, class I2, class O>
         using binary_transform_result = RAH2_NS::ranges::in_in_out_result<I1, I2, O>;
 
-        /// transform
-        ///
-        /// Iterates the input range of [first, last) and the output iterator result
-        /// and assigns the result of unaryOperation(input) to result.
-        ///
-        /// Effects: Assigns through every iterator i in the range [result, result + (last1 - first1))
-        /// a new corresponding value equal to unaryOperation(*(first1 + (i - result)).
-        ///
-        /// Requires: op shall not have any side effects.
-        ///
-        /// Returns: result + (last1 - first1). That is, returns the end of the output range.
-        ///
-        /// Complexity: Exactly 'last1 - first1' applications of unaryOperation.
-        ///
-        /// Note: result may be equal to first.
-        ///
-        template <
-            typename InputIterator,
-            typename InputSentinel,
-            typename OutputIterator,
-            typename UnaryOperation,
-            RAH2_STD::enable_if_t<sentinel_for<InputSentinel, InputIterator>>* = nullptr>
-        unary_transform_result<InputIterator, OutputIterator> transform(
-            InputIterator first, InputSentinel last, OutputIterator result, UnaryOperation unaryOperation)
+        namespace niebloids
         {
-            for (; first != last; ++first, ++result)
-                *result = unaryOperation(*first);
-            return {first, result};
-        }
-        template <typename Range, typename OutputIterator, typename UnaryOperation>
-        unary_transform_result<iterator_t<Range>, OutputIterator>
-        transform(Range&& range, OutputIterator result, UnaryOperation unaryOperation)
-        {
-            return RAH2_NS::ranges::transform(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::move(result),
-                RAH2_STD::move(unaryOperation));
-        }
-
-        /// transform
-        ///
-        /// Iterates the input range of [first, last) and the output iterator result
-        /// and assigns the result of binaryOperation(input1, input2) to result.
-        ///
-        /// Effects: Assigns through every iterator i in the range [result, result + (last1 - first1))
-        /// a new corresponding value equal to binaryOperation(*(first1 + (i - result), *(first2 + (i - result))).
-        ///
-        /// Requires: binaryOperation shall not have any side effects.
-        ///
-        /// Returns: result + (last1 - first1). That is, returns the end of the output range.
-        ///
-        /// Complexity: Exactly 'last1 - first1' applications of binaryOperation.
-        ///
-        /// Note: result may be equal to first1 or first2.
-        ///
-        template <
-            typename InputIterator1,
-            typename InputSentinel1,
-            typename InputIterator2,
-            typename InputSentinel2,
-            typename OutputIterator,
-            typename BinaryOperation,
-            RAH2_STD::enable_if_t<
-                sentinel_for<InputSentinel1, InputIterator1>
-                && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
-        OutputIterator transform(
-            InputIterator1 first1,
-            InputSentinel1 last1,
-            InputIterator2 first2,
-            InputSentinel2 last2,
-            OutputIterator result,
-            BinaryOperation binaryOperation)
-        {
-            for (; (first1 != last1) && (first2 != last2); ++first1, ++first2, ++result)
-                *result = binaryOperation(*first1, *first2);
-            return result;
-        }
-
-        template <
-            typename InputRange1,
-            typename InputRange2,
-            typename OutputIterator,
-            typename BinaryOperation,
-            RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-        OutputIterator transform(
-            InputRange1&& range1,
-            InputRange2 range2,
-            OutputIterator result,
-            BinaryOperation binaryOperation)
-        {
-            return transform(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result),
-                RAH2_STD::move(binaryOperation));
-        }
-
-        /// equal
-        ///
-        /// Returns: true if for every iterator i in the range [first1, last1) the
-        /// following corresponding conditions hold: predicate(*i, *(first2 + (i - first1))) != false.
-        /// Otherwise, returns false.
-        ///
-        /// Complexity: At most last1 first1 applications of the corresponding predicate.
-        ///
-        /// To consider: Make specializations of this for scalar types and random access
-        /// iterators that uses memcmp or some trick memory comparison function.
-        /// We should verify that such a thing results in an improvement.
-        ///
-        template <
-            typename InputIterator1,
-            typename InputSentinel1,
-            typename InputIterator2,
-            typename InputSentinel2,
-            RAH2_STD::enable_if_t<
-                input_iterator<InputIterator1> && input_iterator<InputIterator2>
-                && sentinel_for<InputSentinel1, InputIterator1>
-                && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
-        constexpr bool equal(
-            InputIterator1 first1, InputSentinel1 last1, InputIterator2 first2, InputSentinel2 last2)
-        {
-            for (; first1 != last1; ++first1, ++first2)
+            struct transform
             {
-                if (!(*first1 == *first2)) // Note that we always express value comparisons in terms of < or ==.
-                    return false;
-            }
-            return first2 == last2;
-        }
 
-        template <
-            typename InputRange1,
-            typename InputRange2,
-            RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-        constexpr bool equal(InputRange1&& range1, InputRange2&& range2)
-        {
-            return RAH2_NS::ranges::equal(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2));
-        }
+                /// transform
+                ///
+                /// Iterates the input range of [first, last) and the output iterator result
+                /// and assigns the result of unaryOperation(input) to result.
+                ///
+                /// Effects: Assigns through every iterator i in the range [result, result + (last1 - first1))
+                /// a new corresponding value equal to unaryOperation(*(first1 + (i - result)).
+                ///
+                /// Requires: op shall not have any side effects.
+                ///
+                /// Returns: result + (last1 - first1). That is, returns the end of the output range.
+                ///
+                /// Complexity: Exactly 'last1 - first1' applications of unaryOperation.
+                ///
+                /// Note: result may be equal to first.
+                ///
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename OutputIterator,
+                    typename UnaryOperation,
+                    RAH2_STD::enable_if_t<sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                unary_transform_result<InputIterator, OutputIterator> operator()(
+                    InputIterator first,
+                    InputSentinel last,
+                    OutputIterator result,
+                    UnaryOperation unaryOperation) const
+                {
+                    for (; first != last; ++first, ++result)
+                        *result = unaryOperation(*first);
+                    return {first, result};
+                }
+                template <typename Range, typename OutputIterator, typename UnaryOperation>
+                unary_transform_result<iterator_t<Range>, OutputIterator>
+                operator()(Range&& range, OutputIterator result, UnaryOperation unaryOperation) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(unaryOperation));
+                }
 
-        /// equal
-        ///
-        /// Returns: true if for every iterator i in the range [first1, last1) the
-        /// following corresponding conditions hold: pred(*i, *(first2 + (i first1))) != false.
-        /// Otherwise, returns false.
-        ///
-        /// Complexity: At most last1 first1 applications of the corresponding predicate.
-        ///
-        template <
-            typename InputIterator1,
-            typename InputSentinel1,
-            typename InputIterator2,
-            typename InputSentinel2,
-            typename BinaryPredicate>
-        bool equal(
-            InputIterator1 first1,
-            InputSentinel1 last1,
-            InputIterator2 first2,
-            InputSentinel2 last2,
-            BinaryPredicate&& predicate)
+                /// transform
+                ///
+                /// Iterates the input range of [first, last) and the output iterator result
+                /// and assigns the result of binaryOperation(input1, input2) to result.
+                ///
+                /// Effects: Assigns through every iterator i in the range [result, result + (last1 - first1))
+                /// a new corresponding value equal to binaryOperation(*(first1 + (i - result), *(first2 + (i - result))).
+                ///
+                /// Requires: binaryOperation shall not have any side effects.
+                ///
+                /// Returns: result + (last1 - first1). That is, returns the end of the output range.
+                ///
+                /// Complexity: Exactly 'last1 - first1' applications of binaryOperation.
+                ///
+                /// Note: result may be equal to first1 or first2.
+                ///
+                template <
+                    typename InputIterator1,
+                    typename InputSentinel1,
+                    typename InputIterator2,
+                    typename InputSentinel2,
+                    typename OutputIterator,
+                    typename BinaryOperation,
+                    RAH2_STD::enable_if_t<
+                        sentinel_for<InputSentinel1, InputIterator1>
+                        && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
+                OutputIterator operator()(
+                    InputIterator1 first1,
+                    InputSentinel1 last1,
+                    InputIterator2 first2,
+                    InputSentinel2 last2,
+                    OutputIterator result,
+                    BinaryOperation binaryOperation) const
+                {
+                    for (; (first1 != last1) && (first2 != last2); ++first1, ++first2, ++result)
+                        *result = binaryOperation(*first1, *first2);
+                    return result;
+                }
+
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename OutputIterator,
+                    typename BinaryOperation,
+                    RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
+                OutputIterator operator()(
+                    InputRange1&& range1,
+                    InputRange2 range2,
+                    OutputIterator result,
+                    BinaryOperation binaryOperation) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(binaryOperation));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::transform transform;
+
+        namespace niebloids
         {
-            for (; first1 != last1; ++first1, ++first2)
+            struct equal
             {
-                if (!predicate(*first1, *first2))
-                    return false;
-            }
-            return first2 == last2;
-        }
 
-        template <
-            typename InputRange1,
-            typename InputRange2,
-            typename BinaryPredicate,
-            RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-        constexpr bool equal(InputRange1&& range1, InputRange2&& range2, BinaryPredicate&& predicate)
-        {
-            return RAH2_NS::ranges::equal(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::forward<BinaryPredicate>(predicate));
-        }
+                /// equal
+                ///
+                /// Returns: true if for every iterator i in the range [first1, last1) the
+                /// following corresponding conditions hold: predicate(*i, *(first2 + (i - first1))) != false.
+                /// Otherwise, returns false.
+                ///
+                /// Complexity: At most last1 first1 applications of the corresponding predicate.
+                ///
+                /// To consider: Make specializations of this for scalar types and random access
+                /// iterators that uses memcmp or some trick memory comparison function.
+                /// We should verify that such a thing results in an improvement.
+                ///
+                template <
+                    typename InputIterator1,
+                    typename InputSentinel1,
+                    typename InputIterator2,
+                    typename InputSentinel2,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<InputIterator1> && input_iterator<InputIterator2>
+                        && sentinel_for<InputSentinel1, InputIterator1>
+                        && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
+                constexpr bool operator()(
+                    InputIterator1 first1,
+                    InputSentinel1 last1,
+                    InputIterator2 first2,
+                    InputSentinel2 last2) const
+                {
+                    for (; first1 != last1; ++first1, ++first2)
+                    {
+                        if (!(*first1 == *first2)) // Note that we always express value comparisons in terms of < or ==.
+                            return false;
+                    }
+                    return first2 == last2;
+                }
+
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
+                constexpr bool operator()(InputRange1&& range1, InputRange2&& range2) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2));
+                }
+
+                /// equal
+                ///
+                /// Returns: true if for every iterator i in the range [first1, last1) the
+                /// following corresponding conditions hold: pred(*i, *(first2 + (i first1))) != false.
+                /// Otherwise, returns false.
+                ///
+                /// Complexity: At most last1 first1 applications of the corresponding predicate.
+                ///
+                template <
+                    typename InputIterator1,
+                    typename InputSentinel1,
+                    typename InputIterator2,
+                    typename InputSentinel2,
+                    typename BinaryPredicate>
+                bool operator()(
+                    InputIterator1 first1,
+                    InputSentinel1 last1,
+                    InputIterator2 first2,
+                    InputSentinel2 last2,
+                    BinaryPredicate&& predicate) const
+                {
+                    for (; first1 != last1; ++first1, ++first2)
+                    {
+                        if (!predicate(*first1, *first2))
+                            return false;
+                    }
+                    return first2 == last2;
+                }
+
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename BinaryPredicate,
+                    RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
+                constexpr bool operator()(
+                    InputRange1&& range1, InputRange2&& range2, BinaryPredicate&& predicate) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::forward<BinaryPredicate>(predicate));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::equal equal;
 
         namespace niebloids
         {
@@ -1687,353 +1773,379 @@ namespace RAH2_NS
         ///
         constexpr niebloids::mismatch_fn mismatch;
 
-        /// lower_bound
-        ///
-        /// Finds the position of the first element in a sorted range that has a value
-        /// greater than or equivalent to a specified value.
-        ///
-        /// Effects: Finds the first position into which value can be inserted without
-        /// violating the ordering.
-        ///
-        /// Returns: The furthermost iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, i) the following corresponding
-        /// condition holds: *j < value.
-        ///
-        /// Complexity: At most 'log(last - first) + 1' comparisons.
-        ///
-        /// Optimizations: We have no need to specialize this implementation for random
-        /// access iterators (e.g. contiguous array), as the code below will already
-        /// take advantage of them.
-        ///
-        template <typename ForwardIterator, typename Sentinel, typename T>
-        ForwardIterator lower_bound(ForwardIterator first, Sentinel last, T const& value)
+        namespace niebloids
         {
-            using DifferenceType =
-                typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
-
-            DifferenceType d = RAH2_NS::ranges::distance(
-                first, last); // This will be efficient for a random access iterator such as an array.
-
-            while (d > 0)
+            struct lower_bound
             {
-                ForwardIterator i = first;
-                DifferenceType d2 =
-                    d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
-
-                RAH2_NS::ranges::advance(
-                    i, d2); // This will be efficient for a random access iterator such as an array.
-
-                if (*i < value)
+                /// lower_bound
+                ///
+                /// Finds the position of the first element in a sorted range that has a value
+                /// greater than or equivalent to a specified value.
+                ///
+                /// Effects: Finds the first position into which value can be inserted without
+                /// violating the ordering.
+                ///
+                /// Returns: The furthermost iterator i in the range [first, last) such that
+                /// for any iterator j in the range [first, i) the following corresponding
+                /// condition holds: *j < value.
+                ///
+                /// Complexity: At most 'log(last - first) + 1' comparisons.
+                ///
+                /// Optimizations: We have no need to specialize this implementation for random
+                /// access iterators (e.g. contiguous array), as the code below will already
+                /// take advantage of them.
+                ///
+                template <typename ForwardIterator, typename Sentinel, typename T>
+                ForwardIterator operator()(ForwardIterator first, Sentinel last, T const& value) const
                 {
-                    // Disabled because RAH2_STD::lower_bound doesn't specify (23.3.3.3, p3) this can be done: RAH2_VALIDATE_COMPARE(!(value < *i)); // Validate that the compare function is sane.
-                    first = ++i;
-                    d -= d2 + 1;
+                    using DifferenceType =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
+
+                    DifferenceType d = RAH2_NS::ranges::distance(
+                        first,
+                        last); // This will be efficient for a random access iterator such as an array.
+
+                    while (d > 0)
+                    {
+                        ForwardIterator i = first;
+                        DifferenceType d2 =
+                            d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
+
+                        RAH2_NS::ranges::advance(
+                            i, d2); // This will be efficient for a random access iterator such as an array.
+
+                        if (*i < value)
+                        {
+                            // Disabled because RAH2_STD::lower_bound doesn't specify (23.3.3.3, p3) this can be done: RAH2_VALIDATE_COMPARE(!(value < *i)); // Validate that the compare function is sane.
+                            first = ++i;
+                            d -= d2 + 1;
+                        }
+                        else
+                            d = d2;
+                    }
+                    return first;
                 }
-                else
-                    d = d2;
-            }
-            return first;
-        }
 
-        template <typename ForwardRange, typename T>
-        iterator_t<ForwardRange> lower_bound(ForwardRange&& range, T const& value)
+                template <typename ForwardRange, typename T>
+                iterator_t<ForwardRange> operator()(ForwardRange&& range, T const& value) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
+                }
+
+                /// lower_bound
+                ///
+                /// Finds the position of the first element in a sorted range that has a value
+                /// greater than or equivalent to a specified value. The input Compare function
+                /// takes two arguments and returns true if the first argument is less than
+                /// the second argument.
+                ///
+                /// Effects: Finds the first position into which value can be inserted without
+                /// violating the ordering.
+                ///
+                /// Returns: The furthermost iterator i in the range [first, last) such that
+                /// for any iterator j in the range [first, i) the following corresponding
+                /// condition holds: compare(*j, value) != false.
+                ///
+                /// Complexity: At most 'log(last - first) + 1' comparisons.
+                ///
+                /// Optimizations: We have no need to specialize this implementation for random
+                /// access iterators (e.g. contiguous array), as the code below will already
+                /// take advantage of them.
+                ///
+                template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
+                ForwardIterator operator()(
+                    ForwardIterator first, ForwardSentinel last, T const& value, Compare compare) const
+                {
+                    using DifferenceType =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
+
+                    DifferenceType d = RAH2_NS::ranges::distance(
+                        first,
+                        last); // This will be efficient for a random access iterator such as an array.
+
+                    while (d > 0)
+                    {
+                        ForwardIterator i = first;
+                        DifferenceType d2 =
+                            d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
+
+                        RAH2_NS::ranges::advance(
+                            i, d2); // This will be efficient for a random access iterator such as an array.
+
+                        if (compare(*i, value))
+                        {
+                            // Disabled because RAH2_STD::lower_bound doesn't specify (23.3.3.1, p3) this can be done: RAH2_VALIDATE_COMPARE(!compare(value, *i)); // Validate that the compare function is sane.
+                            first = ++i;
+                            d -= d2 + 1;
+                        }
+                        else
+                            d = d2;
+                    }
+                    return first;
+                }
+
+                template <typename ForwardRange, typename T, typename Compare>
+                iterator_t<ForwardRange>
+                operator()(ForwardRange&& range, T const& value, Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        value,
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::lower_bound lower_bound;
+
+        namespace niebloids
         {
-            return RAH2_NS::ranges::lower_bound(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
-        }
-
-        /// lower_bound
-        ///
-        /// Finds the position of the first element in a sorted range that has a value
-        /// greater than or equivalent to a specified value. The input Compare function
-        /// takes two arguments and returns true if the first argument is less than
-        /// the second argument.
-        ///
-        /// Effects: Finds the first position into which value can be inserted without
-        /// violating the ordering.
-        ///
-        /// Returns: The furthermost iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, i) the following corresponding
-        /// condition holds: compare(*j, value) != false.
-        ///
-        /// Complexity: At most 'log(last - first) + 1' comparisons.
-        ///
-        /// Optimizations: We have no need to specialize this implementation for random
-        /// access iterators (e.g. contiguous array), as the code below will already
-        /// take advantage of them.
-        ///
-        template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
-        ForwardIterator
-        lower_bound(ForwardIterator first, ForwardSentinel last, T const& value, Compare compare)
-        {
-            using DifferenceType =
-                typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
-
-            DifferenceType d = RAH2_NS::ranges::distance(
-                first, last); // This will be efficient for a random access iterator such as an array.
-
-            while (d > 0)
+            struct upper_bound
             {
-                ForwardIterator i = first;
-                DifferenceType d2 =
-                    d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
 
-                RAH2_NS::ranges::advance(
-                    i, d2); // This will be efficient for a random access iterator such as an array.
-
-                if (compare(*i, value))
+                /// upper_bound
+                ///
+                /// Finds the position of the first element in a sorted range that has a
+                /// value that is greater than a specified value.
+                ///
+                /// Effects: Finds the furthermost position into which value can be inserted
+                /// without violating the ordering.
+                ///
+                /// Returns: The furthermost iterator i in the range [first, last) such that
+                /// for any iterator j in the range [first, i) the following corresponding
+                /// condition holds: !(value < *j).
+                ///
+                /// Complexity: At most 'log(last - first) + 1' comparisons.
+                ///
+                template <typename ForwardIterator, typename Sentinel, typename T>
+                ForwardIterator operator()(ForwardIterator first, Sentinel last, T const& value) const
                 {
-                    // Disabled because RAH2_STD::lower_bound doesn't specify (23.3.3.1, p3) this can be done: RAH2_VALIDATE_COMPARE(!compare(value, *i)); // Validate that the compare function is sane.
-                    first = ++i;
-                    d -= d2 + 1;
+                    using DifferenceType =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
+
+                    DifferenceType len = RAH2_NS::ranges::distance(first, last);
+
+                    while (len > 0)
+                    {
+                        ForwardIterator i = first;
+                        DifferenceType len2 =
+                            len >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
+
+                        RAH2_NS::ranges::advance(i, len2);
+
+                        if (!(value < *i)) // Note that we always express value comparisons in terms of < or ==.
+                        {
+                            first = ++i;
+                            len -= len2 + 1;
+                        }
+                        else
+                        {
+                            // Disabled because RAH2_STD::upper_bound doesn't specify (23.3.3.2, p3) this can be done: RAH2_VALIDATE_COMPARE(!(*i < value)); // Validate that the compare function is sane.
+                            len = len2;
+                        }
+                    }
+                    return first;
                 }
-                else
-                    d = d2;
-            }
-            return first;
-        }
 
-        template <typename ForwardRange, typename T, typename Compare>
-        iterator_t<ForwardRange> lower_bound(ForwardRange&& range, T const& value, Compare compare)
+                template <typename ForwardRange, typename T>
+                iterator_t<ForwardRange> operator()(ForwardRange&& range, T const& value) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
+                }
+
+                /// upper_bound
+                ///
+                /// Finds the position of the first element in a sorted range that has a
+                /// value that is greater than a specified value. The input Compare function
+                /// takes two arguments and returns true if the first argument is less than
+                /// the second argument.
+                ///
+                /// Effects: Finds the furthermost position into which value can be inserted
+                /// without violating the ordering.
+                ///
+                /// Returns: The furthermost iterator i in the range [first, last) such that
+                /// for any iterator j in the range [first, i) the following corresponding
+                /// condition holds: compare(value, *j) == false.
+                ///
+                /// Complexity: At most 'log(last - first) + 1' comparisons.
+                ///
+                template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
+                ForwardIterator operator()(
+                    ForwardIterator first, ForwardSentinel last, T const& value, Compare compare) const
+                {
+                    using DifferenceType =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
+
+                    DifferenceType len = RAH2_NS::ranges::distance(first, last);
+
+                    while (len > 0)
+                    {
+                        ForwardIterator i = first;
+                        DifferenceType len2 =
+                            len >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
+
+                        RAH2_NS::ranges::advance(i, len2);
+
+                        if (!compare(value, *i))
+                        {
+                            first = ++i;
+                            len -= len2 + 1;
+                        }
+                        else
+                        {
+                            // Disabled because RAH2_STD::upper_bound doesn't specify (23.3.3.2, p3) this can be done: RAH2_VALIDATE_COMPARE(!compare(*i, value)); // Validate that the compare function is sane.
+                            len = len2;
+                        }
+                    }
+                    return first;
+                }
+
+                template <typename ForwardRange, typename T, typename Compare>
+                iterator_t<ForwardRange>
+                operator()(ForwardRange&& range, T const& value, Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        value,
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::upper_bound upper_bound;
+
+        namespace niebloids
         {
-            return RAH2_NS::ranges::lower_bound(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                value,
-                RAH2_STD::move(compare));
-        }
-
-        /// upper_bound
-        ///
-        /// Finds the position of the first element in a sorted range that has a
-        /// value that is greater than a specified value.
-        ///
-        /// Effects: Finds the furthermost position into which value can be inserted
-        /// without violating the ordering.
-        ///
-        /// Returns: The furthermost iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, i) the following corresponding
-        /// condition holds: !(value < *j).
-        ///
-        /// Complexity: At most 'log(last - first) + 1' comparisons.
-        ///
-        template <typename ForwardIterator, typename Sentinel, typename T>
-        ForwardIterator upper_bound(ForwardIterator first, Sentinel last, T const& value)
-        {
-            using DifferenceType =
-                typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
-
-            DifferenceType len = RAH2_NS::ranges::distance(first, last);
-
-            while (len > 0)
+            struct equal_range
             {
-                ForwardIterator i = first;
-                DifferenceType len2 =
-                    len >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
-
-                RAH2_NS::ranges::advance(i, len2);
-
-                if (!(value < *i)) // Note that we always express value comparisons in terms of < or ==.
+                /// equal_range
+                ///
+                /// Effects: Finds the largest subrange [i, j) such that the value can be inserted
+                /// at any iterator k in it without violating the ordering. k satisfies the
+                /// corresponding conditions: !(*k < value) && !(value < *k).
+                ///
+                /// Complexity: At most '2 * log(last - first) + 1' comparisons.
+                ///
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    typename T,
+                    RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
+                subrange<ForwardIterator>
+                operator()(ForwardIterator first, Sentinel last, T const& value) const
                 {
-                    first = ++i;
-                    len -= len2 + 1;
+                    using DifferenceType =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
+
+                    DifferenceType d = RAH2_NS::ranges::distance(first, last);
+
+                    while (d > 0)
+                    {
+                        ForwardIterator i(first);
+                        DifferenceType d2 =
+                            d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
+
+                        RAH2_NS::ranges::advance(i, d2);
+
+                        if (*i < value)
+                        {
+                            RAH2_ASSERT(!(value < *i)); // Validate that the compare function is sane.
+                            first = ++i;
+                            d -= d2 + 1;
+                        }
+                        else if (value < *i)
+                        {
+                            RAH2_ASSERT(!(*i < value)); // Validate that the compare function is sane.
+                            d = d2;
+                            last = i;
+                        }
+                        else
+                        {
+                            ForwardIterator j(i);
+
+                            return {
+                                RAH2_NS::ranges::lower_bound(first, i, value),
+                                RAH2_NS::ranges::upper_bound(++j, last, value)};
+                        }
+                    }
+                    return {first, first};
                 }
-                else
+
+                template <typename ForwardRange, typename T>
+                borrowed_subrange_t<ForwardRange> operator()(ForwardRange&& range, T const& value) const
                 {
-                    // Disabled because RAH2_STD::upper_bound doesn't specify (23.3.3.2, p3) this can be done: RAH2_VALIDATE_COMPARE(!(*i < value)); // Validate that the compare function is sane.
-                    len = len2;
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
                 }
-            }
-            return first;
-        }
 
-        template <typename ForwardRange, typename T>
-        iterator_t<ForwardRange> upper_bound(ForwardRange&& range, T const& value)
-        {
-            return RAH2_NS::ranges::upper_bound(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
-        }
-
-        /// upper_bound
-        ///
-        /// Finds the position of the first element in a sorted range that has a
-        /// value that is greater than a specified value. The input Compare function
-        /// takes two arguments and returns true if the first argument is less than
-        /// the second argument.
-        ///
-        /// Effects: Finds the furthermost position into which value can be inserted
-        /// without violating the ordering.
-        ///
-        /// Returns: The furthermost iterator i in the range [first, last) such that
-        /// for any iterator j in the range [first, i) the following corresponding
-        /// condition holds: compare(value, *j) == false.
-        ///
-        /// Complexity: At most 'log(last - first) + 1' comparisons.
-        ///
-        template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
-        ForwardIterator
-        upper_bound(ForwardIterator first, ForwardSentinel last, T const& value, Compare compare)
-        {
-            using DifferenceType =
-                typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
-
-            DifferenceType len = RAH2_NS::ranges::distance(first, last);
-
-            while (len > 0)
-            {
-                ForwardIterator i = first;
-                DifferenceType len2 =
-                    len >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
-
-                RAH2_NS::ranges::advance(i, len2);
-
-                if (!compare(value, *i))
+                /// equal_range
+                ///
+                /// Effects: Finds the largest subrange [i, j) such that the value can be inserted
+                /// at any iterator k in it without violating the ordering. k satisfies the
+                /// corresponding conditions: compare(*k, value) == false && compare(value, *k) == false.
+                ///
+                /// Complexity: At most '2 * log(last - first) + 1' comparisons.
+                ///
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    typename T,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
+                subrange<ForwardIterator, ForwardIterator>
+                operator()(ForwardIterator first, Sentinel last, T const& value, Compare compare) const
                 {
-                    first = ++i;
-                    len -= len2 + 1;
+                    using DifferenceType =
+                        typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
+
+                    DifferenceType d = RAH2_NS::ranges::distance(first, last);
+
+                    while (d > 0)
+                    {
+                        ForwardIterator i(first);
+                        DifferenceType d2 =
+                            d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
+
+                        RAH2_NS::ranges::advance(i, d2);
+
+                        if (compare(*i, value))
+                        {
+                            RAH2_ASSERT(
+                                !compare(value, *i)); // Validate that the compare function is sane.
+                            first = ++i;
+                            d -= d2 + 1;
+                        }
+                        else if (compare(value, *i))
+                        {
+                            RAH2_ASSERT(
+                                !compare(*i, value)); // Validate that the compare function is sane.
+                            d = d2;
+                            last = i;
+                        }
+                        else
+                        {
+                            ForwardIterator j(i);
+
+                            return {
+                                RAH2_NS::ranges::lower_bound(first, i, value, compare),
+                                RAH2_NS::ranges::upper_bound(++j, last, value, compare)};
+                        }
+                    }
+                    return {first, first};
                 }
-                else
+
+                template <typename ForwardRange, typename T, typename Compare>
+                subrange<iterator_t<ForwardRange>, sentinel_t<ForwardRange>>
+                operator()(ForwardRange&& range, T const& value, Compare compare) const
                 {
-                    // Disabled because RAH2_STD::upper_bound doesn't specify (23.3.3.2, p3) this can be done: RAH2_VALIDATE_COMPARE(!compare(*i, value)); // Validate that the compare function is sane.
-                    len = len2;
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        value,
+                        RAH2_STD::move(compare));
                 }
-            }
-            return first;
-        }
-
-        template <typename ForwardRange, typename T, typename Compare>
-        iterator_t<ForwardRange> upper_bound(ForwardRange&& range, T const& value, Compare compare)
-        {
-            return RAH2_NS::ranges::upper_bound(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                value,
-                RAH2_STD::move(compare));
-        }
-
-        /// equal_range
-        ///
-        /// Effects: Finds the largest subrange [i, j) such that the value can be inserted
-        /// at any iterator k in it without violating the ordering. k satisfies the
-        /// corresponding conditions: !(*k < value) && !(value < *k).
-        ///
-        /// Complexity: At most '2 * log(last - first) + 1' comparisons.
-        ///
-        template <
-            typename ForwardIterator,
-            typename Sentinel,
-            typename T,
-            RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-        subrange<ForwardIterator> equal_range(ForwardIterator first, Sentinel last, T const& value)
-        {
-            using DifferenceType =
-                typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
-
-            DifferenceType d = RAH2_NS::ranges::distance(first, last);
-
-            while (d > 0)
-            {
-                ForwardIterator i(first);
-                DifferenceType d2 =
-                    d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
-
-                RAH2_NS::ranges::advance(i, d2);
-
-                if (*i < value)
-                {
-                    RAH2_ASSERT(!(value < *i)); // Validate that the compare function is sane.
-                    first = ++i;
-                    d -= d2 + 1;
-                }
-                else if (value < *i)
-                {
-                    RAH2_ASSERT(!(*i < value)); // Validate that the compare function is sane.
-                    d = d2;
-                    last = i;
-                }
-                else
-                {
-                    ForwardIterator j(i);
-
-                    return {
-                        RAH2_NS::ranges::lower_bound(first, i, value),
-                        RAH2_NS::ranges::upper_bound(++j, last, value)};
-                }
-            }
-            return {first, first};
-        }
-
-        template <typename ForwardRange, typename T>
-        borrowed_subrange_t<ForwardRange> equal_range(ForwardRange&& range, T const& value)
-        {
-            return RAH2_NS::ranges::equal_range(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
-        }
-
-        /// equal_range
-        ///
-        /// Effects: Finds the largest subrange [i, j) such that the value can be inserted
-        /// at any iterator k in it without violating the ordering. k satisfies the
-        /// corresponding conditions: compare(*k, value) == false && compare(value, *k) == false.
-        ///
-        /// Complexity: At most '2 * log(last - first) + 1' comparisons.
-        ///
-        template <
-            typename ForwardIterator,
-            typename Sentinel,
-            typename T,
-            typename Compare,
-            RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-        subrange<ForwardIterator, ForwardIterator>
-        equal_range(ForwardIterator first, Sentinel last, T const& value, Compare compare)
-        {
-            using DifferenceType =
-                typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
-
-            DifferenceType d = RAH2_NS::ranges::distance(first, last);
-
-            while (d > 0)
-            {
-                ForwardIterator i(first);
-                DifferenceType d2 =
-                    d >> 1; // We use '>>1' here instead of '/2' because MSVC++ for some reason generates significantly worse code for '/2'. Go figure.
-
-                RAH2_NS::ranges::advance(i, d2);
-
-                if (compare(*i, value))
-                {
-                    RAH2_ASSERT(!compare(value, *i)); // Validate that the compare function is sane.
-                    first = ++i;
-                    d -= d2 + 1;
-                }
-                else if (compare(value, *i))
-                {
-                    RAH2_ASSERT(!compare(*i, value)); // Validate that the compare function is sane.
-                    d = d2;
-                    last = i;
-                }
-                else
-                {
-                    ForwardIterator j(i);
-
-                    return {
-                        RAH2_NS::ranges::lower_bound(first, i, value, compare),
-                        RAH2_NS::ranges::upper_bound(++j, last, value, compare)};
-                }
-            }
-            return {first, first};
-        }
-
-        template <typename ForwardRange, typename T, typename Compare>
-        subrange<iterator_t<ForwardRange>, sentinel_t<ForwardRange>>
-        equal_range(ForwardRange&& range, T const& value, Compare compare)
-        {
-            return RAH2_NS::ranges::equal_range(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                value,
-                RAH2_STD::move(compare));
-        }
+            };
+        } // namespace niebloids
+        constexpr niebloids::equal_range equal_range;
 
         namespace niebloids
         {
@@ -2252,271 +2364,321 @@ namespace RAH2_NS
         ///
         constexpr niebloids::remove_copy_if_fn remove_copy_if{};
 
-        /// remove
-        ///
-        /// Effects: Eliminates all the elements referred to by iterator i in the
-        /// range [first, last) for which the following corresponding condition
-        /// holds: *i == value.
-        ///
-        /// Returns: The end of the resulting range.
-        ///
-        /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
-        ///
-        /// Note: The predicate version of remove is remove_if and not another variation of remove.
-        /// This is because both versions would have the same parameter count and there could be ambiguity.
-        ///
-        /// Note: Since this function moves the element to the back of the heap and
-        /// doesn't actually remove it from the given container, the user must call
-        /// the container erase function if the user wants to erase the element
-        /// from the container.
-        ///
-        /// Example usage:
-        ///    vector<int> intArray;
-        ///    ...
-        ///    intArray.erase(remove(intArray.begin(), intArray.end(), 4), intArray.end()); // Erase all elements of value 4.
-        ///
-        template <typename ForwardIterator, typename ForwardSentinel, typename T>
-        subrange<ForwardIterator> remove(ForwardIterator first, ForwardSentinel last, T const& value)
+        namespace niebloids
         {
-            first = RAH2_NS::ranges::find(first, last, value);
-            if (first != last)
+            struct remove
             {
-                ForwardIterator i(first);
-                return {RAH2_NS::ranges::remove_copy(++i, last, first, value).out, last};
-            }
-            return {first, last};
-        }
+                /// remove
+                ///
+                /// Effects: Eliminates all the elements referred to by iterator i in the
+                /// range [first, last) for which the following corresponding condition
+                /// holds: *i == value.
+                ///
+                /// Returns: The end of the resulting range.
+                ///
+                /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
+                ///
+                /// Note: The predicate version of remove is remove_if and not another variation of remove.
+                /// This is because both versions would have the same parameter count and there could be ambiguity.
+                ///
+                /// Note: Since this function moves the element to the back of the heap and
+                /// doesn't actually remove it from the given container, the user must call
+                /// the container erase function if the user wants to erase the element
+                /// from the container.
+                ///
+                /// Example usage:
+                ///    vector<int> intArray;
+                ///    ...
+                ///    intArray.erase(remove(intArray.begin(), intArray.end(), 4), intArray.end()); // Erase all elements of value 4.
+                ///
+                template <typename ForwardIterator, typename ForwardSentinel, typename T>
+                subrange<ForwardIterator>
+                operator()(ForwardIterator first, ForwardSentinel last, T const& value) const
+                {
+                    first = RAH2_NS::ranges::find(first, last, value);
+                    if (first != last)
+                    {
+                        ForwardIterator i(first);
+                        return {RAH2_NS::ranges::remove_copy(++i, last, first, value).out, last};
+                    }
+                    return {first, last};
+                }
 
-        template <typename ForwardRange, typename T>
-        borrowed_subrange_t<ForwardRange> remove(ForwardRange&& range, T const& value)
+                template <typename ForwardRange, typename T>
+                borrowed_subrange_t<ForwardRange> operator()(ForwardRange&& range, T const& value) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::remove remove;
+        namespace niebloids
         {
-            return RAH2_NS::ranges::remove(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
-        }
-
-        /// remove_if
-        ///
-        /// Effects: Eliminates all the elements referred to by iterator i in the
-        /// range [first, last) for which the following corresponding condition
-        /// holds: predicate(*i) != false.
-        ///
-        /// Returns: The end of the resulting range.
-        ///
-        /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
-        ///
-        /// Note: The predicate version of remove_if is remove and not another variation of remove_if.
-        /// This is because both versions would have the same parameter count and there could be ambiguity.
-        ///
-        /// Note: Since this function moves the element to the back of the heap and
-        /// doesn't actually remove it from the given container, the user must call
-        /// the container erase function if the user wants to erase the element
-        /// from the container.
-        ///
-        /// Example usage:
-        ///    vector<int> intArray;
-        ///    ...
-        ///    intArray.erase(remove(intArray.begin(), intArray.end(), bind2nd(less<int>(), (int)3)), intArray.end()); // Erase all elements less than 3.
-        ///
-        template <typename ForwardIterator, typename ForwardSentinel, typename Predicate>
-        subrange<ForwardIterator>
-        remove_if(ForwardIterator first, ForwardSentinel last, Predicate predicate)
-        {
-            first = RAH2_NS::ranges::find_if(first, last, predicate);
-            if (first != last)
+            struct remove_if
             {
-                ForwardIterator i(first);
-                return {RAH2_NS::ranges::remove_copy_if(++i, last, first, predicate).out, last};
-            }
-            return {first, last};
-        }
+                /// remove_if
+                ///
+                /// Effects: Eliminates all the elements referred to by iterator i in the
+                /// range [first, last) for which the following corresponding condition
+                /// holds: predicate(*i) != false.
+                ///
+                /// Returns: The end of the resulting range.
+                ///
+                /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
+                ///
+                /// Note: The predicate version of remove_if is remove and not another variation of remove_if.
+                /// This is because both versions would have the same parameter count and there could be ambiguity.
+                ///
+                /// Note: Since this function moves the element to the back of the heap and
+                /// doesn't actually remove it from the given container, the user must call
+                /// the container erase function if the user wants to erase the element
+                /// from the container.
+                ///
+                /// Example usage:
+                ///    vector<int> intArray;
+                ///    ...
+                ///    intArray.erase(remove(intArray.begin(), intArray.end(), bind2nd(less<int>(), (int)3)), intArray.end()); // Erase all elements less than 3.
+                ///
+                template <typename ForwardIterator, typename ForwardSentinel, typename Predicate>
+                subrange<ForwardIterator>
+                operator()(ForwardIterator first, ForwardSentinel last, Predicate predicate) const
+                {
+                    first = RAH2_NS::ranges::find_if(first, last, predicate);
+                    if (first != last)
+                    {
+                        ForwardIterator i(first);
+                        return {
+                            RAH2_NS::ranges::remove_copy_if(++i, last, first, predicate).out, last};
+                    }
+                    return {first, last};
+                }
 
-        template <typename ForwardRange, typename Predicate>
-        borrowed_subrange_t<ForwardRange> remove_if(ForwardRange&& range, Predicate predicate)
-        {
-            return RAH2_NS::ranges::remove_if(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(predicate));
-        }
+                template <typename ForwardRange, typename Predicate>
+                borrowed_subrange_t<ForwardRange>
+                operator()(ForwardRange&& range, Predicate predicate) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(predicate));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::remove_if remove_if;
 
         template <class I, class O>
         using replace_copy_result = RAH2_NS::ranges::in_out_result<I, O>;
 
-        /// replace_copy
-        ///
-        /// Effects: Assigns to every iterator i in the range [result, result + (last - first))
-        /// either new_value or *(first + (i - result)) depending on whether the following
-        /// corresponding conditions hold: *(first + (i - result)) == old_value.
-        ///
-        /// Requires: The ranges [first, last) and [result, result + (last - first)) shall not overlap.
-        ///
-        /// Returns: result + (last - first).
-        ///
-        /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
-        ///
-        /// Note: The predicate version of replace_copy is replace_copy_if and not another variation of replace_copy.
-        /// This is because both versions would have the same parameter count and there could be ambiguity.
-        ///
-        template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename T>
-        replace_copy_result<InputIterator, OutputIterator> replace_copy(
-            InputIterator first,
-            InputSentinel last,
-            OutputIterator result,
-            T const& old_value,
-            T const& new_value)
+        namespace niebloids
         {
-            for (; first != last; ++first, ++result)
-                *result = (*first == old_value) ? new_value : *first;
-            return {first, result};
-        }
+            struct replace_copy
+            {
+                /// replace_copy
+                ///
+                /// Effects: Assigns to every iterator i in the range [result, result + (last - first))
+                /// either new_value or *(first + (i - result)) depending on whether the following
+                /// corresponding conditions hold: *(first + (i - result)) == old_value.
+                ///
+                /// Requires: The ranges [first, last) and [result, result + (last - first)) shall not overlap.
+                ///
+                /// Returns: result + (last - first).
+                ///
+                /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
+                ///
+                /// Note: The predicate version of replace_copy is replace_copy_if and not another variation of replace_copy.
+                /// This is because both versions would have the same parameter count and there could be ambiguity.
+                ///
+                template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename T>
+                replace_copy_result<InputIterator, OutputIterator> operator()(
+                    InputIterator first,
+                    InputSentinel last,
+                    OutputIterator result,
+                    T const& old_value,
+                    T const& new_value) const
+                {
+                    for (; first != last; ++first, ++result)
+                        *result = (*first == old_value) ? new_value : *first;
+                    return {first, result};
+                }
 
-        template <typename InputRange, typename OutputIterator, typename T>
-        replace_copy_result<RAH2_NS::ranges::borrowed_iterator_t<InputRange>, OutputIterator>
-        replace_copy(InputRange&& range, OutputIterator result, T const& old_value, T const& new_value)
-        {
-            return RAH2_NS::ranges::replace_copy(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::move(result),
-                old_value,
-                new_value);
-        }
+                template <typename InputRange, typename OutputIterator, typename T>
+                replace_copy_result<RAH2_NS::ranges::borrowed_iterator_t<InputRange>, OutputIterator>
+                operator()(
+                    InputRange&& range, OutputIterator result, T const& old_value, T const& new_value) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(result),
+                        old_value,
+                        new_value);
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::replace_copy replace_copy;
 
         template <class I, class O>
         using replace_copy_if_result = RAH2_NS::ranges::in_out_result<I, O>;
 
-        /// replace_copy_if
-        ///
-        /// Effects: Assigns to every iterator i in the range [result, result + (last - first))
-        /// either new_value or *(first + (i - result)) depending on whether the following
-        /// corresponding conditions hold: predicate(*(first + (i - result))) != false.
-        ///
-        /// Requires: The ranges [first, last) and [result, result+(lastfirst)) shall not overlap.
-        ///
-        /// Returns: result + (last - first).
-        ///
-        /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
-        ///
-        /// Note: The predicate version of replace_copy_if is replace_copy and not another variation of replace_copy_if.
-        /// This is because both versions would have the same parameter count and there could be ambiguity.
-        ///
-        template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename Predicate, typename T>
-        replace_copy_if_result<InputIterator, OutputIterator> replace_copy_if(
-            InputIterator first,
-            InputSentinel last,
-            OutputIterator result,
-            Predicate predicate,
-            T const& new_value)
+        namespace niebloids
         {
-            for (; first != last; ++first, ++result)
-                *result = predicate(*first) ? new_value : *first;
-            return {first, result};
-        }
+            struct replace_copy_if
+            {
+                /// replace_copy_if
+                ///
+                /// Effects: Assigns to every iterator i in the range [result, result + (last - first))
+                /// either new_value or *(first + (i - result)) depending on whether the following
+                /// corresponding conditions hold: predicate(*(first + (i - result))) != false.
+                ///
+                /// Requires: The ranges [first, last) and [result, result+(lastfirst)) shall not overlap.
+                ///
+                /// Returns: result + (last - first).
+                ///
+                /// Complexity: Exactly 'last - first' applications of the corresponding predicate.
+                ///
+                /// Note: The predicate version of replace_copy_if is replace_copy and not another variation of replace_copy_if.
+                /// This is because both versions would have the same parameter count and there could be ambiguity.
+                ///
+                template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename Predicate, typename T>
+                replace_copy_if_result<InputIterator, OutputIterator> operator()(
+                    InputIterator first,
+                    InputSentinel last,
+                    OutputIterator result,
+                    Predicate predicate,
+                    T const& new_value) const
+                {
+                    for (; first != last; ++first, ++result)
+                        *result = predicate(*first) ? new_value : *first;
+                    return {first, result};
+                }
 
-        template <typename InputRange, typename OutputIterator, typename Predicate, typename T>
-        replace_copy_if_result<RAH2_NS::ranges::borrowed_iterator_t<InputRange>, OutputIterator>
-        replace_copy_if(InputRange&& range, OutputIterator result, Predicate predicate, T const& new_value)
-        {
-            return RAH2_NS::ranges::replace_copy_if(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                RAH2_STD::move(result),
-                RAH2_STD::move(predicate),
-                new_value);
-        }
+                template <typename InputRange, typename OutputIterator, typename Predicate, typename T>
+                replace_copy_if_result<RAH2_NS::ranges::borrowed_iterator_t<InputRange>, OutputIterator>
+                operator()(
+                    InputRange&& range,
+                    OutputIterator result,
+                    Predicate predicate,
+                    T const& new_value) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(predicate),
+                        new_value);
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::replace_copy_if replace_copy_if;
 
         // reverse
         //
         // We provide helper functions which allow reverse to be implemented more
         // efficiently for some types of iterators and types.
         //
-        namespace details
+        namespace niebloids
         {
-            template <typename BidirectionalIterator, typename Sentinel>
-            BidirectionalIterator reverse_impl(
-                BidirectionalIterator first, Sentinel last, RAH2_ITC_NS::bidirectional_iterator_tag)
+            struct reverse
             {
-                for (; (first != last) && (first != --last);
-                     ++first) // We are not allowed to use operator <, <=, >, >= with a
-                    RAH2_NS::ranges::iter_swap(
-                        first, last); // generic (bidirectional or otherwise) iterator.
-                return first;
-            }
-
-            template <typename RandomAccessIterator, typename Sentinel>
-            RandomAccessIterator reverse_impl(
-                RandomAccessIterator first, Sentinel last, RAH2_ITC_NS::random_access_iterator_tag)
-            {
-                if (first != last)
+                template <typename BidirectionalIterator, typename Sentinel>
+                static BidirectionalIterator reverse_impl(
+                    BidirectionalIterator first, Sentinel last, RAH2_ITC_NS::bidirectional_iterator_tag)
                 {
-                    for (; first < --last;
-                         ++first) // With a random access iterator, we can use operator < to more efficiently implement
+                    for (; (first != last) && (first != --last);
+                         ++first) // We are not allowed to use operator <, <=, >, >= with a
                         RAH2_NS::ranges::iter_swap(
-                            first,
-                            last); // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
+                            first, last); // generic (bidirectional or otherwise) iterator.
+                    return first;
                 }
-                return first;
-            }
-        } // namespace details
 
-        /// reverse
-        ///
-        /// Reverses the values within the range [first, last).
-        ///
-        /// Effects: For each nonnegative integer i <= (last - first) / 2,
-        /// applies swap to all pairs of iterators first + i, (last i) - 1.
-        ///
-        /// Complexity: Exactly '(last - first) / 2' swaps.
-        ///
-        template <typename BidirectionalIterator, typename Sentinel>
-        BidirectionalIterator reverse(BidirectionalIterator first, Sentinel last)
-        {
-            using IC = typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category;
-            return details::reverse_impl(first, last, IC());
-        }
+                template <typename RandomAccessIterator, typename Sentinel>
+                static RandomAccessIterator reverse_impl(
+                    RandomAccessIterator first, Sentinel last, RAH2_ITC_NS::random_access_iterator_tag)
+                {
+                    if (first != last)
+                    {
+                        for (; first < --last;
+                             ++first) // With a random access iterator, we can use operator < to more efficiently implement
+                            RAH2_NS::ranges::iter_swap(
+                                first,
+                                last); // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
+                    }
+                    return first;
+                }
 
-        template <typename BidirectionalRange>
-        borrowed_iterator_t<BidirectionalRange> reverse(BidirectionalRange&& range)
-        {
-            using IC = details::range_iter_categ_t<BidirectionalRange>;
-            return details::reverse_impl(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), IC());
-        }
+                /// reverse
+                ///
+                /// Reverses the values within the range [first, last).
+                ///
+                /// Effects: For each nonnegative integer i <= (last - first) / 2,
+                /// applies swap to all pairs of iterators first + i, (last i) - 1.
+                ///
+                /// Complexity: Exactly '(last - first) / 2' swaps.
+                ///
+                template <typename BidirectionalIterator, typename Sentinel>
+                BidirectionalIterator operator()(BidirectionalIterator first, Sentinel last) const
+                {
+                    using IC =
+                        typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category;
+                    return reverse_impl(first, last, IC());
+                }
+
+                template <typename BidirectionalRange>
+                borrowed_iterator_t<BidirectionalRange> operator()(BidirectionalRange&& range) const
+                {
+                    using IC = details::range_iter_categ_t<BidirectionalRange>;
+                    return reverse_impl(
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), IC());
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::reverse reverse;
 
         template <class I, class O>
         using reverse_copy_result = RAH2_NS::ranges::in_out_result<I, O>;
 
-        /// reverse_copy
-        ///
-        /// Copies the range [first, last) in reverse order to the result.
-        ///
-        /// Effects: Copies the range [first, last) to the range
-        /// [result, result + (last - first)) such that for any nonnegative
-        /// integer i < (last - first) the following assignment takes place:
-        /// *(result + (last - first) - i) = *(first + i)
-        ///
-        /// Requires: The ranges [first, last) and [result, result + (last - first))
-        /// shall not overlap.
-        ///
-        /// Returns: result + (last - first). That is, returns the end of the output range.
-        ///
-        /// Complexity: Exactly 'last - first' assignments.
-        ///
-        template <typename BidirectionalIterator, typename Sentinel, typename OutputIterator>
-        reverse_copy_result<BidirectionalIterator, OutputIterator>
-        reverse_copy(BidirectionalIterator first, Sentinel last, OutputIterator result)
+        namespace niebloids
         {
-            auto ret = RAH2_NS::ranges::next(first, last);
-            for (; last != first; ++result)
-                *result = *--last;
-            return {RAH2_STD::move(ret), RAH2_STD::move(result)};
-        }
+            struct reverse_copy
+            {
+                /// reverse_copy
+                ///
+                /// Copies the range [first, last) in reverse order to the result.
+                ///
+                /// Effects: Copies the range [first, last) to the range
+                /// [result, result + (last - first)) such that for any nonnegative
+                /// integer i < (last - first) the following assignment takes place:
+                /// *(result + (last - first) - i) = *(first + i)
+                ///
+                /// Requires: The ranges [first, last) and [result, result + (last - first))
+                /// shall not overlap.
+                ///
+                /// Returns: result + (last - first). That is, returns the end of the output range.
+                ///
+                /// Complexity: Exactly 'last - first' assignments.
+                ///
+                template <typename BidirectionalIterator, typename Sentinel, typename OutputIterator>
+                reverse_copy_result<BidirectionalIterator, OutputIterator>
+                operator()(BidirectionalIterator first, Sentinel last, OutputIterator result) const
+                {
+                    auto ret = RAH2_NS::ranges::next(first, last);
+                    for (; last != first; ++result)
+                        *result = *--last;
+                    return {RAH2_STD::move(ret), RAH2_STD::move(result)};
+                }
 
-        template <typename BidirectionalRange, typename OutputIterator>
-        reverse_copy_result<RAH2_NS::ranges::borrowed_iterator_t<BidirectionalRange>, OutputIterator>
-        reverse_copy(BidirectionalRange&& range, OutputIterator result)
-        {
-            return RAH2_NS::ranges::reverse_copy(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(result));
-        }
+                template <typename BidirectionalRange, typename OutputIterator>
+                reverse_copy_result<RAH2_NS::ranges::borrowed_iterator_t<BidirectionalRange>, OutputIterator>
+                operator()(BidirectionalRange&& range, OutputIterator result) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(result));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::reverse_copy reverse_copy;
 
         namespace niebloids
         {
@@ -2666,83 +2828,91 @@ namespace RAH2_NS
         ///
         constexpr niebloids::search_n_fn search_n{};
 
-        /// binary_search
-        ///
-        /// Returns: true if there is an iterator i in the range [first last) that
-        /// satisfies the corresponding conditions: !(*i < value) && !(value < *i).
-        ///
-        /// Complexity: At most 'log(last - first) + 2' comparisons.
-        ///
-        /// Note: The reason binary_search returns bool instead of an iterator is
-        /// that search_n, lower_bound, or equal_range already return an iterator.
-        /// However, there are arguments that binary_search should return an iterator.
-        /// Note that we provide binary_search_i (STL extension) to return an iterator.
-        ///
-        /// To use search_n to find an item, do this:
-        ///     iterator i = search_n(begin, end, 1, value);
-        /// To use lower_bound to find an item, do this:
-        ///     iterator i = lower_bound(begin, end, value);
-        ///     if((i != last) && !(value < *i))
-        ///         <use the iterator>
-        /// It turns out that the above lower_bound method is as fast as binary_search
-        /// would be if it returned an iterator.
-        ///
-        template <
-            typename ForwardIterator,
-            typename Sentinel,
-            typename T,
-            RAH2_STD::enable_if_t<
-                forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-        bool binary_search(ForwardIterator first, Sentinel last, T const& value)
+        namespace niebloids
         {
-            // To do: This can be made slightly faster by not using lower_bound.
-            ForwardIterator i(
-                RAH2_NS::ranges::lower_bound<ForwardIterator, Sentinel, T>(first, last, value));
-            return (
-                (i != last)
-                && !(value < *i)); // Note that we always express value comparisons in terms of < or ==.
-        }
+            struct binary_search
+            {
+                /// binary_search
+                ///
+                /// Returns: true if there is an iterator i in the range [first last) that
+                /// satisfies the corresponding conditions: !(*i < value) && !(value < *i).
+                ///
+                /// Complexity: At most 'log(last - first) + 2' comparisons.
+                ///
+                /// Note: The reason binary_search returns bool instead of an iterator is
+                /// that search_n, lower_bound, or equal_range already return an iterator.
+                /// However, there are arguments that binary_search should return an iterator.
+                /// Note that we provide binary_search_i (STL extension) to return an iterator.
+                ///
+                /// To use search_n to find an item, do this:
+                ///     iterator i = search_n(begin, end, 1, value);
+                /// To use lower_bound to find an item, do this:
+                ///     iterator i = lower_bound(begin, end, value);
+                ///     if((i != last) && !(value < *i))
+                ///         <use the iterator>
+                /// It turns out that the above lower_bound method is as fast as binary_search
+                /// would be if it returned an iterator.
+                ///
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    typename T,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
+                bool operator()(ForwardIterator first, Sentinel last, T const& value) const
+                {
+                    // To do: This can be made slightly faster by not using lower_bound.
+                    ForwardIterator i(RAH2_NS::ranges::lower_bound(first, last, value));
+                    return (
+                        (i != last)
+                        && !(value < *i)); // Note that we always express value comparisons in terms of < or ==.
+                }
 
-        template <typename Range, typename T>
-        bool binary_search(Range&& range, T const& value)
-        {
-            return RAH2_NS::ranges::binary_search(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
-        }
+                template <typename Range, typename T>
+                bool operator()(Range&& range, T const& value) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
+                }
 
-        /// binary_search
-        ///
-        /// Returns: true if there is an iterator i in the range [first last) that
-        /// satisfies the corresponding conditions: compare(*i, value) == false &&
-        /// compare(value, *i) == false.
-        ///
-        /// Complexity: At most 'log(last - first) + 2' comparisons.
-        ///
-        /// Note: See comments above regarding the bool return value of binary_search.
-        ///
-        template <
-            typename ForwardIterator,
-            typename Sentinel,
-            typename T,
-            typename Compare,
-            RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-        bool binary_search(ForwardIterator first, Sentinel last, T const& value, Compare compare)
-        {
-            // To do: This can be made slightly faster by not using lower_bound.
-            ForwardIterator i(RAH2_NS::ranges::lower_bound<ForwardIterator, T, Compare>(
-                first, last, value, compare));
-            return ((i != last) && !compare(value, *i));
-        }
+                /// binary_search
+                ///
+                /// Returns: true if there is an iterator i in the range [first last) that
+                /// satisfies the corresponding conditions: compare(*i, value) == false &&
+                /// compare(value, *i) == false.
+                ///
+                /// Complexity: At most 'log(last - first) + 2' comparisons.
+                ///
+                /// Note: See comments above regarding the bool return value of binary_search.
+                ///
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    typename T,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
+                bool operator()(ForwardIterator first, Sentinel last, T const& value, Compare compare) const
+                {
+                    // To do: This can be made slightly faster by not using lower_bound.
+                    ForwardIterator i(RAH2_NS::ranges::lower_bound(first, last, value, compare));
+                    return ((i != last) && !compare(value, *i));
+                }
 
-        template <typename Range, typename T, typename Compare, RAH2_STD::enable_if_t<forward_range<Range>>* = nullptr>
-        bool binary_search(Range&& range, T const& value, Compare compare)
-        {
-            return binary_search(
-                RAH2_NS::ranges::begin(range),
-                RAH2_NS::ranges::end(range),
-                value,
-                RAH2_STD::move(compare));
-        }
+                template <
+                    typename Range,
+                    typename T,
+                    typename Compare,
+                    RAH2_STD::enable_if_t<forward_range<Range>>* = nullptr>
+                bool operator()(Range&& range, T const& value, Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        value,
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::binary_search binary_search;
 
         namespace niebloids
         {
@@ -2890,644 +3060,694 @@ namespace RAH2_NS
         template <class I, class O>
         using set_difference_result = in_out_result<I, O>;
 
-        /// set_difference
-        ///
-        /// set_difference iterates over both input ranges and copies elements present
-        /// in the first range but not the second to the output range.
-        ///
-        /// Effects: Copies the elements of the range [first1, last1) which are not
-        /// present in the range [first2, last2) to the range beginning at result.
-        /// The elements in the constructed range are sorted.
-        ///
-        /// Requires: The input ranges must be sorted.
-        /// Requires: The output range shall not overlap with either of the original ranges.
-        ///
-        /// Returns: The end of the output range.
-        ///
-        /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
-        ///
-        template <
-            typename InputIterator1,
-            typename Sentinel1,
-            typename InputIterator2,
-            typename Sentinel2,
-            typename OutputIterator,
-            RAH2_STD::enable_if_t<
-                input_iterator<InputIterator1> && sentinel_for<Sentinel1, InputIterator1>
-                && input_iterator<InputIterator2> && sentinel_for<Sentinel2, InputIterator2>>* = nullptr>
-        set_difference_result<InputIterator1, OutputIterator> set_difference(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result)
+        namespace niebloids
         {
-            while ((first1 != last1) && (first2 != last2))
+            struct set_difference
             {
-                if (*first1 < *first2)
+                /// set_difference
+                ///
+                /// set_difference iterates over both input ranges and copies elements present
+                /// in the first range but not the second to the output range.
+                ///
+                /// Effects: Copies the elements of the range [first1, last1) which are not
+                /// present in the range [first2, last2) to the range beginning at result.
+                /// The elements in the constructed range are sorted.
+                ///
+                /// Requires: The input ranges must be sorted.
+                /// Requires: The output range shall not overlap with either of the original ranges.
+                ///
+                /// Returns: The end of the output range.
+                ///
+                /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
+                ///
+                template <
+                    typename InputIterator1,
+                    typename Sentinel1,
+                    typename InputIterator2,
+                    typename Sentinel2,
+                    typename OutputIterator,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<InputIterator1> && sentinel_for<Sentinel1, InputIterator1>
+                        && input_iterator<InputIterator2> && sentinel_for<Sentinel2, InputIterator2>>* = nullptr>
+                set_difference_result<InputIterator1, OutputIterator> operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result) const
                 {
-                    *result = *first1;
-                    ++first1;
-                    ++result;
-                }
-                else if (*first2 < *first1)
-                    ++first2;
-                else
-                {
-                    ++first1;
-                    ++first2;
-                }
-            }
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (*first1 < *first2)
+                        {
+                            *result = *first1;
+                            ++first1;
+                            ++result;
+                        }
+                        else if (*first2 < *first1)
+                            ++first2;
+                        else
+                        {
+                            ++first1;
+                            ++first2;
+                        }
+                    }
 
-            return RAH2_NS::ranges::copy(first1, last1, result);
-        }
-
-        template <typename InputRange1, typename InputRange2, typename OutputIterator>
-        set_difference_result<iterator_t<InputRange1>, OutputIterator>
-        set_difference(InputRange1&& range1, InputRange2&& range2, OutputIterator result)
-        {
-            return RAH2_NS::ranges::set_difference(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result));
-        }
-
-        template <
-            typename InputIterator1,
-            typename Sentinel1,
-            typename InputIterator2,
-            typename Sentinel2,
-            typename OutputIterator,
-            typename Compare>
-        OutputIterator set_difference(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result,
-            Compare compare)
-        {
-            while ((first1 != last1) && (first2 != last2))
-            {
-                if (compare(*first1, *first2))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first2, *first1)); // Validate that the compare function is sane.
-                    *result = *first1;
-                    ++first1;
-                    ++result;
+                    return RAH2_NS::ranges::copy(first1, last1, result);
                 }
-                else if (compare(*first2, *first1))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first1, *first2)); // Validate that the compare function is sane.
-                    ++first2;
-                }
-                else
-                {
-                    ++first1;
-                    ++first2;
-                }
-            }
 
-            return RAH2_NS::ranges::copy(first1, last1, result);
-        }
+                template <typename InputRange1, typename InputRange2, typename OutputIterator>
+                set_difference_result<iterator_t<InputRange1>, OutputIterator>
+                operator()(InputRange1&& range1, InputRange2&& range2, OutputIterator result) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result));
+                }
+
+                template <
+                    typename InputIterator1,
+                    typename Sentinel1,
+                    typename InputIterator2,
+                    typename Sentinel2,
+                    typename OutputIterator,
+                    typename Compare>
+                OutputIterator operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result,
+                    Compare compare) const
+                {
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (compare(*first1, *first2))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first2, *first1)); // Validate that the compare function is sane.
+                            *result = *first1;
+                            ++first1;
+                            ++result;
+                        }
+                        else if (compare(*first2, *first1))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first1, *first2)); // Validate that the compare function is sane.
+                            ++first2;
+                        }
+                        else
+                        {
+                            ++first1;
+                            ++first2;
+                        }
+                    }
+
+                    return RAH2_NS::ranges::copy(first1, last1, result);
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::set_difference set_difference;
 
         template <class I1, class I2, class O>
         using set_symmetric_difference_result = RAH2_NS::ranges::in_in_out_result<I1, I2, O>;
 
-        /// set_symmetric_difference
-        ///
-        /// set_difference iterates over both input ranges and copies elements present
-        /// in the either range but not the other to the output range.
-        ///
-        /// Effects: Copies the elements of the range [first1, last1) which are not
-        /// present in the range [first2, last2), and the elements of the range [first2, last2)
-        /// which are not present in the range [first1, last1) to the range beginning at result.
-        /// The elements in the constructed range are sorted.
-        ///
-        /// Requires: The input ranges must be sorted.
-        /// Requires: The resulting range shall not overlap with either of the original ranges.
-        ///
-        /// Returns: The end of the constructed range.
-        ///
-        /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
-        ///
-        template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
-        set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
-        set_symmetric_difference(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result)
+        namespace niebloids
         {
-            while ((first1 != last1) && (first2 != last2))
+            struct set_symmetric_difference
             {
-                if (*first1 < *first2)
+                /// set_symmetric_difference
+                ///
+                /// set_difference iterates over both input ranges and copies elements present
+                /// in the either range but not the other to the output range.
+                ///
+                /// Effects: Copies the elements of the range [first1, last1) which are not
+                /// present in the range [first2, last2), and the elements of the range [first2, last2)
+                /// which are not present in the range [first1, last1) to the range beginning at result.
+                /// The elements in the constructed range are sorted.
+                ///
+                /// Requires: The input ranges must be sorted.
+                /// Requires: The resulting range shall not overlap with either of the original ranges.
+                ///
+                /// Returns: The end of the constructed range.
+                ///
+                /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
+                ///
+                template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
+                set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
+                operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result) const
                 {
-                    *result = *first1;
-                    ++first1;
-                    ++result;
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (*first1 < *first2)
+                        {
+                            *result = *first1;
+                            ++first1;
+                            ++result;
+                        }
+                        else if (*first2 < *first1)
+                        {
+                            *result = *first2;
+                            ++first2;
+                            ++result;
+                        }
+                        else
+                        {
+                            ++first1;
+                            ++first2;
+                        }
+                    }
+                    auto res1 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
+                    auto res2 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
+                    return {
+                        RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
                 }
-                else if (*first2 < *first1)
-                {
-                    *result = *first2;
-                    ++first2;
-                    ++result;
-                }
-                else
-                {
-                    ++first1;
-                    ++first2;
-                }
-            }
-            auto res1 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
-            auto res2 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
-            return {RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
-        }
 
-        template <typename InputRange1, typename InputRange2, typename OutputIterator>
-        set_symmetric_difference_result<
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
-            OutputIterator>
-        set_symmetric_difference(InputRange1&& range1, InputRange2&& range2, OutputIterator result)
-        {
-            return RAH2_NS::ranges::set_symmetric_difference(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result));
-        }
-
-        template <
-            typename InputIterator1,
-            typename Sentinel1,
-            typename InputIterator2,
-            typename Sentinel2,
-            typename OutputIterator,
-            typename Compare>
-        set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
-        set_symmetric_difference(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result,
-            Compare compare)
-        {
-            while ((first1 != last1) && (first2 != last2))
-            {
-                if (compare(*first1, *first2))
+                template <typename InputRange1, typename InputRange2, typename OutputIterator>
+                set_symmetric_difference_result<
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
+                    OutputIterator>
+                operator()(InputRange1&& range1, InputRange2&& range2, OutputIterator result) const
                 {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first2, *first1)); // Validate that the compare function is sane.
-                    *result = *first1;
-                    ++first1;
-                    ++result;
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result));
                 }
-                else if (compare(*first2, *first1))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first1, *first2)); // Validate that the compare function is sane.
-                    *result = *first2;
-                    ++first2;
-                    ++result;
-                }
-                else
-                {
-                    ++first1;
-                    ++first2;
-                }
-            }
 
-            auto res1 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
-            auto res2 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
-            return {RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
-        }
+                template <
+                    typename InputIterator1,
+                    typename Sentinel1,
+                    typename InputIterator2,
+                    typename Sentinel2,
+                    typename OutputIterator,
+                    typename Compare>
+                set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
+                operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result,
+                    Compare compare) const
+                {
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (compare(*first1, *first2))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first2, *first1)); // Validate that the compare function is sane.
+                            *result = *first1;
+                            ++first1;
+                            ++result;
+                        }
+                        else if (compare(*first2, *first1))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first1, *first2)); // Validate that the compare function is sane.
+                            *result = *first2;
+                            ++first2;
+                            ++result;
+                        }
+                        else
+                        {
+                            ++first1;
+                            ++first2;
+                        }
+                    }
 
-        template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
-        set_symmetric_difference_result<
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
-            OutputIterator>
-        set_symmetric_difference(
-            InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare)
-        {
-            return RAH2_NS::ranges::set_symmetric_difference(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result),
-                RAH2_STD::move(compare));
-        }
+                    auto res1 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
+                    auto res2 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
+                    return {
+                        RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
+                }
+
+                template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
+                set_symmetric_difference_result<
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
+                    OutputIterator>
+                operator()(
+                    InputRange1&& range1,
+                    InputRange2&& range2,
+                    OutputIterator result,
+                    Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::set_symmetric_difference set_symmetric_difference;
 
         template <class I1, class I2, class O>
         using set_intersection_result = in_in_out_result<I1, I2, O>;
 
-        /// set_intersection
-        ///
-        /// set_intersection over both ranges and copies elements present in
-        /// both ranges to the output range.
-        ///
-        /// Effects: Constructs a sorted intersection of the elements from the
-        /// two ranges; that is, the set of elements that are present in both of the ranges.
-        ///
-        /// Requires: The input ranges must be sorted.
-        /// Requires: The resulting range shall not overlap with either of the original ranges.
-        ///
-        /// Returns: The end of the constructed range.
-        ///
-        /// Complexity: At most 2 * ((last1 - first1) + (last2 - first2)) - 1)  comparisons.
-        ///
-        /// Note: The copying operation is stable; if an element is present in both ranges,
-        /// the one from the first range is copied.
-        ///
-        template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
-        set_intersection_result<InputIterator1, InputIterator2, OutputIterator> set_intersection(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result)
+        namespace niebloids
         {
-            while ((first1 != last1) && (first2 != last2))
+            struct set_intersection
             {
-                if (*first1 < *first2)
-                    ++first1;
-                else if (*first2 < *first1)
-                    ++first2;
-                else
+                /// set_intersection
+                ///
+                /// set_intersection over both ranges and copies elements present in
+                /// both ranges to the output range.
+                ///
+                /// Effects: Constructs a sorted intersection of the elements from the
+                /// two ranges; that is, the set of elements that are present in both of the ranges.
+                ///
+                /// Requires: The input ranges must be sorted.
+                /// Requires: The resulting range shall not overlap with either of the original ranges.
+                ///
+                /// Returns: The end of the constructed range.
+                ///
+                /// Complexity: At most 2 * ((last1 - first1) + (last2 - first2)) - 1)  comparisons.
+                ///
+                /// Note: The copying operation is stable; if an element is present in both ranges,
+                /// the one from the first range is copied.
+                ///
+                template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
+                set_intersection_result<InputIterator1, InputIterator2, OutputIterator> operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result) const
                 {
-                    *result = *first1;
-                    ++first1;
-                    ++first2;
-                    ++result;
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (*first1 < *first2)
+                            ++first1;
+                        else if (*first2 < *first1)
+                            ++first2;
+                        else
+                        {
+                            *result = *first1;
+                            ++first1;
+                            ++first2;
+                            ++result;
+                        }
+                    }
+
+                    return {first1, first2, result};
                 }
-            }
 
-            return {first1, first2, result};
-        }
-
-        template <typename InputRange1, typename InputRange2, typename OutputIterator>
-        set_intersection_result<iterator_t<InputRange1>, iterator_t<InputRange2>, OutputIterator>
-        set_intersection(InputRange1&& range1, InputRange2&& range2, OutputIterator result)
-        {
-            return RAH2_NS::ranges::set_intersection(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result));
-        }
-
-        template <
-            typename InputIterator1,
-            typename Sentinel1,
-            typename InputIterator2,
-            typename Sentinel2,
-            typename OutputIterator,
-            typename Compare>
-        OutputIterator set_intersection(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result,
-            Compare compare)
-        {
-            while ((first1 != last1) && (first2 != last2))
-            {
-                if (compare(*first1, *first2))
+                template <typename InputRange1, typename InputRange2, typename OutputIterator>
+                set_intersection_result<iterator_t<InputRange1>, iterator_t<InputRange2>, OutputIterator>
+                operator()(InputRange1&& range1, InputRange2&& range2, OutputIterator result) const
                 {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first2, *first1)); // Validate that the compare function is sane.
-                    ++first1;
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result));
                 }
-                else if (compare(*first2, *first1))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first1, *first2)); // Validate that the compare function is sane.
-                    ++first2;
-                }
-                else
-                {
-                    *result = *first1;
-                    ++first1;
-                    ++first2;
-                    ++result;
-                }
-            }
 
-            return result;
-        }
+                template <
+                    typename InputIterator1,
+                    typename Sentinel1,
+                    typename InputIterator2,
+                    typename Sentinel2,
+                    typename OutputIterator,
+                    typename Compare>
+                OutputIterator operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result,
+                    Compare compare) const
+                {
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (compare(*first1, *first2))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first2, *first1)); // Validate that the compare function is sane.
+                            ++first1;
+                        }
+                        else if (compare(*first2, *first1))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first1, *first2)); // Validate that the compare function is sane.
+                            ++first2;
+                        }
+                        else
+                        {
+                            *result = *first1;
+                            ++first1;
+                            ++first2;
+                            ++result;
+                        }
+                    }
+
+                    return result;
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::set_intersection set_intersection;
 
         template <class I1, class I2, class O>
         using set_union_result = RAH2_NS::ranges::in_in_out_result<I1, I2, O>;
 
-        /// set_union
-        ///
-        /// set_union iterates over both ranges and copies elements present in
-        /// both ranges to the output range.
-        ///
-        /// Effects: Constructs a sorted union of the elements from the two ranges;
-        /// that is, the set of elements that are present in one or both of the ranges.
-        ///
-        /// Requires: The input ranges must be sorted.
-        /// Requires: The resulting range shall not overlap with either of the original ranges.
-        ///
-        /// Returns: The end of the constructed range.
-        ///
-        /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
-        ///
-        /// Note: The copying operation is stable; if an element is present in both ranges,
-        /// the one from the first range is copied.
-        ///
-        template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
-        set_union_result<InputIterator1, InputIterator2, OutputIterator> set_union(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result)
+        namespace niebloids
         {
-            while ((first1 != last1) && (first2 != last2))
+            struct set_union
             {
-                if (*first1 < *first2)
+                /// set_union
+                ///
+                /// set_union iterates over both ranges and copies elements present in
+                /// both ranges to the output range.
+                ///
+                /// Effects: Constructs a sorted union of the elements from the two ranges;
+                /// that is, the set of elements that are present in one or both of the ranges.
+                ///
+                /// Requires: The input ranges must be sorted.
+                /// Requires: The resulting range shall not overlap with either of the original ranges.
+                ///
+                /// Returns: The end of the constructed range.
+                ///
+                /// Complexity: At most (2 * ((last1 - first1) + (last2 - first2)) - 1) comparisons.
+                ///
+                /// Note: The copying operation is stable; if an element is present in both ranges,
+                /// the one from the first range is copied.
+                ///
+                template <typename InputIterator1, typename Sentinel1, typename InputIterator2, typename Sentinel2, typename OutputIterator>
+                set_union_result<InputIterator1, InputIterator2, OutputIterator> operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result) const
                 {
-                    *result = *first1;
-                    ++first1;
-                }
-                else if (*first2 < *first1)
-                {
-                    *result = *first2;
-                    ++first2;
-                }
-                else
-                {
-                    *result = *first1;
-                    ++first1;
-                    ++first2;
-                }
-                ++result;
-            }
-
-            auto res1 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
-            auto res2 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
-            return {RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
-        }
-
-        template <typename InputRange1, typename InputRange2, typename OutputIterator>
-        set_union_result<
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
-            OutputIterator>
-        set_union(InputRange1&& range1, InputRange2&& range2, OutputIterator result)
-        {
-            return RAH2_NS::ranges::set_union(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result));
-        }
-
-        template <
-            typename InputIterator1,
-            typename Sentinel1,
-            typename InputIterator2,
-            typename Sentinel2,
-            typename OutputIterator,
-            typename Compare>
-        set_union_result<InputIterator1, InputIterator2, OutputIterator> set_union(
-            InputIterator1 first1,
-            Sentinel1 last1,
-            InputIterator2 first2,
-            Sentinel2 last2,
-            OutputIterator result,
-            Compare compare)
-        {
-            while ((first1 != last1) && (first2 != last2))
-            {
-                if (compare(*first1, *first2))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first2, *first1)); // Validate that the compare function is sane.
-                    *result = *first1;
-                    ++first1;
-                }
-                else if (compare(*first2, *first1))
-                {
-                    RAH2_VALIDATE_COMPARE(
-                        !compare(*first1, *first2)); // Validate that the compare function is sane.
-                    *result = *first2;
-                    ++first2;
-                }
-                else
-                {
-                    *result = *first1;
-                    ++first1;
-                    ++first2;
-                }
-                ++result;
-            }
-
-            auto res1 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
-            auto res2 = RAH2_NS::ranges::copy(
-                RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
-            return {RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
-        }
-
-        template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
-        set_union_result<
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
-            RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
-            OutputIterator>
-        set_union(InputRange1&& range1, InputRange2&& range2, OutputIterator result, Compare compare)
-        {
-            return RAH2_NS::ranges::set_union(
-                RAH2_NS::ranges::begin(range1),
-                RAH2_NS::ranges::end(range1),
-                RAH2_NS::ranges::begin(range2),
-                RAH2_NS::ranges::end(range2),
-                RAH2_STD::move(result),
-                RAH2_STD::move(compare));
-        }
-
-        /// is_permutation
-        ///
-        struct is_permutation_fn
-        {
-            template <
-                typename I1,
-                typename S1,
-                typename I2,
-                typename S2,
-                class Proj1 = RAH2_NS::details::identity,
-                class Proj2 = RAH2_NS::details::identity,
-                typename Pred = RAH2_NS::ranges::equal_to,
-                RAH2_STD::enable_if_t<
-                    forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
-                    && sentinel_for<S2, I2>>* = nullptr>
-            constexpr bool operator()(
-                I1 first1,
-                S1 last1,
-                I2 first2,
-                S2 last2,
-                Pred pred = {},
-                Proj1 proj1 = {},
-                Proj2 proj2 = {}) const
-            {
-                // skip common prefix
-                auto ret = RAH2_NS::ranges::mismatch(
-                    first1,
-                    last1,
-                    first2,
-                    last2,
-                    RAH2_STD::ref(pred),
-                    RAH2_STD::ref(proj1),
-                    RAH2_STD::ref(proj2));
-                first1 = ret.in1, first2 = ret.in2;
-
-                // iterate over the rest, counting how many times each element
-                // from [first1, last1) appears in [first2, last2)
-                for (auto i{first1}; i != last1; ++i)
-                {
-                    auto const i_proj{proj1(*i)};
-                    auto i_cmp = [&](auto&& t)
+                    while ((first1 != last1) && (first2 != last2))
                     {
-                        return pred(i_proj, RAH2_STD::forward<decltype(t)>(t));
-                    };
+                        if (*first1 < *first2)
+                        {
+                            *result = *first1;
+                            ++first1;
+                        }
+                        else if (*first2 < *first1)
+                        {
+                            *result = *first2;
+                            ++first2;
+                        }
+                        else
+                        {
+                            *result = *first1;
+                            ++first1;
+                            ++first2;
+                        }
+                        ++result;
+                    }
 
-                    if (i != RAH2_NS::ranges::find_if(first1, i, i_cmp, proj1))
-                        continue; // this *i has been checked
-
-                    auto const m{RAH2_NS::ranges::count_if(first2, last2, i_cmp, proj2)};
-                    if (m == 0 or m != RAH2_NS::ranges::count_if(i, last1, i_cmp, proj1))
-                        return false;
+                    auto res1 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
+                    auto res2 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
+                    return {
+                        RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
                 }
-                return true;
-            }
 
-            template <
-                typename R1,
-                typename R2,
-                class Proj1 = RAH2_NS::details::identity,
-                class Proj2 = RAH2_NS::details::identity,
-                typename Pred = RAH2_NS::ranges::equal_to,
-                RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
-            constexpr bool
-            operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+                template <typename InputRange1, typename InputRange2, typename OutputIterator>
+                set_union_result<
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
+                    OutputIterator>
+                operator()(InputRange1&& range1, InputRange2&& range2, OutputIterator result) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result));
+                }
+
+                template <
+                    typename InputIterator1,
+                    typename Sentinel1,
+                    typename InputIterator2,
+                    typename Sentinel2,
+                    typename OutputIterator,
+                    typename Compare>
+                set_union_result<InputIterator1, InputIterator2, OutputIterator> operator()(
+                    InputIterator1 first1,
+                    Sentinel1 last1,
+                    InputIterator2 first2,
+                    Sentinel2 last2,
+                    OutputIterator result,
+                    Compare compare) const
+                {
+                    while ((first1 != last1) && (first2 != last2))
+                    {
+                        if (compare(*first1, *first2))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first2, *first1)); // Validate that the compare function is sane.
+                            *result = *first1;
+                            ++first1;
+                        }
+                        else if (compare(*first2, *first1))
+                        {
+                            RAH2_VALIDATE_COMPARE(!compare(
+                                *first1, *first2)); // Validate that the compare function is sane.
+                            *result = *first2;
+                            ++first2;
+                        }
+                        else
+                        {
+                            *result = *first1;
+                            ++first1;
+                            ++first2;
+                        }
+                        ++result;
+                    }
+
+                    auto res1 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first1), RAH2_STD::move(last1), RAH2_STD::move(result));
+                    auto res2 = RAH2_NS::ranges::copy(
+                        RAH2_STD::move(first2), RAH2_STD::move(last2), RAH2_STD::move(res1.out));
+                    return {
+                        RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
+                }
+
+                template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
+                set_union_result<
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
+                    RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
+                    OutputIterator>
+                operator()(
+                    InputRange1&& range1,
+                    InputRange2&& range2,
+                    OutputIterator result,
+                    Compare compare) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::set_union set_union;
+
+        namespace niebloids
+        {
+            /// is_permutation
+            ///
+            struct is_permutation_fn
             {
-                return (*this)(
-                    RAH2_NS::ranges::begin(r1),
-                    RAH2_NS::ranges::end(r1),
-                    RAH2_NS::ranges::begin(r2),
-                    RAH2_NS::ranges::end(r2),
-                    RAH2_STD::move(pred),
-                    RAH2_STD::move(proj1),
-                    RAH2_STD::move(proj2));
-            }
-        };
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    typename Pred = RAH2_NS::ranges::equal_to,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
+                        && sentinel_for<S2, I2>>* = nullptr>
+                constexpr bool operator()(
+                    I1 first1,
+                    S1 last1,
+                    I2 first2,
+                    S2 last2,
+                    Pred pred = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
+                {
+                    // skip common prefix
+                    auto ret = RAH2_NS::ranges::mismatch(
+                        first1,
+                        last1,
+                        first2,
+                        last2,
+                        RAH2_STD::ref(pred),
+                        RAH2_STD::ref(proj1),
+                        RAH2_STD::ref(proj2));
+                    first1 = ret.in1, first2 = ret.in2;
 
-        constexpr is_permutation_fn is_permutation{};
+                    // iterate over the rest, counting how many times each element
+                    // from [first1, last1) appears in [first2, last2)
+                    for (auto i{first1}; i != last1; ++i)
+                    {
+                        auto const i_proj{proj1(*i)};
+                        auto i_cmp = [&](auto&& t)
+                        {
+                            return pred(i_proj, RAH2_STD::forward<decltype(t)>(t));
+                        };
+
+                        if (i != RAH2_NS::ranges::find_if(first1, i, i_cmp, proj1))
+                            continue; // this *i has been checked
+
+                        auto const m{RAH2_NS::ranges::count_if(first2, last2, i_cmp, proj2)};
+                        if (m == 0 or m != RAH2_NS::ranges::count_if(i, last1, i_cmp, proj1))
+                            return false;
+                    }
+                    return true;
+                }
+
+                template <
+                    typename R1,
+                    typename R2,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    typename Pred = RAH2_NS::ranges::equal_to,
+                    RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
+                constexpr bool
+                operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(r1),
+                        RAH2_NS::ranges::end(r1),
+                        RAH2_NS::ranges::begin(r2),
+                        RAH2_NS::ranges::end(r2),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::is_permutation_fn is_permutation{};
 
         template <class I>
         using next_permutation_result = RAH2_NS::ranges::in_found_result<I>;
 
-        /// next_permutation
-        ///
-        /// mutates the range [first, last) to the next permutation. Returns true if the
-        /// new range is not the final permutation (sorted like the starting permutation).
-        /// Permutations start with a sorted range, and false is returned when next_permutation
-        /// results in the initial sorted range, or if the range has <= 1 element.
-        /// Note that elements are compared by operator < (as usual) and that elements deemed
-        /// equal via this are not rearranged.
-        ///
-        /// http://marknelson.us/2002/03/01/next-permutation/
-        /// Basically we start with an ordered range and reverse it's order one specifically
-        /// chosen swap and reverse at a time. It happens that this require going through every
-        /// permutation of the range. We use the same variable names as the document above.
-        ///
-        /// To consider: Significantly improved permutation/combination functionality:
-        ///    http://home.roadrunner.com/~hinnant/combinations.html
-        ///
-        /// Example usage:
-        ///     vector<int> intArray;
-        ///     // <populate intArray>
-        ///     sort(intArray.begin(), intArray.end());
-        ///     do {
-        ///         // <do something with intArray>
-        ///     } while(next_permutation(intArray.begin(), intArray.end()));
-        ///
-
-        template <
-            typename BidirectionalIterator,
-            typename Sentinel,
-            typename Compare = RAH2_NS::ranges::less,
-            RAH2_STD::enable_if_t<
-                bidirectional_iterator<BidirectionalIterator>
-                && sentinel_for<Sentinel, BidirectionalIterator>>* = nullptr>
-        next_permutation_result<BidirectionalIterator>
-        next_permutation(BidirectionalIterator first, Sentinel last, Compare compare = {})
+        namespace niebloids
         {
-            if (first != last) // If there is anything in the range...
+            struct next_permutation
             {
-                auto i = RAH2_NS::ranges::next(first, last);
-                auto lasti = i;
-                if (first != --i) // If the range has more than one item...
+                /// next_permutation
+                ///
+                /// mutates the range [first, last) to the next permutation. Returns true if the
+                /// new range is not the final permutation (sorted like the starting permutation).
+                /// Permutations start with a sorted range, and false is returned when next_permutation
+                /// results in the initial sorted range, or if the range has <= 1 element.
+                /// Note that elements are compared by operator < (as usual) and that elements deemed
+                /// equal via this are not rearranged.
+                ///
+                /// http://marknelson.us/2002/03/01/next-permutation/
+                /// Basically we start with an ordered range and reverse it's order one specifically
+                /// chosen swap and reverse at a time. It happens that this require going through every
+                /// permutation of the range. We use the same variable names as the document above.
+                ///
+                /// To consider: Significantly improved permutation/combination functionality:
+                ///    http://home.roadrunner.com/~hinnant/combinations.html
+                ///
+                /// Example usage:
+                ///     vector<int> intArray;
+                ///     // <populate intArray>
+                ///     sort(intArray.begin(), intArray.end());
+                ///     do {
+                ///         // <do something with intArray>
+                ///     } while(next_permutation(intArray.begin(), intArray.end()));
+                ///
+
+                template <
+                    typename BidirectionalIterator,
+                    typename Sentinel,
+                    typename Compare = RAH2_NS::ranges::less,
+                    RAH2_STD::enable_if_t<
+                        bidirectional_iterator<BidirectionalIterator>
+                        && sentinel_for<Sentinel, BidirectionalIterator>>* = nullptr>
+                next_permutation_result<BidirectionalIterator>
+                operator()(BidirectionalIterator first, Sentinel last, Compare compare = {}) const
                 {
-                    for (;;)
+                    if (first != last) // If there is anything in the range...
                     {
-                        BidirectionalIterator ii(i), j;
-
-                        if (compare(*--i, *ii)) // Find two consecutive values where the first is less than the second.
+                        auto i = RAH2_NS::ranges::next(first, last);
+                        auto lasti = i;
+                        if (first != --i) // If the range has more than one item...
                         {
-                            j = last;
-                            while (!compare(
-                                *i, *--j)) // Find the final value that's greater than the first (it may be equal to the second).
+                            for (;;)
                             {
-                            }
-                            RAH2_NS::ranges::iter_swap(i, j); // Swap the first and the final.
-                            RAH2_NS::ranges::reverse(
-                                ii, last); // Reverse the ranget from second to last.
-                            return {RAH2_STD::move(lasti), true};
-                        }
+                                BidirectionalIterator ii(i), j;
 
-                        if (i == first) // There are no two consecutive values where the first is less than the second, meaning the range is in reverse order. The reverse ordered range is always the last permutation.
-                        {
-                            RAH2_NS::ranges::reverse(first, last);
-                            break; // We are done.
+                                if (compare(*--i, *ii)) // Find two consecutive values where the first is less than the second.
+                                {
+                                    j = last;
+                                    while (!compare(
+                                        *i, *--j)) // Find the final value that's greater than the first (it may be equal to the second).
+                                    {
+                                    }
+                                    RAH2_NS::ranges::iter_swap(i, j); // Swap the first and the final.
+                                    RAH2_NS::ranges::reverse(
+                                        ii, last); // Reverse the ranget from second to last.
+                                    return {RAH2_STD::move(lasti), true};
+                                }
+
+                                if (i == first) // There are no two consecutive values where the first is less than the second, meaning the range is in reverse order. The reverse ordered range is always the last permutation.
+                                {
+                                    RAH2_NS::ranges::reverse(first, last);
+                                    break; // We are done.
+                                }
+                            }
                         }
                     }
+
+                    return {RAH2_STD::move(first), false};
                 }
-            }
 
-            return {RAH2_STD::move(first), false};
-        }
-
-        template <
-            typename BidirectionalRange,
-            typename Compare = RAH2_NS::ranges::less,
-            RAH2_STD::enable_if_t<bidirectional_range<BidirectionalRange>>* = nullptr>
-        constexpr next_permutation_result<borrowed_iterator_t<BidirectionalRange>>
-        next_permutation(BidirectionalRange&& range, Compare compare = {})
-        {
-            return RAH2_NS::ranges::next_permutation(
-                RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(compare));
-        }
+                template <
+                    typename BidirectionalRange,
+                    typename Compare = RAH2_NS::ranges::less,
+                    RAH2_STD::enable_if_t<bidirectional_range<BidirectionalRange>>* = nullptr>
+                constexpr next_permutation_result<borrowed_iterator_t<BidirectionalRange>>
+                operator()(BidirectionalRange&& range, Compare compare = {}) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(compare));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::next_permutation next_permutation;
 
         /// rotate
         ///
@@ -3771,42 +3991,51 @@ namespace RAH2_NS
 
         } // namespace details
 
-        template <typename ForwardIterator, typename ForwardSentinel>
-        subrange<ForwardIterator>
-        rotate(ForwardIterator first, ForwardIterator middle, ForwardSentinel last)
+        namespace niebloids
         {
-            if (middle != first)
+            struct rotate
             {
-                if (middle != last)
+                template <typename ForwardIterator, typename ForwardSentinel>
+                subrange<ForwardIterator>
+                operator()(ForwardIterator first, ForwardIterator middle, ForwardSentinel last) const
                 {
-                    using IC = typename RAH2_STD::iterator_traits<ForwardIterator>::iterator_category;
-                    using value_type =
-                        typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
+                    if (middle != first)
+                    {
+                        if (middle != last)
+                        {
+                            using IC =
+                                typename RAH2_STD::iterator_traits<ForwardIterator>::iterator_category;
+                            using value_type =
+                                typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
-                    return details::rotate_helper < IC,
-                           RAH2_STD::is_trivially_move_assignable<value_type>::value
+                            return details::rotate_helper < IC,
+                                   RAH2_STD::is_trivially_move_assignable<value_type>::value
 #if not RAH2_CPP20
-                               || // This is the best way of telling if we can move types via memmove, but without a conforming C++11 compiler it usually returns false.
-                               RAH2_STD::is_pod<value_type>::value
+                                       || // This is the best way of telling if we can move types via memmove, but without a conforming C++11 compiler it usually returns false.
+                                       RAH2_STD::is_pod<value_type>::value
 #endif
-                               || // This is a more conservative way of telling if we can move types via memmove, and most compilers support it, but it doesn't have as full of coverage as is_trivially_move_assignable.
-                               RAH2_NS::is_scalar<value_type>::value
-                                   > // This is the most conservative means and works with all compilers, but works only for scalars.
-                                   ::rotate_impl(first, middle, last);
+                                       || // This is a more conservative way of telling if we can move types via memmove, and most compilers support it, but it doesn't have as full of coverage as is_trivially_move_assignable.
+                                       RAH2_NS::is_scalar<value_type>::value
+                                           > // This is the most conservative means and works with all compilers, but works only for scalars.
+                                           ::rotate_impl(first, middle, last);
+                        }
+
+                        return {RAH2_STD::move(first), RAH2_STD::move(middle)};
+                    }
+                    auto last_it = RAH2_NS::ranges::next(first, last);
+                    return {last_it, last_it};
                 }
 
-                return {RAH2_STD::move(first), RAH2_STD::move(middle)};
-            }
-            auto last_it = RAH2_NS::ranges::next(first, last);
-            return {last_it, last_it};
-        }
-
-        template <typename ForwardRange>
-        borrowed_subrange_t<ForwardRange> rotate(ForwardRange&& range, iterator_t<ForwardRange> middle)
-        {
-            return RAH2_NS::ranges::rotate(
-                RAH2_NS::ranges::begin(range), middle, RAH2_NS::ranges::end(range));
-        }
+                template <typename ForwardRange>
+                borrowed_subrange_t<ForwardRange>
+                operator()(ForwardRange&& range, iterator_t<ForwardRange> middle) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range), middle, RAH2_NS::ranges::end(range));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::rotate rotate;
 
         template <class I, class O>
         using rotate_copy_result = in_out_result<I, O>;
