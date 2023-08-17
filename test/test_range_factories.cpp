@@ -29,9 +29,9 @@ void test_empty_view()
     testSuite.test_case("concept");
     using R = RAH2_NS::ranges::empty_view<int>;
     auto r = RAH2_NS::views::empty<int>;
-    auto e = RAH2_NS::ranges::end(r);
+    auto e = end(r); // Test ADL end
     assert(RAH2_NS::ranges::empty(r));
-    auto i = RAH2_NS::ranges::begin(r);
+    auto i = begin(r); // Test ADL begin
     auto u = i;
     assert(!(u < i));
     assert(!(i < u));
