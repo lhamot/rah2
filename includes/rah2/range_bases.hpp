@@ -1878,6 +1878,7 @@ namespace RAH2_NS
     template <class T, std::size_t N>
     RAH2_NODISCARD constexpr bool empty(const T (&array)[N]) noexcept
     {
+        (void)array;
         return N == 0;
     }
 
