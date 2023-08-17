@@ -298,8 +298,7 @@ namespace RAH2_NS
 
                         iNext = iCurrent = iSorted;
 
-                        for (--iCurrent; (iNext != first) && compare(temp, *iCurrent);
-                             --iNext, --iCurrent)
+                        for (; (iNext != first) && compare(temp, *--iCurrent); --iNext)
                         {
                             RAH2_VALIDATE_COMPARE(!compare(
                                 *iCurrent, temp)); // Validate that the compare function is sane.
