@@ -20,7 +20,6 @@
 #endif
 
 #define RAH2_ITC_NS RAH2_NS
-#define RAHAllocatorType RAH2_STD::allocator
 #define RAH2_ASSERT(expression) assert(expression)
 
 #define RAH2_VALIDATE_COMPARE(CHECK)
