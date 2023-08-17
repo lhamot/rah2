@@ -1849,24 +1849,24 @@ namespace RAH2_NS
 
     template <class C>
     constexpr auto ssize(const C& c)
-        -> RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
+        -> RAH2_STD::common_type_t<std::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
     {
         return RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>(
             c.size());
     }
 
     template <class T, std::size_t N>
-    constexpr RAH2_STD::size_t size(const T (&array)[N]) noexcept
+    constexpr std::size_t size(const T (&array)[N]) noexcept
     {
         (void)array;
         return N;
     }
 
     template <class T, std::ptrdiff_t N>
-    constexpr RAH2_STD::ptrdiff_t ssize(const T (&array)[N]) noexcept
+    constexpr std::ptrdiff_t ssize(const T (&array)[N]) noexcept
     {
         (void)array;
-        return static_cast<RAH2_STD::ptrdiff_t>(N);
+        return static_cast<std::ptrdiff_t>(N);
     }
 
     template <class C>

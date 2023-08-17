@@ -1,5 +1,21 @@
 #pragma once
 
+#if defined(RAH2_INSIDE_EASTL) && RAH2_INSIDE_EASTL
+
+#define RAH2_STD eastl
+#define RAH2_NS eastl
+#define RAH2_USE_EASTL 1
+
+#else
+
+#define RAH2_INSIDE_EASTL 0
+
+#if defined(RAH2_USE_EASTL)
+#define RAH2_STD eastl
+#endif
+
+#endif
+
 #ifndef RAH2_STD
 #define RAH2_STD ::std
 #endif
