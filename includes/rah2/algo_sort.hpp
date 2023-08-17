@@ -1334,7 +1334,7 @@ namespace RAH2_NS
                 {
 #ifdef RAH2_USE_EASTL
                     RAH2_NS::ranges::details::
-                        merge_sort<RandomAccessIterator, Sentinel, RAHAllocatorType, StrictWeakOrdering>(
+                        merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType, StrictWeakOrdering>(
                             first, last, *RAH2_STD::get_default_allocator(0), compare);
 #else
                     using Allocator = RAH2_STD::allocator<
