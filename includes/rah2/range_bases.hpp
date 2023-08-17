@@ -1745,6 +1745,159 @@ namespace RAH2_NS
 
     } // namespace ranges
 
+#if !RAH2_INSIDE_EASTL
+    template <class C>
+    constexpr auto begin(C& c) -> decltype(c.begin())
+    {
+        return c.begin();
+    }
+    template <class C>
+    constexpr auto begin(C const& c) -> decltype(c.begin())
+    {
+        return c.begin();
+    }
+
+    template <class T, std::size_t N>
+    constexpr T* begin(T (&array)[N]) noexcept
+    {
+        return array;
+    }
+
+    template <class C>
+    constexpr auto cbegin(const C& c) noexcept -> decltype(RAH2_NS::begin(c))
+    {
+        return RAH2_NS::begin(c);
+    }
+
+    template <class C>
+    constexpr auto end(C& c) -> decltype(c.end())
+    {
+        return c.end();
+    }
+
+    template <class C>
+    constexpr auto end(const C& c) -> decltype(c.end())
+    {
+        return c.end();
+    }
+
+    template <class T, std::size_t N>
+    constexpr T* end(T (&array)[N]) noexcept
+    {
+        return array;
+    }
+
+    template <class C>
+    constexpr auto cend(const C& c) noexcept -> decltype(RAH2_NS::end(c))
+    {
+        return RAH2_NS::end(c);
+    }
+
+    template <class C>
+    constexpr auto rbegin(C& c) -> decltype(c.rbegin())
+    {
+        return c.rbegin();
+    }
+
+    template <class C>
+    constexpr auto rbegin(const C& c) -> decltype(c.rbegin())
+    {
+        return c.rbegin();
+    }
+
+    template <class T, std::size_t N>
+    constexpr RAH2_STD::reverse_iterator<T*> rbegin(T (&array)[N])
+    {
+        return RAH2_STD::reverse_iterator<T*>(array + N);
+    }
+
+    template <class C>
+    constexpr auto crbegin(const C& c) -> decltype(RAH2_NS::rbegin(c))
+    {
+        return RAH2_NS::rbegin(c);
+    }
+
+    template <class C>
+    constexpr auto rend(C& c) -> decltype(c.rend())
+    {
+        return c.rend();
+    }
+
+    template <class C>
+    constexpr auto rend(const C& c) -> decltype(c.rend())
+    {
+        return c.rend();
+    }
+
+    template <class T, std::size_t N>
+    constexpr RAH2_STD::reverse_iterator<T*> rend(T (&array)[N])
+    {
+        return RAH2_STD::reverse_iterator<T*>(array);
+    }
+
+    template <class C>
+    constexpr auto crend(const C& c) -> decltype(RAH2_NS::rend(c))
+    {
+        return RAH2_NS::rend(c);
+    }
+
+    template <class C>
+    constexpr auto size(const C& c) -> decltype(c.size())
+    {
+        return c.size();
+    }
+
+    template <class C>
+    constexpr auto ssize(const C& c)
+        -> RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
+    {
+        return RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>(
+            c.size());
+    }
+
+    template <class T, std::size_t N>
+    constexpr RAH2_STD::size_t size(const T (&array)[N]) noexcept
+    {
+        return N;
+    }
+
+    template <class T, std::ptrdiff_t N>
+    constexpr RAH2_STD::ptrdiff_t ssize(const T (&array)[N]) noexcept
+    {
+        return static_cast<RAH2_STD::ptrdiff_t>(N);
+    }
+
+    template <class C>
+    RAH2_NODISCARD constexpr auto empty(const C& c) -> decltype(c.empty())
+    {
+        return c.empty();
+    }
+
+    template <class T, std::size_t N>
+    RAH2_NODISCARD constexpr bool empty(const T (&array)[N]) noexcept
+    {
+        return N == 0;
+    }
+
+    template <class C>
+    constexpr auto data(C& c) -> decltype(c.data())
+    {
+        return c.data();
+    }
+
+    template <class C>
+    constexpr auto data(const C& c) -> decltype(c.data())
+    {
+        return c.data();
+    }
+
+    template <class T, std::size_t N>
+    constexpr T* data(T (&array)[N]) noexcept
+    {
+        return array;
+    }
+#endif
+
     // ********************** <iterator> Classes **************************************************
     struct default_sentinel_t
     {
