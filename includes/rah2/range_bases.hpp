@@ -944,9 +944,9 @@ namespace RAH2_NS
             struct range_impl
             {
                 template <typename R2>
-                using has_begin = decltype(begin(RAH2_STD::declval<R2>()));
+                using has_begin = decltype(ranges::begin(RAH2_STD::declval<R2>()));
                 template <typename R2>
-                using has_end = decltype(end(RAH2_STD::declval<R2>()));
+                using has_end = decltype(ranges::end(RAH2_STD::declval<R2>()));
 
                 static constexpr bool value = concepts::compiles<Diagnostic, R, has_begin>
                                               && concepts::compiles<Diagnostic, R, has_end>;
