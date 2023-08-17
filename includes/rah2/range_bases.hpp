@@ -412,7 +412,7 @@ namespace RAH2_NS
     constexpr bool totally_ordered = details::totally_ordered_impl<T>::value;
 
     // **************************** <iterator> traits *********************************************
-#if EASTL_STD_ITERATOR_CATEGORY_ENABLED
+#if defined(EASTL_STD_ITERATOR_CATEGORY_ENABLED) and EASTL_STD_ITERATOR_CATEGORY_ENABLED
     using std::bidirectional_iterator_tag;
     using std::forward_iterator_tag;
     using std::input_iterator_tag;
