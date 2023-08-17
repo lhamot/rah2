@@ -1,12 +1,17 @@
 
 # rah2
 **rah2** is a **ra**nge, **h**eader-only, C++14/17/20 library. 
+
 It is also compatible with the [EASTL](https://github.com/electronicarts/EASTL).
 ## What is a range library?
 A range is anything that can be iterated. 
+
 In C++, something is a range if we can call `begin(range)` and `end(range)` on it.
+
 Typically, ranges are containers or views.
+
 Views can be generators or adaptors.
+
 Adaptors take a range as input and produce some data in a lazy way.
 
 A range library allows to create ranges and algorithms.
