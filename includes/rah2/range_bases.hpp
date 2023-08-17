@@ -412,6 +412,21 @@ namespace RAH2_NS
     constexpr bool totally_ordered = details::totally_ordered_impl<T>::value;
 
     // **************************** <iterator> traits *********************************************
+#if EASTL_STD_ITERATOR_CATEGORY_ENABLED
+    using std::bidirectional_iterator_tag;
+    using std::forward_iterator_tag;
+    using std::input_iterator_tag;
+    using std::output_iterator_tag;
+    using std::random_access_iterator_tag;
+#if RAH2_CPP20
+    using std::contiguous_iterator_tag;
+#else
+    struct contiguous_iterator_tag : std::random_access_iterator_tag
+    {
+    };
+#endif
+
+#else
     using RAH2_STD::bidirectional_iterator_tag;
     using RAH2_STD::forward_iterator_tag;
     using RAH2_STD::input_iterator_tag;
@@ -423,6 +438,7 @@ namespace RAH2_NS
     struct contiguous_iterator_tag : RAH2_STD::random_access_iterator_tag
     {
     };
+#endif
 #endif
 
     // TODO : Implement iter_difference_t
@@ -629,7 +645,8 @@ namespace RAH2_NS
         {
             template <typename I2>
             using derived_from_input = RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<iterator_category<I2>, RAH2_STD::input_iterator_tag>>;
+                RAH2_NS::derived_from<iterator_category<I2>, RAH2_NS::input_iterator_tag>
+                || RAH2_NS::derived_from<iterator_category<I2>, RAH2_NS::forward_iterator_tag>>;
 
             static constexpr bool value =
                 concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value>
