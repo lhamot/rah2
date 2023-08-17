@@ -1,6 +1,7 @@
 
 # rah2
-**rah2** is a **ra**nge, **h**eader-only, C++14/17/20 library.
+**rah2** is a **ra**nge, **h**eader-only, C++14/17/20 library. 
+It is also compatible with the [EASTL](https://github.com/electronicarts/EASTL).
 ## What is a range library?
 A range is anything that can be iterated. 
 In C++, something is a range if we can call `begin(range)` and `end(range)` on it.
@@ -73,12 +74,18 @@ rah2 is licensed under the [Boost Software License](http://www.boost.org/LICENSE
 - Using `std` ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
 - Using `eastl` ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake_eastl.yml/badge.svg)
 ## How to use?
-- Add **rah2/includes** in your include path
-    - Include **rah2/ranges.hpp** to get the views
-    - Include **rah2/algorithm.hpp** to get the algorithms
 - Doc is WIP but cppreference is great
 - Views are in **rah2::views** namespace. [Ranges library](https://en.cppreference.com/w/cpp/ranges)
 - Algorithms are in **rah2::ranges** namespace [Constrained algorithms](https://en.cppreference.com/w/cpp/algorithm/ranges)
+### Simple use
+- Add **rah2/includes** in your include path
+    - Include **rah2/ranges.hpp** to get the views
+    - Include **rah2/algorithm.hpp** to get the algorithms
+### How to use with EASTL as backend
+- Add the preprocessor definition `RAH2_USE_EASTL`
+### How to use as part of the EASTL
+- Add the preprocessor definition `RAH2_INSIDE_EASTL`
+- Will allow to call rah2 this way ex: `eastl::views::iota(10)`
 ## The future of **rah2**
 - More tests (have to test all iterator category with all algo and all adaptors)
 - More optimizations
