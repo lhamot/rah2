@@ -1784,7 +1784,7 @@ namespace RAH2_NS
     template <class T, std::size_t N>
     constexpr T* end(T (&array)[N]) noexcept
     {
-        return array;
+        return array + N;
     }
 
     template <class C>
@@ -1858,12 +1858,14 @@ namespace RAH2_NS
     template <class T, std::size_t N>
     constexpr RAH2_STD::size_t size(const T (&array)[N]) noexcept
     {
+        (void)array;
         return N;
     }
 
     template <class T, std::ptrdiff_t N>
     constexpr RAH2_STD::ptrdiff_t ssize(const T (&array)[N]) noexcept
     {
+        (void)array;
         return static_cast<RAH2_STD::ptrdiff_t>(N);
     }
 
