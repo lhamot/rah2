@@ -2447,8 +2447,16 @@ namespace RAH2_NS
                     if (first != last)
                     {
                         ForwardIterator i(first);
-                        return {
-                            RAH2_NS::ranges::remove_copy_if(++i, last, first, predicate).out, last};
+                        ++i;
+                        for (; i != last; ++i)
+                        {
+                            if (!predicate(*i))
+                            {
+                                *first = RAH2_STD::move(*i);
+                                ++first;
+                            }
+                        }
+                        return {RAH2_STD::move(i), RAH2_STD::move(first)};
                     }
                     return {first, last};
                 }
