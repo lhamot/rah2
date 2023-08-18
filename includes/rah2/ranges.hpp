@@ -1644,6 +1644,8 @@ namespace RAH2_NS
             using iterator1 = iterator_t<R>;
             using iterator2 = sentinel_t<R>;
             using sub_range_type = RAH2_NS::ranges::range_reference_t<R>;
+            static_assert(RAH2_NS::ranges::range<R>, "R have to be a range");
+            static_assert(RAH2_NS::ranges::range<sub_range_type>, "rah2::ranges::range_reference_t<R> have to be a range");
             using sub_range_ref_traits = RAH2_NS::ranges::details::pointer_type<sub_range_type>;
             using sub_range_type_ptr = typename sub_range_ref_traits::type;
             using sub_iter_begin = iterator_t<sub_range_type>;
@@ -1729,12 +1731,18 @@ namespace RAH2_NS
 
             auto begin()
             {
-                init_ = true;
-                range_iter_ = RAH2_NS::ranges::begin(base_);
-                range_end_ = RAH2_NS::ranges::end(base_);
-                subrange_ = sub_range_ref_traits::to_pointer(*range_iter_);
-                sub_range_iter_ = RAH2_NS::ranges::begin(*subrange_);
-                sub_range_end_ = RAH2_NS::ranges::end(*subrange_);
+                if (not init_)
+                {
+                    init_ = true;
+                    range_iter_ = RAH2_NS::ranges::begin(base_);
+                    range_end_ = RAH2_NS::ranges::end(base_);
+                    if (range_iter_ != range_end_)
+                    {
+                        subrange_ = sub_range_ref_traits::to_pointer(*range_iter_);
+                        sub_range_iter_ = RAH2_NS::ranges::begin(*subrange_);
+                        sub_range_end_ = RAH2_NS::ranges::end(*subrange_);
+                    }
+                }
 
                 return iterator(this);
             }
