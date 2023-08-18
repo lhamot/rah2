@@ -2456,7 +2456,7 @@ namespace RAH2_NS
                                 ++first;
                             }
                         }
-                        return {RAH2_STD::move(i), RAH2_STD::move(first)};
+                        return {RAH2_STD::move(first), RAH2_STD::move(last)};
                     }
                     return {first, last};
                 }
