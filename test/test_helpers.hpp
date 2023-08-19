@@ -17,6 +17,10 @@
 #include <string>
 #endif
 
+#ifndef TEST_LEVEL
+#define TEST_LEVEL 1 // medium
+#endif
+
 #define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
 
 struct TestSuite
@@ -881,6 +885,9 @@ struct call_on_range_if_true<false, Sentinel, Cat, Sized, MakeR, Check>
 template <class Func>
 void foreach_range_combination()
 {
+#if TEST_LEVEL == 0
+    Func{}.template call<Common, RAH2_NS::random_access_iterator_tag, true>(R"(common_RA_sized)");
+#else
     Func{}.template call<Sentinel, RAH2_STD::input_iterator_tag, false>("sent_input_unsized");
     Func{}.template call<Sentinel, RAH2_STD::forward_iterator_tag, false>("sent_forward_unsized");
     Func{}.template call<Sentinel, RAH2_NS::bidirectional_iterator_tag, false>(
@@ -905,6 +912,7 @@ void foreach_range_combination()
     Func{}.template call<Common, RAH2_NS::bidirectional_iterator_tag, true>(R"(common_bidir_sized)");
     Func{}.template call<Common, RAH2_NS::random_access_iterator_tag, true>(R"(common_RA_sized)");
     Func{}.template call<Common, RAH2_NS::contiguous_iterator_tag, true>(R"(common_conti_sized)");
+#endif
 }
 
 template <template <CommonOrSent, typename, bool> class MakeRange>
