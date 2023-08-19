@@ -5,6 +5,56 @@
 template <class Func>
 void foreach_range_combination2()
 {
+#if TEST_LEVEL == 0
+    Func{}.template call<Common, RAH2_NS::random_access_iterator_tag, true, Common, RAH2_NS::random_access_iterator_tag, true>();
+
+#elif TEST_LEVEL == 1
+    Func{}.template call<Sentinel, RAH2_STD::input_iterator_tag, false, Sentinel, RAH2_STD::input_iterator_tag, false>();
+    Func{}.template call<Sentinel, RAH2_STD::forward_iterator_tag, false, Sentinel, RAH2_STD::forward_iterator_tag, false>();
+    Func{}
+        .template call<
+            Sentinel,
+            RAH2_NS::bidirectional_iterator_tag,
+            false,
+            Sentinel,
+            RAH2_NS::bidirectional_iterator_tag,
+            false>();
+    Func{}
+        .template call<
+            Sentinel,
+            RAH2_NS::random_access_iterator_tag,
+            false,
+            Sentinel,
+            RAH2_NS::random_access_iterator_tag,
+            false>();
+    Func{}.template call<Sentinel, RAH2_NS::contiguous_iterator_tag, false, Sentinel, RAH2_NS::contiguous_iterator_tag, false>();
+    Func{}.template call<Common, RAH2_NS::forward_iterator_tag, false, Common, RAH2_NS::forward_iterator_tag, false>();
+    Func{}.template call<Common, RAH2_NS::bidirectional_iterator_tag, false, Common, RAH2_NS::bidirectional_iterator_tag, false>();
+    Func{}.template call<Sentinel, RAH2_NS::input_iterator_tag, true, Sentinel, RAH2_NS::input_iterator_tag, true>();
+    Func{}.template call<Sentinel, RAH2_NS::forward_iterator_tag, true, Sentinel, RAH2_NS::forward_iterator_tag, true>();
+    Func{}
+        .template call<
+            Sentinel,
+            RAH2_NS::bidirectional_iterator_tag,
+            true,
+            Sentinel,
+            RAH2_NS::bidirectional_iterator_tag,
+            true>();
+    Func{}
+        .template call<
+            Sentinel,
+            RAH2_NS::random_access_iterator_tag,
+            true,
+            Sentinel,
+            RAH2_NS::random_access_iterator_tag,
+            true>();
+    Func{}.template call<Sentinel, RAH2_NS::contiguous_iterator_tag, true, Sentinel, RAH2_NS::contiguous_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::forward_iterator_tag, true, Common, RAH2_NS::forward_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::bidirectional_iterator_tag, true, Common, RAH2_NS::bidirectional_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::random_access_iterator_tag, true, Common, RAH2_NS::random_access_iterator_tag, true>();
+    Func{}.template call<Common, RAH2_NS::contiguous_iterator_tag, true, Common, RAH2_NS::contiguous_iterator_tag, true>();
+
+#else
     // The MSVC compiler take a LOT of memory to build all range combinations so, with MSVC
     // we do not test a combination (B, A) if (A, B) as already been tested.
     // It is tested with g++ and clang anyway.
@@ -230,6 +280,8 @@ void foreach_range_combination2()
     TEST_ALL_RANGE_TYPES(Common, RAH2_NS::bidirectional_iterator_tag, true)
     TEST_ALL_RANGE_TYPES(Common, RAH2_NS::random_access_iterator_tag, true)
     TEST_ALL_RANGE_TYPES(Common, RAH2_NS::contiguous_iterator_tag, true)
+#endif
+
 #endif
 }
 
