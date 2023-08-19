@@ -479,10 +479,50 @@ namespace RAH2_NS
     namespace details
     {
         template <typename I>
-        using iterator_category = RAH2_STD::conditional_t<
-            RAH2_NS::is_pointer_v<I>,
-            RAH2_NS::contiguous_iterator_tag,
-            typename RAH2_STD::iterator_traits<I>::iterator_category>;
+        using has_iterator_iterator_concept = typename I::iterator_concept;
+
+        template <typename I>
+        using has_iterator_traits_iterator_concept =
+            typename std::iterator_traits<I>::iterator_concept;
+
+        template <typename I>
+        using has_iterator_traits_iterator_category =
+            typename std::iterator_traits<I>::iterator_category;
+
+        template <typename I, typename = void>
+        struct iterator_concept_impl;
+
+        template <typename I>
+        struct iterator_concept_impl<
+            I,
+            std::enable_if_t<concepts::compiles<false, I, has_iterator_iterator_concept>>>
+        {
+            using type = typename I::iterator_concept;
+        };
+
+        template <typename I>
+        struct iterator_concept_impl<
+            I,
+            std::enable_if_t<
+                !concepts::compiles<false, I, has_iterator_iterator_concept>
+                && concepts::compiles<false, I, has_iterator_traits_iterator_concept>>>
+        {
+            using type = typename std::iterator_traits<I>::iterator_concept;
+        };
+
+        template <typename I>
+        struct iterator_concept_impl<
+            I,
+            std::enable_if_t<
+                !concepts::compiles<false, I, has_iterator_iterator_concept>
+                && !concepts::compiles<false, I, has_iterator_traits_iterator_concept>
+                && concepts::compiles<false, I, has_iterator_traits_iterator_category>>>
+        {
+            using type = typename std::iterator_traits<I>::iterator_category;
+        };
+
+        template <typename I>
+        using iterator_concept = typename iterator_concept_impl<I>::type;
 
         template <class Out, class T, bool Diagnostic = false>
         struct indirectly_writable_impl
@@ -644,13 +684,13 @@ namespace RAH2_NS
         {
             template <typename I2>
             using derived_from_input = RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<iterator_category<I2>, RAH2_NS::input_iterator_tag>
-                || RAH2_NS::derived_from<iterator_category<I2>, RAH2_NS::forward_iterator_tag>>;
+                RAH2_NS::derived_from<iterator_concept<I2>, RAH2_NS::input_iterator_tag>
+                || RAH2_NS::derived_from<iterator_concept<I2>, RAH2_NS::forward_iterator_tag>>;
 
             static constexpr bool value =
                 concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value>
                 && indirectly_readable_impl<I, Diagnostic>::value
-                && concepts::compiles<Diagnostic, I, iterator_category>
+                && concepts::compiles<Diagnostic, I, iterator_concept>
                 && concepts::compiles<Diagnostic, I, derived_from_input>;
         };
 
@@ -668,7 +708,7 @@ namespace RAH2_NS
         {
             template <typename U>
             using has_forward_tag = RAH2_STD::enable_if_t<
-                derived_from<details::iterator_category<U>, RAH2_STD::forward_iterator_tag>>;
+                derived_from<details::iterator_concept<U>, RAH2_STD::forward_iterator_tag>>;
 
             static constexpr bool value = input_iterator_impl<I, Diagnostic>::value
                                           && concepts::compiles<Diagnostic, I, has_forward_tag>
@@ -701,7 +741,7 @@ namespace RAH2_NS
                 RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()--), U>>;
             template <typename U>
             using has_bidir_cat = RAH2_STD::enable_if_t<
-                derived_from<details::iterator_category<U>, RAH2_STD::bidirectional_iterator_tag>>;
+                derived_from<details::iterator_concept<U>, RAH2_STD::bidirectional_iterator_tag>>;
 
             static constexpr bool value = forward_iterator_impl<I, Diagnostic>::value
                                           && concepts::compiles<Diagnostic, I, has_bidir_cat>
@@ -739,7 +779,7 @@ namespace RAH2_NS
 
             template <typename U>
             using has_random_access_cat = RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<details::iterator_category<U>, RAH2_STD::random_access_iterator_tag>>;
+                RAH2_NS::derived_from<details::iterator_concept<U>, RAH2_STD::random_access_iterator_tag>>;
 
             static constexpr bool value =
                 bidirectional_iterator_impl<I, Diagnostic>::value
@@ -759,7 +799,7 @@ namespace RAH2_NS
                 RAH2_NS::details::random_access_iterator_impl<I, Diagnostic>::value
                 && concepts::is_true_v<
                     Diagnostic,
-                    RAH2_NS::derived_from<details::iterator_category<I>, RAH2_NS::contiguous_iterator_tag>>
+                    RAH2_NS::derived_from<iterator_concept<I>, RAH2_NS::contiguous_iterator_tag>>
                 && concepts::is_true_v<Diagnostic, RAH2_NS::is_lvalue_reference_v<RAH2_NS::iter_reference_t<I>>>
                 && concepts::is_true_v<
                     Diagnostic,
@@ -1228,7 +1268,7 @@ namespace RAH2_NS
         namespace details
         {
             template <typename R>
-            using range_iter_categ_t = RAH2_NS::details::iterator_category<iterator_t<R>>;
+            using range_iter_categ_t = RAH2_NS::details::iterator_concept<iterator_t<R>>;
         }
 
         // ******************************** <ranges> concepts *****************************************
@@ -1434,7 +1474,7 @@ namespace RAH2_NS
         {
             I iterator_;
             S sentinel_;
-            using iter_cat = RAH2_NS::details::iterator_category<I>;
+            using iter_cat = RAH2_NS::details::iterator_concept<I>;
 
         public:
             subrange() = default;

@@ -629,7 +629,7 @@ struct check_iterator_cat<RAH2_STD::input_iterator_tag, I>
 {
     STATIC_ASSERT(RAH2_NS::input_iterator<I>);
     STATIC_ASSERT(
-        (RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::input_iterator_tag>));
+        (RAH2_NS::is_same_v<RAH2_NS::details::iterator_concept<I>, RAH2_NS::input_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::forward_iterator<I>);
 };
 
@@ -638,7 +638,7 @@ struct check_iterator_cat<RAH2_STD::forward_iterator_tag, I>
 {
     STATIC_ASSERT(RAH2_NS::forward_iterator<I>);
     STATIC_ASSERT(
-        (RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::forward_iterator_tag>));
+        (RAH2_NS::is_same_v<RAH2_NS::details::iterator_concept<I>, RAH2_NS::forward_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::bidirectional_iterator<I>);
 };
 
@@ -647,7 +647,7 @@ struct check_iterator_cat<RAH2_NS::bidirectional_iterator_tag, I>
 {
     STATIC_ASSERT(RAH2_NS::bidirectional_iterator<I>);
     STATIC_ASSERT((
-        RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::bidirectional_iterator_tag>));
+        RAH2_NS::is_same_v<RAH2_NS::details::iterator_concept<I>, RAH2_NS::bidirectional_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::random_access_iterator<I>);
 };
 
@@ -656,7 +656,7 @@ struct check_iterator_cat<RAH2_NS::random_access_iterator_tag, I>
 {
     STATIC_ASSERT(RAH2_NS::random_access_iterator<I>);
     STATIC_ASSERT((
-        RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::random_access_iterator_tag>));
+        RAH2_NS::is_same_v<RAH2_NS::details::iterator_concept<I>, RAH2_NS::random_access_iterator_tag>));
     STATIC_ASSERT(not RAH2_NS::contiguous_iterator<I>);
 };
 
@@ -665,7 +665,7 @@ struct check_iterator_cat<RAH2_NS::contiguous_iterator_tag, I>
 {
     STATIC_ASSERT(RAH2_NS::contiguous_iterator<I>);
     STATIC_ASSERT((
-        RAH2_NS::is_same_v<RAH2_NS::details::iterator_category<I>, RAH2_NS::contiguous_iterator_tag>));
+        RAH2_NS::is_same_v<RAH2_NS::details::iterator_concept<I>, RAH2_NS::contiguous_iterator_tag>));
 };
 
 template <bool sized>
@@ -811,8 +811,7 @@ struct check_range_cat<RAH2_NS::random_access_iterator_tag, R>
             assert(i >= RAH2_NS::ranges::begin(r));
         }
         STATIC_ASSERT((RAH2_NS::ranges::details::random_access_range_impl<R, true>::value));
-        // TODO : Fix reverse_iterator which keep the contiguous_iterator_tag
-        // AssertSame<RAH2_NS::ranges::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag>();
+        AssertSame<RAH2_NS::ranges::details::range_iter_categ_t<R>, RAH2_NS::random_access_iterator_tag>();
         STATIC_ASSERT(not RAH2_NS::ranges::contiguous_range<R>);
     }
 };

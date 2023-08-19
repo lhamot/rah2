@@ -538,7 +538,7 @@ struct make_reverse_view
     static constexpr bool do_test = RAH2_NS::ranges::bidirectional_range<BaseRange>;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
     using expected_cat = RAH2_NS::ranges::details::
-        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::random_access_iterator_tag>;
+        cap_iterator_tag<Tag, RAH2_STD::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>;
 };
 void test_reverse_view()
 {
