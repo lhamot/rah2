@@ -34,6 +34,7 @@ struct TestSuite
 
     bool current_test_status = true;
     size_t test_count = 0;
+    bool all_success = true;
 
     void addTest(RAH2_STD::string const& group, RAH2_STD::string const& name, std::function<void()> test)
     {
@@ -75,6 +76,7 @@ struct TestSuite
             }
             std::cout << std::endl;
         }
+        std::cout << (all_success ? "Tests passed" : "Tests failed") << std::endl;
     }
 
     void run()
@@ -97,6 +99,7 @@ struct TestSuite
             }
             testResult[name].success = current_test_status;
             testResult[name].testCount = test_count;
+            all_success = all_success && current_test_status;
         }
     }
 };

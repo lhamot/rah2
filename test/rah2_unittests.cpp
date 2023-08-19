@@ -1098,7 +1098,7 @@ try
     }
 
     testSuite.report();
-    return EXIT_SUCCESS;
+    return testSuite.all_success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 catch (...)
 {
