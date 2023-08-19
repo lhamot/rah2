@@ -1645,7 +1645,9 @@ namespace RAH2_NS
             using iterator2 = sentinel_t<R>;
             using sub_range_type = RAH2_NS::ranges::range_reference_t<R>;
             static_assert(RAH2_NS::ranges::range<R>, "R have to be a range");
-            static_assert(RAH2_NS::ranges::range<sub_range_type>, "rah2::ranges::range_reference_t<R> have to be a range");
+            static_assert(
+                RAH2_NS::ranges::range<sub_range_type>,
+                "rah2::ranges::range_reference_t<R> have to be a range");
             using sub_range_ref_traits = RAH2_NS::ranges::details::pointer_type<sub_range_type>;
             using sub_range_type_ptr = typename sub_range_ref_traits::type;
             using sub_iter_begin = iterator_t<sub_range_type>;
