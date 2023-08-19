@@ -1921,12 +1921,12 @@ namespace RAH2_NS
                         using unsigned_difference_type =
                             typename RAH2_STD::make_unsigned<difference_type>::type;
 #endif
-                        using uniform_int_distribution =
+                        using uniform_int_distrib =
                             RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
                         using uniform_int_distribution_param_type =
-                            typename uniform_int_distribution::param_type;
+                            typename uniform_int_distrib::param_type;
 
-                        uniform_int_distribution uid;
+                        uniform_int_distrib uid;
 
                         for (RandomAccessIterator i = first + 1; i != last; ++i)
                             RAH2_NS::ranges::iter_swap(
