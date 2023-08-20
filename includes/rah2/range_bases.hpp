@@ -483,11 +483,11 @@ namespace RAH2_NS
 
         template <typename I>
         using has_iterator_traits_iterator_concept =
-            typename std::iterator_traits<I>::iterator_concept;
+            typename RAH2_STD::iterator_traits<I>::iterator_concept;
 
         template <typename I>
         using has_iterator_traits_iterator_category =
-            typename std::iterator_traits<I>::iterator_category;
+            typename RAH2_STD::iterator_traits<I>::iterator_category;
 
         template <typename I, typename = void>
         struct iterator_concept_impl;
@@ -513,7 +513,7 @@ namespace RAH2_NS
                 !RAH2_NS::is_pointer_v<I> && !concepts::compiles<false, I, has_iterator_iterator_concept>
                 && concepts::compiles<false, I, has_iterator_traits_iterator_concept>>>
         {
-            using type = typename std::iterator_traits<I>::iterator_concept;
+            using type = typename RAH2_STD::iterator_traits<I>::iterator_concept;
         };
 
         template <typename I>
@@ -524,7 +524,7 @@ namespace RAH2_NS
                 && !concepts::compiles<false, I, has_iterator_traits_iterator_concept>
                 && concepts::compiles<false, I, has_iterator_traits_iterator_category>>>
         {
-            using type = typename std::iterator_traits<I>::iterator_category;
+            using type = typename RAH2_STD::iterator_traits<I>::iterator_category;
         };
 
         template <typename I>
