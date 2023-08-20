@@ -936,6 +936,26 @@ struct test_range
 };
 
 template <template <CommonOrSent, typename, bool> class MakeRange>
+struct test_algo
+{
+    struct CheckAlgo
+    {
+        template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
+        void call(char const* range_type) const
+        {
+            auto t1 = MakeR<Sentinel, Cat, Sized>();
+            t1.template test<Sentinel, Cat, Sized>(range_type);
+        }
+    };
+    template <CommonOrSent Sentinel, typename Cat, bool Sized>
+    void call(char const* range_type)
+    {
+        constexpr bool do_test = MakeRange<Sentinel, Cat, Sized>::do_test;
+        call_on_range_if_true<do_test, Sentinel, Cat, Sized, MakeRange, CheckAlgo>::test(range_type);
+    }
+};
+
+template <template <CommonOrSent, typename, bool> class MakeRange>
 struct test_range2 // When the adaptor take two ranges
 {
     template <CommonOrSent Sentinel, typename Cat, bool Sized>

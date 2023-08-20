@@ -28,11 +28,44 @@
 #endif
 
 #if RAH2_CPP20
-#include <ranges>
+#include <algorithm>
 #endif
 
 #include "test_helpers.hpp"
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_all_of_
+{
+    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    auto test(char const* range_type)
+    {
+        std::vector<int> raw_yes = {4, 4, 4, 4};
+        assert(RAH2_NS::ranges::all_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_yes), [](auto a) { return a == 4; }));
+        std::vector<int> raw_no = {4, 4, 3, 4};
+        assert(!RAH2_NS::ranges::all_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_no), [](auto a) { return a == 4; }));
+        std::vector<int> raw_empty = {};
+        assert(RAH2_NS::ranges::all_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
+
+        std::vector<int> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
+        auto is_zero = [](int value)
+        {
+            return value == 0;
+        };
+        COMPARE_DURATION_TO_STD_RANGES(
+            "all_of",
+            range_type,
+            [&]
+            {
+                auto result = STD::ranges::all_of(perf_no, is_zero);
+                assert(result);
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_all_of()
 {
     testSuite.test_case("sample");
@@ -46,7 +79,45 @@ void test_all_of()
     RAH2_STD::vector<int> vec = {4, 4, 3, 4};
     testSuite.test_case("iter");
     assert(RAH2_NS::ranges::all_of(vec.begin(), vec.end(), [](auto a) { return a == 4; }) == false);
+
+    testSuite.test_case("all_input_types");
+    testSuite.test_case("empty");
+    foreach_range_combination<test_algo<test_all_of_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_any_of_
+{
+    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    auto test(char const* range_type)
+    {
+        std::vector<int> raw_yes = {3, 3, 4, 3};
+        assert(RAH2_NS::ranges::any_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_yes), [](auto a) { return a == 4; }));
+        std::vector<int> raw_no = {3, 2, 3, 5};
+        assert(!RAH2_NS::ranges::any_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_no), [](auto a) { return a == 4; }));
+        std::vector<int> raw_empty = {};
+        assert(!RAH2_NS::ranges::any_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
+
+        std::vector<int> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
+        auto is_one = [](int value)
+        {
+            return value == 1;
+        };
+        COMPARE_DURATION_TO_STD_RANGES(
+            "any_of",
+            range_type,
+            [&]
+            {
+                auto result = STD::ranges::any_of(perf_no, is_one);
+                assert(!result);
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_any_of()
 {
     testSuite.test_case("sample");
@@ -60,7 +131,45 @@ void test_any_of()
     testSuite.test_case("iter");
     RAH2_STD::vector<int> vec = {3, 0, 1, 3, 4, 6};
     assert(RAH2_NS::ranges::any_of(vec.begin(), vec.end(), [](auto a) { return a == 5; }) == false);
+
+    testSuite.test_case("all_input_types");
+    testSuite.test_case("empty");
+    foreach_range_combination<test_algo<test_any_of_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_none_of_
+{
+    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    auto test(char const* range_type)
+    {
+        std::vector<int> raw_yes = {3, 2, 3, 5};
+        assert(RAH2_NS::ranges::none_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_yes), [](auto a) { return a == 4; }));
+        std::vector<int> raw_no = {3, 2, 4, 5};
+        assert(!RAH2_NS::ranges::none_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_no), [](auto a) { return a == 4; }));
+        std::vector<int> raw_empty = {};
+        assert(RAH2_NS::ranges::none_of(
+            make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
+
+        std::vector<int> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
+        auto is_one = [](int value)
+        {
+            return value == 1;
+        };
+        COMPARE_DURATION_TO_STD_RANGES(
+            "none_of",
+            range_type,
+            [&]
+            {
+                auto result = STD::ranges::none_of(perf_no, is_one);
+                assert(result);
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_none_of()
 {
     testSuite.test_case("sample");
@@ -74,6 +183,10 @@ void test_none_of()
     testSuite.test_case("iter");
     RAH2_STD::vector<int> vec = {7, 8, 9, 10};
     assert(RAH2_NS::ranges::none_of(vec.begin(), vec.end(), [](auto a) { return a == 9; }) == false);
+
+    testSuite.test_case("all_input_types");
+    testSuite.test_case("empty");
+    foreach_range_combination<test_algo<test_none_of_>>();
 }
 void test_for_each()
 {
