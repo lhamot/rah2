@@ -281,11 +281,7 @@ public:
             iter_ -= value;
             return *this;
         }
-        auto& operator*() const
-        {
-            return *iter_;
-        }
-        ref_type operator*()
+        ref_type operator*() const
         {
             return *iter_;
         }

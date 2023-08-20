@@ -397,7 +397,7 @@ namespace RAH2_NS
         {
             return r.count_ - count_;
         }
-        auto operator*() -> decltype(*iter_)
+        auto operator*() const -> decltype(*iter_)
         {
             return *iter_;
         }
@@ -1233,7 +1233,7 @@ namespace RAH2_NS
                 {
                     return iter_ - r.iter_;
                 }
-                auto operator*() -> decltype((*func_)(*iter_))
+                auto operator*() const -> decltype((*func_)(*iter_))
                 {
                     return (*func_)(*iter_);
                 }
@@ -1866,7 +1866,7 @@ namespace RAH2_NS
                     return *this;
                 }
                 RAH2_POST_INCR(base_cat)
-                auto operator*()
+                auto operator*() const
                 {
                     return subrange<inner_iterator>{cur_, next_.begin()};
                 }
@@ -2091,7 +2091,7 @@ namespace RAH2_NS
                 {
                 }
 
-                iter_reference_t<base_iterator> operator*()
+                iter_reference_t<base_iterator> operator*() const
                 {
                     return *RAH2_VARIANT_NS::get<base_iterator>(var_);
                 }
@@ -2371,7 +2371,7 @@ namespace RAH2_NS
                 {
                 }
 
-                reference operator*()
+                reference operator*() const
                 {
                     return RAH2_STD::get<N>(*iter_);
                 }
@@ -2553,7 +2553,7 @@ namespace RAH2_NS
                 template <
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
-                RAH2_POST_DECR value_type operator*()
+                RAH2_POST_DECR value_type operator*() const
                 {
                     return {pos_, *current_};
                 }
@@ -2776,7 +2776,7 @@ namespace RAH2_NS
 
             template <typename F, typename... Args, size_t... Is>
             auto deref_call_impl(
-                F const& func, RAH2_STD::tuple<Args...>& t, RAH2_STD::index_sequence<Is...>)
+                F const& func, RAH2_STD::tuple<Args...> const& t, RAH2_STD::index_sequence<Is...>)
             {
                 return func((*RAH2_STD::get<Is>(t))...);
             }
@@ -3025,7 +3025,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* =
                         nullptr>
                 RAH2_POST_DECR;
-                auto operator*()
+                auto operator*() const
                 {
                     return details::zip_range_reference(iters_);
                 }
@@ -3221,7 +3221,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* =
                         nullptr>
                 RAH2_POST_DECR;
-                reference_t operator*()
+                reference_t operator*() const
                 {
                     return details::deref_call_impl(
                         parent_->func_, iters_, RAH2_STD::make_index_sequence<tuple_size>{});
@@ -3381,7 +3381,7 @@ namespace RAH2_NS
             struct iterator : iterator_facade<iterator, sentinel, reference, iterator_category>
             {
                 base_iterator subRangeBegin_;
-                base_value sliding_result[N];
+                mutable base_value sliding_result[N];
                 size_t result_output_index = 0;
 
                 iterator() = default;
@@ -3416,14 +3416,14 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::bidirectional_iterator_tag>>* = nullptr>
                 RAH2_POST_DECR;
                 template <size_t... Is>
-                auto make_result(RAH2_STD::index_sequence<Is...>)
+                auto make_result(RAH2_STD::index_sequence<Is...>) const
                 {
                     sliding_result[result_output_index] = *subRangeBegin_;
                     return RAH2_STD::make_tuple(
                         (sliding_result[(result_output_index + 1 + Is) % N])...);
                 }
 
-                auto operator*()
+                auto operator*() const
                 {
                     return make_result(RAH2_STD::make_integer_sequence<size_t, N>{});
                 }
@@ -3610,7 +3610,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<derived_from<C, bidirectional_iterator_tag>>* = nullptr>
                 RAH2_POST_DECR;
 
-                auto operator*()
+                auto operator*() const
                 {
                     return details::apply(view_->func_, *iter_, RAH2_STD::make_index_sequence<N>{});
                 }
@@ -4338,7 +4338,7 @@ namespace RAH2_NS
                     return it1.iter_ - it2.iter_;
                 }
 
-                iter_reference_t<I> operator*()
+                iter_reference_t<I> operator*() const
                 {
                     return *iter_;
                 }
@@ -4575,7 +4575,7 @@ namespace RAH2_NS
                         && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* =
                         nullptr>
                 RAH2_POST_DECR;
-                RAH2_NS::ranges::range_reference_t<R> operator*()
+                RAH2_NS::ranges::range_reference_t<R> operator*() const
                 {
                     assert(view_ != nullptr);
                     return *iter_;
