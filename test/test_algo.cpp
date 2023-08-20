@@ -140,91 +140,28 @@ void test_algo_count()
         intsVec.insert(intsVec.end(), 79, 2);
         intsVec.insert(intsVec.end(), 10000000, 3);
 
-        auto const value = 2;
         auto getter_lbd = [](Coord const& c)
         {
             return c.x;
         };
 
-        auto const count_rah_noproj = COMPUTE_DURATION(
-            "count_rah_noproj",
+        COMPARE_DURATION_TO_STD_RANGES(
+            "count_noproj",
+            "common_RA_sized",
             [&]
             {
                 const auto count =
-                    RAH2_NS::ranges::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
+                    STD::ranges::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
                 assert(count == 79);
             });
-        auto const count_raw_noproj = COMPUTE_DURATION(
-            "count_raw_noproj",
+        COMPARE_DURATION_TO_STD_RANGES(
+            "count_proj",
+            "common_RA_sized",
             [&]
             {
-                size_t count = 0;
-                auto i = intsVec.data();
-                auto e = intsVec.data() + intsVec.size();
-                for (; i != e; ++i)
-                {
-                    if (*i == value)
-                        ++count;
-                }
+                const auto count = STD::ranges::count(coordsVec, 2, getter_lbd);
                 assert(count == 79);
             });
-        assert(count_rah_noproj < count_raw_noproj * 1.2);
-        auto const count_std_noproj = COMPUTE_DURATION(
-            "count_std_noproj",
-            [&]
-            {
-                const auto count =
-                    RAH2_STD::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
-                assert(count == 79);
-            });
-        assert(count_rah_noproj < count_std_noproj * 1.2);
-#if RAH2_CPP20
-        const auto count_rng_noproj = COMPUTE_DURATION(
-            "count_rng_noproj",
-            [&]
-            {
-                const size_t count =
-                    RAH2_NS::ranges::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
-                assert(count == 79);
-            });
-        assert(count_rah_noproj < count_rng_noproj * 1.2);
-#endif
-        auto const count_rah_proj = COMPUTE_DURATION(
-            "count_rah_proj",
-            [&]
-            {
-                const auto count = RAH2_NS::ranges::count(
-                    coordsVec.data(), coordsVec.data() + coordsVec.size(), 2, getter_lbd);
-                assert(count == 79);
-            });
-        auto const count_raw_proj = COMPUTE_DURATION(
-            "count_raw_proj",
-            [&]
-            {
-                size_t count = 0;
-                auto i = coordsVec.data();
-                auto e = coordsVec.data() + coordsVec.size();
-                for (; i != e; ++i)
-                {
-                    if (getter_lbd(*i) == value)
-                        ++count;
-                }
-                assert(count == 79);
-            });
-        assert(count_rah_proj < count_raw_proj * 1.2);
-
-        auto const count_rgn_proj = COMPUTE_DURATION(
-            "count_rgn_proj",
-            [&]
-            {
-                const auto count = RAH2_NS::ranges::count(
-                    coordsVec.data(),
-                    coordsVec.data() + coordsVec.size(),
-                    2,
-                    [](Coord const& c) { return c.x; });
-                assert(count == 79);
-            });
-        assert(count_rah_proj < count_rgn_proj * 1.2);
     }
 }
 void test_count_if()
@@ -254,41 +191,18 @@ void test_count_if()
         {
             return c.x == 2;
         };
-
-        auto const count_if_rah_pred = COMPUTE_DURATION(
-            "count_if_rah_pred",
+        auto proj = [](coord const& c)
+        {
+            return c;
+        };
+        COMPARE_DURATION_TO_STD_RANGES(
+            "count_if_pred",
+            "common_RA_sized",
             [&]
             {
-                const auto count = RAH2_NS::ranges::count_if(
-                    coords_vec.data(), coords_vec.data() + coords_vec.size(), pred);
+                const auto count = STD::ranges::count_if(coords_vec, pred, proj);
                 assert(count == 79);
             });
-
-        auto const count_if_raw_pred = COMPUTE_DURATION(
-            "count_if_raw_pred",
-            [&]
-            {
-                size_t count = 0;
-                auto i = coords_vec.data();
-                auto e = coords_vec.data() + coords_vec.size();
-                for (; i != e; ++i)
-                {
-                    if (pred(*i))
-                        ++count;
-                }
-                assert(count == 79);
-            });
-        assert(count_if_rah_pred < count_if_raw_pred * 1.2);
-
-        auto const count_if_std_pred = COMPUTE_DURATION(
-            "count_if_std_pred",
-            [&]
-            {
-                const auto count = RAH2_STD::count_if(
-                    coords_vec.data(), coords_vec.data() + coords_vec.size(), pred);
-                assert(count == 79);
-            });
-        assert(count_if_rah_pred < count_if_std_pred * 1.2);
     }
 }
 void test_mismatch()
