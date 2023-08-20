@@ -349,6 +349,17 @@ namespace RAH2_NS
             : iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>
         {
             using iterator_category = RAH2_NS::contiguous_iterator_tag;
+
+            using pointer_type = RAH2_STD::remove_reference_t<R>*;
+
+            pointer_type operator->()
+            {
+                return &(*(RAH2_SELF));
+            }
+            pointer_type operator->() const
+            {
+                return &(*(RAH2_SELF_CONST));
+            }
         };
     } // namespace ranges
 
