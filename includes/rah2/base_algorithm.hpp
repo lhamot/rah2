@@ -2626,8 +2626,7 @@ namespace RAH2_NS
                 template <typename BidirectionalIterator, typename Sentinel>
                 BidirectionalIterator operator()(BidirectionalIterator first, Sentinel last) const
                 {
-                    using IC =
-                        typename RAH2_STD::iterator_traits<BidirectionalIterator>::iterator_category;
+                    using IC = RAH2_NS::details::iterator_concept<BidirectionalIterator>;
                     return reverse_impl(first, last, IC());
                 }
 
@@ -4011,8 +4010,7 @@ namespace RAH2_NS
                     {
                         if (middle != last)
                         {
-                            using IC =
-                                typename RAH2_STD::iterator_traits<ForwardIterator>::iterator_category;
+                            using IC = RAH2_NS::details::iterator_concept<ForwardIterator>;
                             using value_type =
                                 typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 

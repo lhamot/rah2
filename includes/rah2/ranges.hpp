@@ -192,6 +192,7 @@ namespace RAH2_NS
         struct iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>
         {
             using iterator_category = RAH2_STD::input_iterator_tag;
+            using iterator_concept = RAH2_STD::input_iterator_tag;
             using value_type = RAH2_NS::remove_cvref_t<R>;
             using difference_type = intptr_t;
             using pointer = RAH2_STD::remove_reference_t<R>*;
@@ -233,6 +234,7 @@ namespace RAH2_NS
             : iterator_facade<I, S, R, RAH2_STD::input_iterator_tag>
         {
             using iterator_category = RAH2_STD::forward_iterator_tag;
+            using iterator_concept = RAH2_STD::forward_iterator_tag;
 
             friend bool operator!=(I const& it1, I const& it2)
             {
@@ -244,6 +246,7 @@ namespace RAH2_NS
         struct iterator_facade<I, S, R, RAH2_STD::output_iterator_tag>
         {
             using iterator_category = RAH2_STD::output_iterator_tag;
+            using iterator_concept = RAH2_STD::output_iterator_tag;
             using value_type = RAH2_STD::remove_reference_t<R>;
             using difference_type = intptr_t;
             using pointer = value_type*;
@@ -287,6 +290,7 @@ namespace RAH2_NS
             : iterator_facade<I, S, R, RAH2_STD::forward_iterator_tag>
         {
             using iterator_category = RAH2_STD::bidirectional_iterator_tag;
+            using iterator_concept = RAH2_STD::bidirectional_iterator_tag;
         };
 
         template <typename I, typename S, typename R>
@@ -294,6 +298,7 @@ namespace RAH2_NS
             : iterator_facade<I, S, R, RAH2_STD::bidirectional_iterator_tag>
         {
             using iterator_category = RAH2_STD::random_access_iterator_tag;
+            using iterator_concept = RAH2_STD::random_access_iterator_tag;
 
             friend bool operator<=(I const& it1, I const& it2)
             {
@@ -348,7 +353,8 @@ namespace RAH2_NS
         struct iterator_facade<I, S, R, RAH2_NS::contiguous_iterator_tag>
             : iterator_facade<I, S, R, RAH2_STD::random_access_iterator_tag>
         {
-            using iterator_category = RAH2_NS::contiguous_iterator_tag;
+            using iterator_category = RAH2_NS::random_access_iterator_tag;
+            using iterator_concept = RAH2_NS::contiguous_iterator_tag;
 
             using pointer_type = RAH2_STD::remove_reference_t<R>*;
 
@@ -368,11 +374,11 @@ namespace RAH2_NS
                                  counted_iterator<I>,
                                  RAH2_NS::default_sentinel_t,
                                  decltype(*RAH2_STD::declval<I>()),
-                                 typename RAH2_STD::iterator_traits<I>::iterator_category>
+                                 RAH2_NS::details::iterator_concept<I>>
     {
         I iter_;
         iter_difference_t<I> count_ = {};
-        using base_cat = typename RAH2_STD::iterator_traits<I>::iterator_category;
+        using base_cat = RAH2_NS::details::iterator_concept<I>;
 
     public:
         counted_iterator() = default;
@@ -4298,36 +4304,32 @@ namespace RAH2_NS
 
         // ******************************************* unbounded **********************************
 
-        template <typename I>
-        class unbounded_view : public view_interface<unbounded_view<I>>
+        namespace details
         {
-            I iter_;
-            using base_cat = typename RAH2_STD::iterator_traits<I>::iterator_category;
-
-        public:
-            explicit unbounded_view(I iter)
-                : iter_(RAH2_STD::move(iter))
-            {
-            }
-            class iterator
-                : public iterator_facade<iterator, default_sentinel_t, iter_reference_t<I>, base_cat>
+            template <typename I>
+            class unbounded_iterator : public iterator_facade<
+                                           unbounded_iterator<I>,
+                                           default_sentinel_t,
+                                           iter_reference_t<I>,
+                                           RAH2_NS::details::iterator_concept<I>>
             {
                 I iter_;
+                using base_cat = typename RAH2_NS::details::iterator_concept<I>;
 
             public:
-                iterator() = default;
-                explicit iterator(I iter)
+                unbounded_iterator() = default;
+                explicit unbounded_iterator(I iter)
                     : iter_(RAH2_STD::move(iter))
                 {
                 }
 
-                iterator& operator++()
+                unbounded_iterator& operator++()
                 {
                     ++iter_;
                     return *this;
                 }
                 RAH2_POST_INCR(base_cat)
-                iterator& operator+=(intptr_t off)
+                unbounded_iterator& operator+=(intptr_t off)
                 {
                     iter_ += off;
                     return *this;
@@ -4335,7 +4337,7 @@ namespace RAH2_NS
                 template <
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, bidirectional_iterator_tag>>* = nullptr>
-                iterator& operator--()
+                unbounded_iterator& operator--()
                 {
                     --iter_;
                     return *this;
@@ -4344,7 +4346,7 @@ namespace RAH2_NS
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, bidirectional_iterator_tag>>* = nullptr>
                 RAH2_POST_DECR;
-                friend intptr_t operator-(iterator const& it1, iterator const& it2)
+                friend intptr_t operator-(unbounded_iterator const& it1, unbounded_iterator const& it2)
                 {
                     return it1.iter_ - it2.iter_;
                 }
@@ -4356,28 +4358,41 @@ namespace RAH2_NS
                 template <
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
-                bool operator<(iterator const it2) const
+                bool operator<(unbounded_iterator const it2) const
                 {
                     return iter_ < it2.iter_;
                 }
 
-                friend bool operator==(iterator const& it1, iterator const& it2)
+                friend bool operator==(unbounded_iterator const& it1, unbounded_iterator const& it2)
                 {
                     return it1.iter_ == it2.iter_;
                 }
-                friend bool operator==(iterator const&, default_sentinel_t const&)
+                friend bool operator==(unbounded_iterator const&, default_sentinel_t const&)
                 {
                     return false;
                 }
-                friend bool operator==(default_sentinel_t const&, iterator const&)
+                friend bool operator==(default_sentinel_t const&, unbounded_iterator const&)
                 {
                     return false;
                 }
             };
+        } // namespace details
+
+        template <typename I>
+        class unbounded_view : public view_interface<unbounded_view<I>>
+        {
+            I iter_;
+            using base_cat = typename RAH2_NS::details::iterator_concept<I>;
+
+        public:
+            explicit unbounded_view(I iter)
+                : iter_(RAH2_STD::move(iter))
+            {
+            }
 
             auto begin()
             {
-                return iterator{iter_};
+                return details::unbounded_iterator<I>{iter_};
             }
             auto end()
             {
