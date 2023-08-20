@@ -493,9 +493,15 @@ namespace RAH2_NS
         struct iterator_concept_impl;
 
         template <typename I>
+        struct iterator_concept_impl<I, std::enable_if_t<RAH2_NS::is_pointer_v<I>>>
+        {
+            using type = RAH2_NS::contiguous_iterator_tag;
+        };
+
+        template <typename I>
         struct iterator_concept_impl<
             I,
-            std::enable_if_t<concepts::compiles<false, I, has_iterator_iterator_concept>>>
+            std::enable_if_t<!RAH2_NS::is_pointer_v<I> && concepts::compiles<false, I, has_iterator_iterator_concept>>>
         {
             using type = typename I::iterator_concept;
         };
@@ -504,7 +510,7 @@ namespace RAH2_NS
         struct iterator_concept_impl<
             I,
             std::enable_if_t<
-                !concepts::compiles<false, I, has_iterator_iterator_concept>
+                !RAH2_NS::is_pointer_v<I> && !concepts::compiles<false, I, has_iterator_iterator_concept>
                 && concepts::compiles<false, I, has_iterator_traits_iterator_concept>>>
         {
             using type = typename std::iterator_traits<I>::iterator_concept;
@@ -514,7 +520,7 @@ namespace RAH2_NS
         struct iterator_concept_impl<
             I,
             std::enable_if_t<
-                !concepts::compiles<false, I, has_iterator_iterator_concept>
+                !RAH2_NS::is_pointer_v<I> && !concepts::compiles<false, I, has_iterator_iterator_concept>
                 && !concepts::compiles<false, I, has_iterator_traits_iterator_concept>
                 && concepts::compiles<false, I, has_iterator_traits_iterator_category>>>
         {
