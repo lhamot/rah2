@@ -1968,6 +1968,11 @@ namespace RAH2_NS
             return *this;
         }
 
+        back_insert_iterator const& operator*() const
+        {
+            return *this;
+        }
+
         back_insert_iterator& operator++()
         {
             return *this;
