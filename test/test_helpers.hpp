@@ -1061,12 +1061,22 @@ auto toto(std::initializer_list<V> il)
 template <typename T>
 struct WhatIs;
 
-#define PERF_TEST 0
+#ifdef NDEBUG
+#define RELEASE_MULTIPLIER 50
+#else
+#define RELEASE_MULTIPLIER 1
+#endif
 
 template <typename F>
-auto compute_duration(F&& func, char const* name, char const* file, int line)
+std::chrono::nanoseconds compute_duration(
+    F&& func,
+    char const* algo,
+    char const* range_type,
+    char const* step, // ref or test
+    char const* file,
+    int line)
 {
-#if PERF_TEST
+#ifdef PERF_TEST
     size_t count = 0;
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
@@ -1089,10 +1099,13 @@ auto compute_duration(F&& func, char const* name, char const* file, int line)
         ++count;
         end = std::chrono::high_resolution_clock::now();
     }
-    std::cout << name << " : " << ((end - start) / count).count() << std::endl;
+    std::cout << algo << "/" << range_type << "/" << step << " : "
+              << ((end - start) / count).count() << std::endl;
     return (end - start) / count;
 #else
-    (void)name;
+    (void)algo;
+    (void)range_type;
+    (void)step;
     (void)func;
     (void)file;
     (void)line;
@@ -1100,6 +1113,52 @@ auto compute_duration(F&& func, char const* name, char const* file, int line)
 #endif
 }
 
-#define COMPUTE_DURATION(N, F) compute_duration((F), N, __FILE__, __LINE__)
+template <typename F, typename F2>
+auto compare_duration(
+    F&& func_std,
+    F2&& func_rah2,
+    char const* algo,
+    char const* range_type,
+    char const* file,
+    int line)
+{
+    auto duration_std =
+        compute_duration(RAH2_STD::forward<F>(func_std), algo, range_type, "std", file, line);
+    auto duration_rah2 =
+        compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
+    assert(duration_rah2 < (duration_std * 1.2));
+}
+
+#define COMPUTE_DURATION(ALGO, CONCEPT, STEP, F)                                                   \
+    compute_duration((F), ALGO, CONCEPT, STEP, __FILE__, __LINE__)
+
+#if RAH2_CPP20
+#define COMPUTE_DURATION_IF_CPP20(ALGO, CONCEPT, STEP, F)                                          \
+    compute_duration((F), ALGO, CONCEPT, STEP, __FILE__, __LINE__)
+#else
+#define COMPUTE_DURATION_IF_CPP20(ALGO, CONCEPT, STEP, F)                                          \
+    std::chrono::nanoseconds(std::chrono::seconds(1000))
+#endif
 
 #define CHECK_EQUAL(A, B) assert((A) == (B))
+
+#if defined(PERF_TEST) and RAH2_CPP20
+#define COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, F)                                           \
+    {                                                                                              \
+        namespace STD = std;                                                                       \
+        auto test_std = (F);                                                                       \
+        {                                                                                          \
+            namespace STD = RAH2_NS;                                                               \
+            auto test_rah2 = (F);                                                                  \
+            compare_duration(test_std, test_rah2, ALGO, CONCEPT, __FILE__, __LINE__);              \
+        }                                                                                          \
+    }
+#else
+#define COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, F)                                           \
+    {                                                                                              \
+        namespace STD = RAH2_NS;                                                                   \
+        (void)ALGO;                                                                                \
+        (void)CONCEPT;                                                                             \
+        (void)(F);                                                                                 \
+    }
+#endif
