@@ -117,7 +117,7 @@ inline void assert_impl(char const* file, int line, char const* condition, bool 
 {
     ++testSuite.test_count;
 #if defined(TEST_DISPLAY_ALL)
-    std::cout << line << " assert : " << condition << std::endl;
+    std::cout << file << ":" << line << " assert : " << condition << std::endl;
 #endif
     if (value)
     {
@@ -128,7 +128,7 @@ inline void assert_impl(char const* file, int line, char const* condition, bool 
     else
     {
 #if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
-        std::cout << line << " assert : " << condition << std::endl;
+        std::cout << file << ":" << line << " assert : " << condition << std::endl;
 #endif
 #if defined(TEST_DISPLAY_FAILED)
         std::cout << "NOT OK (" << file << ":" << line << ")" << std::endl;
@@ -1135,12 +1135,7 @@ std::chrono::nanoseconds compute_duration(
 
 template <typename F, typename F2>
 auto compare_duration(
-    F&& func_std,
-    F2&& func_rah2,
-    char const* algo,
-    char const* range_type,
-    char const* file,
-    int line)
+    F&& func_std, F2&& func_rah2, char const* algo, char const* range_type, char const* file, int line)
 {
     auto duration_std =
         compute_duration(RAH2_STD::forward<F>(func_std), algo, range_type, "std", file, line);
