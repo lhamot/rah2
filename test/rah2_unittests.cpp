@@ -373,7 +373,8 @@ void test_range_traits()
 int main()
 try
 {
-    // std::cout.imbue(std::locale("en_EN"));
+    std::setlocale(LC_ALL, "en_US.UTF-8");
+    std::cout.imbue(std::locale("en_US.UTF-8"));
 
     testSuite.addTest("Range_concepts", "*", test_range_traits);
     testSuite.addTest("concepts", "*", test_concepts);
