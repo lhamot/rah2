@@ -6,6 +6,7 @@
 #include <random>
 #include <forward_list>
 #include <cstring>
+#include <clocale>
 
 #ifdef RAH2_USE_EASTL
 #include <EASTL/vector.h>
