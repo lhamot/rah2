@@ -6,6 +6,7 @@
 //
 #include <rah2/ranges.hpp>
 #include <rah2/algorithm.hpp>
+#include <clocale>
 
 #ifdef RAH2_USE_EASTL
 
