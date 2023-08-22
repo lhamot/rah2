@@ -488,7 +488,8 @@ auto make_test_view()
 template <CommonOrSent Sent, typename Cat, bool Sized, typename Range>
 auto make_test_view_adapter(Range&& r)
 {
-    return test_view_adapter<Sent, Cat, Sized, std::remove_reference_t<Range>>(std::forward<Range>(r));
+    return test_view_adapter<Sent, Cat, Sized, RAH2_STD::remove_reference_t<Range>>(
+        RAH2_STD::forward<Range>(r));
 }
 
 // output
@@ -1031,7 +1032,7 @@ void equalRange(R&& RANGE, I&& IL, char const* rangeName, char const* ILName)
     std::cout << "assert : " << rangeName << " == " << ILName << std::endl;
 #endif
     if (RAH2_NS::ranges::all_of(
-            RAH2_NS::views::zip(std::forward<R>(RANGE), std::forward<I>(IL)), PairEqual))
+            RAH2_NS::views::zip(RAH2_STD::forward<R>(RANGE), RAH2_STD::forward<I>(IL)), PairEqual))
     {
 #if defined(TEST_DISPLAY_ALL)
         std::cout << "OK" << std::endl;
@@ -1060,7 +1061,7 @@ std::ostream& operator<<(std::ostream& os, RAH2_STD::tuple<Args...> tup)
 {
     auto print_elt = [](auto&& elt)
     {
-        (std::cout << std::forward<decltype(elt)>(elt)) << " ";
+        (std::cout << RAH2_STD::forward<decltype(elt)>(elt)) << " ";
     };
 
     RAH2_NS::ranges::details::for_each(tup, print_elt);

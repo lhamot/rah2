@@ -1248,9 +1248,9 @@ namespace RAH2_NS
                     typename R,
                     RAH2_STD::enable_if_t<!has_data_member<R> and contiguous_iterator<iterator_t<R>>>* = nullptr>
                 auto operator()(R&& range) const
-                    -> decltype(&(*ranges::begin(std::forward<R>(range))))
+                    -> decltype(&(*ranges::begin(RAH2_STD::forward<R>(range))))
                 {
-                    return &(*ranges::begin(std::forward<R>(range)));
+                    return &(*ranges::begin(RAH2_STD::forward<R>(range)));
                 }
             };
 
