@@ -705,7 +705,7 @@ namespace RAH2_NS
         struct sentinel_for_impl
         {
             static constexpr bool value =
-                concepts::is_true_v<Diagnostic, RAH2_NS::semiregular<S>>
+                concepts::is_true_v<Diagnostic, RAH2_NS::semiregular<S, Diagnostic>>
                 && concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value>
                 && weakly_equality_comparable_with_impl<I, S, Diagnostic>::value;
         };
@@ -986,6 +986,40 @@ namespace RAH2_NS
                     return range.end();
                 }
             };
+
+            template <typename I, typename S = I>
+            struct unwraped_iterators
+            {
+                I iterator;
+                S sentinel;
+            };
+
+            template <
+                typename I,
+                typename S,
+                RAH2_STD::enable_if_t<
+                    contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                    && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>>* =
+                    nullptr>
+            unwraped_iterators<RAH2_STD::remove_reference_t<RAH2_STD::iter_reference_t<I>>*>
+            unwrap(I&& it, S&& s)
+            {
+                auto begin_it = &(*it);
+                return {begin_it, begin_it + (s - it)};
+            }
+            template <
+                typename I,
+                typename S,
+                RAH2_STD::enable_if_t<not(
+                    contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                    && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
+                    nullptr>
+            unwraped_iterators<RAH2_STD::remove_reference_t<I>, RAH2_STD::remove_reference_t<S>>
+            unwrap(I&& it, S&& s)
+            {
+                return {RAH2_STD::forward<I>(it), RAH2_STD::forward<S>(s)};
+            }
+
         } // namespace details
 
         constexpr auto begin = details::begin_impl();
@@ -1209,6 +1243,15 @@ namespace RAH2_NS
                 {
                     return range.data();
                 }
+
+                template <
+                    typename R,
+                    RAH2_STD::enable_if_t<!has_data_member<R> and contiguous_iterator<iterator_t<R>>>* = nullptr>
+                auto operator()(R&& range) const
+                    -> decltype(&(*ranges::begin(std::forward<R>(range))))
+                {
+                    return &(*ranges::begin(std::forward<R>(range)));
+                }
             };
 
             struct cdata_impl
@@ -1363,7 +1406,7 @@ namespace RAH2_NS
                 template <typename T>
                 using has_data = RAH2_STD::enable_if_t<RAH2_NS::is_same_v<
                     decltype(RAH2_NS::ranges::data(RAH2_STD::declval<T>())),
-                    RAH2_STD::add_pointer_t<range_reference_t<T>>>>;
+                    RAH2_STD::add_pointer_t<RAH2_STD::remove_reference_t<range_reference_t<T>>>>>;
                 template <typename T>
                 using contiguous_iterator = RAH2_STD::enable_if_t<
                     RAH2_NS::details::contiguous_iterator_impl<iterator_t<T>, Diagnostic>::value>;

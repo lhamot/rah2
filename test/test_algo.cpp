@@ -260,16 +260,15 @@ void test_algo_count()
 
         COMPARE_DURATION_TO_STD_RANGES(
             "count_noproj",
-            "common_RA_sized",
+            "common_contig_sized",
             [&]
             {
-                const auto count =
-                    STD::ranges::count(intsVec.data(), intsVec.data() + intsVec.size(), 2);
+                const auto count = STD::ranges::count(intsVec, 2);
                 assert(count == 79);
             });
         COMPARE_DURATION_TO_STD_RANGES(
             "count_proj",
-            "common_RA_sized",
+            "common_contig_sized",
             [&]
             {
                 const auto count = STD::ranges::count(coordsVec, 2, getter_lbd);
@@ -277,6 +276,13 @@ void test_algo_count()
             });
     }
 }
+
+struct coord
+{
+    int x;
+    int y;
+};
+
 void test_count_if()
 {
     testSuite.test_case("sample");
@@ -291,11 +297,6 @@ void test_count_if()
 
     {
         testSuite.test_case("perf");
-        struct coord
-        {
-            int x;
-            int y;
-        };
         RAH2_STD::vector<coord> coords_vec;
         coords_vec.insert(coords_vec.end(), 10000000, {1, 47});
         coords_vec.insert(coords_vec.end(), 79, {2, 47});
@@ -309,8 +310,8 @@ void test_count_if()
             return c;
         };
         COMPARE_DURATION_TO_STD_RANGES(
-            "count_if_pred",
-            "common_RA_sized",
+            "count_if_pred_proj",
+            "common_contig_sized",
             [&]
             {
                 const auto count = STD::ranges::count_if(coords_vec, pred, proj);
