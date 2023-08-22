@@ -1001,7 +1001,7 @@ namespace RAH2_NS
                     contiguous_iterator<RAH2_STD::remove_reference_t<I>>
                     && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>>* =
                     nullptr>
-            unwraped_iterators<RAH2_STD::remove_reference_t<RAH2_STD::iter_reference_t<I>>*>
+            unwraped_iterators<RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*>
             unwrap(I&& it, S&& s)
             {
                 auto begin_it = &(*it);
