@@ -868,8 +868,12 @@ namespace RAH2_NS
                     class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 constexpr RAH2_NS::iter_difference_t<I>
-                operator()(I first, S last, T const& value, Proj proj) const
+                operator()(I first_w, S last_w, T const& value, Proj proj) const
                 {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    auto first = RAH2_STD::move(first_last.iterator);
+                    auto last = RAH2_STD::move(first_last.sentinel);
                     RAH2_NS::iter_difference_t<I> counter = 0;
                     for (; first != last; ++first)
                     {
@@ -898,8 +902,13 @@ namespace RAH2_NS
                     typename S,
                     class T,
                     RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr RAH2_NS::iter_difference_t<I> operator()(I first, S last, T const& value) const
+                constexpr RAH2_NS::iter_difference_t<I>
+                operator()(I first_w, S last_w, T const& value) const
                 {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    auto first = RAH2_STD::move(first_last.iterator);
+                    auto last = RAH2_STD::move(first_last.sentinel);
                     RAH2_NS::iter_difference_t<I> counter = 0;
                     for (; first != last; ++first)
                         if (*first == value)
@@ -940,8 +949,12 @@ namespace RAH2_NS
                     typename Pred,
                     RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 RAH2_NODISCARD RAH2_CONSTEXPR20 RAH2_NS::iter_difference_t<I>
-                operator()(I first, S last, Pred pred, Proj proj) const
+                operator()(I first_w, S last_w, Pred pred, Proj proj) const
                 {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    auto first = RAH2_STD::move(first_last.iterator);
+                    auto last = RAH2_STD::move(first_last.sentinel);
                     RAH2_NS::iter_difference_t<I> counter = 0;
                     for (; first != last; ++first)
                         if (pred(proj(*first)))
@@ -960,8 +973,8 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
 
                 template <
@@ -970,8 +983,12 @@ namespace RAH2_NS
                     typename Pred,
                     RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 RAH2_NODISCARD RAH2_CONSTEXPR20 RAH2_NS::iter_difference_t<I>
-                operator()(I first, S last, Pred pred) const
+                operator()(I first_w, S last_w, Pred pred) const
                 {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    auto first = RAH2_STD::move(first_last.iterator);
+                    auto last = RAH2_STD::move(first_last.sentinel);
                     RAH2_NS::iter_difference_t<I> counter = 0;
                     for (; first != last; ++first)
                         if (pred(*first))
@@ -983,7 +1000,7 @@ namespace RAH2_NS
                 RAH2_NODISCARD RAH2_CONSTEXPR20 range_difference_t<R> operator()(R&& r, Pred pred) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(pred));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(pred));
                 }
             };
         } // namespace niebloids
