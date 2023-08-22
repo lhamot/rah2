@@ -46,7 +46,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(init),
-                        RAH2_STD::ref(f));
+                        RAH2_STD::move(f));
                 }
             };
 
@@ -78,7 +78,7 @@ namespace RAH2_NS
                 constexpr auto operator()(R&& r, F f) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(f));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(f));
                 }
             };
 
@@ -114,7 +114,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(init),
-                        RAH2_STD::ref(f));
+                        RAH2_STD::move(f));
                 }
             };
 
@@ -149,7 +149,7 @@ namespace RAH2_NS
                 constexpr auto operator()(R&& r, F f) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(f));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(f));
                 }
             };
 
@@ -182,7 +182,7 @@ namespace RAH2_NS
                         RAH2_STD::move(first),
                         RAH2_STD::move(last),
                         RAH2_STD::move(init),
-                        RAH2_STD::ref(f));
+                        RAH2_STD::move(f));
                 }
 
                 template <
@@ -196,7 +196,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(init),
-                        RAH2_STD::ref(f));
+                        RAH2_STD::move(f));
                 }
             };
 
@@ -227,7 +227,7 @@ namespace RAH2_NS
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<I>, RAH2_STD::iter_reference_t<I>>
                 constexpr auto operator()(I first, S last, F f) const
                 {
-                    return impl<I>(RAH2_STD::move(first), RAH2_STD::move(last), RAH2_STD::ref(f));
+                    return impl<I>(RAH2_STD::move(first), RAH2_STD::move(last), RAH2_STD::move(f));
                 }
 
                 template <
@@ -238,7 +238,7 @@ namespace RAH2_NS
                 constexpr auto operator()(R&& r, F f) const
                 {
                     return impl<RAH2_NS::ranges::borrowed_iterator_t<R>>(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(f));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(f));
                 }
             };
         } // namespace niebloids
@@ -289,7 +289,10 @@ namespace RAH2_NS
                 operator()(R&& r, T const& value, Proj proj = {}) const
                 {
                     return this->operator()(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value, RAH2_STD::ref(proj));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        value,
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -331,8 +334,8 @@ namespace RAH2_NS
                     return this->operator()(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -375,8 +378,8 @@ namespace RAH2_NS
                     return this->operator()(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -942,7 +945,7 @@ namespace RAH2_NS
                 constexpr bool operator()(R&& r, Pred pred) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(pred));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), details::move_proj(pred));
                 }
             };
         } // namespace niebloids
@@ -1124,7 +1127,7 @@ namespace RAH2_NS
                         last_it,
                         RAH2_NS::ranges::distance(first, middle),
                         RAH2_NS::ranges::distance(middle, last_it),
-                        RAH2_STD::ref(comp));
+                        RAH2_STD::move(comp));
                     return last_it;
                 }
 
@@ -1168,7 +1171,8 @@ namespace RAH2_NS
                     {
                         d1 = n1 / 2;
                         RAH2_NS::ranges::advance(cut1, d1);
-                        cut2 = RAH2_NS::ranges::lower_bound(middle, last, *cut1, RAH2_STD::ref(comp));
+                        cut2 =
+                            RAH2_NS::ranges::lower_bound(middle, last, *cut1, RAH2_STD::move(comp));
                         d2 = RAH2_NS::ranges::distance(middle, cut2);
                     }
                     else
@@ -1176,13 +1180,14 @@ namespace RAH2_NS
                         d2 = n2 / 2;
                         RAH2_NS::ranges::advance(cut2, d2);
                         cut1 =
-                            RAH2_NS::ranges::upper_bound(first, middle, *cut2, RAH2_STD::ref(comp));
+                            RAH2_NS::ranges::upper_bound(first, middle, *cut2, RAH2_STD::move(comp));
                         d1 = RAH2_NS::ranges::distance(first, cut1);
                     }
 
                     I new_middle = RAH2_NS::ranges::rotate(cut1, middle, cut2).begin();
-                    inplace_merge_slow(first, cut1, new_middle, d1, d2, RAH2_STD::ref(comp));
-                    inplace_merge_slow(new_middle, cut2, last, n1 - d1, n2 - d2, RAH2_STD::ref(comp));
+                    inplace_merge_slow(first, cut1, new_middle, d1, d2, RAH2_STD::move(comp));
+                    inplace_merge_slow(
+                        new_middle, cut2, last, n1 - d1, n2 - d2, RAH2_STD::move(comp));
                 }
             };
         } // namespace niebloids
@@ -1246,7 +1251,7 @@ namespace RAH2_NS
                     >
                 constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
                 {
-                    return *RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp));
+                    return *RAH2_NS::ranges::max_element(r, RAH2_STD::move(comp));
                 }
 
                 template <
@@ -1256,7 +1261,7 @@ namespace RAH2_NS
                 constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
                 {
                     using V = range_value_t<R>;
-                    return static_cast<V>(*RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp)));
+                    return static_cast<V>(*RAH2_NS::ranges::max_element(r, RAH2_STD::move(comp)));
                 }
                 template <
                     typename R,
@@ -1289,7 +1294,7 @@ namespace RAH2_NS
                 template <typename T, typename Comp = RAH2_NS::ranges::less>
                 constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
                 {
-                    return *RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp));
+                    return *RAH2_NS::ranges::min_element(r, RAH2_STD::move(comp));
                 }
 
                 template <
@@ -1299,7 +1304,7 @@ namespace RAH2_NS
                 constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
                 {
                     using V = range_value_t<R>;
-                    return static_cast<V>(*RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp)));
+                    return static_cast<V>(*RAH2_NS::ranges::min_element(r, RAH2_STD::move(comp)));
                 }
                 template <
                     typename R,
@@ -1344,7 +1349,7 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::minmax_result<T>
                 operator()(std::initializer_list<T> r, Comp comp = {}) const
                 {
-                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::ref(comp));
+                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::move(comp));
                     return {*result.min, *result.max};
                 }
 
@@ -1356,7 +1361,7 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
                 operator()(R&& r, Comp comp = {}) const
                 {
-                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::ref(comp));
+                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::move(comp));
                     return {RAH2_STD::move(*result.min), RAH2_STD::move(*result.max)};
                 }
             };

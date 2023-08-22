@@ -1020,6 +1020,27 @@ namespace RAH2_NS
                 return {RAH2_STD::forward<I>(it), RAH2_STD::forward<S>(s)};
             }
 
+            template <
+                typename T,
+                std::enable_if_t<std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
+            auto wrap_proj(T&& func) -> decltype(std::ref(std::forward<T>(func)))
+            {
+                return std::ref(std::forward<T>(func));
+            }
+
+            template <
+                typename T,
+                std::enable_if_t<!std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
+            T wrap_proj(T&& func)
+            {
+                return std::forward<T>(func);
+            }
+
+            template <typename T>
+            auto move_proj(T&& func) -> decltype(wrap_proj(RAH2_STD::move(func)))
+            {
+                return wrap_proj(RAH2_STD::move(func));
+            }
         } // namespace details
 
         constexpr auto begin = details::begin_impl();

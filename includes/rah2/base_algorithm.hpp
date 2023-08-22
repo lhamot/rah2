@@ -12,7 +12,6 @@
 
 #include <string.h> // memcmp
 #include <utility> // std::move
-#include <functional> // std::ref
 
 #endif
 
@@ -189,8 +188,8 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(result),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -570,12 +569,9 @@ namespace RAH2_NS
         {
             struct all_of
             {
-                /// all_of
-                ///
-                /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                bool impl(InputIterator first, InputSentinel last, Predicate p) const
                 {
                     for (; first != last; ++first)
                     {
@@ -583,6 +579,22 @@ namespace RAH2_NS
                             return false;
                     }
                     return true;
+                }
+
+            public:
+                /// all_of
+                ///
+                /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Predicate>
+                bool operator()(InputIterator first_w, InputSentinel last_w, Predicate p) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::move_proj(p));
                 }
 
                 template <typename InputRange, typename Predicate>
@@ -599,12 +611,9 @@ namespace RAH2_NS
         {
             struct any_of
             {
-                /// any_of
-                ///
-                /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                bool impl(InputIterator first, InputSentinel last, Predicate p) const
                 {
                     for (; first != last; ++first)
                     {
@@ -612,6 +621,22 @@ namespace RAH2_NS
                             return true;
                     }
                     return false;
+                }
+
+            public:
+                /// any_of
+                ///
+                /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Predicate>
+                bool operator()(InputIterator first_w, InputSentinel last_w, Predicate p) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::move_proj(p));
                 }
 
                 template <typename InputRange, typename Predicate>
@@ -628,12 +653,9 @@ namespace RAH2_NS
         {
             struct none_of
             {
-                /// none_of
-                ///
-                /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                bool impl(InputIterator first, InputSentinel last, Predicate p) const
                 {
                     for (; first != last; ++first)
                     {
@@ -643,13 +665,27 @@ namespace RAH2_NS
                     return true;
                 }
 
+            public:
+                /// none_of
+                ///
+                /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
+                ///
+                template <typename InputIterator, typename InputSentinel, typename Predicate>
+                bool operator()(InputIterator first_w, InputSentinel last_w, Predicate p) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::move_proj(p));
+                }
+
                 template <typename InputRange, typename Predicate>
-                bool operator()(InputRange&& range, Predicate&& p) const
+                bool operator()(InputRange&& range, Predicate p) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::forward<Predicate>(p));
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
                 }
             };
         } // namespace niebloids
@@ -689,8 +725,8 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -894,7 +930,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         value,
-                        RAH2_STD::move(proj));
+                        details::move_proj(proj));
                 }
 
                 template <
@@ -973,8 +1009,8 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::move(pred),
-                        RAH2_STD::move(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
 
                 template <
@@ -1000,7 +1036,7 @@ namespace RAH2_NS
                 RAH2_NODISCARD RAH2_CONSTEXPR20 range_difference_t<R> operator()(R&& r, Pred pred) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(pred));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), details::move_proj(pred));
                 }
             };
         } // namespace niebloids
@@ -1046,7 +1082,10 @@ namespace RAH2_NS
                 constexpr borrowed_iterator_t<R> operator()(R&& r, T const& value, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value, RAH2_STD::ref(proj));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        value,
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -1080,8 +1119,8 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -1130,8 +1169,8 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        details::move_proj(pred),
+                        details::move_proj(proj));
                 }
             };
         } // namespace niebloids
@@ -1692,9 +1731,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
-                        RAH2_STD::ref(comp),
-                        RAH2_STD::ref(proj1),
-                        RAH2_STD::ref(proj2));
+                        details::move_proj(comp),
+                        details::move_proj(proj1),
+                        details::move_proj(proj2));
                 }
             };
         } // namespace niebloids
@@ -1767,9 +1806,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj1),
-                        RAH2_STD::ref(proj2));
+                        details::move_proj(pred),
+                        details::move_proj(proj1),
+                        details::move_proj(proj2));
                 }
             };
         } // namespace niebloids
@@ -3631,9 +3670,9 @@ namespace RAH2_NS
                         last1,
                         first2,
                         last2,
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj1),
-                        RAH2_STD::ref(proj2));
+                        details::move_proj(pred),
+                        details::move_proj(proj1),
+                        details::move_proj(proj2));
                     first1 = ret.in1, first2 = ret.in2;
 
                     // iterate over the rest, counting how many times each element
