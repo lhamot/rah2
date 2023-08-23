@@ -292,7 +292,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         value,
-                        details::move_proj(proj));
+                        details::move_unary(proj));
                 }
             };
         } // namespace niebloids
@@ -334,8 +334,8 @@ namespace RAH2_NS
                     return this->operator()(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        details::move_proj(pred),
-                        details::move_proj(proj));
+                        details::move_unary(pred),
+                        details::move_unary(proj));
                 }
             };
         } // namespace niebloids
@@ -378,8 +378,8 @@ namespace RAH2_NS
                     return this->operator()(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        details::move_proj(pred),
-                        details::move_proj(proj));
+                        details::move_unary(pred),
+                        details::move_unary(proj));
                 }
             };
         } // namespace niebloids
@@ -461,8 +461,8 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
                         RAH2_STD::move(pred),
-                        RAH2_STD::move(proj1),
-                        RAH2_STD::move(proj2));
+                        details::move_unary(proj1),
+                        details::move_unary(proj2));
                 }
             };
         } // namespace niebloids
@@ -499,8 +499,8 @@ namespace RAH2_NS
                                RAH2_STD::move(first2),
                                last2,
                                RAH2_STD::move(pred),
-                               RAH2_STD::move(proj1),
-                               RAH2_STD::move(proj2))
+                               details::move_unary(proj1),
+                               details::move_unary(proj2))
                                .in2
                            == last2;
                 }
@@ -522,8 +522,8 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
                         RAH2_STD::move(pred),
-                        RAH2_STD::move(proj1),
-                        RAH2_STD::move(proj2));
+                        details::move_unary(proj1),
+                        details::move_unary(proj2));
                 }
             };
         } // namespace niebloids
@@ -945,7 +945,7 @@ namespace RAH2_NS
                 constexpr bool operator()(R&& r, Pred pred) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), details::move_proj(pred));
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), details::move_unary(pred));
                 }
             };
         } // namespace niebloids
@@ -998,7 +998,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(out_true),
                         RAH2_STD::move(out_false),
-                        RAH2_STD::move(pred));
+                        details::move_unary(pred));
                 }
             };
         } // namespace niebloids

@@ -1023,7 +1023,7 @@ namespace RAH2_NS
             template <
                 typename T,
                 std::enable_if_t<std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
-            auto wrap_proj(T&& func) -> decltype(std::ref(std::forward<T>(func)))
+            auto wrap_unary(T&& func) -> decltype(std::ref(std::forward<T>(func)))
             {
                 return std::ref(std::forward<T>(func));
             }
@@ -1031,16 +1031,38 @@ namespace RAH2_NS
             template <
                 typename T,
                 std::enable_if_t<!std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
-            T wrap_proj(T&& func)
+            T wrap_unary(T&& func)
             {
                 return std::forward<T>(func);
             }
 
             template <typename T>
-            auto move_proj(T&& func) -> decltype(wrap_proj(RAH2_STD::move(func)))
+            auto move_unary(T&& func) -> decltype(wrap_unary(RAH2_STD::move(func)))
             {
-                return wrap_proj(RAH2_STD::move(func));
+                return wrap_unary(RAH2_STD::move(func));
             }
+
+            template <
+                typename Pred,
+                typename Proj,
+                std::enable_if_t<std::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
+            auto wrap_pred_proj(Pred&& pred, Proj&&)
+            {
+                return std::forward<Pred>(pred);
+            }
+
+            template <
+                typename Pred,
+                typename Proj,
+                std::enable_if_t<!std::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
+            auto wrap_pred_proj(Pred&& pred, Proj&& proj)
+            {
+                return [pred = std::forward<Pred>(pred), proj = std::forward<Proj>(proj)](auto&& v)
+                {
+                    return pred(proj(std::forward<decltype(v)>(v)));
+                };
+            }
+
         } // namespace details
 
         constexpr auto begin = details::begin_impl();
