@@ -71,7 +71,8 @@
 #endif
 
 // static_cast to rvalue reference
-#define RAH2_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
+#define RAH2_MOV(...)                                                                              \
+    static_cast<RAH2_STD::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
 
 // static_cast to identity
 #define RAH2_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
@@ -1046,9 +1047,9 @@ namespace RAH2_NS
                 typename T,
                 RAH2_STD::enable_if_t<
                     RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<T>>::value>* = nullptr>
-            call_member_pointer<std::remove_reference_t<T>> wrap_unary(T&& mem_ptr)
+            call_member_pointer<RAH2_STD::remove_reference_t<T>> wrap_unary(T&& mem_ptr)
             {
-                return call_member_pointer<std::remove_reference_t<T>>{mem_ptr};
+                return call_member_pointer<RAH2_STD::remove_reference_t<T>>{mem_ptr};
             }
 
             template <
