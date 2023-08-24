@@ -1112,6 +1112,10 @@ namespace RAH2_NS
                 {
                     return it.iter_ == sent.sent;
                 }
+                friend bool operator==(sentinel const& sent, iterator const& it)
+                {
+                    return it.iter_ == sent.sent;
+                }
             };
 
             filter_view(R rng, P pred)
@@ -1896,6 +1900,10 @@ namespace RAH2_NS
                 {
                     return x.cur_ == y.inner;
                 }
+                friend bool operator==(sentinel const& y, iterator const& x)
+                {
+                    return x.cur_ == y.inner;
+                }
             };
 
             split_view(R base, P pattern)
@@ -1997,7 +2005,7 @@ namespace RAH2_NS
 
             // TODO : Move in RAH_NS for std::common_iterator
             class common_iterator
-                : public iterator_facade<common_iterator, void, iter_reference_t<base_iterator>, Cat>
+                : public iterator_facade<common_iterator, default_sentinel_t, iter_reference_t<base_iterator>, Cat>
             {
                 static_assert(
                     RAH2_NS::input_or_output_iterator<base_iterator>,
@@ -2423,6 +2431,10 @@ namespace RAH2_NS
                 {
                     return it.iter_ == sent.sent;
                 }
+                friend bool operator==(sentinel const& sent, iterator const& it)
+                {
+                    return it.iter_ == sent.sent;
+                }
                 template <
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
@@ -2583,6 +2595,11 @@ namespace RAH2_NS
                 }
                 template <typename I = iterator, RAH2_STD::enable_if_t<!RAH2_NS::is_same_v<I, sentinel>>* = nullptr>
                 friend bool operator==(iterator const& iter, sentinel const& sent)
+                {
+                    return iter.current_ == sent.sent;
+                }
+                template <typename I = iterator, RAH2_STD::enable_if_t<!RAH2_NS::is_same_v<I, sentinel>>* = nullptr>
+                friend bool operator==(sentinel const& sent, iterator const& iter)
                 {
                     return iter.current_ == sent.sent;
                 }
@@ -3455,6 +3472,10 @@ namespace RAH2_NS
                 {
                     return i.subRangeBegin_ == s.sent;
                 }
+                friend bool operator==(sentinel const& s, iterator const& i)
+                {
+                    return i.subRangeBegin_ == s.sent;
+                }
                 template <
                     typename C = iterator_category,
                     RAH2_STD::enable_if_t<derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
@@ -4210,6 +4231,10 @@ namespace RAH2_NS
                 {
                     return current_ == end_;
                 }
+                friend bool operator==(default_sentinel_t const&, iterator const& it)
+                {
+                    return it.current_ == it.end_;
+                }
 
                 template <
                     typename C = iter_cat,
@@ -4811,6 +4836,10 @@ namespace RAH2_NS
                     return first1_ == it2.first1_;
                 }
                 friend bool operator==(iterator const& it, default_sentinel_t)
+                {
+                    return it.first1_ == it.last1_;
+                }
+                friend bool operator==(default_sentinel_t, iterator const& it)
                 {
                     return it.first1_ == it.last1_;
                 }
