@@ -1016,8 +1016,15 @@ namespace RAH2_NS
             unwraped_iterators<RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*>
             unwrap(I&& it, S&& s)
             {
-                auto begin_it = &(*it);
-                return {begin_it, begin_it + (s - it)};
+                if (it != s)
+                {
+                    auto begin_it = &(*it);
+                    return {begin_it, begin_it + (s - it)};
+                }
+                else
+                {
+                    return {nullptr, nullptr};
+                }
             }
             template <
                 typename I,
