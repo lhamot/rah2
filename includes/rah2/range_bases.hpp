@@ -1513,6 +1513,7 @@ namespace RAH2_NS
                 return *last;
             }
 
+            template <typename U = T, RAH2_STD::enable_if_t<RAH2_NS::ranges::random_access_range<U>>* = nullptr>
             auto operator[](size_t index) // -> decltype(*(RAH2_SELF_CONST.begin()))
             {
                 return *(RAH2_SELF.begin() + index);
