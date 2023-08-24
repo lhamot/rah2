@@ -352,10 +352,11 @@ class test_view_adapter : public RAH2_NS::ranges::view_interface<test_view<Sent,
     Range base_;
     using base_iterator = RAH2_NS::ranges::iterator_t<Range>;
     using base_sentinel = RAH2_NS::ranges::sentinel_t<Range>;
+    using ref = RAH2_NS::ranges::range_reference_t<Range>;
 
 public:
     class iterator
-        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::ranges::sentinel_iterator, int&, Cat>
+        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::ranges::sentinel_iterator, ref, Cat>
     {
         base_iterator iter_;
         base_iterator end_;
@@ -465,7 +466,7 @@ public:
     template <
         typename C = Cat,
         RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
-    int* data()
+    std::remove_reference_t<ref>* data()
     {
         return RAH2_NS::ranges::data(base_);
     }
@@ -473,7 +474,7 @@ public:
     template <
         typename C = Cat,
         RAH2_STD::enable_if_t<RAH2_NS::is_same_v<C, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
-    int* data() const
+    std::remove_reference_t<ref>* data() const
     {
         return RAH2_NS::ranges::data(base_);
     }
@@ -911,7 +912,7 @@ void foreach_range_combination()
     Func{}.template call<Sentinel, RAH2_NS::random_access_iterator_tag, false>(R"(sent_RA_unsized)");
     Func{}.template call<Sentinel, RAH2_NS::contiguous_iterator_tag, false>(R"(sent_conti_unsized)");
 
-    Func{}.template call<Common, RAH2_NS::forward_iterator_tag, false>(R"(common_dorward_unsized)");
+    Func{}.template call<Common, RAH2_NS::forward_iterator_tag, false>(R"(common_forward_unsized)");
     Func{}.template call<Common, RAH2_NS::bidirectional_iterator_tag, false>(
         R"(common_bidir_unsized)");
     // Common random_access can't be not sized

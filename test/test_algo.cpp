@@ -33,6 +33,12 @@
 
 #include "test_helpers.hpp"
 
+struct Coord
+{
+    int x;
+    int y;
+};
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_
 {
@@ -49,11 +55,11 @@ struct test_all_of_
         assert(RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
 
-        std::vector<int> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER, {0, 2});
         auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
-        auto is_zero = [](int value)
+        auto is_zero = [](Coord const& value)
         {
-            return value == 0;
+            return value.x == 0;
         };
         COMPARE_DURATION_TO_STD_RANGES(
             "all_of",
@@ -61,6 +67,15 @@ struct test_all_of_
             [&]
             {
                 auto result = STD::ranges::all_of(perf_no, is_zero);
+                assert(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "all_of_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::ranges::all_of(
+                    perf_no, [](int x) { return x == 0; }, &Coord::x);
                 assert(result);
             });
     }
@@ -101,11 +116,11 @@ struct test_any_of_
         assert(!RAH2_NS::ranges::any_of(
             make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
 
-        std::vector<int> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
         auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
-        auto is_one = [](int value)
+        auto is_one = [](Coord const& value)
         {
-            return value == 1;
+            return value.x == 1;
         };
         COMPARE_DURATION_TO_STD_RANGES(
             "any_of",
@@ -113,6 +128,15 @@ struct test_any_of_
             [&]
             {
                 auto result = STD::ranges::any_of(perf_no, is_one);
+                assert(!result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "any_of_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::ranges::any_of(
+                    perf_no, [](int v) { return v == 1; }, &Coord::x);
                 assert(!result);
             });
     }
@@ -153,11 +177,11 @@ struct test_none_of_
         assert(RAH2_NS::ranges::none_of(
             make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
 
-        std::vector<int> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
         auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
-        auto is_one = [](int value)
+        auto is_one = [](Coord const& value)
         {
-            return value == 1;
+            return value.x == 1;
         };
         COMPARE_DURATION_TO_STD_RANGES(
             "none_of",
@@ -165,6 +189,15 @@ struct test_none_of_
             [&]
             {
                 auto result = STD::ranges::none_of(perf_no, is_one);
+                assert(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "none_of_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::ranges::none_of(
+                    perf_no, [](int x) { return x == 1; }, &Coord::x);
                 assert(result);
             });
     }

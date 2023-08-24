@@ -70,6 +70,12 @@
 #define RAH2_EXT_WARNING_POP
 #endif
 
+// static_cast to rvalue reference
+#define RAH2_MOV(...) static_cast<std::remove_reference_t<decltype(__VA_ARGS__)>&&>(__VA_ARGS__)
+
+// static_cast to identity
+#define RAH2_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
+
 namespace RAH2_NS
 {
     // ***************************** <type_traits> traits *****************************************
@@ -802,17 +808,22 @@ namespace RAH2_NS
         template <typename I, bool Diagnostic = false>
         struct contiguous_iterator_impl
         {
+            template <typename U>
+            using has_contig_tag = RAH2_STD::enable_if_t<
+                RAH2_NS::derived_from<iterator_concept<U>, RAH2_NS::contiguous_iterator_tag>>;
+            template <typename U>
+            using same_value_and_ref = RAH2_STD::enable_if_t<RAH2_NS::same_as<
+                RAH2_NS::iter_value_t<U>,
+                RAH2_NS::remove_cvref_t<RAH2_NS::iter_reference_t<U>>>>;
+            template <typename U>
+            using ref_is_lvalue =
+                RAH2_STD::enable_if_t<RAH2_NS::is_lvalue_reference_v<RAH2_NS::iter_reference_t<U>>>;
+
             static constexpr bool value =
                 RAH2_NS::details::random_access_iterator_impl<I, Diagnostic>::value
-                && concepts::is_true_v<
-                    Diagnostic,
-                    RAH2_NS::derived_from<iterator_concept<I>, RAH2_NS::contiguous_iterator_tag>>
-                && concepts::is_true_v<Diagnostic, RAH2_NS::is_lvalue_reference_v<RAH2_NS::iter_reference_t<I>>>
-                && concepts::is_true_v<
-                    Diagnostic,
-                    RAH2_NS::same_as<
-                        RAH2_NS::iter_value_t<I>,
-                        RAH2_NS::remove_cvref_t<RAH2_NS::iter_reference_t<I>>>>;
+                && concepts::compiles<Diagnostic, I, has_contig_tag>
+                && concepts::compiles<Diagnostic, I, ref_is_lvalue>
+                && concepts::compiles<Diagnostic, I, same_value_and_ref>;
         };
 
     } // namespace details
@@ -1020,12 +1031,23 @@ namespace RAH2_NS
                 return {RAH2_STD::forward<I>(it), RAH2_STD::forward<S>(s)};
             }
 
+            template <typename MemPtr>
+            struct call_member_pointer
+            {
+                MemPtr mem_ptr{};
+                template <typename Class>
+                auto operator()(Class&& self) const -> decltype(self.*mem_ptr)
+                {
+                    return self.*mem_ptr;
+                }
+            };
+
             template <
                 typename T,
                 std::enable_if_t<std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
-            auto wrap_unary(T&& func) -> decltype(std::ref(std::forward<T>(func)))
+            call_member_pointer<std::remove_reference_t<T>> wrap_unary(T&& mem_ptr)
             {
-                return std::ref(std::forward<T>(func));
+                return call_member_pointer<std::remove_reference_t<T>>{mem_ptr};
             }
 
             template <
@@ -1057,9 +1079,10 @@ namespace RAH2_NS
                 std::enable_if_t<!std::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&& proj)
             {
-                return [pred = std::forward<Pred>(pred), proj = std::forward<Proj>(proj)](auto&& v)
+                return
+                    [pred = wrap_unary(RAH2_FWD(pred)), proj = wrap_unary(RAH2_FWD(proj))](auto&& v)
                 {
-                    return pred(proj(std::forward<decltype(v)>(v)));
+                    return pred(proj(RAH2_FWD(v)));
                 };
             }
 
