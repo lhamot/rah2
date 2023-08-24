@@ -296,7 +296,7 @@ struct test_2_inputs_adaptor
         auto t1 = MakeR();
         auto r1 = t1.make();
         using ExpectedCat = typename MakeR::expected_cat;
-        check_range_cat<ExpectedCat, std::remove_reference_t<decltype(r1)>>::test(r1);
+        check_range_cat<ExpectedCat, RAH2_STD::remove_reference_t<decltype(r1)>>::test(r1);
         AssertEqual<RAH2_NS::ranges::common_range<decltype(r1)>, t1.is_common>();
         AssertEqual<RAH2_NS::ranges::sized_range<decltype(r1)>, t1.is_sized>();
         AssertEqual<RAH2_NS::ranges::borrowed_range<decltype(r1)>, t1.is_borrowed>();

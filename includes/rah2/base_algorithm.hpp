@@ -570,26 +570,54 @@ namespace RAH2_NS
         {
             struct all_of
             {
-                /// all_of
-                ///
-                /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                bool impl(InputIterator first, InputSentinel last, Predicate pred) const
                 {
                     for (; first != last; ++first)
                     {
-                        if (!p(*first))
+                        if (!pred(*first))
                             return false;
                     }
                     return true;
                 }
 
-                template <typename InputRange, typename Predicate>
-                bool operator()(InputRange&& range, Predicate p) const
+            public:
+                /// all_of
+                ///
+                /// Returns: true if the unary predicate p returns true for all elements in the range [first, last)
+                ///
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<InputIterator>
+                        && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                bool operator()(
+                    InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                }
+
+                template <
+                    typename InputRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -599,12 +627,9 @@ namespace RAH2_NS
         {
             struct any_of
             {
-                /// any_of
-                ///
-                /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                bool impl(InputIterator first, InputSentinel last, Predicate p) const
                 {
                     for (; first != last; ++first)
                     {
@@ -614,11 +639,42 @@ namespace RAH2_NS
                     return false;
                 }
 
-                template <typename InputRange, typename Predicate>
-                bool operator()(InputRange&& range, Predicate p) const
+            public:
+                /// any_of
+                ///
+                /// Returns: true if the unary predicate p returns true for any of the elements in the range [first, last)
+                ///
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<InputIterator>
+                        && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                bool operator()(
+                    InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                }
+
+                template <
+                    typename InputRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -628,28 +684,53 @@ namespace RAH2_NS
         {
             struct none_of
             {
-                /// none_of
-                ///
-                /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool operator()(InputIterator first, InputSentinel last, Predicate p) const
+                bool impl(InputIterator first, InputSentinel last, Predicate pred) const
                 {
                     for (; first != last; ++first)
                     {
-                        if (p(*first))
+                        if (pred(*first))
                             return false;
                     }
                     return true;
                 }
 
-                template <typename InputRange, typename Predicate>
-                bool operator()(InputRange&& range, Predicate&& p) const
+            public:
+                /// none_of
+                ///
+                /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
+                ///
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<InputIterator> && sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                bool operator()(
+                    InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                }
+
+                template <
+                    typename InputRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<InputRange>>* = nullptr>
+                bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::forward<Predicate>(p));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids

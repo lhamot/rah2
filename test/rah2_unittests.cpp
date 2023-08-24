@@ -1102,7 +1102,13 @@ try
     testSuite.report();
     return testSuite.all_success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
+catch (std::exception& ex)
+{
+    printf("Exception : %s - %s\n", typeid(ex).name(), ex.what());
+    return EXIT_FAILURE;
+}
 catch (...)
 {
+    printf("Unknown exception occurred\n");
     return EXIT_FAILURE;
 }
