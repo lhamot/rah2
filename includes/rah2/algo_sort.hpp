@@ -699,7 +699,7 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        details::move_unary(pred));
+                        RAH2_STD::move(pred));
                 }
             };
         } // namespace niebloids
