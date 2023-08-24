@@ -1067,7 +1067,7 @@ namespace RAH2_NS
             template <
                 typename Pred,
                 typename Proj,
-                std::enable_if_t<std::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
+                std::enable_if_t<RAH2_NS::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&&)
             {
                 return std::forward<Pred>(pred);
@@ -1076,7 +1076,7 @@ namespace RAH2_NS
             template <
                 typename Pred,
                 typename Proj,
-                std::enable_if_t<!std::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
+                std::enable_if_t<!RAH2_NS::is_same_v<std::identity, std::remove_cvref_t<Proj>>>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&& proj)
             {
                 return
