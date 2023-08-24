@@ -592,7 +592,7 @@ namespace RAH2_NS
                     typename InputSentinel,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    std::enable_if_t<
+                    RAH2_STD::enable_if_t<
                         RAH2_NS::input_iterator<InputIterator>
                         && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 bool operator()(
@@ -610,7 +610,7 @@ namespace RAH2_NS
                     typename InputRange,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    std::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
                 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
@@ -649,7 +649,7 @@ namespace RAH2_NS
                     typename InputSentinel,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    std::enable_if_t<
+                    RAH2_STD::enable_if_t<
                         RAH2_NS::input_iterator<InputIterator>
                         && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 bool operator()(
@@ -667,7 +667,7 @@ namespace RAH2_NS
                     typename InputRange,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    std::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
                 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
@@ -706,7 +706,7 @@ namespace RAH2_NS
                     typename InputSentinel,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    std::enable_if_t<
+                    RAH2_STD::enable_if_t<
                         input_iterator<InputIterator> && sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
@@ -723,7 +723,7 @@ namespace RAH2_NS
                     typename InputRange,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    std::enable_if_t<input_range<InputRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<input_range<InputRange>>* = nullptr>
                 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(

@@ -1044,7 +1044,8 @@ namespace RAH2_NS
 
             template <
                 typename T,
-                std::enable_if_t<std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<T>>::value>* = nullptr>
             call_member_pointer<std::remove_reference_t<T>> wrap_unary(T&& mem_ptr)
             {
                 return call_member_pointer<std::remove_reference_t<T>>{mem_ptr};
@@ -1052,10 +1053,11 @@ namespace RAH2_NS
 
             template <
                 typename T,
-                std::enable_if_t<!std::is_member_pointer<std::remove_reference_t<T>>::value>* = nullptr>
+                RAH2_STD::enable_if_t<
+                    !RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<T>>::value>* = nullptr>
             T wrap_unary(T&& func)
             {
-                return std::forward<T>(func);
+                return RAH2_STD::forward<T>(func);
             }
 
             template <typename T>
@@ -1067,17 +1069,17 @@ namespace RAH2_NS
             template <
                 typename Pred,
                 typename Proj,
-                std::enable_if_t<
+                RAH2_STD::enable_if_t<
                     RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj>>>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&&)
             {
-                return std::forward<Pred>(pred);
+                return RAH2_STD::forward<Pred>(pred);
             }
 
             template <
                 typename Pred,
                 typename Proj,
-                std::enable_if_t<
+                RAH2_STD::enable_if_t<
                     !RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj>>>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&& proj)
             {
