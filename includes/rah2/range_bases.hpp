@@ -999,11 +999,28 @@ namespace RAH2_NS
                 }
             };
 
-            template <typename I, typename S = I>
+            template <typename Ptr, typename Iter>
+            struct unwraped_pointers
+            {
+                Ptr iterator;
+                Ptr sentinel;
+                Iter first_iter;
+                Iter get_last_iterator(Ptr last)
+                {
+                    first_iter += (last - iterator);
+                    return RAH2_STD::move(first_iter);
+                }
+            };
+
+            template <typename I, typename S>
             struct unwraped_iterators
             {
                 I iterator;
                 S sentinel;
+                I get_last_iterator(I&& last)
+                {
+                    return RAH2_STD::move(last);
+                }
             };
 
             template <
@@ -1013,17 +1030,20 @@ namespace RAH2_NS
                     contiguous_iterator<RAH2_STD::remove_reference_t<I>>
                     && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>>* =
                     nullptr>
-            unwraped_iterators<RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*>
+            unwraped_pointers<
+                RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*,
+                RAH2_STD::remove_reference_t<I>>
             unwrap(I&& it, S&& s)
             {
                 if (it != s)
                 {
                     auto begin_it = &(*it);
-                    return {begin_it, begin_it + (s - it)};
+                    auto const range_size = s - it;
+                    return {begin_it, begin_it + range_size, RAH2_STD::forward<I>(it)};
                 }
                 else
                 {
-                    return {nullptr, nullptr};
+                    return {nullptr, nullptr, RAH2_STD::forward<I>(it)};
                 }
             }
             template <
@@ -1084,18 +1104,64 @@ namespace RAH2_NS
                 return RAH2_STD::forward<Pred>(pred);
             }
 
+            template <typename Pred, typename Proj>
+            struct wrap_pred_memptr_fn
+            {
+                Pred pred;
+                Proj proj;
+                template <typename V>
+                auto operator()(V&& v) const
+                {
+                    return pred(RAH2_FWD(v).*proj);
+                }
+
+                operator Pred() &&
+                {
+                    return RAH2_STD::move(pred);
+                }
+            };
+
             template <
                 typename Pred,
                 typename Proj,
                 RAH2_STD::enable_if_t<
-                    !RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj>>>* = nullptr>
+                    RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<Proj>>::value>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&& proj)
             {
-                return
-                    [pred = wrap_unary(RAH2_FWD(pred)), proj = wrap_unary(RAH2_FWD(proj))](auto&& v)
+                return wrap_pred_memptr_fn<
+                    decltype(wrap_unary(RAH2_FWD(pred))),
+                    RAH2_STD::remove_reference_t<Proj>>{wrap_unary(RAH2_FWD(pred)), RAH2_FWD(proj)};
+            }
+
+            template <typename Pred, typename Proj>
+            struct wrap_pred_proj_fn
+            {
+                Pred pred;
+                Proj proj;
+                template <typename V>
+                auto operator()(V&& v) const
                 {
                     return pred(proj(RAH2_FWD(v)));
-                };
+                }
+
+                operator Pred() &&
+                {
+                    return RAH2_STD::move(pred);
+                }
+            };
+
+            template <
+                typename Pred,
+                typename Proj,
+                RAH2_STD::enable_if_t<
+                    !RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj>>
+                    and !RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<Proj>>::value>* = nullptr>
+            auto wrap_pred_proj(Pred&& pred, Proj&& proj)
+            {
+                return wrap_pred_proj_fn<
+                    decltype(wrap_unary(RAH2_FWD(pred))),
+                    decltype(wrap_unary(RAH2_FWD(proj)))>{
+                    wrap_unary(RAH2_FWD(pred)), wrap_unary(RAH2_FWD(proj))};
             }
 
         } // namespace details

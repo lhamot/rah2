@@ -1300,39 +1300,59 @@ namespace RAH2_NS
         ///
         constexpr niebloids::find_first_of_fn find_first_of{};
 
+        template <class I, class F>
+        using for_each_result = ranges::in_fun_result<I, F>;
+
         namespace niebloids
         {
             struct for_each
             {
-                /// for_each
-                ///
-                /// Calls the Function function for each value in the range [first, last).
-                /// Function takes a single parameter: the current value.
-                ///
-                /// Effects: Applies function to the result of dereferencing every iterator in
-                /// the range [first, last), starting from first and proceeding to last 1.
-                ///
-                /// Returns: function.
-                ///
-                /// Complexity: Applies function exactly 'last - first' times.
-                ///
-                /// Note: If function returns a result, the result is ignored.
-                ///
+            private:
                 template <typename InputIterator, typename InputSentinel, typename Function>
-                Function operator()(InputIterator first, InputSentinel last, Function function) const
+                for_each_result<InputIterator, Function>
+                impl(InputIterator first, InputSentinel last, Function function) const
                 {
                     for (; first != last; ++first)
                         function(*first);
-                    return function;
+                    return {RAH2_STD::move(first), RAH2_STD::move(function)};
                 }
 
-                template <typename InputRange, typename Function>
-                auto operator()(InputRange&& range, Function function) const
+            public:
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename Function,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<InputIterator>
+                        && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                for_each_result<InputIterator, Function> operator()(
+                    InputIterator first_w, InputSentinel last_w, Function function, Proj proj = {}) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::wrap_pred_proj(RAH2_STD::move(function), RAH2_STD::move(proj)));
+                    return {
+                        first_last.get_last_iterator(RAH2_STD::move(result.in)),
+                        Function(RAH2_STD::move(result.fun))};
+                }
+
+                template <
+                    typename InputRange,
+                    typename Function,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                for_each_result<borrowed_iterator_t<InputRange>, Function>
+                operator()(InputRange&& range, Function function, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(function));
+                        RAH2_STD::move(function),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids

@@ -480,6 +480,17 @@ public:
     }
 };
 
+namespace RAH2_NS
+{
+    namespace ranges
+    {
+        template <CommonOrSent Sent, typename Cat, bool SizedRange, typename Range>
+        constexpr bool enable_borrowed_range<test_view_adapter<Sent, Cat, SizedRange, Range>> =
+            enable_borrowed_range<Range>;
+    }
+
+} // namespace RAH2_NS
+
 template <CommonOrSent Sent, typename Cat, bool Sized>
 auto make_test_view()
 {
@@ -489,8 +500,7 @@ auto make_test_view()
 template <CommonOrSent Sent, typename Cat, bool Sized, typename Range>
 auto make_test_view_adapter(Range&& r)
 {
-    return test_view_adapter<Sent, Cat, Sized, RAH2_STD::remove_reference_t<Range>>(
-        RAH2_STD::forward<Range>(r));
+    return test_view_adapter<Sent, Cat, Sized, RAH2_NS::views::all_t<Range>>(RAH2_NS::views::all(r));
 }
 
 // output

@@ -221,6 +221,61 @@ void test_none_of()
     testSuite.test_case("empty");
     foreach_range_combination<test_algo<test_none_of_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_for_each_
+{
+    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    auto test(char const* range_type)
+    {
+        size_t sum = 0;
+        std::vector<int> vec(10000000 * RELEASE_MULTIPLIER, 1);
+        auto func = [&sum](auto v)
+        {
+            sum += v;
+        };
+        auto r = make_test_view_adapter<CS2, Tag2, Sized2>(vec);
+        auto result = RAH2_NS::ranges::for_each(r, func);
+        assert(sum == vec.size());
+        assert(result.in == r.end());
+        result.fun(1);
+        assert(sum == vec.size() + 1); // result.fun
+
+        std::vector<int> vec_empty;
+        sum = 0;
+        auto r2 = make_test_view_adapter<CS2, Tag2, Sized2>(vec_empty);
+        auto result2 = RAH2_NS::ranges::for_each(r2, func);
+        assert(sum == 0);
+        assert(result2.in == r2.end());
+        result.fun(1);
+        assert(sum == vec_empty.size() + 1); // result.fun
+        std::vector<Coord> coord_vec(10000000 * RELEASE_MULTIPLIER, {1, 2});
+        COMPARE_DURATION_TO_STD_RANGES(
+            "for_each",
+            range_type,
+            (
+                [&coord_vec]
+                {
+                    int sum = 0;
+                    auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
+                    STD::ranges::for_each(r3, [&sum](Coord const& c) { sum += c.x; });
+                    assert(sum == 10000000 * RELEASE_MULTIPLIER);
+                }));
+        COMPARE_DURATION_TO_STD_RANGES(
+            "for_each_proj",
+            range_type,
+            (
+                [&coord_vec]
+                {
+                    int sum = 0;
+                    auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
+                    STD::ranges::for_each(
+                        r3, [&sum](int x) { sum += x; }, &Coord::x);
+                    assert(sum == 10000000 * RELEASE_MULTIPLIER);
+                }));
+    }
+    static constexpr bool do_test = true;
+};
 void test_for_each()
 {
     testSuite.test_case("sample");
@@ -234,6 +289,10 @@ void test_for_each()
     testSuite.test_case("iter");
     RAH2_NS::ranges::for_each(testFE.begin(), testFE.end(), [](auto& value) { return ++value; });
     assert(RAH2_NS::ranges::equal(testFE, std::initializer_list<int>({6, 6, 6, 6})));
+
+    testSuite.test_case("all_input_types");
+    testSuite.test_case("empty");
+    foreach_range_combination<test_algo<test_for_each_>>();
 }
 void test_for_each_n()
 {
