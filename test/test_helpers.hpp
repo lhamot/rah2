@@ -979,11 +979,24 @@ struct test_algo
             t1.template test<Sentinel, Cat, Sized>(range_type);
         }
     };
+    struct CheckAlgoCommon
+    {
+        template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
+        void call(char const* range_type) const
+        {
+            auto t1 = MakeR<Sentinel, Cat, Sized>();
+            t1.template test_common<>(range_type);
+        }
+    };
     template <CommonOrSent Sentinel, typename Cat, bool Sized>
     void call(char const* range_type)
     {
         constexpr bool do_test = MakeRange<Sentinel, Cat, Sized>::do_test;
         call_on_range_if_true<do_test, Sentinel, Cat, Sized, MakeRange, CheckAlgo>::test(range_type);
+        constexpr bool do_test_common =
+            MakeRange<Sentinel, Cat, Sized>::do_test && Sentinel == Common;
+        call_on_range_if_true<do_test_common, Sentinel, Cat, Sized, MakeRange, CheckAlgoCommon>::test(
+            range_type);
     }
 };
 
@@ -1167,10 +1180,16 @@ std::chrono::nanoseconds compute_duration(
 
 template <typename F, typename F2>
 auto compare_duration(
-    F&& func_std, F2&& func_rah2, char const* algo, char const* range_type, char const* file, int line)
+    F&& func_std_range,
+    F2&& func_rah2,
+    char const* algo,
+    char const* range_type,
+    char const* ref_ns,
+    char const* file,
+    int line)
 {
     auto duration_std =
-        compute_duration(RAH2_STD::forward<F>(func_std), algo, range_type, "std", file, line);
+        compute_duration(RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
     auto duration_rah2 =
         compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
     assert(duration_rah2 < (duration_std * 1.2));
@@ -1189,16 +1208,37 @@ auto compare_duration(
 
 #define CHECK_EQUAL(A, B) assert((A) == (B))
 
-#if defined(PERF_TEST) and RAH2_CPP20
-#define COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, F)                                           \
+#if defined(PERF_TEST)
+#define COMPARE_DURATION_TO_STD_ALGOS(ALGO, CONCEPT, F)                                            \
     {                                                                                              \
         namespace STD = std;                                                                       \
         auto test_std = (F);                                                                       \
         {                                                                                          \
-            namespace STD = RAH2_NS;                                                               \
+            namespace STD = RAH2_NS::ranges;                                                       \
             auto test_rah2 = (F);                                                                  \
-            compare_duration(test_std, test_rah2, ALGO, CONCEPT, __FILE__, __LINE__);              \
+            compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std", __FILE__, __LINE__);       \
         }                                                                                          \
+    }
+#else
+#define COMPARE_DURATION_TO_STD_ALGOS(ALGO, CONCEPT, F)                                            \
+    {                                                                                              \
+        namespace STD = RAH2_NS::ranges;                                                           \
+        (void)ALGO;                                                                                \
+        (void)CONCEPT;                                                                             \
+        (void)(F);                                                                                 \
+    }
+#endif
+
+#if defined(PERF_TEST) and RAH2_CPP20
+#define COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, F)                                            \
+    {                                                                                               \
+        namespace STD = std;                                                                        \
+        auto test_std = (F);                                                                        \
+        {                                                                                           \
+            namespace STD = RAH2_NS;                                                                \
+            auto test_rah2 = (F);                                                                   \
+            compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std_ranges", __FILE__, __LINE__); \
+        }                                                                                           \
     }
 #else
 #define COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, F)                                           \

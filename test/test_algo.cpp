@@ -43,7 +43,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_
 {
     template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    auto test(char const* range_type)
+    void test(char const* range_type)
     {
         std::vector<int> raw_yes = {4, 4, 4, 4};
         assert(RAH2_NS::ranges::all_of(
@@ -79,6 +79,24 @@ struct test_all_of_
                 assert(result);
             });
     }
+    template <bool = true>
+    void test_common(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER, {0, 2});
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        auto is_zero = [](Coord const& value)
+        {
+            return value.x == 0;
+        };
+        COMPARE_DURATION_TO_STD_ALGOS(
+            "all_of",
+            range_type,
+            [&]
+            {
+                auto result = STD::all_of(perf_no.begin(), perf_no.end(), is_zero);
+                assert(result);
+            });
+    }
     static constexpr bool do_test = true;
 };
 void test_all_of()
@@ -104,7 +122,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_any_of_
 {
     template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    auto test(char const* range_type)
+    void test(char const* range_type)
     {
         std::vector<int> raw_yes = {3, 3, 4, 3};
         assert(RAH2_NS::ranges::any_of(
@@ -140,6 +158,24 @@ struct test_any_of_
                 assert(!result);
             });
     }
+    template <bool = true>
+    void test_common(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        auto is_one = [](Coord const& value)
+        {
+            return value.x == 1;
+        };
+        COMPARE_DURATION_TO_STD_ALGOS(
+            "any_of",
+            range_type,
+            [&]
+            {
+                auto result = STD::any_of(perf_no.begin(), perf_no.end(), is_one);
+                assert(!result);
+            });
+    }
     static constexpr bool do_test = true;
 };
 void test_any_of()
@@ -165,7 +201,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_none_of_
 {
     template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    auto test(char const* range_type)
+    void test(char const* range_type)
     {
         std::vector<int> raw_yes = {3, 2, 3, 5};
         assert(RAH2_NS::ranges::none_of(
@@ -201,6 +237,24 @@ struct test_none_of_
                 assert(result);
             });
     }
+    template <bool = true>
+    void test_common(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        auto is_one = [](Coord const& value)
+        {
+            return value.x == 1;
+        };
+        COMPARE_DURATION_TO_STD_ALGOS(
+            "none_of",
+            range_type,
+            [&]
+            {
+                auto result = STD::none_of(perf_no.begin(), perf_no.end(), is_one);
+                assert(result);
+            });
+    }
     static constexpr bool do_test = true;
 };
 void test_none_of()
@@ -226,7 +280,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_for_each_
 {
     template <CommonOrSent CS2, typename Tag2, bool Sized2>
-    auto test(char const* range_type)
+    void test(char const* range_type)
     {
         size_t sum = 0;
         std::vector<int> vec(10000000 * RELEASE_MULTIPLIER, 1);
@@ -271,6 +325,22 @@ struct test_for_each_
                     auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
                     STD::ranges::for_each(
                         r3, [&sum](int x) { sum += x; }, &Coord::x);
+                    assert(sum == 10000000 * RELEASE_MULTIPLIER);
+                }));
+    }
+    template <bool = true>
+    void test_common(char const* range_type)
+    {
+        std::vector<Coord> coord_vec(10000000 * RELEASE_MULTIPLIER, {1, 2});
+        auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
+        COMPARE_DURATION_TO_STD_ALGOS(
+            "for_each",
+            range_type,
+            (
+                [&]
+                {
+                    int sum = 0;
+                    STD::for_each(r3.begin(), r3.end(), [&sum](Coord const& c) { sum += c.x; });
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
                 }));
     }

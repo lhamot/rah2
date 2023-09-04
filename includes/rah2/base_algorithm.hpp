@@ -571,15 +571,71 @@ namespace RAH2_NS
             struct all_of
             {
             private:
-                template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool impl(InputIterator first, InputSentinel last, Predicate pred) const
+                template <
+                    typename I,
+                    typename S,
+                    typename Predicate,
+                    RAH2_STD::enable_if_t<not sized_sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 bool impl(I first, S last, Predicate pred) const
                 {
-                    for (; first != last; ++first)
+                    while (first != last && pred(*first))
+                    {
+                        ++first;
+                    }
+                    return first == last;
+                }
+
+                /// This is an overload used by find algos for the RAI case.
+                /// TODO : Use factorize with find_if(_not)
+                template <
+                    typename S,
+                    typename I,
+                    typename Predicate,
+                    RAH2_STD::enable_if_t<sized_sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 bool impl(I first, S last, Predicate pred) const
+                {
+                    typename RAH2_STD::iterator_traits<I>::difference_type trip_count =
+                        (last - first) >> 2;
+
+                    for (; trip_count > 0; --trip_count)
                     {
                         if (!pred(*first))
                             return false;
+                        ++first;
+
+                        if (!pred(*first))
+                            return false;
+                        ++first;
+
+                        if (!pred(*first))
+                            return false;
+                        ++first;
+
+                        if (!pred(*first))
+                            return false;
+                        ++first;
                     }
-                    return true;
+
+                    switch (last - first)
+                    {
+                    case 3:
+                        if (!pred(*first))
+                            return false;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 2:
+                        if (!pred(*first))
+                            return false;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 1:
+                        if (!pred(*first))
+                            return false;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 0:
+                    default: return true;
+                    }
                 }
 
             public:
@@ -595,7 +651,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_iterator<InputIterator>
                         && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
-                bool operator()(
+                RAH2_CONSTEXPR20 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
                     auto first_last =
@@ -611,7 +667,7 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
-                bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
+                RAH2_CONSTEXPR20 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
@@ -628,8 +684,12 @@ namespace RAH2_NS
             struct any_of
             {
             private:
-                template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool impl(InputIterator first, InputSentinel last, Predicate p) const
+                template <
+                    typename I,
+                    typename S,
+                    typename Predicate,
+                    RAH2_STD::enable_if_t<not sized_sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 bool impl(I first, S last, Predicate p) const
                 {
                     for (; first != last; ++first)
                     {
@@ -637,6 +697,59 @@ namespace RAH2_NS
                             return true;
                     }
                     return false;
+                }
+
+                /// This is an overload used by find algos for the RAI case.
+                /// TODO : Use factorize with find_if(_not)
+                template <
+                    typename I,
+                    typename S,
+                    typename Predicate,
+                    RAH2_STD::enable_if_t<sized_sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 bool impl(I first, S last, Predicate pred) const
+                {
+                    typename RAH2_STD::iterator_traits<I>::difference_type trip_count =
+                        (last - first) >> 2;
+
+                    for (; trip_count > 0; --trip_count)
+                    {
+                        if (pred(*first))
+                            return true;
+                        ++first;
+
+                        if (pred(*first))
+                            return true;
+                        ++first;
+
+                        if (pred(*first))
+                            return true;
+                        ++first;
+
+                        if (pred(*first))
+                            return true;
+                        ++first;
+                    }
+
+                    switch (last - first)
+                    {
+                    case 3:
+                        if (pred(*first))
+                            return true;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 2:
+                        if (pred(*first))
+                            return true;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 1:
+                        if (pred(*first))
+                            return true;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 0:
+                    default: return false;
+                    }
                 }
 
             public:
@@ -684,23 +797,7 @@ namespace RAH2_NS
         {
             struct none_of
             {
-            private:
-                template <typename InputIterator, typename InputSentinel, typename Predicate>
-                bool impl(InputIterator first, InputSentinel last, Predicate pred) const
-                {
-                    for (; first != last; ++first)
-                    {
-                        if (pred(*first))
-                            return false;
-                    }
-                    return true;
-                }
-
             public:
-                /// none_of
-                ///
-                /// Returns: true if the unary predicate p returns true for none of the elements in the range [first, last)
-                ///
                 template <
                     typename InputIterator,
                     typename InputSentinel,
@@ -709,14 +806,13 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         input_iterator<InputIterator> && sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 bool operator()(
-                    InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
+                    InputIterator first, InputSentinel last, Predicate pred, Proj proj = {}) const
                 {
-                    auto first_last =
-                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
-                    return impl(
-                        RAH2_STD::move(first_last.iterator),
-                        RAH2_STD::move(first_last.sentinel),
-                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                    return not RAH2_NS::ranges::any_of(
+                        RAH2_STD::move(first),
+                        RAH2_STD::move(last),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
 
                 template <
@@ -726,9 +822,8 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<input_range<InputRange>>* = nullptr>
                 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
+                    return not RAH2_NS::ranges::any_of(
+                        RAH2_STD::forward<InputRange>(range),
                         RAH2_STD::move(pred),
                         RAH2_STD::move(proj));
                 }
