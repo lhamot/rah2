@@ -62,7 +62,7 @@ struct test_all_of_
             return value.x == 0;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            CS2 == Common,
+            CS == Common,
             "all_of",
             range_type,
             [&]
@@ -124,7 +124,7 @@ struct test_any_of_
             return value.x == 1;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            CS2 == Common,
+            CS == Common,
             "any_of",
             range_type,
             [&]
@@ -186,7 +186,7 @@ struct test_none_of_
             return value.x == 1;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            CS2 == Common,
+            CS == Common,
             "none_of",
             range_type,
             [&]
@@ -254,7 +254,7 @@ struct test_for_each_
         assert(sum == vec_empty.size() + 1); // result.fun
         std::vector<Coord> coord_vec(10000000 * RELEASE_MULTIPLIER, {1, 2});
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            CS2 == Common,
+            CS == Common,
             "for_each",
             range_type,
             (
@@ -296,8 +296,68 @@ void test_for_each()
 
     testSuite.test_case("all_input_types");
     testSuite.test_case("empty");
+    testSuite.test_case("proj");
+    testSuite.test_case("noproj");
     foreach_range_combination<test_algo<test_for_each_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_for_each_n_
+{
+    template <bool = true>
+    void test(char const* range_type)
+    {
+        size_t sum = 0;
+        static constexpr auto vec_size = 10000000 * RELEASE_MULTIPLIER;
+        std::vector<int> vec(vec_size, 1);
+        auto func = [&sum](auto v)
+        {
+            sum += v;
+        };
+        auto r = make_test_view_adapter<CS, Tag, Sized>(vec);
+        auto result = RAH2_NS::ranges::for_each_n(r.begin(), vec_size, func);
+        assert(sum == vec.size());
+        assert(result.in == r.end());
+        result.fun(1);
+        assert(sum == vec.size() + 1); // result.fun
+
+        std::vector<int> vec_empty;
+        sum = 0;
+        auto r2 = make_test_view_adapter<CS, Tag, Sized>(vec_empty);
+        auto result2 = RAH2_NS::ranges::for_each_n(r2.begin(), 0, func);
+        assert(sum == 0);
+        assert(result2.in == r2.end());
+        result.fun(1);
+        assert(sum == vec_empty.size() + 1); // result.fun
+        std::vector<Coord> coord_vec(vec_size, {1, 2});
+        COMPARE_DURATION_TO_STD_ALGO17_AND_RANGES(
+            CS == Common,
+            "for_each_n",
+            range_type,
+            (
+                [&]
+                {
+                    int sum = 0;
+                    auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
+                    STD::for_each_n(
+                        fwd(r3.begin()), vec_size, [&sum](Coord const& c) { sum += c.x; });
+                    assert(sum == vec_size);
+                }));
+        COMPARE_DURATION_TO_STD_RANGES(
+            "for_each_n_proj",
+            range_type,
+            (
+                [&coord_vec]
+                {
+                    int sum = 0;
+                    auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
+                    STD::for_each_n(
+                        r3.begin(), vec_size, [&sum](int x) { sum += x; }, &Coord::x);
+                    assert(sum == vec_size);
+                }));
+    }
+    static constexpr bool do_test = true;
+};
 void test_for_each_n()
 {
     testSuite.test_case("sample");
@@ -308,6 +368,12 @@ void test_for_each_n()
     assert(RAH2_NS::ranges::equal(testFE, std::initializer_list<int>({5, 5, 5, 5})));
     assert(res.in == testFE.end());
     /// [rah2::ranges::for_each_n]
+
+    testSuite.test_case("all_input_types");
+    testSuite.test_case("empty");
+    testSuite.test_case("proj");
+    testSuite.test_case("noproj");
+    foreach_range_combination<test_algo<test_for_each_n_>>();
 }
 
 void test_algo_count()
