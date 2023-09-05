@@ -976,7 +976,7 @@ struct test_algo
         void call(char const* range_type) const
         {
             auto t1 = MakeR<Sentinel, Cat, Sized>();
-            t1.template test<Sentinel, Cat, Sized>(range_type);
+            t1.template test<>(range_type);
         }
     };
     template <CommonOrSent Sentinel, typename Cat, bool Sized>

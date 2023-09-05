@@ -42,21 +42,21 @@ struct Coord
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    template <bool = true>
     void test(char const* range_type)
     {
         std::vector<int> raw_yes = {4, 4, 4, 4};
         assert(RAH2_NS::ranges::all_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_yes), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {4, 4, 3, 4};
         assert(!RAH2_NS::ranges::all_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_no), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
         std::vector<int> raw_empty = {};
         assert(RAH2_NS::ranges::all_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
 
         std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER, {0, 2});
-        auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_zero = [](Coord const& value)
         {
             return value.x == 0;
@@ -104,21 +104,21 @@ void test_all_of()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_any_of_
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    template <bool = true>
     void test(char const* range_type)
     {
         std::vector<int> raw_yes = {3, 3, 4, 3};
         assert(RAH2_NS::ranges::any_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_yes), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {3, 2, 3, 5};
         assert(!RAH2_NS::ranges::any_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_no), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
         std::vector<int> raw_empty = {};
         assert(!RAH2_NS::ranges::any_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
 
         std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
-        auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_one = [](Coord const& value)
         {
             return value.x == 1;
@@ -166,21 +166,21 @@ void test_any_of()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_none_of_
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    template <bool = true>
     void test(char const* range_type)
     {
         std::vector<int> raw_yes = {3, 2, 3, 5};
         assert(RAH2_NS::ranges::none_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_yes), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {3, 2, 4, 5};
         assert(!RAH2_NS::ranges::none_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_no), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
         std::vector<int> raw_empty = {};
         assert(RAH2_NS::ranges::none_of(
-            make_test_view_adapter<CS2, Tag2, Sized2>(raw_empty), [](auto a) { return a == 4; }));
+            make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
 
         std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
-        auto perf_no = make_test_view_adapter<CS2, Tag2, Sized2>(perf_no_vec);
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_one = [](Coord const& value)
         {
             return value.x == 1;
@@ -228,7 +228,7 @@ void test_none_of()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_for_each_
 {
-    template <CommonOrSent CS2, typename Tag2, bool Sized2>
+    template <bool = true>
     void test(char const* range_type)
     {
         size_t sum = 0;
@@ -237,7 +237,7 @@ struct test_for_each_
         {
             sum += v;
         };
-        auto r = make_test_view_adapter<CS2, Tag2, Sized2>(vec);
+        auto r = make_test_view_adapter<CS, Tag, Sized>(vec);
         auto result = RAH2_NS::ranges::for_each(r, func);
         assert(sum == vec.size());
         assert(result.in == r.end());
@@ -246,7 +246,7 @@ struct test_for_each_
 
         std::vector<int> vec_empty;
         sum = 0;
-        auto r2 = make_test_view_adapter<CS2, Tag2, Sized2>(vec_empty);
+        auto r2 = make_test_view_adapter<CS, Tag, Sized>(vec_empty);
         auto result2 = RAH2_NS::ranges::for_each(r2, func);
         assert(sum == 0);
         assert(result2.in == r2.end());
@@ -261,7 +261,7 @@ struct test_for_each_
                 [&]
                 {
                     int sum = 0;
-                    auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
+                    auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each(fwd(r3.begin()), r3.end(), [&sum](Coord const& c) { sum += c.x; });
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
                 }));
@@ -272,7 +272,7 @@ struct test_for_each_
                 [&coord_vec]
                 {
                     int sum = 0;
-                    auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
+                    auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each(
                         r3, [&sum](int x) { sum += x; }, &Coord::x);
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
