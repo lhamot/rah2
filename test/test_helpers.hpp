@@ -1315,6 +1315,7 @@ auto compare_duration(
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(IS_COMMON, ALGO, CONCEPT, F)                       \
     {                                                                                              \
         namespace STD = RAH2_NS::ranges;                                                           \
+        Fwd fwd;                                                                                   \
         (void)ALGO;                                                                                \
         (void)CONCEPT;                                                                             \
         (void)(F);                                                                                 \
