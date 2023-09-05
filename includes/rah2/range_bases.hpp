@@ -51,8 +51,14 @@
 
 #if RAH2_CPP17
 #define RAH2_NODISCARD [[nodiscard]]
+#define RAH2_FALLTHROUGH [[fallthrough]]
 #else
 #define RAH2_NODISCARD
+#if defined(__GNUC__) || defined(__clang__)
+#define RAH2_FALLTHROUGH __attribute__((fallthrough))
+#else
+#define RAH2_FALLTHROUGH
+#endif
 #endif
 
 #if !RAH2_CPP20

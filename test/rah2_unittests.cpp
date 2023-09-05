@@ -551,11 +551,6 @@ try
     testSuite.run();
 
     {
-        RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
-        toto(vec);
-        toto({0, 1, 2, 2, 3});
-    }
-    {
         /// [make_pipeable use]
         RAH2_STD::vector<int> vec{0, 1, 2, 2, 3};
         assert((vec | test_count(2)) == 2);
