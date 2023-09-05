@@ -1321,3 +1321,57 @@ auto compare_duration(
         (void)(F);                                                                                 \
     }
 #endif
+
+#if defined(PERF_TEST) and RAH2_CPP20
+#define COMPARE_DURATION_TO_STD_ALGO17_AND_RANGES(IS_COMMON, ALGO, CONCEPT, F)                     \
+    call_if_true<IS_COMMON>(                                                                       \
+        [&](auto fwd)                                                                              \
+        {                                                                                          \
+            namespace STD = std;                                                                   \
+            auto test_std = (F);                                                                   \
+            {                                                                                      \
+                namespace STD = std::ranges;                                                       \
+                auto test_std_ranges = (F);                                                        \
+                {                                                                                  \
+                    namespace STD = RAH2_NS::ranges;                                               \
+                    auto test_rah2 = (F);                                                          \
+                    compare_duration(                                                              \
+                        test_std, test_std_ranges, test_rah2, ALGO, CONCEPT, __FILE__, __LINE__);  \
+                }                                                                                  \
+            }                                                                                      \
+        });                                                                                        \
+    call_if_true<not(IS_COMMON)>(                                                                  \
+        [&](auto fwd)                                                                              \
+        {                                                                                          \
+            namespace STD = std::ranges;                                                           \
+            auto test_std_ranges = (F);                                                            \
+            {                                                                                      \
+                namespace STD = RAH2_NS::ranges;                                                   \
+                auto test_rah2 = (F);                                                              \
+                compare_duration(                                                                  \
+                    test_std_ranges, test_rah2, ALGO, CONCEPT, "std::ranges", __FILE__, __LINE__); \
+            }                                                                                      \
+        });
+#elif defined(PERF_TEST) and RAH2_CPP17
+#define COMPARE_DURATION_TO_STD_ALGO17_AND_RANGES(IS_COMMON, ALGO, CONCEPT, F)                     \
+    call_if_true<IS_COMMON>(                                                                       \
+        [&](auto fwd)                                                                              \
+        {                                                                                          \
+            namespace STD = std;                                                                   \
+            auto test_std = (F);                                                                   \
+            {                                                                                      \
+                namespace STD = RAH2_NS::ranges;                                                   \
+                auto test_rah2 = (F);                                                              \
+                compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std", __FILE__, __LINE__);   \
+            }                                                                                      \
+        });
+#else
+#define COMPARE_DURATION_TO_STD_ALGO17_AND_RANGES(IS_COMMON, ALGO, CONCEPT, F)                     \
+    {                                                                                              \
+        namespace STD = RAH2_NS::ranges;                                                           \
+        Fwd fwd;                                                                                   \
+        (void)ALGO;                                                                                \
+        (void)CONCEPT;                                                                             \
+        (void)(F);                                                                                 \
+    }
+#endif

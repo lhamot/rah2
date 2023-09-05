@@ -1460,13 +1460,29 @@ namespace RAH2_NS
         {
             struct for_each_n_fn
             {
-                template <typename I, class Proj = RAH2_NS::details::identity, typename Fun>
-                constexpr for_each_n_result<I, Fun>
-                operator()(I first, RAH2_NS::iter_difference_t<I> n, Fun fun, Proj proj = Proj{}) const
+            private:
+                template <typename I, typename Fun>
+                RAH2_CONSTEXPR20 for_each_n_result<I, Fun>
+                impl(I first, RAH2_NS::iter_difference_t<I> n, Fun fun) const
                 {
                     for (; n-- > 0; ++first)
-                        fun(proj(*first));
+                        fun(*first);
                     return {RAH2_STD::move(first), RAH2_STD::move(fun)};
+                }
+
+            public:
+                template <typename I, class Proj = RAH2_NS::details::identity, typename Fun>
+                RAH2_CONSTEXPR20 for_each_n_result<I, Fun> operator()(
+                    I first_w, RAH2_NS::iter_difference_t<I> n, Fun fun, Proj proj = Proj{}) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first_w), nullptr);
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        n,
+                        details::wrap_pred_proj(RAH2_STD::move(fun), RAH2_STD::move(proj)));
+                    return {
+                        first_last.get_last_iterator(RAH2_STD::move(result.in)),
+                        Fun(RAH2_STD::move(result.fun))};
                 }
             };
         } // namespace niebloids
