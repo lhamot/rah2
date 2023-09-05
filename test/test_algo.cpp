@@ -61,12 +61,13 @@ struct test_all_of_
         {
             return value.x == 0;
         };
-        COMPARE_DURATION_TO_STD_RANGES(
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS2 == Common,
             "all_of",
             range_type,
             [&]
             {
-                auto result = STD::ranges::all_of(perf_no, is_zero);
+                auto result = STD::all_of(fwd(perf_no.begin()), perf_no.end(), is_zero);
                 assert(result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
@@ -74,26 +75,8 @@ struct test_all_of_
             range_type,
             [&]
             {
-                auto result = STD::ranges::all_of(
+                auto result = STD::all_of(
                     perf_no, [](int x) { return x == 0; }, &Coord::x);
-                assert(result);
-            });
-    }
-    template <bool = true>
-    void test_common(char const* range_type)
-    {
-        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER, {0, 2});
-        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
-        auto is_zero = [](Coord const& value)
-        {
-            return value.x == 0;
-        };
-        COMPARE_DURATION_TO_STD_ALGOS(
-            "all_of",
-            range_type,
-            [&]
-            {
-                auto result = STD::all_of(perf_no.begin(), perf_no.end(), is_zero);
                 assert(result);
             });
     }
@@ -140,12 +123,13 @@ struct test_any_of_
         {
             return value.x == 1;
         };
-        COMPARE_DURATION_TO_STD_RANGES(
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS2 == Common,
             "any_of",
             range_type,
             [&]
             {
-                auto result = STD::ranges::any_of(perf_no, is_one);
+                auto result = STD::any_of(fwd(perf_no.begin()), perf_no.end(), is_one);
                 assert(!result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
@@ -153,26 +137,8 @@ struct test_any_of_
             range_type,
             [&]
             {
-                auto result = STD::ranges::any_of(
+                auto result = STD::any_of(
                     perf_no, [](int v) { return v == 1; }, &Coord::x);
-                assert(!result);
-            });
-    }
-    template <bool = true>
-    void test_common(char const* range_type)
-    {
-        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
-        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
-        auto is_one = [](Coord const& value)
-        {
-            return value.x == 1;
-        };
-        COMPARE_DURATION_TO_STD_ALGOS(
-            "any_of",
-            range_type,
-            [&]
-            {
-                auto result = STD::any_of(perf_no.begin(), perf_no.end(), is_one);
                 assert(!result);
             });
     }
@@ -219,12 +185,13 @@ struct test_none_of_
         {
             return value.x == 1;
         };
-        COMPARE_DURATION_TO_STD_RANGES(
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS2 == Common,
             "none_of",
             range_type,
             [&]
             {
-                auto result = STD::ranges::none_of(perf_no, is_one);
+                auto result = STD::none_of(fwd(perf_no.begin()), perf_no.end(), is_one);
                 assert(result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
@@ -232,26 +199,8 @@ struct test_none_of_
             range_type,
             [&]
             {
-                auto result = STD::ranges::none_of(
+                auto result = STD::none_of(
                     perf_no, [](int x) { return x == 1; }, &Coord::x);
-                assert(result);
-            });
-    }
-    template <bool = true>
-    void test_common(char const* range_type)
-    {
-        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
-        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
-        auto is_one = [](Coord const& value)
-        {
-            return value.x == 1;
-        };
-        COMPARE_DURATION_TO_STD_ALGOS(
-            "none_of",
-            range_type,
-            [&]
-            {
-                auto result = STD::none_of(perf_no.begin(), perf_no.end(), is_one);
                 assert(result);
             });
     }
@@ -304,15 +253,16 @@ struct test_for_each_
         result.fun(1);
         assert(sum == vec_empty.size() + 1); // result.fun
         std::vector<Coord> coord_vec(10000000 * RELEASE_MULTIPLIER, {1, 2});
-        COMPARE_DURATION_TO_STD_RANGES(
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS2 == Common,
             "for_each",
             range_type,
             (
-                [&coord_vec]
+                [&]
                 {
                     int sum = 0;
                     auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
-                    STD::ranges::for_each(r3, [&sum](Coord const& c) { sum += c.x; });
+                    STD::for_each(fwd(r3.begin()), r3.end(), [&sum](Coord const& c) { sum += c.x; });
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
                 }));
         COMPARE_DURATION_TO_STD_RANGES(
@@ -323,24 +273,8 @@ struct test_for_each_
                 {
                     int sum = 0;
                     auto r3 = make_test_view_adapter<CS2, Tag2, Sized2>(coord_vec);
-                    STD::ranges::for_each(
+                    STD::for_each(
                         r3, [&sum](int x) { sum += x; }, &Coord::x);
-                    assert(sum == 10000000 * RELEASE_MULTIPLIER);
-                }));
-    }
-    template <bool = true>
-    void test_common(char const* range_type)
-    {
-        std::vector<Coord> coord_vec(10000000 * RELEASE_MULTIPLIER, {1, 2});
-        auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
-        COMPARE_DURATION_TO_STD_ALGOS(
-            "for_each",
-            range_type,
-            (
-                [&]
-                {
-                    int sum = 0;
-                    STD::for_each(r3.begin(), r3.end(), [&sum](Coord const& c) { sum += c.x; });
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
                 }));
     }
@@ -425,7 +359,7 @@ void test_algo_count()
             "common_contig_sized",
             [&]
             {
-                const auto count = STD::ranges::count(intsVec, 2);
+                const auto count = STD::count(intsVec.begin(), intsVec.end(), 2);
                 assert(count == 79);
             });
         COMPARE_DURATION_TO_STD_RANGES(
@@ -433,7 +367,7 @@ void test_algo_count()
             "common_contig_sized",
             [&]
             {
-                const auto count = STD::ranges::count(coordsVec, 2, getter_lbd);
+                const auto count = STD::count(coordsVec, 2, getter_lbd);
                 assert(count == 79);
             });
     }
@@ -476,7 +410,7 @@ void test_count_if()
             "common_contig_sized",
             [&]
             {
-                const auto count = STD::ranges::count_if(coords_vec, pred, proj);
+                const auto count = STD::count_if(coords_vec, pred, proj);
                 assert(count == 79);
             });
     }
