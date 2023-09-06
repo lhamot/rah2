@@ -6,6 +6,7 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
+#include <set>
 
 #ifdef RAH2_USE_EASTL
 #include <EASTL/map.h>
@@ -33,8 +34,7 @@ struct TestSuite
 
     RAH2_STD::map<RAH2_STD::string, std::function<void()>> testMap;
     RAH2_STD::map<RAH2_STD::string, TestResult> testResult;
-    RAH2_STD::map<RAH2_STD::string, RAH2_STD::vector<RAH2_STD::pair<RAH2_STD::string, RAH2_STD::string>>>
-        testCases;
+    RAH2_STD::map<RAH2_STD::string, std::set<RAH2_STD::pair<RAH2_STD::string, RAH2_STD::string>>> testCases;
 
     bool current_test_status = true;
     size_t test_count = 0;
@@ -48,7 +48,7 @@ struct TestSuite
     char const* currentTest = nullptr;
     void test_case(char const* testcase, char const* extra = "")
     {
-        testCases[currentTest].emplace_back(testcase, extra);
+        testCases[currentTest].emplace(testcase, extra);
     }
 
     void report() const
