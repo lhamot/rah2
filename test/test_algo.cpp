@@ -441,9 +441,6 @@ struct test_count_
 void test_algo_count()
 {
     testSuite.test_case("sample");
-    testSuite.test_case("noproj");
-    testSuite.test_case("proj");
-    testSuite.test_case("range");
     {
         /// [rah2::ranges::count]
         assert(RAH2_NS::ranges::count(std::initializer_list<int>{4, 4, 4, 3}, 3) == 1);
@@ -460,24 +457,35 @@ void test_algo_count()
     foreach_range_combination<test_algo<test_count_>>();
 }
 
-void test_count_if()
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_count_if_
 {
-    testSuite.test_case("sample");
-    testSuite.test_case("range");
-    /// [rah2::ranges::count_if]
-    RAH2_STD::vector<int> vec = {4, 4, 4, 3};
-    assert(RAH2_NS::ranges::count_if(vec, [](auto a) { return a == 4; }) == 3);
-    /// [rah2::ranges::count_if]
-
-    testSuite.test_case("iter");
-    assert(RAH2_NS::ranges::count_if(vec.begin(), vec.end(), [](auto a) { return a == 4; }) == 3);
-
+    template <bool = true>
+    void test(char const* range_type)
     {
+        {
+            testSuite.test_case("range");
+            testSuite.test_case("noproj");
+            RAH2_STD::vector<int> vec = {4, 4, 4, 3};
+            auto intsRange = make_test_view_adapter<CS, Tag, Sized>(vec);
+            assert(RAH2_NS::ranges::count_if(intsRange, [](auto a) { return a == 4; }) == 3);
+
+            testSuite.test_case("iter");
+            testSuite.test_case("proj");
+            RAH2_STD::vector<Coord> coords = {{4, 1}, {4, 2}, {4, 3}, {3, 4}};
+            auto coordsRange = make_test_view_adapter<CS, Tag, Sized>(coords);
+            assert(
+                RAH2_NS::ranges::count_if(
+                    coordsRange.begin(), coordsRange.end(), [](auto a) { return a == 4; }, &Coord::x)
+                == 3);
+        }
+
         testSuite.test_case("perf");
         RAH2_STD::vector<Coord> coords_vec;
         coords_vec.insert(coords_vec.end(), 10000000, {1, 47});
         coords_vec.insert(coords_vec.end(), 79, {2, 47});
         coords_vec.insert(coords_vec.end(), 10000000, {3, 47});
+        auto coordRange = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
         auto pred = [](Coord const& c)
         {
             return c.x == 2;
@@ -486,13 +494,33 @@ void test_count_if()
         {
             return c;
         };
-        COMPARE_DURATION_TO_STD_RANGES(
-            "count_if_pred_proj",
-            "common_contig_sized",
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "count_if",
+            range_type,
             [&]
             {
-                const auto count = STD::count_if(coords_vec, pred, proj);
+                const auto count = STD::count_if(fwd(coordRange.begin()), coordRange.end(), pred);
+                assert(count == 79);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "count_if_proj",
+            range_type,
+            [&]
+            {
+                const auto count = STD::count_if(coordRange, pred, proj);
                 assert(count == 79);
             });
     }
+    static constexpr bool do_test = true;
+};
+void test_count_if()
+{
+    testSuite.test_case("sample");
+    /// [rah2::ranges::count_if]
+    RAH2_STD::vector<int> vec = {4, 4, 4, 3};
+    assert(RAH2_NS::ranges::count_if(vec, [](auto a) { return a == 4; }) == 3);
+    /// [rah2::ranges::count_if]
+
+    foreach_range_combination<test_algo<test_count_if_>>();
 }
