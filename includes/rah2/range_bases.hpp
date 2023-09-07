@@ -1011,7 +1011,7 @@ namespace RAH2_NS
                 Ptr iterator;
                 Ptr sentinel;
                 Iter first_iter;
-                Iter get_last_iterator(Ptr last)
+                Iter wrap_iterator(Ptr last)
                 {
                     first_iter += (last - iterator);
                     return RAH2_STD::move(first_iter);
@@ -1023,7 +1023,7 @@ namespace RAH2_NS
             {
                 I iterator;
                 S sentinel;
-                I get_last_iterator(I&& last)
+                I wrap_iterator(I&& last)
                 {
                     return RAH2_STD::move(last);
                 }
@@ -1110,6 +1110,18 @@ namespace RAH2_NS
                 return RAH2_STD::forward<Pred>(pred);
             }
 
+            template <
+                typename Pred,
+                typename Proj1,
+                typename Proj2,
+                RAH2_STD::enable_if_t<
+                    RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj1>>
+                    and RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj2>>>* = nullptr>
+            auto wrap_pred_proj(Pred&& pred, Proj1&&, Proj2&&)
+            {
+                return RAH2_STD::forward<Pred>(pred);
+            }
+
             template <typename Pred, typename Proj>
             struct wrap_pred_memptr_fn
             {
@@ -1168,6 +1180,42 @@ namespace RAH2_NS
                     decltype(wrap_unary(RAH2_FWD(pred))),
                     decltype(wrap_unary(RAH2_FWD(proj)))>{
                     wrap_unary(RAH2_FWD(pred)), wrap_unary(RAH2_FWD(proj))};
+            }
+
+            template <typename Pred, typename Proj1, typename Proj2>
+            struct wrap_pred_proj_fn_proj_fn
+            {
+                Pred pred;
+                Proj1 proj1;
+                Proj2 proj2;
+                template <typename V1, typename V2>
+                auto operator()(V1&& v1, V2&& v2) const
+                {
+                    return pred(proj1(RAH2_FWD(v1)), proj2(RAH2_FWD(v2)));
+                }
+
+                operator Pred() &&
+                {
+                    return RAH2_STD::move(pred);
+                }
+            };
+
+            template <
+                typename Pred,
+                typename Proj1,
+                typename Proj2,
+                RAH2_STD::enable_if_t<not(
+                    RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj1>>
+                    and RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj2>>)>* = nullptr>
+            auto wrap_pred_proj(Pred&& pred, Proj1&& proj1, Proj2&& proj2)
+            {
+                return wrap_pred_proj_fn_proj_fn<
+                    decltype(wrap_unary(RAH2_FWD(pred))),
+                    decltype(wrap_unary(RAH2_FWD(proj1))),
+                    decltype(wrap_unary(RAH2_FWD(proj2)))>{
+                    wrap_unary(RAH2_FWD(pred)),
+                    wrap_unary(RAH2_FWD(proj1)),
+                    wrap_unary(RAH2_FWD(proj2))};
             }
 
         } // namespace details

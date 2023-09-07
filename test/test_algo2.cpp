@@ -37,8 +37,89 @@ struct Coord
 {
     int x;
     int y;
+
+    bool operator==(Coord c) const
+    {
+        return x == c.x and y == c.y;
+    }
 };
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_mismatch_
+{
+    template <bool = true>
+    void test(char const* range_type)
+    {
+        // TODO : Test all ranges combinations ?
+        {
+            testSuite.test_case("noproj");
+            testSuite.test_case("nopred");
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in1 = {1, 2, 3, 4};
+            RAH2_STD::vector<int> in2 = {1, 2, 42, 43};
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto r1_r2 =
+                RAH2_NS::ranges::mismatch(rng1.begin(), rng1.end(), rng2.begin(), rng2.end());
+            assert(*r1_r2.in1 == 3);
+            assert(*r1_r2.in2 == 42);
+        }
+        {
+            testSuite.test_case("range");
+            testSuite.test_case("proj");
+            testSuite.test_case("pred");
+            RAH2_STD::vector<Coord> in1 = {{1, 0}, {2, 0}, {3, 5}, {4, 2}};
+            RAH2_STD::vector<Coord> in2 = {{6, 1}, {2, 2}, {2, 42}, {3, 43}};
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto r1_r2 = RAH2_NS::ranges::mismatch(
+                rng1, rng2, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::y);
+            assert(*r1_r2.in1 == (Coord{3, 5}));
+            assert(*r1_r2.in2 == (Coord{2, 42}));
+        }
+        {
+            testSuite.test_case("perf");
+            [[maybe_unused]] RAH2_STD::vector<Coord> coords_vec;
+            coords_vec.insert(coords_vec.end(), 10000000 * RELEASE_MULTIPLIER, Coord{1, 47});
+            coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 47});
+            coords_vec.insert(coords_vec.end(), 100000 * RELEASE_MULTIPLIER, Coord{3, 47});
+            [[maybe_unused]] RAH2_STD::vector<Coord> coords_vec2;
+            coords_vec2.insert(coords_vec2.end(), 10000000 * RELEASE_MULTIPLIER, Coord{1, 47});
+            coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{2, 47});
+            coords_vec2.insert(coords_vec2.end(), 100000 * RELEASE_MULTIPLIER, Coord{2, 48});
+
+            auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
+            auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
+            auto pred = [](int a, int b)
+            {
+                return a == b;
+            };
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "mismatch",
+                range_type,
+                [&]
+                {
+                    volatile const auto v1_v2 = STD::mismatch(
+                        fwd(coordRange1.begin()),
+                        coordRange1.end(),
+                        coordRange2.begin(),
+                        coordRange2.end());
+                    DONT_OPTIM(v1_v2);
+                });
+            COMPARE_DURATION_TO_STD_RANGES(
+                "mismatch_pred_proj",
+                range_type,
+                [&]
+                {
+                    volatile const auto v1_v2 =
+                        STD::mismatch(coordRange1, coordRange2, pred, &Coord::x, &Coord::x);
+                    DONT_OPTIM(v1_v2);
+                });
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_mismatch()
 {
     testSuite.test_case("sample");
@@ -51,10 +132,7 @@ void test_mismatch()
     assert(*r1_r2.in2 == 42);
     /// [rah2::ranges::mismatch]
 
-    testSuite.test_case("iter");
-    r1_r2 = RAH2_NS::ranges::mismatch(in1.begin(), in1.end(), in2.begin(), in2.end());
-    assert(*r1_r2.in1 == 3);
-    assert(*r1_r2.in2 == 42);
+    foreach_range_combination<test_algo<test_mismatch_>>();
 }
 void test_equal()
 {

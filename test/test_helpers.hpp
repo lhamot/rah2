@@ -39,6 +39,7 @@ struct TestSuite
     bool current_test_status = true;
     size_t test_count = 0;
     bool all_success = true;
+    volatile size_t avoid_optim = 1;
 
     void addTest(RAH2_STD::string const& group, RAH2_STD::string const& name, std::function<void()> test)
     {
@@ -1375,3 +1376,5 @@ auto compare_duration(
         (void)(F);                                                                                 \
     }
 #endif
+
+#define DONT_OPTIM(V) memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
