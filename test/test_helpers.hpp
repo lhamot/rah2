@@ -39,6 +39,7 @@ struct TestSuite
     bool current_test_status = true;
     size_t test_count = 0;
     bool all_success = true;
+    volatile size_t avoid_optim = 1;
 
     void addTest(RAH2_STD::string const& group, RAH2_STD::string const& name, std::function<void()> test)
     {
@@ -1147,9 +1148,10 @@ std::chrono::nanoseconds compute_duration(
     func();
     ++count;
     end = std::chrono::high_resolution_clock::now();
-    if ((end - start) < std::chrono::milliseconds(1))
+    if ((end - start) < std::chrono::microseconds(100))
     {
-        std::cerr << "Too short function at " << file << "(" << line << ")" << std::endl;
+        std::cerr << "Too short function (" << ((end - start) / count).count() << ") at " << file
+                  << "(" << line << ")" << std::endl;
     }
     if ((end - start) > perf_test_duration)
     {
@@ -1375,3 +1377,6 @@ auto compare_duration(
         (void)(F);                                                                                 \
     }
 #endif
+
+#define DONT_OPTIM(V)                                                                              \
+    memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))

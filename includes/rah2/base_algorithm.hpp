@@ -1423,7 +1423,7 @@ namespace RAH2_NS
                         RAH2_STD::move(first_last.sentinel),
                         details::wrap_pred_proj(RAH2_STD::move(function), RAH2_STD::move(proj)));
                     return {
-                        first_last.get_last_iterator(RAH2_STD::move(result.in)),
+                        first_last.wrap_iterator(RAH2_STD::move(result.in)),
                         Function(RAH2_STD::move(result.fun))};
                 }
 
@@ -1473,7 +1473,7 @@ namespace RAH2_NS
                         n,
                         details::wrap_pred_proj(RAH2_STD::move(fun), RAH2_STD::move(proj)));
                     return {
-                        first_last.get_last_iterator(RAH2_STD::move(result.in)),
+                        first_last.wrap_iterator(RAH2_STD::move(result.in)),
                         Fun(RAH2_STD::move(result.fun))};
                 }
             };
@@ -1929,6 +1929,52 @@ namespace RAH2_NS
         {
             struct mismatch_fn
             {
+            private:
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    RAH2_STD::enable_if_t<sized_sentinel_for<S1, I1> && sized_sentinel_for<S2, I2>>* = nullptr>
+                RAH2_CONSTEXPR20 mismatch_result<I1, I2>
+                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}) const
+                {
+                    auto const count1 = last1 - first1;
+                    auto const count2 = last2 - first2;
+                    auto n =
+                        RAH2_STD::min(static_cast<intptr_t>(count1), static_cast<intptr_t>(count2));
+                    for (; n != 0; ++first1, ++first2, --n)
+                    {
+                        if (!pred(*first1, *first2))
+                        {
+                            break;
+                        }
+                    }
+
+                    return {first1, first2};
+                }
+
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    RAH2_STD::enable_if_t<not(sized_sentinel_for<S1, I1> && sized_sentinel_for<S2, I2>)>* = nullptr>
+                RAH2_CONSTEXPR20 mismatch_result<I1, I2>
+                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}) const
+                {
+                    while (first1 != last1 && first2 != last2 && pred(*first1, *first2))
+                    {
+                        ++first1;
+                        ++first2;
+                    }
+
+                    return {first1, first2};
+                }
+
+            public:
                 template <
                     typename I1,
                     typename S1,
@@ -1940,7 +1986,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                         && sentinel_for<S2, I2>>* = nullptr>
-                constexpr mismatch_result<I1, I2> operator()(
+                RAH2_CONSTEXPR20 mismatch_result<I1, I2> operator()(
                     I1 first1,
                     S1 last1,
                     I2 first2,
@@ -1949,11 +1995,20 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    for (; first1 != last1 && first2 != last2; ++first1, (void)++first2)
-                        if (not pred(proj1(*first1), proj2(*first2)))
-                            break;
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
 
-                    return {first1, first2};
+                    auto i1_i2 = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        details::wrap_pred_proj(
+                            RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
+                    return {
+                        first_last.wrap_iterator(RAH2_STD::move(i1_i2.in1)),
+                        first2_last2.wrap_iterator(RAH2_STD::move(i1_i2.in2))};
                 }
 
                 template <
@@ -1963,7 +2018,7 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<input_range<R1> && input_range<R2>>* = nullptr>
-                constexpr mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
+                RAH2_CONSTEXPR20 mismatch_result<borrowed_iterator_t<R1>, borrowed_iterator_t<R2>>
                 operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
                     return (*this)(
@@ -1971,9 +2026,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj1),
-                        RAH2_STD::ref(proj2));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
