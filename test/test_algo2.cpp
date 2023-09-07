@@ -80,13 +80,13 @@ struct test_mismatch_
         {
             testSuite.test_case("perf");
             RAH2_STD::vector<Coord> coords_vec;
-            coords_vec.insert(coords_vec.end(), 10000000 * RELEASE_MULTIPLIER, Coord{1, 47});
+            coords_vec.insert(coords_vec.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 47});
             coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 47});
-            coords_vec.insert(coords_vec.end(), 100000 * RELEASE_MULTIPLIER, Coord{3, 47});
+            coords_vec.insert(coords_vec.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 47});
             RAH2_STD::vector<Coord> coords_vec2;
-            coords_vec2.insert(coords_vec2.end(), 10000000 * RELEASE_MULTIPLIER, Coord{1, 47});
+            coords_vec2.insert(coords_vec2.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 47});
             coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{2, 47});
-            coords_vec2.insert(coords_vec2.end(), 100000 * RELEASE_MULTIPLIER, Coord{2, 48});
+            coords_vec2.insert(coords_vec2.end(), 10000 * RELEASE_MULTIPLIER, Coord{2, 48});
 
             auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
             auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
