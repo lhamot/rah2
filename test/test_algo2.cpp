@@ -79,11 +79,11 @@ struct test_mismatch_
         }
         {
             testSuite.test_case("perf");
-            [[maybe_unused]] RAH2_STD::vector<Coord> coords_vec;
+            RAH2_STD::vector<Coord> coords_vec;
             coords_vec.insert(coords_vec.end(), 10000000 * RELEASE_MULTIPLIER, Coord{1, 47});
             coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 47});
             coords_vec.insert(coords_vec.end(), 100000 * RELEASE_MULTIPLIER, Coord{3, 47});
-            [[maybe_unused]] RAH2_STD::vector<Coord> coords_vec2;
+            RAH2_STD::vector<Coord> coords_vec2;
             coords_vec2.insert(coords_vec2.end(), 10000000 * RELEASE_MULTIPLIER, Coord{1, 47});
             coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{2, 47});
             coords_vec2.insert(coords_vec2.end(), 100000 * RELEASE_MULTIPLIER, Coord{2, 48});
