@@ -134,6 +134,70 @@ void test_mismatch()
 
     foreach_range_combination<test_algo<test_mismatch_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_equal_
+{
+    template <bool = true>
+    void test(char const* range_type)
+    {
+        // TODO : Test all ranges combinations ?
+        {
+            testSuite.test_case("noproj");
+            testSuite.test_case("nopred");
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in1 = {1, 2, 3, 4};
+            RAH2_STD::vector<int> in2 = {1, 2, 42, 43};
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            assert(not RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+            assert(RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng1.begin(), rng1.end()));
+        }
+        {
+            testSuite.test_case("range");
+            testSuite.test_case("proj");
+            testSuite.test_case("pred");
+            RAH2_STD::vector<Coord> in1 = {{1, 0}, {2, 0}, {3, 5}, {4, 2}};
+            RAH2_STD::vector<Coord> in2 = {{6, 1}, {2, 2}, {2, 3}, {3, 4}};
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            assert(RAH2_NS::ranges::equal(rng1, rng2, [](auto a, auto b) { return a.x == b.y; }));
+        }
+        {
+            testSuite.test_case("perf");
+            RAH2_STD::vector<Coord> coords_vec;
+            coords_vec.insert(coords_vec.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 1});
+            coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 4});
+            coords_vec.insert(coords_vec.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 3});
+            RAH2_STD::vector<Coord> coords_vec2;
+            coords_vec2.insert(coords_vec2.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 1});
+            coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{5, 3});
+            coords_vec2.insert(coords_vec2.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 3});
+
+            auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
+            auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
+            auto pred = [](Coord a, Coord b)
+            {
+                return a.x == b.y;
+            };
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "equal",
+                range_type,
+                [&]
+                {
+                    assert(not STD::equal(
+                        fwd(coordRange1.begin()),
+                        coordRange1.end(),
+                        coordRange2.begin(),
+                        coordRange2.end()));
+                });
+            COMPARE_DURATION_TO_STD_RANGES(
+                "equal_pred", range_type, [&] { assert(STD::equal(coordRange1, coordRange2, pred)); });
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_equal()
 {
     testSuite.test_case("sample");
@@ -146,9 +210,7 @@ void test_equal()
     assert(RAH2_NS::ranges::equal(in1, in3) == false);
     /// [rah2::ranges::equal]
 
-    testSuite.test_case("iter");
-    assert(RAH2_NS::ranges::equal(in1.begin(), in1.end(), in2.begin(), in2.end()));
-    assert(RAH2_NS::ranges::equal(in1.begin(), in1.end(), in3.begin(), in3.end()) == false);
+    foreach_range_combination<test_algo<test_equal_>>();
 }
 void test_lexicographical_compare()
 {
