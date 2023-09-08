@@ -194,6 +194,7 @@ namespace RAH2_NS
             using iterator_category = RAH2_STD::input_iterator_tag;
             using iterator_concept = RAH2_STD::input_iterator_tag;
             using value_type = RAH2_NS::remove_cvref_t<R>;
+            using element_type = RAH2_NS::remove_cvref_t<R>;
             using difference_type = intptr_t;
             using pointer = RAH2_STD::remove_reference_t<R>*;
             using reference = R;
