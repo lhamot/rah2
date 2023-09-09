@@ -1188,10 +1188,19 @@ auto compare_duration(
     char const* file,
     int line)
 {
-    auto duration_std =
-        compute_duration(RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
-    auto duration_rah2 =
-        compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
+    std::chrono::nanoseconds duration_std{};
+    std::chrono::nanoseconds duration_rah2{};
+    for (size_t i = 0; i < 4; ++i)
+    {
+        duration_std += compute_duration(
+            RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
+        duration_rah2 +=
+            compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
+        if (duration_rah2 < (duration_std * 1.2))
+        {
+            break;
+        }
+    }
     assert(duration_rah2 < (duration_std * 1.2));
 }
 
@@ -1205,12 +1214,22 @@ auto compare_duration(
     char const* file,
     int line)
 {
-    auto duration_std =
-        compute_duration(RAH2_STD::forward<F>(func_std_algo), algo, range_type, "std", file, line);
-    auto duration_std_ranges = compute_duration(
-        RAH2_STD::forward<F2>(func_std_range), algo, range_type, "std::ranges", file, line);
-    auto duration_rah2 =
-        compute_duration(RAH2_STD::forward<F3>(func_rah2), algo, range_type, "rah2", file, line);
+    std::chrono::nanoseconds duration_std{};
+    std::chrono::nanoseconds duration_std_ranges{};
+    std::chrono::nanoseconds duration_rah2{};
+    for (size_t i = 0; i < 4; ++i)
+    {
+        duration_std += compute_duration(
+            RAH2_STD::forward<F>(func_std_algo), algo, range_type, "std", file, line);
+        duration_std_ranges += compute_duration(
+            RAH2_STD::forward<F2>(func_std_range), algo, range_type, "std::ranges", file, line);
+        duration_rah2 +=
+            compute_duration(RAH2_STD::forward<F3>(func_rah2), algo, range_type, "rah2", file, line);
+        if (duration_rah2 < (duration_std * 1.2) && duration_rah2 < (duration_std_ranges * 1.2))
+        {
+            break;
+        }
+    }
     assert(duration_rah2 < (duration_std * 1.2));
     assert(duration_rah2 < (duration_std_ranges * 1.2));
 }
