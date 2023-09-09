@@ -1192,29 +1192,132 @@ namespace RAH2_NS
         {
             struct find_fn
             {
+            private:
                 template <
                     typename I,
                     typename S,
                     class T,
                     class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr I operator()(I first, S last, T const& value, Proj proj = {}) const
+                RAH2_CONSTEXPR20 I impl(I first, S last, T const& value, Proj proj = {}) const
                 {
-                    for (; first != last; ++first)
-                        if (proj(*first) == value)
-                            return first;
+                    while ((first != last) && (proj(*first) != value))
+                    {
+                        ++first;
+                    }
                     return first;
+                }
+
+                template <typename I, typename Diff, typename P>
+                RAH2_CONSTEXPR20 I impl(I first, Diff count, P pred) const
+                {
+                    for (; count > 3; count -= 4)
+                    {
+                        if (pred(*first))
+                            return first;
+                        ++first;
+
+                        if (pred(*first))
+                            return first;
+                        ++first;
+
+                        if (pred(*first))
+                            return first;
+                        ++first;
+
+                        if (pred(*first))
+                            return first;
+                        ++first;
+                    }
+
+                    switch (count)
+                    {
+                    case 3:
+                        if (pred(*first))
+                            return first;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 2:
+                        if (pred(*first))
+                            return first;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 1:
+                        if (pred(*first))
+                            return first;
+                        ++first;
+                        RAH2_FALLTHROUGH;
+                    case 0:
+                    default: return first;
+                    }
+                }
+
+            public:
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<I> && sentinel_for<S, I> && not sized_sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 I operator()(I first, S last, T const& value, Proj proj = {}) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto iter = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        value,
+                        RAH2_NS::ranges::details::move_unary(proj));
+                    return first_last.wrap_iterator(RAH2_STD::move(iter));
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_iterator<I> && sized_sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 I operator()(I first, S last, T const& value, Proj proj = {}) const
+                {
+                    auto const diff = last - first;
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto iter = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        diff,
+                        details::wrap_pred_proj(
+                            [&value](auto&& val) { return val == value; }, RAH2_STD::move(proj)));
+                    return first_last.wrap_iterator(RAH2_STD::move(iter));
                 }
 
                 template <
                     typename R,
                     class T,
                     class Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
-                constexpr borrowed_iterator_t<R> operator()(R&& r, T const& value, Proj proj = {}) const
+                    RAH2_STD::enable_if_t<input_range<R> && not sized_range<R>>* = nullptr>
+                RAH2_CONSTEXPR20 borrowed_iterator_t<R> operator()(R&& r, T const& value, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value, RAH2_STD::ref(proj));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        value,
+                        RAH2_STD::move(proj));
+                }
+
+                template <
+                    typename R,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<R> && sized_range<R>>* = nullptr>
+                RAH2_CONSTEXPR20 borrowed_iterator_t<R> operator()(R&& r, T const& value, Proj proj = {}) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
+                    auto iter = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_NS::ranges::size(r),
+                        details::wrap_pred_proj(
+                            [&value](auto&& val) { return val == value; }, RAH2_STD::move(proj)));
+                    return first_last.wrap_iterator(RAH2_STD::move(iter));
                 }
             };
         } // namespace niebloids
