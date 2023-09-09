@@ -33,41 +33,44 @@
 
 #include "test_helpers.hpp"
 
-struct Coord
+namespace
 {
-    intptr_t x;
-    intptr_t y;
-
-    bool operator==(Coord c) const
+    struct Coord
     {
-        return x == c.x and y == c.y;
-    }
+        intptr_t x;
+        intptr_t y;
 
-    bool operator!=(Coord c) const
-    {
-        return !(*this == c);
-    }
+        bool operator==(Coord c) const
+        {
+            return x == c.x and y == c.y;
+        }
 
-    friend bool operator<(Coord a, Coord b)
-    {
-        return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
-    }
+        bool operator!=(Coord c) const
+        {
+            return !(*this == c);
+        }
 
-    friend bool operator>(Coord a, Coord b)
-    {
-        return (a.x != b.x) ? (a.x > b.x) : (a.y > b.y);
-    }
+        friend bool operator<(Coord a, Coord b)
+        {
+            return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
+        }
 
-    friend bool operator<=(Coord a, Coord b)
-    {
-        return a < b || a == b;
-    }
+        friend bool operator>(Coord a, Coord b)
+        {
+            return (a.x != b.x) ? (a.x > b.x) : (a.y > b.y);
+        }
 
-    friend bool operator>=(Coord a, Coord b)
-    {
-        return a > b || a == b;
-    }
-};
+        friend bool operator<=(Coord a, Coord b)
+        {
+            return a < b || a == b;
+        }
+
+        friend bool operator>=(Coord a, Coord b)
+        {
+            return a > b || a == b;
+        }
+    };
+} // namespace
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
