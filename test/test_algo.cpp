@@ -33,11 +33,14 @@
 
 #include "test_helpers.hpp"
 
-struct Coord
+namespace
 {
-    int x;
-    int y;
-};
+    struct Coord
+    {
+        int x;
+        int y;
+    };
+} // namespace
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_

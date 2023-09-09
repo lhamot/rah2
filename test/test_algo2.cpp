@@ -33,16 +33,24 @@
 
 #include "test_helpers.hpp"
 
-struct Coord
+namespace
 {
-    int x;
-    int y;
-
-    bool operator==(Coord c) const
+    struct Coord
     {
-        return x == c.x and y == c.y;
-    }
-};
+        intptr_t x;
+        intptr_t y;
+
+        bool operator==(Coord c) const
+        {
+            return x == c.x and y == c.y;
+        }
+
+        friend bool operator<(Coord a, Coord b)
+        {
+            return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
+        }
+    };
+} // namespace
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
@@ -90,7 +98,7 @@ struct test_mismatch_
 
             auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
             auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-            auto pred = [](int a, int b)
+            auto pred = [](intptr_t a, intptr_t b)
             {
                 return a == b;
             };
@@ -212,6 +220,96 @@ void test_equal()
 
     foreach_range_combination<test_algo<test_equal_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_lexicographical_compare_
+{
+    template <bool = true>
+    void test(char const* range_type)
+    {
+        // TODO : Test all ranges combinations ?
+        {
+            testSuite.test_case("range");
+            testSuite.test_case("nocomp");
+            testSuite.test_case("noproj");
+            RAH2_STD::vector<char> v1{'a', 'b', 'c', 'd'};
+            RAH2_STD::vector<char> v2{'a', 'x', 'y', 'z'};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(v1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(v2);
+            assert(RAH2_NS::ranges::lexicographical_compare(r1, r1) == false);
+            assert(RAH2_NS::ranges::lexicographical_compare(r1, r2) == true);
+            assert(RAH2_NS::ranges::lexicographical_compare(r2, r1) == false);
+
+            testSuite.test_case("iter");
+            assert(
+                RAH2_NS::ranges::lexicographical_compare(r1.begin(), r1.end(), r1.begin(), r1.end())
+                == false);
+            assert(
+                RAH2_NS::ranges::lexicographical_compare(r1.begin(), r1.end(), r2.begin(), r2.end())
+                == true);
+            assert(
+                RAH2_NS::ranges::lexicographical_compare(r2.begin(), r2.end(), r1.begin(), r1.end())
+                == false);
+        }
+        {
+            testSuite.test_case("range");
+            testSuite.test_case("comp");
+            testSuite.test_case("proj");
+            RAH2_STD::vector<Coord> v1{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
+            RAH2_STD::vector<Coord> v2{{0, 1}, {0, 3}, {0, 4}, {0, 5}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(v1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(v2);
+            assert(
+                RAH2_NS::ranges::lexicographical_compare(
+                    r1, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
+                == true);
+            assert(
+                RAH2_NS::ranges::lexicographical_compare(
+                    r1, r2, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
+                == false);
+            assert(
+                RAH2_NS::ranges::lexicographical_compare(
+                    r2, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
+                == false);
+        }
+        {
+            testSuite.test_case("perf");
+            RAH2_STD::vector<Coord> coords_vec;
+            RAH2_STD::vector<Coord> coords_vec2;
+            for (intptr_t i = 0; i < 1000000; ++i)
+            {
+                coords_vec.push_back(Coord{i, i});
+                coords_vec2.push_back(Coord{i, i});
+            }
+            coords_vec.push_back({0, 1});
+            coords_vec2.push_back({1, 0});
+
+            auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
+            auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
+            auto pred = [](Coord a, Coord b)
+            {
+                return a.x < b.y;
+            };
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "lexicographical_compare",
+                range_type,
+                [&]
+                {
+                    assert(STD::lexicographical_compare(
+                        fwd(coordRange1.begin()),
+                        fwd(coordRange1.end()),
+                        coordRange2.begin(),
+                        coordRange2.end()));
+                });
+            COMPARE_DURATION_TO_STD_RANGES(
+                "lexicographical_compare_pred",
+                range_type,
+                [&] { assert(not STD::lexicographical_compare(coordRange1, coordRange2, pred)); });
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_lexicographical_compare()
 {
     testSuite.test_case("sample");
@@ -231,6 +329,8 @@ void test_lexicographical_compare()
         RAH2_NS::ranges::lexicographical_compare(v1.begin(), v1.end(), v2.begin(), v2.end()) == true);
     assert(
         RAH2_NS::ranges::lexicographical_compare(v2.begin(), v2.end(), v1.begin(), v1.end()) == false);
+
+    foreach_range_combination<test_algo<test_lexicographical_compare_>>();
 }
 void test_find()
 {

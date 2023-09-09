@@ -1780,6 +1780,7 @@ namespace RAH2_NS
         {
             struct lexicographical_compare_fn
             {
+            private:
                 template <
                     typename I1,
                     typename S1,
@@ -1791,26 +1792,20 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                         && sentinel_for<S2, I2>>* = nullptr>
-                constexpr bool operator()(
-                    I1 first1,
-                    S1 last1,
-                    I2 first2,
-                    S2 last2,
-                    Comp comp = {},
-                    Proj1 proj1 = {},
-                    Proj2 proj2 = {}) const
+                constexpr bool impl(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}) const
                 {
                     for (; (first1 != last1) && (first2 != last2); ++first1, (void)++first2)
                     {
-                        if (comp(proj1(*first1), proj2(*first2)))
+                        if (comp(*first1, *first2))
                             return true;
 
-                        if (comp(proj2(*first2), proj1(*first1)))
+                        if (comp(*first2, *first1))
                             return false;
                     }
                     return (first1 == last1) && (first2 != last2);
                 }
 
+            public:
                 bool // Specialization for const char*.
                 operator()(char const* first1, char const* last1, char const* first2, char const* last2) const
                 {
@@ -1882,6 +1877,37 @@ namespace RAH2_NS
                 }
 
                 template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    typename Comp = RAH2_NS::ranges::less,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
+                        && sentinel_for<S2, I2>>* = nullptr>
+                constexpr bool operator()(
+                    I1 first1,
+                    S1 last1,
+                    I2 first2,
+                    S2 last2,
+                    Comp comp = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    return impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        details::wrap_pred_proj(
+                            RAH2_STD::move(comp), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
+                }
+                template <
                     typename R1,
                     typename R2,
                     class Proj1 = RAH2_NS::details::identity,
@@ -1896,9 +1922,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
-                        RAH2_STD::ref(comp),
-                        RAH2_STD::ref(proj1),
-                        RAH2_STD::ref(proj2));
+                        RAH2_STD::move(comp),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
