@@ -45,29 +45,9 @@ namespace
             return x == c.x and y == c.y;
         }
 
-        bool operator!=(Coord c) const
-        {
-            return !(*this == c);
-        }
-
         friend bool operator<(Coord a, Coord b)
         {
             return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
-        }
-
-        friend bool operator>(Coord a, Coord b)
-        {
-            return (a.x != b.x) ? (a.x > b.x) : (a.y > b.y);
-        }
-
-        friend bool operator<=(Coord a, Coord b)
-        {
-            return a < b || a == b;
-        }
-
-        friend bool operator>=(Coord a, Coord b)
-        {
-            return a > b || a == b;
         }
     };
 } // namespace
