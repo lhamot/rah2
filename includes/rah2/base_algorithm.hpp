@@ -566,6 +566,96 @@ namespace RAH2_NS
         } // namespace niebloids
         constexpr niebloids::median median;
 
+        namespace details
+        {
+            template <typename I, typename Diff, typename P>
+            RAH2_CONSTEXPR20 I find_if_n(I first, Diff count, P pred)
+            {
+                for (; count > 3; count -= 4)
+                {
+                    if (pred(*first))
+                        return first;
+                    ++first;
+
+                    if (pred(*first))
+                        return first;
+                    ++first;
+
+                    if (pred(*first))
+                        return first;
+                    ++first;
+
+                    if (pred(*first))
+                        return first;
+                    ++first;
+                }
+
+                switch (count)
+                {
+                case 3:
+                    if (pred(*first))
+                        return first;
+                    ++first;
+                    RAH2_FALLTHROUGH;
+                case 2:
+                    if (pred(*first))
+                        return first;
+                    ++first;
+                    RAH2_FALLTHROUGH;
+                case 1:
+                    if (pred(*first))
+                        return first;
+                    ++first;
+                    RAH2_FALLTHROUGH;
+                case 0:
+                default: return first;
+                }
+            }
+
+            template <typename I, typename Diff, typename P>
+            RAH2_CONSTEXPR20 I find_if_not_n(I first, Diff count, P pred)
+            {
+                for (; count > 3; count -= 4)
+                {
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+                }
+
+                switch (count)
+                {
+                case 3:
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+                    RAH2_FALLTHROUGH;
+                case 2:
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+                    RAH2_FALLTHROUGH;
+                case 1:
+                    if (!pred(*first))
+                        return first;
+                    ++first;
+                    RAH2_FALLTHROUGH;
+                case 0:
+                default: return first;
+                }
+            }
+        } // namespace details
         namespace niebloids
         {
             struct all_of
@@ -585,59 +675,6 @@ namespace RAH2_NS
                     return first == last;
                 }
 
-                /// This is an overload used by find algos for the RAI case.
-                /// TODO : Use factorize with find_if(_not)
-                template <
-                    typename S,
-                    typename I,
-                    typename Predicate,
-                    RAH2_STD::enable_if_t<sized_sentinel_for<S, I>>* = nullptr>
-                RAH2_CONSTEXPR20 bool impl(I first, S last, Predicate pred) const
-                {
-                    typename RAH2_STD::iterator_traits<I>::difference_type trip_count =
-                        (last - first) >> 2;
-
-                    for (; trip_count > 0; --trip_count)
-                    {
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-                    }
-
-                    switch (last - first)
-                    {
-                    case 3:
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-                        RAH2_FALLTHROUGH;
-                    case 2:
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-                        RAH2_FALLTHROUGH;
-                    case 1:
-                        if (!pred(*first))
-                            return false;
-                        ++first;
-                        RAH2_FALLTHROUGH;
-                    case 0:
-                    default: return true;
-                    }
-                }
-
             public:
                 /// all_of
                 ///
@@ -649,8 +686,8 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator>
-                        && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator>
+                        && not RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 RAH2_CONSTEXPR20 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
@@ -663,10 +700,32 @@ namespace RAH2_NS
                 }
 
                 template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<InputIterator>
+                        && RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                RAH2_CONSTEXPR20 bool operator()(
+                    InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
+                {
+                    auto const range_size = last_w - first_w;
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return first_last.sentinel
+                           == details::find_if_not_n(
+                               RAH2_STD::move(first_last.iterator),
+                               range_size,
+                               details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                }
+
+                template <
                     typename InputRange,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::input_range<InputRange> && not sized_range<InputRange>>* = nullptr>
                 RAH2_CONSTEXPR20 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
@@ -674,6 +733,23 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(range),
                         RAH2_STD::move(pred),
                         RAH2_STD::move(proj));
+                }
+
+                template <
+                    typename InputRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<sized_range<InputRange>>* = nullptr>
+                RAH2_CONSTEXPR20 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
+                {
+                    auto const range_size = RAH2_NS::ranges::size(range);
+                    auto first_last =
+                        details::unwrap(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
+                    return first_last.sentinel
+                           == details::find_if_not_n(
+                               RAH2_STD::move(first_last.iterator),
+                               range_size,
+                               details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
                 }
             };
         } // namespace niebloids
@@ -699,59 +775,6 @@ namespace RAH2_NS
                     return false;
                 }
 
-                /// This is an overload used by find algos for the RAI case.
-                /// TODO : Use factorize with find_if(_not)
-                template <
-                    typename I,
-                    typename S,
-                    typename Predicate,
-                    RAH2_STD::enable_if_t<sized_sentinel_for<S, I>>* = nullptr>
-                RAH2_CONSTEXPR20 bool impl(I first, S last, Predicate pred) const
-                {
-                    typename RAH2_STD::iterator_traits<I>::difference_type trip_count =
-                        (last - first) >> 2;
-
-                    for (; trip_count > 0; --trip_count)
-                    {
-                        if (pred(*first))
-                            return true;
-                        ++first;
-
-                        if (pred(*first))
-                            return true;
-                        ++first;
-
-                        if (pred(*first))
-                            return true;
-                        ++first;
-
-                        if (pred(*first))
-                            return true;
-                        ++first;
-                    }
-
-                    switch (last - first)
-                    {
-                    case 3:
-                        if (pred(*first))
-                            return true;
-                        ++first;
-                        RAH2_FALLTHROUGH;
-                    case 2:
-                        if (pred(*first))
-                            return true;
-                        ++first;
-                        RAH2_FALLTHROUGH;
-                    case 1:
-                        if (pred(*first))
-                            return true;
-                        ++first;
-                        RAH2_FALLTHROUGH;
-                    case 0:
-                    default: return false;
-                    }
-                }
-
             public:
                 /// any_of
                 ///
@@ -763,8 +786,8 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator>
-                        && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator>
+                        && not RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
@@ -777,10 +800,33 @@ namespace RAH2_NS
                 }
 
                 template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<InputIterator>
+                        && RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                bool operator()(
+                    InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
+                {
+                    auto const range_size = last_w - first_w;
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
+                    return first_last.sentinel
+                           != details::find_if_n(
+                               RAH2_STD::move(first_last.iterator),
+                               range_size,
+                               details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                }
+
+                template <
                     typename InputRange,
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<RAH2_NS::ranges::input_range<InputRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::input_range<InputRange>
+                        && not RAH2_NS::ranges::sized_range<InputRange>>* = nullptr>
                 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
@@ -788,6 +834,23 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(range),
                         RAH2_STD::move(pred),
                         RAH2_STD::move(proj));
+                }
+
+                template <
+                    typename InputRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<InputRange>>* = nullptr>
+                bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
+                {
+                    auto const range_size = RAH2_NS::ranges::size(range);
+                    auto first_last =
+                        details::unwrap(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
+                    return first_last.sentinel
+                           != details::find_if_n(
+                               RAH2_STD::move(first_last.iterator),
+                               range_size,
+                               details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
                 }
             };
         } // namespace niebloids
@@ -1188,96 +1251,6 @@ namespace RAH2_NS
         ///
         constexpr niebloids::count_if_fn count_if;
 
-        namespace details
-        {
-            template <typename I, typename Diff, typename P>
-            RAH2_CONSTEXPR20 I find_if_n(I first, Diff count, P pred)
-            {
-                for (; count > 3; count -= 4)
-                {
-                    if (pred(*first))
-                        return first;
-                    ++first;
-
-                    if (pred(*first))
-                        return first;
-                    ++first;
-
-                    if (pred(*first))
-                        return first;
-                    ++first;
-
-                    if (pred(*first))
-                        return first;
-                    ++first;
-                }
-
-                switch (count)
-                {
-                case 3:
-                    if (pred(*first))
-                        return first;
-                    ++first;
-                    RAH2_FALLTHROUGH;
-                case 2:
-                    if (pred(*first))
-                        return first;
-                    ++first;
-                    RAH2_FALLTHROUGH;
-                case 1:
-                    if (pred(*first))
-                        return first;
-                    ++first;
-                    RAH2_FALLTHROUGH;
-                case 0:
-                default: return first;
-                }
-            }
-
-            template <typename I, typename Diff, typename P>
-            RAH2_CONSTEXPR20 I find_if_not_n(I first, Diff count, P pred)
-            {
-                for (; count > 3; count -= 4)
-                {
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-                }
-
-                switch (count)
-                {
-                case 3:
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-                    RAH2_FALLTHROUGH;
-                case 2:
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-                    RAH2_FALLTHROUGH;
-                case 1:
-                    if (!pred(*first))
-                        return first;
-                    ++first;
-                    RAH2_FALLTHROUGH;
-                case 0:
-                default: return first;
-                }
-            }
-        } // namespace details
         namespace niebloids
         {
             struct find_fn
