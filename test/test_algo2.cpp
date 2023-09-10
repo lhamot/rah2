@@ -33,24 +33,40 @@
 
 #include "test_helpers.hpp"
 
-namespace
+struct Coord
 {
-    struct Coord
+    intptr_t x;
+    intptr_t y;
+
+    bool operator==(Coord c) const
     {
-        intptr_t x;
-        intptr_t y;
+        return x == c.x and y == c.y;
+    }
+    bool operator!=(Coord c) const
+    {
+        return x != c.x || y != c.y;
+    }
 
-        bool operator==(Coord c) const
-        {
-            return x == c.x and y == c.y;
-        }
+    friend bool operator<(Coord a, Coord b)
+    {
+        return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
+    }
 
-        friend bool operator<(Coord a, Coord b)
-        {
-            return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
-        }
-    };
-} // namespace
+    friend bool operator<=(Coord a, Coord b)
+    {
+        return (a < b) || (a == b);
+    }
+
+    friend bool operator>(Coord a, Coord b)
+    {
+        return !(a < b) && !(a == b);
+    }
+
+    friend bool operator>=(Coord a, Coord b)
+    {
+        return !(a < b);
+    }
+};
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
@@ -322,16 +338,53 @@ void test_lexicographical_compare()
     assert(RAH2_NS::ranges::lexicographical_compare(v2, v1) == false);
     /// [rah2::ranges::lexicographical_compare]
 
-    testSuite.test_case("iter");
-    assert(
-        RAH2_NS::ranges::lexicographical_compare(v1.begin(), v1.end(), v1.begin(), v1.end()) == false);
-    assert(
-        RAH2_NS::ranges::lexicographical_compare(v1.begin(), v1.end(), v2.begin(), v2.end()) == true);
-    assert(
-        RAH2_NS::ranges::lexicographical_compare(v2.begin(), v2.end(), v1.begin(), v1.end()) == false);
-
     foreach_range_combination<test_algo<test_lexicographical_compare_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_find_
+{
+    template <bool = true>
+    void test(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            testSuite.test_case("range");
+            testSuite.test_case("noproj");
+            auto const iter = RAH2_NS::ranges::find(r1, Coord{3, 0});
+            testSuite.test_case("iter");
+            testSuite.test_case("proj");
+            assert((*iter == Coord{3, 0}));
+            auto const iter2 = RAH2_NS::ranges::find(r1.begin(), r1.end(), 3, &Coord::x);
+            assert((*iter2 == Coord{3, 0}));
+        }
+        {
+            RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
+            in.push_back(Coord{3, 4});
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "find",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find(fwd(r1.begin()), r1.end(), Coord{3, 4});
+                    assert((*iter == Coord{3, 4}));
+                });
+            COMPARE_DURATION_TO_STD_RANGES(
+                "find_proj",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find(r1.begin(), r1.end(), 3, &Coord::x);
+                    assert((*iter == Coord{3, 4}));
+                });
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_find()
 {
     testSuite.test_case("sample");
@@ -341,6 +394,8 @@ void test_find()
     assert(RAH2_NS::ranges::equal(
         RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::ranges::find]
+
+    foreach_range_combination<test_algo<test_find_>>();
 }
 void test_find_if()
 {
