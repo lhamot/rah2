@@ -397,6 +397,59 @@ void test_find()
 
     foreach_range_combination<test_algo<test_find_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_find_if_
+{
+    template <bool = true>
+    void test(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            testSuite.test_case("range");
+            testSuite.test_case("noproj");
+            auto const iter = RAH2_NS::ranges::find_if(r1, [](auto c) { return c == Coord{3, 0}; });
+            testSuite.test_case("iter");
+            testSuite.test_case("proj");
+            assert((*iter == Coord{3, 0}));
+            auto const iter2 = RAH2_NS::ranges::find_if(
+                r1.begin(), r1.end(), [](auto c) { return c == 3; }, &Coord::x);
+            assert((*iter2 == Coord{3, 0}));
+        }
+        {
+            testSuite.test_case("perf");
+            RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
+            in.push_back(Coord{3, 4});
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "find_if",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find_if(
+                        fwd(r1.begin()),
+                        r1.end(),
+                        [](auto c) {
+                            return c == Coord{3, 4};
+                        });
+                    assert((*iter == Coord{3, 4}));
+                });
+            COMPARE_DURATION_TO_STD_RANGES(
+                "find_if_proj",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find_if(
+                        r1.begin(), r1.end(), [](auto c) { return c == 3; }, &Coord::x);
+                    assert((*iter == Coord{3, 4}));
+                });
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_find_if()
 {
     testSuite.test_case("sample");
@@ -406,6 +459,8 @@ void test_find_if()
     assert(RAH2_NS::ranges::equal(
         RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::ranges::find_if]
+
+    foreach_range_combination<test_algo<test_find_if_>>();
 }
 void test_find_if_not()
 {
