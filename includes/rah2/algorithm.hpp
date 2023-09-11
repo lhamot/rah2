@@ -291,8 +291,15 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, T const& value, Proj proj = {}) const
                 {
-                    return impl(
-                        RAH2_STD::move(first), RAH2_STD::move(last), value, details::move_unary(proj));
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        value,
+                        details::move_unary(proj));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
                 }
 
                 template <
@@ -303,11 +310,16 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::borrowed_subrange_t<R>
                 operator()(R&& r, T const& value, Proj proj = {}) const
                 {
-                    return impl(
-                        RAH2_NS::ranges::begin(r),
-                        RAH2_NS::ranges::end(r),
+                    auto first_last =
+                        details::unwrap(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
                         value,
                         details::move_unary(proj));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
                 }
             };
         } // namespace niebloids

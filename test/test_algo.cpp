@@ -33,15 +33,6 @@
 
 #include "test_helpers.hpp"
 
-namespace
-{
-    struct Coord
-    {
-        int x;
-        int y;
-    };
-} // namespace
-
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_
 {
@@ -79,7 +70,7 @@ struct test_all_of_
             [&]
             {
                 auto result = STD::all_of(
-                    perf_no, [](int x) { return x == 0; }, &Coord::x);
+                    perf_no, [](intptr_t x) { return x == 0; }, &Coord::x);
                 assert(result);
             });
     }
@@ -141,7 +132,7 @@ struct test_any_of_
             [&]
             {
                 auto result = STD::any_of(
-                    perf_no, [](int v) { return v == 1; }, &Coord::x);
+                    perf_no, [](intptr_t v) { return v == 1; }, &Coord::x);
                 assert(!result);
             });
     }
@@ -203,7 +194,7 @@ struct test_none_of_
             [&]
             {
                 auto result = STD::none_of(
-                    perf_no, [](int x) { return x == 1; }, &Coord::x);
+                    perf_no, [](intptr_t x) { return x == 1; }, &Coord::x);
                 assert(result);
             });
     }
@@ -263,7 +254,7 @@ struct test_for_each_
             (
                 [&]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each(fwd(r3.begin()), r3.end(), [&sum](Coord const& c) { sum += c.x; });
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
@@ -274,10 +265,10 @@ struct test_for_each_
             (
                 [&coord_vec]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each(
-                        r3, [&sum](int x) { sum += x; }, &Coord::x);
+                        r3, [&sum](intptr_t x) { sum += x; }, &Coord::x);
                     assert(sum == 10000000 * RELEASE_MULTIPLIER);
                 }));
     }
@@ -340,7 +331,7 @@ struct test_for_each_n_
             (
                 [&]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each_n(
                         fwd(r3.begin()), vec_size, [&sum](Coord const& c) { sum += c.x; });
@@ -352,10 +343,10 @@ struct test_for_each_n_
             (
                 [&coord_vec]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each_n(
-                        r3.begin(), vec_size, [&sum](int x) { sum += x; }, &Coord::x);
+                        r3.begin(), vec_size, [&sum](intptr_t x) { sum += x; }, &Coord::x);
                     assert(sum == vec_size);
                 }));
     }

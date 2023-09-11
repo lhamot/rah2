@@ -1289,6 +1289,27 @@ auto compare_duration(
     }
 #endif
 
+#if defined(PERF_TEST) and RAH2_CPP23
+#define COMPARE_DURATION_TO_STD_RANGES_23(ALGO, CONCEPT, F)                                         \
+    {                                                                                               \
+        namespace STD = std::ranges;                                                                \
+        auto test_std = (F);                                                                        \
+        {                                                                                           \
+            namespace STD = RAH2_NS::ranges;                                                        \
+            auto test_rah2 = (F);                                                                   \
+            compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std_ranges", __FILE__, __LINE__); \
+        }                                                                                           \
+    }
+#else
+#define COMPARE_DURATION_TO_STD_RANGES_23(ALGO, CONCEPT, F)                                        \
+    {                                                                                              \
+        namespace STD = RAH2_NS::ranges;                                                           \
+        (void)ALGO;                                                                                \
+        (void)CONCEPT;                                                                             \
+        (void)(F);                                                                                 \
+    }
+#endif
+
 #if defined(PERF_TEST) and RAH2_CPP20
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(IS_COMMON, ALGO, CONCEPT, F)                       \
     call_if_true<IS_COMMON>(                                                                       \
@@ -1399,3 +1420,38 @@ auto compare_duration(
 
 #define DONT_OPTIM(V)                                                                              \
     memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
+
+struct Coord
+{
+    intptr_t x;
+    intptr_t y;
+
+    bool operator==(Coord c) const
+    {
+        return x == c.x and y == c.y;
+    }
+    bool operator!=(Coord c) const
+    {
+        return x != c.x || y != c.y;
+    }
+
+    friend bool operator<(Coord a, Coord b)
+    {
+        return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
+    }
+
+    friend bool operator<=(Coord a, Coord b)
+    {
+        return (a < b) || (a == b);
+    }
+
+    friend bool operator>(Coord a, Coord b)
+    {
+        return !(a < b) && !(a == b);
+    }
+
+    friend bool operator>=(Coord a, Coord b)
+    {
+        return !(a < b);
+    }
+};

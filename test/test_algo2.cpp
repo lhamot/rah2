@@ -33,41 +33,6 @@
 
 #include "test_helpers.hpp"
 
-struct Coord
-{
-    intptr_t x;
-    intptr_t y;
-
-    bool operator==(Coord c) const
-    {
-        return x == c.x and y == c.y;
-    }
-    bool operator!=(Coord c) const
-    {
-        return x != c.x || y != c.y;
-    }
-
-    friend bool operator<(Coord a, Coord b)
-    {
-        return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
-    }
-
-    friend bool operator<=(Coord a, Coord b)
-    {
-        return (a < b) || (a == b);
-    }
-
-    friend bool operator>(Coord a, Coord b)
-    {
-        return !(a < b) && !(a == b);
-    }
-
-    friend bool operator>=(Coord a, Coord b)
-    {
-        return !(a < b);
-    }
-};
-
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
 {
@@ -557,25 +522,32 @@ struct test_find_last_
         {
             RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
             in.push_back(Coord{3, 4});
+            in.push_back(Coord{3, 4});
+            in.push_back(Coord{18, 4});
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "find_last",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find_last(fwd(r1.begin()), r1.end(), Coord{3, 4});
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "find_last_proj",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find_last(r1.begin(), r1.end(), 3, &Coord::x);
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                });
+            {
+                COMPARE_DURATION_TO_STD_RANGES_23( // find_last does not exist in std
+                    "find_last",
+                    range_type,
+                    [&]
+                    {
+                        auto iter = STD::find_last(r1.begin(), r1.end(), Coord{3, 4});
+                        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    });
+            }
+            {
+                COMPARE_DURATION_TO_STD_RANGES_23(
+                    "find_last_proj",
+                    range_type,
+                    [&]
+                    {
+                        auto iter = STD::find_last(r1.begin(), r1.end(), 3, &Coord::x);
+                        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    });
+            }
         }
     }
     static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
