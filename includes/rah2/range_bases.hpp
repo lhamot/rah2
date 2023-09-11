@@ -1421,7 +1421,7 @@ namespace RAH2_NS
                         !has_empty_member<R> && concepts::compiles<false, R, has_ranges_size>>* = nullptr>
                 auto operator()(R&& range) const
                 {
-                    return size_impl{}(range);
+                    return size_impl{}(range) == 0;
                 }
 
                 template <

@@ -259,6 +259,7 @@ namespace RAH2_NS
         {
             struct find_last_fn
             {
+            private:
                 template <
                     typename I,
                     typename S,
@@ -266,7 +267,7 @@ namespace RAH2_NS
                     class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
-                operator()(I first, S last, T const& value, Proj proj = {}) const
+                impl(I first, S last, T const& value, Proj proj = {}) const
                 {
                     // Note: if I is mere forward_iterator, we may only go from begin to end.
                     I found{};
@@ -280,6 +281,20 @@ namespace RAH2_NS
                     return {found, RAH2_NS::ranges::next(found, last)};
                 }
 
+            public:
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::ranges::subrange<I>
+                operator()(I first, S last, T const& value, Proj proj = {}) const
+                {
+                    return impl(
+                        RAH2_STD::move(first), RAH2_STD::move(last), value, details::move_unary(proj));
+                }
+
                 template <
                     typename R,
                     class T,
@@ -288,8 +303,11 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::borrowed_subrange_t<R>
                 operator()(R&& r, T const& value, Proj proj = {}) const
                 {
-                    return this->operator()(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value, RAH2_STD::ref(proj));
+                    return impl(
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        value,
+                        details::move_unary(proj));
                 }
             };
         } // namespace niebloids
