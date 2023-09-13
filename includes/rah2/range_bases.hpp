@@ -1060,9 +1060,26 @@ namespace RAH2_NS
             template <
                 typename I,
                 typename S,
-                RAH2_STD::enable_if_t<not(
-                    contiguous_iterator<RAH2_STD::remove_reference_t<I>>
-                    && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
+                RAH2_STD::enable_if_t<
+                    RAH2_STD::is_assignable<RAH2_NS::remove_cvref_t<I>, S>::value
+                    && not(
+                        contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                        && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
+                    nullptr>
+            unwraped_iterators<RAH2_STD::remove_reference_t<I>, RAH2_STD::remove_reference_t<S>>
+            unwrap(I&& it, S&& s)
+            {
+                I it_end = RAH2_STD::move(s);
+                return {RAH2_STD::forward<I>(it), RAH2_STD::move(it_end)};
+            }
+            template <
+                typename I,
+                typename S,
+                RAH2_STD::enable_if_t<
+                    not RAH2_STD::is_assignable<I, S>::value
+                    && not(
+                        contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                        && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
                     nullptr>
             unwraped_iterators<RAH2_STD::remove_reference_t<I>, RAH2_STD::remove_reference_t<S>>
             unwrap(I&& it, S&& s)
