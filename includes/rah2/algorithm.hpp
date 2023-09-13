@@ -270,15 +270,22 @@ namespace RAH2_NS
                 impl(I first, S last, T const& value, Proj proj = {}) const
                 {
                     // Note: if I is mere forward_iterator, we may only go from begin to end.
-                    I found{};
                     for (; first != last; ++first)
+                    {
                         if (RAH2_INVOKE_1(proj, *first) == value)
-                            found = first;
-
-                    if (found == I{})
-                        return {first, first};
-
-                    return {found, RAH2_NS::ranges::next(found, last)};
+                        {
+                            I found = first;
+                            for (; first != last; ++first)
+                            {
+                                if (RAH2_INVOKE_1(proj, *first) == value)
+                                {
+                                    found = first;
+                                }
+                            }
+                            return {found, RAH2_NS::ranges::next(found, last)};
+                        }
+                    }
+                    return {first, first};
                 }
 
             public:
