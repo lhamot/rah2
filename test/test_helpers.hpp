@@ -980,10 +980,17 @@ struct test_algo
     struct CheckAlgo
     {
         template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
-        void call(char const* range_type) const
+        void call(char const*
+#if defined(PERF_TEST)
+                      range_type
+#endif
+        ) const
         {
             auto t1 = MakeR<Sentinel, Cat, Sized>();
-            t1.template test<>(range_type);
+            t1.template test<>();
+#if defined(PERF_TEST)
+            t1.template test_perf<>(range_type);
+#endif
         }
     };
     template <CommonOrSent Sentinel, typename Cat, bool Sized>
