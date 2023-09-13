@@ -37,7 +37,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         std::vector<int> raw_yes = {4, 4, 4, 4};
         assert(RAH2_NS::ranges::all_of(
@@ -48,7 +48,10 @@ struct test_all_of_
         std::vector<int> raw_empty = {};
         assert(RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
-
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
         std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {0, 2});
         auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_zero = [](Coord const& value)
@@ -99,7 +102,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_any_of_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         std::vector<int> raw_yes = {3, 3, 4, 3};
         assert(RAH2_NS::ranges::any_of(
@@ -110,7 +113,10 @@ struct test_any_of_
         std::vector<int> raw_empty = {};
         assert(!RAH2_NS::ranges::any_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
-
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
         std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER);
         auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_one = [](Coord const& value)
@@ -161,7 +167,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_none_of_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         std::vector<int> raw_yes = {3, 2, 3, 5};
         assert(RAH2_NS::ranges::none_of(
@@ -172,6 +178,10 @@ struct test_none_of_
         std::vector<int> raw_empty = {};
         assert(RAH2_NS::ranges::none_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
 
         std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER);
         auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
@@ -223,7 +233,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_for_each_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
 #if defined(TEST_DISPLAY_ALL)
         std::cout << "range_type : " << range_type << std::endl;
@@ -249,6 +259,10 @@ struct test_for_each_
         assert(result2.in == r2.end());
         result.fun(1);
         assert(sum == vec_empty.size() + 1); // result.fun
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
         std::vector<Coord> coord_vec(1000000 * RELEASE_MULTIPLIER, {1, 2});
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -302,10 +316,10 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_for_each_n_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         size_t sum = 0;
-        static constexpr auto vec_size = 1000000 * RELEASE_MULTIPLIER;
+        static constexpr auto vec_size = 1000 * RELEASE_MULTIPLIER;
         std::vector<int> vec(vec_size, 1);
         auto func = [&sum](auto v)
         {
@@ -326,6 +340,11 @@ struct test_for_each_n_
         assert(result2.in == r2.end());
         result.fun(1);
         assert(sum == vec_empty.size() + 1); // result.fun
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        static constexpr auto vec_size = 1000000 * RELEASE_MULTIPLIER;
         std::vector<Coord> coord_vec(vec_size, {1, 2});
         COMPARE_DURATION_TO_STD_ALGO17_AND_RANGES(
             CS == Common,
@@ -377,61 +396,60 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_count_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
+        testSuite.test_case("range");
+        testSuite.test_case("noproj");
+        RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        assert(RAH2_NS::ranges::count(intsRange, 3) == 1);
+
+        testSuite.test_case("proj");
+        RAH2_STD::vector<Coord> coordsVec({Coord{1, 1}, {1, 2}, {2, 1}, {2, 3}, {3, 1}});
+        static auto coords = make_test_view_adapter<CS, Tag, Sized>(coordsVec);
+        assert(RAH2_NS::ranges::count(coords, 1, RAH2_STD::mem_fn(&Coord::x)) == 2);
+
+        testSuite.test_case("iter");
+        assert(
+            RAH2_NS::ranges::count(coords.begin(), coords.end(), 1, RAH2_STD::mem_fn(&Coord::x)) == 2);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> coordsVec;
+        coordsVec.insert(coordsVec.end(), 1000000, {1, 47});
+        coordsVec.insert(coordsVec.end(), 79, {2, 47});
+        coordsVec.insert(coordsVec.end(), 1000000, {3, 47});
+        RAH2_STD::vector<int> intsVec;
+        intsVec.insert(intsVec.end(), 1000000, 1);
+        intsVec.insert(intsVec.end(), 79, 2);
+        intsVec.insert(intsVec.end(), 1000000, 3);
+
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        auto coordsRange = make_test_view_adapter<CS, Tag, Sized>(coordsVec);
+
+        auto getter_lbd = [](Coord const& c)
         {
-            testSuite.test_case("range");
-            testSuite.test_case("noproj");
-            RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
-            auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
-            assert(RAH2_NS::ranges::count(intsRange, 3) == 1);
-
-            testSuite.test_case("proj");
-            RAH2_STD::vector<Coord> coordsVec({Coord{1, 1}, {1, 2}, {2, 1}, {2, 3}, {3, 1}});
-            static auto coords = make_test_view_adapter<CS, Tag, Sized>(coordsVec);
-            assert(RAH2_NS::ranges::count(coords, 1, RAH2_STD::mem_fn(&Coord::x)) == 2);
-
-            testSuite.test_case("iter");
-            assert(
-                RAH2_NS::ranges::count(coords.begin(), coords.end(), 1, RAH2_STD::mem_fn(&Coord::x))
-                == 2);
-        }
-        {
-            RAH2_STD::vector<Coord> coordsVec;
-            coordsVec.insert(coordsVec.end(), 1000000, {1, 47});
-            coordsVec.insert(coordsVec.end(), 79, {2, 47});
-            coordsVec.insert(coordsVec.end(), 1000000, {3, 47});
-            RAH2_STD::vector<int> intsVec;
-            intsVec.insert(intsVec.end(), 1000000, 1);
-            intsVec.insert(intsVec.end(), 79, 2);
-            intsVec.insert(intsVec.end(), 1000000, 3);
-
-            auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
-            auto coordsRange = make_test_view_adapter<CS, Tag, Sized>(coordsVec);
-
-            auto getter_lbd = [](Coord const& c)
+            return c.x;
+        };
+        testSuite.test_case("perf");
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "count_noproj",
+            range_type,
+            [&]
             {
-                return c.x;
-            };
-            testSuite.test_case("perf");
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "count_noproj",
-                range_type,
-                [&]
-                {
-                    const auto count = STD::count(fwd(intsRange.begin()), intsRange.end(), 2);
-                    assert(count == 79);
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "count_proj",
-                range_type,
-                [&]
-                {
-                    const auto count = STD::count(coordsRange, 2, getter_lbd);
-                    assert(count == 79);
-                });
-        }
+                const auto count = STD::count(fwd(intsRange.begin()), intsRange.end(), 2);
+                assert(count == 79);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "count_proj",
+            range_type,
+            [&]
+            {
+                const auto count = STD::count(coordsRange, 2, getter_lbd);
+                assert(count == 79);
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -458,25 +476,26 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_count_if_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
-        {
-            testSuite.test_case("range");
-            testSuite.test_case("noproj");
-            RAH2_STD::vector<int> vec = {4, 4, 4, 3};
-            auto intsRange = make_test_view_adapter<CS, Tag, Sized>(vec);
-            assert(RAH2_NS::ranges::count_if(intsRange, [](auto a) { return a == 4; }) == 3);
+        testSuite.test_case("range");
+        testSuite.test_case("noproj");
+        RAH2_STD::vector<int> vec = {4, 4, 4, 3};
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(vec);
+        assert(RAH2_NS::ranges::count_if(intsRange, [](auto a) { return a == 4; }) == 3);
 
-            testSuite.test_case("iter");
-            testSuite.test_case("proj");
-            RAH2_STD::vector<Coord> coords = {{4, 1}, {4, 2}, {4, 3}, {3, 4}};
-            auto coordsRange = make_test_view_adapter<CS, Tag, Sized>(coords);
-            assert(
-                RAH2_NS::ranges::count_if(
-                    coordsRange.begin(), coordsRange.end(), [](auto a) { return a == 4; }, &Coord::x)
-                == 3);
-        }
-
+        testSuite.test_case("iter");
+        testSuite.test_case("proj");
+        RAH2_STD::vector<Coord> coords = {{4, 1}, {4, 2}, {4, 3}, {3, 4}};
+        auto coordsRange = make_test_view_adapter<CS, Tag, Sized>(coords);
+        assert(
+            RAH2_NS::ranges::count_if(
+                coordsRange.begin(), coordsRange.end(), [](auto a) { return a == 4; }, &Coord::x)
+            == 3);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
         testSuite.test_case("perf");
         RAH2_STD::vector<Coord> coords_vec;
         coords_vec.insert(coords_vec.end(), 1000000, {1, 47});

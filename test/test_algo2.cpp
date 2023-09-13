@@ -37,7 +37,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         // TODO : Test all ranges combinations ?
         {
@@ -66,46 +66,48 @@ struct test_mismatch_
             assert(*r1_r2.in1 == (Coord{3, 5}));
             assert(*r1_r2.in2 == (Coord{2, 42}));
         }
-        {
-            testSuite.test_case("perf");
-            RAH2_STD::vector<Coord> coords_vec;
-            coords_vec.insert(coords_vec.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 47});
-            coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 47});
-            coords_vec.insert(coords_vec.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 47});
-            RAH2_STD::vector<Coord> coords_vec2;
-            coords_vec2.insert(coords_vec2.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 47});
-            coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{2, 47});
-            coords_vec2.insert(coords_vec2.end(), 10000 * RELEASE_MULTIPLIER, Coord{2, 48});
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<Coord> coords_vec;
+        coords_vec.insert(coords_vec.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 47});
+        coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 47});
+        coords_vec.insert(coords_vec.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 47});
+        RAH2_STD::vector<Coord> coords_vec2;
+        coords_vec2.insert(coords_vec2.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 47});
+        coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{2, 47});
+        coords_vec2.insert(coords_vec2.end(), 10000 * RELEASE_MULTIPLIER, Coord{2, 48});
 
-            auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
-            auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-            auto pred = [](intptr_t a, intptr_t b)
+        auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
+        auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
+        auto pred = [](intptr_t a, intptr_t b)
+        {
+            return a == b;
+        };
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "mismatch",
+            range_type,
+            [&]
             {
-                return a == b;
-            };
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "mismatch",
-                range_type,
-                [&]
-                {
-                    volatile const auto v1_v2 = STD::mismatch(
-                        fwd(coordRange1.begin()),
-                        coordRange1.end(),
-                        coordRange2.begin(),
-                        coordRange2.end());
-                    DONT_OPTIM(v1_v2);
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "mismatch_pred_proj",
-                range_type,
-                [&]
-                {
-                    volatile const auto v1_v2 =
-                        STD::mismatch(coordRange1, coordRange2, pred, &Coord::x, &Coord::x);
-                    DONT_OPTIM(v1_v2);
-                });
-        }
+                volatile const auto v1_v2 = STD::mismatch(
+                    fwd(coordRange1.begin()),
+                    coordRange1.end(),
+                    coordRange2.begin(),
+                    coordRange2.end());
+                DONT_OPTIM(v1_v2);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "mismatch_pred_proj",
+            range_type,
+            [&]
+            {
+                volatile const auto v1_v2 =
+                    STD::mismatch(coordRange1, coordRange2, pred, &Coord::x, &Coord::x);
+                DONT_OPTIM(v1_v2);
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -128,7 +130,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_equal_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         // TODO : Test all ranges combinations ?
         {
@@ -152,38 +154,40 @@ struct test_equal_
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
             assert(RAH2_NS::ranges::equal(rng1, rng2, [](auto a, auto b) { return a.x == b.y; }));
         }
-        {
-            testSuite.test_case("perf");
-            RAH2_STD::vector<Coord> coords_vec;
-            coords_vec.insert(coords_vec.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 1});
-            coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 4});
-            coords_vec.insert(coords_vec.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 3});
-            RAH2_STD::vector<Coord> coords_vec2;
-            coords_vec2.insert(coords_vec2.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 1});
-            coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{5, 3});
-            coords_vec2.insert(coords_vec2.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 3});
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<Coord> coords_vec;
+        coords_vec.insert(coords_vec.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 1});
+        coords_vec.insert(coords_vec.end(), 79 * RELEASE_MULTIPLIER, Coord{3, 4});
+        coords_vec.insert(coords_vec.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 3});
+        RAH2_STD::vector<Coord> coords_vec2;
+        coords_vec2.insert(coords_vec2.end(), 1000000 * RELEASE_MULTIPLIER, Coord{1, 1});
+        coords_vec2.insert(coords_vec2.end(), 79 * RELEASE_MULTIPLIER, Coord{5, 3});
+        coords_vec2.insert(coords_vec2.end(), 10000 * RELEASE_MULTIPLIER, Coord{3, 3});
 
-            auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
-            auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-            auto pred = [](Coord a, Coord b)
+        auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
+        auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
+        auto pred = [](Coord a, Coord b)
+        {
+            return a.x == b.y;
+        };
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "equal",
+            range_type,
+            [&]
             {
-                return a.x == b.y;
-            };
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "equal",
-                range_type,
-                [&]
-                {
-                    assert(not STD::equal(
-                        fwd(coordRange1.begin()),
-                        coordRange1.end(),
-                        coordRange2.begin(),
-                        coordRange2.end()));
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "equal_pred", range_type, [&] { assert(STD::equal(coordRange1, coordRange2, pred)); });
-        }
+                assert(not STD::equal(
+                    fwd(coordRange1.begin()),
+                    coordRange1.end(),
+                    coordRange2.begin(),
+                    coordRange2.end()));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "equal_pred", range_type, [&] { assert(STD::equal(coordRange1, coordRange2, pred)); });
     }
     static constexpr bool do_test = true;
 };
@@ -206,7 +210,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_lexicographical_compare_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         // TODO : Test all ranges combinations ?
         {
@@ -253,41 +257,43 @@ struct test_lexicographical_compare_
                     r2, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
                 == false);
         }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<Coord> coords_vec;
+        RAH2_STD::vector<Coord> coords_vec2;
+        for (intptr_t i = 0; i < 1000000; ++i)
         {
-            testSuite.test_case("perf");
-            RAH2_STD::vector<Coord> coords_vec;
-            RAH2_STD::vector<Coord> coords_vec2;
-            for (intptr_t i = 0; i < 1000000; ++i)
-            {
-                coords_vec.push_back(Coord{i, i});
-                coords_vec2.push_back(Coord{i, i});
-            }
-            coords_vec.push_back({0, 1});
-            coords_vec2.push_back({1, 0});
-
-            auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
-            auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-            auto pred = [](Coord a, Coord b)
-            {
-                return a.x < b.y;
-            };
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "lexicographical_compare",
-                range_type,
-                [&]
-                {
-                    assert(STD::lexicographical_compare(
-                        fwd(coordRange1.begin()),
-                        fwd(coordRange1.end()),
-                        coordRange2.begin(),
-                        coordRange2.end()));
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "lexicographical_compare_pred",
-                range_type,
-                [&] { assert(not STD::lexicographical_compare(coordRange1, coordRange2, pred)); });
+            coords_vec.push_back(Coord{i, i});
+            coords_vec2.push_back(Coord{i, i});
         }
+        coords_vec.push_back({0, 1});
+        coords_vec2.push_back({1, 0});
+
+        auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
+        auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
+        auto pred = [](Coord a, Coord b)
+        {
+            return a.x < b.y;
+        };
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "lexicographical_compare",
+            range_type,
+            [&]
+            {
+                assert(STD::lexicographical_compare(
+                    fwd(coordRange1.begin()),
+                    fwd(coordRange1.end()),
+                    coordRange2.begin(),
+                    coordRange2.end()));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "lexicographical_compare_pred",
+            range_type,
+            [&] { assert(not STD::lexicographical_compare(coordRange1, coordRange2, pred)); });
     }
     static constexpr bool do_test = true;
 };
@@ -310,7 +316,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_find_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
@@ -324,29 +330,31 @@ struct test_find_
             auto const iter2 = RAH2_NS::ranges::find(r1.begin(), r1.end(), 3, &Coord::x);
             assert((*iter2 == Coord{3, 0}));
         }
-        {
-            RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
-            in.push_back(Coord{3, 4});
-            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
+        in.push_back(Coord{3, 4});
+        auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "find",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find(fwd(r1.begin()), r1.end(), Coord{3, 4});
-                    assert((*iter == Coord{3, 4}));
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "find_proj",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find(r1.begin(), r1.end(), 3, &Coord::x);
-                    assert((*iter == Coord{3, 4}));
-                });
-        }
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "find",
+            range_type,
+            [&]
+            {
+                auto iter = STD::find(fwd(r1.begin()), r1.end(), Coord{3, 4});
+                assert((*iter == Coord{3, 4}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "find_proj",
+            range_type,
+            [&]
+            {
+                auto iter = STD::find(r1.begin(), r1.end(), 3, &Coord::x);
+                assert((*iter == Coord{3, 4}));
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -367,7 +375,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_find_if_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
@@ -382,36 +390,38 @@ struct test_find_if_
                 r1.begin(), r1.end(), [](auto c) { return c == 3; }, &Coord::x);
             assert((*iter2 == Coord{3, 0}));
         }
-        {
-            testSuite.test_case("perf");
-            RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
-            in.push_back(Coord{3, 4});
-            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
+        in.push_back(Coord{3, 4});
+        auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "find_if",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find_if(
-                        fwd(r1.begin()),
-                        r1.end(),
-                        [](auto c) {
-                            return c == Coord{3, 4};
-                        });
-                    assert((*iter == Coord{3, 4}));
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "find_if_proj",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find_if(
-                        r1.begin(), r1.end(), [](auto c) { return c == 3; }, &Coord::x);
-                    assert((*iter == Coord{3, 4}));
-                });
-        }
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "find_if",
+            range_type,
+            [&]
+            {
+                auto iter = STD::find_if(
+                    fwd(r1.begin()),
+                    r1.end(),
+                    [](auto c) {
+                        return c == Coord{3, 4};
+                    });
+                assert((*iter == Coord{3, 4}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "find_if_proj",
+            range_type,
+            [&]
+            {
+                auto iter = STD::find_if(
+                    r1.begin(), r1.end(), [](auto c) { return c == 3; }, &Coord::x);
+                assert((*iter == Coord{3, 4}));
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -432,7 +442,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_find_if_not_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
@@ -451,36 +461,38 @@ struct test_find_if_not_
                 r1.begin(), r1.end(), [](auto c) { return c != 3; }, &Coord::x);
             assert((*iter2 == Coord{3, 0}));
         }
-        {
-            testSuite.test_case("perf");
-            RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
-            in.push_back(Coord{3, 4});
-            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
+        in.push_back(Coord{3, 4});
+        auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "find_if",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find_if_not(
-                        fwd(r1.begin()),
-                        r1.end(),
-                        [](auto c) {
-                            return c != Coord{3, 4};
-                        });
-                    assert((*iter == Coord{3, 4}));
-                });
-            COMPARE_DURATION_TO_STD_RANGES(
-                "find_if_proj",
-                range_type,
-                [&]
-                {
-                    auto iter = STD::find_if_not(
-                        r1.begin(), r1.end(), [](auto c) { return c != 3; }, &Coord::x);
-                    assert((*iter == Coord{3, 4}));
-                });
-        }
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "find_if",
+            range_type,
+            [&]
+            {
+                auto iter = STD::find_if_not(
+                    fwd(r1.begin()),
+                    r1.end(),
+                    [](auto c) {
+                        return c != Coord{3, 4};
+                    });
+                assert((*iter == Coord{3, 4}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "find_if_proj",
+            range_type,
+            [&]
+            {
+                auto iter = STD::find_if_not(
+                    r1.begin(), r1.end(), [](auto c) { return c != 3; }, &Coord::x);
+                assert((*iter == Coord{3, 4}));
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -501,7 +513,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_find_last_
 {
     template <bool = true>
-    void test(char const* range_type)
+    void test()
     {
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}, {3, 0}, {2, 0}};
@@ -519,35 +531,37 @@ struct test_find_last_
             auto const iter3 = RAH2_NS::ranges::find_last(r1.begin(), r1.end(), 45, &Coord::x);
             assert(RAH2_NS::ranges::empty(iter3));
         }
-        {
-            RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
-            in.push_back(Coord{3, 4});
-            in.push_back(Coord{3, 4});
-            in.push_back(Coord{18, 4});
-            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> in(1000000, Coord{1, 2});
+        in.push_back(Coord{3, 4});
+        in.push_back(Coord{3, 4});
+        in.push_back(Coord{18, 4});
+        auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
-            {
-                COMPARE_DURATION_TO_STD_RANGES_23( // find_last does not exist in std
-                    "find_last",
-                    range_type,
-                    [&]
-                    {
-                        auto iter = STD::find_last(r1.begin(), r1.end(), Coord{3, 4});
-                        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
-                    });
-            }
-            {
-                COMPARE_DURATION_TO_STD_RANGES_23(
-                    "find_last_proj",
-                    range_type,
-                    [&]
-                    {
-                        auto iter = STD::find_last(r1.begin(), r1.end(), 3, &Coord::x);
-                        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
-                    });
-            }
+        {
+            COMPARE_DURATION_TO_STD_RANGES_23( // find_last does not exist in std
+                "find_last",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find_last(r1.begin(), r1.end(), Coord{3, 4});
+                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES_23(
+                "find_last_proj",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find_last(r1.begin(), r1.end(), 3, &Coord::x);
+                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                });
         }
     }
     static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
