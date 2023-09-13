@@ -49,7 +49,9 @@ struct TestSuite
     char const* currentTest = nullptr;
     void test_case(char const* testcase, char const* extra = "")
     {
+#if defined(TEST_DISPLAY_ALL)
         std::cout << "case : " << testcase << "/" << extra << std::endl;
+#endif
         testCases[currentTest].emplace(testcase, extra);
     }
 
@@ -96,7 +98,9 @@ struct TestSuite
             test_count = 0;
             try
             {
+#if defined(TEST_DISPLAY_ALL)
                 std::cout << "Testing : " << currentTest << std::endl;
+#endif
                 test();
             }
             catch (...)
