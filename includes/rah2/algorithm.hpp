@@ -265,7 +265,9 @@ namespace RAH2_NS
                     typename S,
                     class T,
                     class Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<I> && sentinel_for<S, I>
+                        && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* = nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
                 impl(I first, S last, T const& value, Proj proj = {}) const
                 {
@@ -286,6 +288,31 @@ namespace RAH2_NS
                         }
                     }
                     return {first, first};
+                }
+
+                template <
+                    typename I,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<bidirectional_iterator<I>>* = nullptr>
+                constexpr RAH2_NS::ranges::subrange<I>
+                impl(I first, I last, T const& value, Proj proj = {}) const
+                {
+                    I last_save = last;
+                    if (first == last)
+                    {
+                        return {last_save, last_save};
+                    }
+                    do
+                    {
+                        --last;
+                        if (RAH2_INVOKE_1(proj, *last) == value)
+                        {
+                            return {last, last_save};
+                        }
+                    } while (first != last);
+
+                    return {last_save, last_save};
                 }
 
             public:
