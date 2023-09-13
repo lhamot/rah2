@@ -259,6 +259,36 @@ namespace RAH2_NS
         {
             struct find_last_fn
             {
+            private:
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::ranges::subrange<I>
+                impl(I first, S last, T const& value, Proj proj = {}) const
+                {
+                    // Note: if I is mere forward_iterator, we may only go from begin to end.
+                    for (; first != last; ++first)
+                    {
+                        if (RAH2_INVOKE_1(proj, *first) == value)
+                        {
+                            I found = first;
+                            for (; first != last; ++first)
+                            {
+                                if (RAH2_INVOKE_1(proj, *first) == value)
+                                {
+                                    found = first;
+                                }
+                            }
+                            return {found, RAH2_NS::ranges::next(found, last)};
+                        }
+                    }
+                    return {first, first};
+                }
+
+            public:
                 template <
                     typename I,
                     typename S,
@@ -268,16 +298,15 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, T const& value, Proj proj = {}) const
                 {
-                    // Note: if I is mere forward_iterator, we may only go from begin to end.
-                    I found{};
-                    for (; first != last; ++first)
-                        if (RAH2_INVOKE_1(proj, *first) == value)
-                            found = first;
-
-                    if (found == I{})
-                        return {first, first};
-
-                    return {found, RAH2_NS::ranges::next(found, last)};
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        value,
+                        details::move_unary(proj));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
                 }
 
                 template <
@@ -288,8 +317,16 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::borrowed_subrange_t<R>
                 operator()(R&& r, T const& value, Proj proj = {}) const
                 {
-                    return this->operator()(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value, RAH2_STD::ref(proj));
+                    auto first_last =
+                        details::unwrap(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        value,
+                        details::move_unary(proj));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
                 }
             };
         } // namespace niebloids

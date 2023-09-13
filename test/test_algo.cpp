@@ -33,15 +33,6 @@
 
 #include "test_helpers.hpp"
 
-namespace
-{
-    struct Coord
-    {
-        int x;
-        int y;
-    };
-} // namespace
-
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_all_of_
 {
@@ -58,7 +49,7 @@ struct test_all_of_
         assert(RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
 
-        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER, {0, 2});
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {0, 2});
         auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_zero = [](Coord const& value)
         {
@@ -79,7 +70,7 @@ struct test_all_of_
             [&]
             {
                 auto result = STD::all_of(
-                    perf_no, [](int x) { return x == 0; }, &Coord::x);
+                    perf_no, [](intptr_t x) { return x == 0; }, &Coord::x);
                 assert(result);
             });
     }
@@ -120,7 +111,7 @@ struct test_any_of_
         assert(!RAH2_NS::ranges::any_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
 
-        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER);
         auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_one = [](Coord const& value)
         {
@@ -141,7 +132,7 @@ struct test_any_of_
             [&]
             {
                 auto result = STD::any_of(
-                    perf_no, [](int v) { return v == 1; }, &Coord::x);
+                    perf_no, [](intptr_t v) { return v == 1; }, &Coord::x);
                 assert(!result);
             });
     }
@@ -182,7 +173,7 @@ struct test_none_of_
         assert(RAH2_NS::ranges::none_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
 
-        std::vector<Coord> perf_no_vec(10000000 * RELEASE_MULTIPLIER);
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER);
         auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
         auto is_one = [](Coord const& value)
         {
@@ -203,7 +194,7 @@ struct test_none_of_
             [&]
             {
                 auto result = STD::none_of(
-                    perf_no, [](int x) { return x == 1; }, &Coord::x);
+                    perf_no, [](intptr_t x) { return x == 1; }, &Coord::x);
                 assert(result);
             });
     }
@@ -234,8 +225,9 @@ struct test_for_each_
     template <bool = true>
     void test(char const* range_type)
     {
+        std::cout << "range_type : " << range_type << std::endl;
         size_t sum = 0;
-        std::vector<int> vec(10000000 * RELEASE_MULTIPLIER, 1);
+        std::vector<int> vec(1000000 * RELEASE_MULTIPLIER, 1);
         auto func = [&sum](auto v)
         {
             sum += v;
@@ -255,7 +247,7 @@ struct test_for_each_
         assert(result2.in == r2.end());
         result.fun(1);
         assert(sum == vec_empty.size() + 1); // result.fun
-        std::vector<Coord> coord_vec(10000000 * RELEASE_MULTIPLIER, {1, 2});
+        std::vector<Coord> coord_vec(1000000 * RELEASE_MULTIPLIER, {1, 2});
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
             "for_each",
@@ -263,10 +255,10 @@ struct test_for_each_
             (
                 [&]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each(fwd(r3.begin()), r3.end(), [&sum](Coord const& c) { sum += c.x; });
-                    assert(sum == 10000000 * RELEASE_MULTIPLIER);
+                    assert(sum == 1000000 * RELEASE_MULTIPLIER);
                 }));
         COMPARE_DURATION_TO_STD_RANGES(
             "for_each_proj",
@@ -274,11 +266,11 @@ struct test_for_each_
             (
                 [&coord_vec]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each(
-                        r3, [&sum](int x) { sum += x; }, &Coord::x);
-                    assert(sum == 10000000 * RELEASE_MULTIPLIER);
+                        r3, [&sum](intptr_t x) { sum += x; }, &Coord::x);
+                    assert(sum == 1000000 * RELEASE_MULTIPLIER);
                 }));
     }
     static constexpr bool do_test = true;
@@ -311,7 +303,7 @@ struct test_for_each_n_
     void test(char const* range_type)
     {
         size_t sum = 0;
-        static constexpr auto vec_size = 10000000 * RELEASE_MULTIPLIER;
+        static constexpr auto vec_size = 1000000 * RELEASE_MULTIPLIER;
         std::vector<int> vec(vec_size, 1);
         auto func = [&sum](auto v)
         {
@@ -340,7 +332,7 @@ struct test_for_each_n_
             (
                 [&]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each_n(
                         fwd(r3.begin()), vec_size, [&sum](Coord const& c) { sum += c.x; });
@@ -352,10 +344,10 @@ struct test_for_each_n_
             (
                 [&coord_vec]
                 {
-                    int sum = 0;
+                    intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
                     STD::for_each_n(
-                        r3.begin(), vec_size, [&sum](int x) { sum += x; }, &Coord::x);
+                        r3.begin(), vec_size, [&sum](intptr_t x) { sum += x; }, &Coord::x);
                     assert(sum == vec_size);
                 }));
     }
@@ -404,13 +396,13 @@ struct test_count_
         }
         {
             RAH2_STD::vector<Coord> coordsVec;
-            coordsVec.insert(coordsVec.end(), 10000000, {1, 47});
+            coordsVec.insert(coordsVec.end(), 1000000, {1, 47});
             coordsVec.insert(coordsVec.end(), 79, {2, 47});
-            coordsVec.insert(coordsVec.end(), 10000000, {3, 47});
+            coordsVec.insert(coordsVec.end(), 1000000, {3, 47});
             RAH2_STD::vector<int> intsVec;
-            intsVec.insert(intsVec.end(), 10000000, 1);
+            intsVec.insert(intsVec.end(), 1000000, 1);
             intsVec.insert(intsVec.end(), 79, 2);
-            intsVec.insert(intsVec.end(), 10000000, 3);
+            intsVec.insert(intsVec.end(), 1000000, 3);
 
             auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
             auto coordsRange = make_test_view_adapter<CS, Tag, Sized>(coordsVec);
@@ -485,9 +477,9 @@ struct test_count_if_
 
         testSuite.test_case("perf");
         RAH2_STD::vector<Coord> coords_vec;
-        coords_vec.insert(coords_vec.end(), 10000000, {1, 47});
+        coords_vec.insert(coords_vec.end(), 1000000, {1, 47});
         coords_vec.insert(coords_vec.end(), 79, {2, 47});
-        coords_vec.insert(coords_vec.end(), 10000000, {3, 47});
+        coords_vec.insert(coords_vec.end(), 1000000, {3, 47});
         auto coordRange = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
         auto pred = [](Coord const& c)
         {

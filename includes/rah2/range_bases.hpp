@@ -36,6 +36,12 @@
 #define RAH2_CPP20 0
 #endif
 
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202300L) || __cplusplus >= 202300L)
+#define RAH2_CPP23 1
+#else
+#define RAH2_CPP23 0
+#endif
+
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201700L) || __cplusplus >= 201700L)
 #define RAH2_CPP17 1
 #else
@@ -1013,8 +1019,7 @@ namespace RAH2_NS
                 Iter first_iter;
                 Iter wrap_iterator(Ptr last)
                 {
-                    first_iter += (last - iterator);
-                    return RAH2_STD::move(first_iter);
+                    return first_iter + (last - iterator);
                 }
             };
 
@@ -1421,7 +1426,7 @@ namespace RAH2_NS
                         !has_empty_member<R> && concepts::compiles<false, R, has_ranges_size>>* = nullptr>
                 auto operator()(R&& range) const
                 {
-                    return size_impl{}(range);
+                    return size_impl{}(range) == 0;
                 }
 
                 template <
