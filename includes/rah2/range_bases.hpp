@@ -30,6 +30,12 @@
 #define RAH2_INVOKE_1(FUNC, ARG) FUNC(ARG)
 #define RAH2_INVOKE_2(FUNC, ARG1, ARG2) FUNC(ARG1, ARG2)
 
+#if defined(_MSVC_LANG)
+#define RAH2_CPP_VER _MSVC_LANG
+#else
+#define RAH2_CPP_VER __cplusplus
+#endif
+
 #if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202000L) || __cplusplus >= 202000L)
 #define RAH2_CPP20 1
 #else

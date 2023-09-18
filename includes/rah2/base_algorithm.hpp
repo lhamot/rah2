@@ -3208,6 +3208,26 @@ namespace RAH2_NS
         {
             struct search_fn
             {
+            private:
+                template <typename I1, typename S1, typename I2, typename S2, class Pred>
+                constexpr subrange<I1> impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    for (;; ++first1)
+                    {
+                        I1 it1 = first1;
+                        for (I2 it2 = first2;; ++it1, ++it2)
+                        {
+                            if (it2 == last2)
+                                return {first1, it1};
+                            if (it1 == last1)
+                                return {it1, it1};
+                            if (!pred(*it1, *it2))
+                                break;
+                        }
+                    }
+                }
+
+            public:
                 template <
                     typename I1,
                     typename S1,
@@ -3226,19 +3246,13 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    for (;; ++first1)
-                    {
-                        I1 it1 = first1;
-                        for (I2 it2 = first2;; ++it1, ++it2)
-                        {
-                            if (it2 == last2)
-                                return {first1, it1};
-                            if (it1 == last1)
-                                return {it1, it1};
-                            if (!pred(proj1(*it1), proj2(*it2)))
-                                break;
-                        }
-                    }
+                    return impl(
+                        RAH2_STD::move(first1),
+                        RAH2_STD::move(last1),
+                        RAH2_STD::move(first2),
+                        RAH2_STD::move(last2),
+                        RAH2_NS::ranges::details::wrap_pred_proj(
+                            RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
                 }
 
                 template <
@@ -3507,7 +3521,113 @@ namespace RAH2_NS
         {
             struct find_end_fn
             {
-                //TODO search from end when reversible
+            private:
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    std::enable_if_t<not bidirectional_iterator<S1>>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
+                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    auto result = first1;
+                    auto resultEnd = first1;
+                    for (;;)
+                    {
+                        auto it1 = first1;
+                        auto it2 = first2;
+                        for (;;)
+                        {
+                            bool const found = (it2 == last2);
+                            if (it2 == last2) // needle found
+                            {
+                                result = first1;
+                                resultEnd = it1;
+                            }
+                            if (it1 == last1) // needle not found
+                            {
+                                return {result, resultEnd};
+                            }
+                            if (found || !pred(*it1, *it2)) // needle not found
+                            {
+                                break;
+                            }
+                            ++it1;
+                            ++it2;
+                        }
+                        ++first1;
+                    }
+                }
+
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    std::enable_if_t<
+                        bidirectional_iterator<S1> && bidirectional_iterator<S2>
+                        && not random_access_iterator<I1>>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
+                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    S1 last1_save = last1;
+                    if (first2 == last2)
+                    {
+                        return {last1_save, last1_save};
+                    }
+                    while (first1 != last1)
+                    {
+                        I1 it1 = last1;
+                        I2 it2 = last2;
+                        while (true)
+                        {
+                            if (it2 == first2)
+                                return {it1, last1};
+                            if (it1 == first1)
+                                return {last1_save, last1_save};
+                            --it1;
+                            --it2;
+                            if (!pred(*it1, *it2))
+                                break;
+                        }
+                        --last1;
+                    }
+                    return {last1_save, last1_save};
+                }
+
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    std::enable_if_t<random_access_iterator<S1> && random_access_iterator<S2>>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
+                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    auto const size2 = last2 - first2;
+                    for (auto begin1 = last1 - size2; begin1 != first1; --begin1)
+                    {
+                        auto it1 = begin1;
+                        for (auto it2 = first2;; ++it1, ++it2)
+                        {
+                            if (it2 == last2)
+                            {
+                                return {begin1, it1};
+                            }
+                            if (!pred(*it1, *it2))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    return {last1, last1};
+                }
+
+            public:
                 template <
                     typename I1,
                     typename S1,
@@ -3528,26 +3648,19 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    if (first2 == last2)
-                    {
-                        auto last_it = RAH2_NS::ranges::next(first1, last1);
-                        return {last_it, last_it};
-                    }
-                    auto result = RAH2_NS::ranges::search(
-                        RAH2_STD::move(first1), last1, first2, last2, pred, proj1, proj2);
-
-                    if (result.empty())
-                        return result;
-
-                    for (;;)
-                    {
-                        auto new_result = RAH2_NS::ranges::search(
-                            RAH2_STD::next(result.begin()), last1, first2, last2, pred, proj1, proj2);
-                        if (new_result.empty())
-                            return result;
-                        else
-                            result = RAH2_STD::move(new_result);
-                    }
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        details::wrap_pred_proj(
+                            RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
                 }
 
                 template <

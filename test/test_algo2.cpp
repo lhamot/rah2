@@ -785,6 +785,168 @@ void test_find_last_if_not()
 
     foreach_range_combination<test_algo<test_find_last_if_not_>>();
 }
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_find_end_
+{
+    template <bool = true>
+    void test()
+    {
+        using namespace std::literals;
+        RAH2_STD::string secret_str{"password password word..."};
+        RAH2_STD::string wanted_str{"password"};
+        auto secret = make_test_view_adapter<CS, Tag, Sized>(secret_str);
+        auto wanted = make_test_view_adapter<CS, Tag, Sized>(wanted_str);
+
+        testSuite.test_case("iter");
+        testSuite.test_case("noproj");
+        auto const found1 =
+            RAH2_NS::ranges::find_end(secret.begin(), secret.end(), wanted.begin(), wanted.end());
+        assert(
+            found1.begin()
+            == RAH2_NS::ranges::next(secret.begin(), static_cast<intptr_t>(strlen("password "))));
+        assert(
+            found1.end()
+            == RAH2_NS::ranges::next(
+                secret.begin(), static_cast<intptr_t>(strlen("password password"))));
+
+        testSuite.test_case("range");
+        auto word_str = RAH2_STD::string("word");
+        auto word = make_test_view_adapter<CS, Tag, Sized>(word_str);
+        auto const found2 = RAH2_NS::ranges::find_end(secret, word);
+        assert(
+            found2.begin()
+            == RAH2_NS::ranges::next(
+                secret.begin(), static_cast<intptr_t>(strlen("password password "))));
+        assert(
+            found2.end()
+            == RAH2_NS::ranges::next(
+                secret.begin(), static_cast<intptr_t>(strlen("password password word"))));
+
+        auto ord_str = RAH2_STD::string("ORD");
+        auto ord = make_test_view_adapter<CS, Tag, Sized>(ord_str);
+        auto const found3 = RAH2_NS::ranges::find_end(
+            secret, ord, [](char const x, char const y) { // uses a binary predicate
+                return std::tolower(x) == std::tolower(y);
+            });
+        assert(
+            found3.begin()
+            == RAH2_NS::ranges::next(
+                secret.begin(), static_cast<intptr_t>(strlen("password password w"))));
+        assert(
+            found3.end()
+            == RAH2_NS::ranges::next(
+                secret.begin(), static_cast<intptr_t>(strlen("password password word"))));
+
+        testSuite.test_case("proj");
+        auto sword_str = RAH2_STD::string("SWORD");
+        auto sword = make_test_view_adapter<CS, Tag, Sized>(sword_str);
+        auto const found4 = RAH2_NS::ranges::find_end(
+            secret, sword, {}, {}, [](char c) { return std::tolower(c); }); // projects the 2nd range
+        assert(
+            found4.begin()
+            == RAH2_NS::ranges::next(secret.begin(), static_cast<intptr_t>(strlen("password pas"))));
+        assert(
+            found4.end()
+            == RAH2_NS::ranges::next(
+                secret.begin(), static_cast<intptr_t>(strlen("password password"))));
+
+        testSuite.test_case("empty");
+        auto pass_str = RAH2_STD::string("PASS");
+        auto pass = make_test_view_adapter<CS, Tag, Sized>(pass_str);
+        assert(RAH2_NS::ranges::find_end(secret, pass).empty()); // => not found
+    }
+
+    template <typename I1, typename S1, typename I2, typename S2, class Pred>
+    RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
+    find_end_fwd(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+    {
+        auto result = first1;
+        auto resultEnd = first1;
+        for (;;)
+        {
+            auto it1 = first1;
+            auto it2 = first2;
+            for (;;)
+            {
+                bool const found = (it2 == last2);
+                if (it2 == last2) // needle found
+                {
+                    result = first1;
+                    resultEnd = it1;
+                }
+                if (it1 == last1) // needle not found
+                {
+                    return {result, resultEnd};
+                }
+                if (found || !pred(*it1, *it2)) // needle not found
+                {
+                    break;
+                }
+                ++it1;
+                ++it2;
+            }
+            ++first1;
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> in(1000000 * RELEASE_MULTIPLIER, Coord{1, 2});
+        in.push_back(Coord{3, 4});
+        in.push_back(Coord{3, 4});
+        in.push_back(Coord{18, 4});
+        in.insert(in.end(), 1000001 * RELEASE_MULTIPLIER, Coord{0, 0});
+        RAH2_STD::vector<Coord> search1;
+        search1.push_back(Coord{3, 4});
+        search1.push_back(Coord{3, 4});
+        search1.push_back(Coord{18, 4});
+        RAH2_STD::vector<Coord> search2;
+        search2.push_back(Coord{0, 3});
+        search2.push_back(Coord{0, 3});
+        search2.push_back(Coord{0, 18});
+        auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        auto s1 = make_test_view_adapter<CS, Tag, Sized>(search1);
+        auto s2 = make_test_view_adapter<CS, Tag, Sized>(search2);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2( // find_last_if_not does not exist in std
+                201700L,
+                202000L,
+                CS == Common,
+                "find_end",
+                range_type,
+                [&]
+                {
+                    auto iter = std::find_end(fwd(r1.begin()), r1.end(), s1.begin(), s1.end());
+                    assert(iter != r1.end());
+                    assert(
+                        RAH2_NS::ranges::distance(r1.begin(), iter) == 1000000 * RELEASE_MULTIPLIER);
+                },
+                [&]
+                {
+                    auto iter = STD::find_end(fwd(r1.begin()), r1.end(), s1.begin(), s1.end());
+                    assert(iter.begin() != r1.end());
+                    assert(
+                        RAH2_NS::ranges::distance(r1.begin(), iter.begin())
+                        == 1000000 * RELEASE_MULTIPLIER);
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "find_end_proj",
+                range_type,
+                [&]
+                {
+                    auto iter = STD::find_end(
+                        r1, s2, [](intptr_t a, intptr_t b) { return a == b; }, &Coord::x, &Coord::y);
+                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 3));
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_find_end()
 {
     testSuite.test_case("sample");
@@ -816,6 +978,8 @@ void test_find_end()
 
     assert(RAH2_NS::ranges::find_end(secret, RAH2_STD::string("PASS")).empty()); // => not found
     /// [rah2::ranges::find_end]
+
+    foreach_range_combination<test_algo<test_find_end_>>();
 }
 void test_find_first_of()
 {
