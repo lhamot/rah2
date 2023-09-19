@@ -936,25 +936,25 @@ namespace RAH2_NS
             struct begin_impl
             {
                 template <class T, size_t N>
-                T* operator()(T (&array)[N]) const
+                RAH2_CONSTEXPR20 T* operator()(T (&array)[N]) const
                 {
                     return array;
                 }
 
                 template <class T, size_t N>
-                T const* operator()(T const (&array)[N]) const
+                RAH2_CONSTEXPR20 T const* operator()(T const (&array)[N]) const
                 {
                     return array;
                 }
 
                 template <typename R, RAH2_STD::enable_if_t<has_begin_member<R>>* = nullptr>
-                auto operator()(R&& range) const
+                RAH2_CONSTEXPR20 auto operator()(R&& range) const
                 {
                     return range.begin();
                 }
 
                 template <typename R, RAH2_STD::enable_if_t<not has_begin_member<R> && has_begin_ADL<R>>* = nullptr>
-                auto operator()(R&& range) const
+                RAH2_CONSTEXPR20 auto operator()(R&& range) const
                 {
                     return begin(range);
                 }
@@ -963,25 +963,25 @@ namespace RAH2_NS
             struct end_impl
             {
                 template <class T, size_t N>
-                T* operator()(T (&array)[N]) const noexcept
+                RAH2_CONSTEXPR20 T* operator()(T (&array)[N]) const noexcept
                 {
                     return array + N;
                 }
 
                 template <class T, size_t N>
-                T const* operator()(T const (&array)[N]) const noexcept
+                RAH2_CONSTEXPR20 T const* operator()(T const (&array)[N]) const noexcept
                 {
                     return array + N;
                 }
 
                 template <typename R, RAH2_STD::enable_if_t<has_end_member<R>>* = nullptr>
-                auto operator()(R&& range) const
+                RAH2_CONSTEXPR20 auto operator()(R&& range) const
                 {
                     return range.end();
                 }
 
                 template <typename R, RAH2_STD::enable_if_t<not has_end_member<R> and has_end_ADL<R>>* = nullptr>
-                auto operator()(R&& range) const
+                RAH2_CONSTEXPR20 auto operator()(R&& range) const
                 {
                     return end(range);
                 }
@@ -990,13 +990,13 @@ namespace RAH2_NS
             struct cbegin_impl
             {
                 template <class T, size_t N>
-                T const* operator()(T const (&array)[N]) const
+                RAH2_CONSTEXPR20 T const* operator()(T const (&array)[N]) const
                 {
                     return array;
                 }
 
                 template <typename R>
-                auto operator()(R const& range) const
+                RAH2_CONSTEXPR20 auto operator()(R const& range) const
                 {
                     return range.begin();
                 }
@@ -1005,13 +1005,13 @@ namespace RAH2_NS
             struct cend_impl
             {
                 template <class T, size_t N>
-                T const* operator()(T const (&array)[N]) const noexcept
+                RAH2_CONSTEXPR20 T const* operator()(T const (&array)[N]) const noexcept
                 {
                     return array + N;
                 }
 
                 template <typename R>
-                auto operator()(R const& range) const
+                RAH2_CONSTEXPR20 auto operator()(R const& range) const
                 {
                     return range.end();
                 }
@@ -1868,7 +1868,7 @@ namespace RAH2_NS
             struct advance
             {
                 template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-                constexpr intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                RAH2_CONSTEXPR20 intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
                 {
                     // RAH2_STD::abs is not constexpr until C++23
                     auto abs = [](intptr_t const x)
@@ -1899,7 +1899,7 @@ namespace RAH2_NS
                     typename S,
                     RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-                constexpr intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                RAH2_CONSTEXPR20 intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
                 {
                     while (n > 0 && i != bound)
                     {
@@ -1921,7 +1921,7 @@ namespace RAH2_NS
                     typename S,
                     RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-                constexpr intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                RAH2_CONSTEXPR20 intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
                 {
                     RAH2_ASSERT(n >= 0);
                     while (n > 0 && i != bound)
@@ -1936,7 +1936,7 @@ namespace RAH2_NS
                     typename I,
                     RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-                constexpr void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
+                RAH2_CONSTEXPR20 void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
                 {
                     RAH2_ASSERT(n >= 0);
                     while (n > 0)
@@ -1950,7 +1950,7 @@ namespace RAH2_NS
                     typename I,
                     RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::random_access_iterator<I>>* = nullptr>
-                constexpr void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
+                RAH2_CONSTEXPR20 void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
                 {
                     while (n > 0)
                     {
@@ -1966,7 +1966,7 @@ namespace RAH2_NS
                 }
 
                 template <typename I, RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<I>>* = nullptr>
-                constexpr void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
+                RAH2_CONSTEXPR20 void operator()(I& i, RAH2_NS::iter_difference_t<I> n) const
                 {
                     i += n;
                 }
@@ -1977,7 +1977,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<RAH2_NS::assignable_from<I&, S>>* = nullptr>
-                constexpr void operator()(I& i, S bound) const
+                RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     i = RAH2_STD::move(bound);
                 }
@@ -1989,7 +1989,7 @@ namespace RAH2_NS
                         RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
                     RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-                constexpr void operator()(I& i, S bound) const
+                RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     advance(i, bound - i);
                 }
@@ -2001,7 +2001,7 @@ namespace RAH2_NS
                         RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-                constexpr void operator()(I& i, S bound) const
+                RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     while (i != bound)
                         ++i;
@@ -2015,14 +2015,14 @@ namespace RAH2_NS
             struct next
             {
                 template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
-                constexpr I operator()(I i) const
+                RAH2_CONSTEXPR20 I operator()(I i) const
                 {
                     ++i;
                     return i;
                 }
 
                 template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_or_output_iterator<I>>* = nullptr>
-                constexpr I operator()(I i, RAH2_NS::iter_difference_t<I> n) const
+                RAH2_CONSTEXPR20 I operator()(I i, RAH2_NS::iter_difference_t<I> n) const
                 {
                     RAH2_NS::ranges::advance(i, n);
                     return i;
@@ -2033,7 +2033,7 @@ namespace RAH2_NS
                     typename S,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
-                constexpr I operator()(I i, S const& bound) const
+                RAH2_CONSTEXPR20 I operator()(I i, S const& bound) const
                 {
                     static_assert(RAH2_NS::semiregular<S>, "RAH2_NS::semiregular<S>");
                     static_assert(
@@ -2050,7 +2050,7 @@ namespace RAH2_NS
                     typename S,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
-                constexpr I operator()(I i, RAH2_NS::iter_difference_t<I> n, S bound) const
+                RAH2_CONSTEXPR20 I operator()(I i, RAH2_NS::iter_difference_t<I> n, S bound) const
                 {
                     RAH2_NS::ranges::advance(i, n, bound);
                     return i;

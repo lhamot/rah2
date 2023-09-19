@@ -3522,42 +3522,112 @@ namespace RAH2_NS
             struct find_end_fn
             {
             private:
+                template <typename I1, typename S1, typename I2, typename S2, class Pred>
+                RAH2_CONSTEXPR20 subrange<I1>
+                search(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    if (first1 == last1 || first2 == last2)
+                        return {first1, first1};
+
+                    for (;;)
+                    {
+                        for (;;)
+                        {
+                            if (first1 == last1)
+                                return {first1, first1};
+                            if (pred(*first1, *first2))
+                                break;
+                            ++first1;
+                        }
+                        auto cur1 = first1;
+                        auto cur2 = first2;
+                        for (;;)
+                        {
+                            if (++cur2 == last2)
+                                return {first1, ++cur1};
+                            if (++cur1 == last1)
+                                return {cur1, cur1};
+                            if (!pred(*cur1, *cur2))
+                            {
+                                ++first1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                template <typename I1, typename I2, class Pred>
+                RAH2_CONSTEXPR20 subrange<I1>
+                rsearch(I1 __first1, I1 __last1, I2 __first2, I2 __last2, Pred pred) const
+                {
+                    auto first1 = RAH2_STD::reverse_iterator<I1>{__first1};
+                    auto last1 = RAH2_STD::reverse_iterator<I1>{__last1};
+                    auto first2 = RAH2_STD::reverse_iterator<I2>{__first2};
+                    auto last2 = RAH2_STD::reverse_iterator<I2>{__last2};
+
+                    if (first1 == last1 || first2 == last2)
+                        return {first1.base(), first1.base()};
+
+                    for (;;)
+                    {
+                        for (;;)
+                        {
+                            if (first1 == last1)
+                                return {first1.base(), first1.base()};
+                            if (pred(*first1, *first2))
+                                break;
+                            ++first1;
+                        }
+                        auto cur1 = first1;
+                        auto cur2 = first2;
+                        for (;;)
+                        {
+                            if (++cur2 == last2)
+                                return {first1.base(), (++cur1).base()};
+                            if (++cur1 == last1)
+                                return {cur1.base(), cur1.base()};
+                            if (!pred(*cur1, *cur2))
+                            {
+                                ++first1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 template <
                     typename I1,
                     typename S1,
                     typename I2,
                     typename S2,
-                    class Pred,
-                    std::enable_if_t<not bidirectional_iterator<S1>>* = nullptr>
+                    typename Pred = ranges::equal_to,
+                    typename Proj1 = identity,
+                    typename Proj2 = identity,
+                    std::enable_if_t<not(bidirectional_iterator<I1> && bidirectional_iterator<I2>)>* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
                 impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
                 {
-                    auto result = first1;
-                    auto resultEnd = first1;
+                    // Works in g++ (forward, release, noproj)
+                    auto i = ranges::next(first1, last1);
+                    if (first2 == last2)
+                        return {i, i};
+
+                    auto result_begin = i;
+                    auto result_end = i;
                     for (;;)
                     {
-                        auto it1 = first1;
-                        auto it2 = first2;
-                        for (;;)
+                        auto new_range = this->search(first1, last1, first2, last2, pred);
+                        auto new_result_begin = new_range.begin();
+                        auto new_result_end = new_range.end();
+                        if (new_result_begin == last1)
+                            return {result_begin, result_end};
+                        else
                         {
-                            bool const found = (it2 == last2);
-                            if (it2 == last2) // needle found
-                            {
-                                result = first1;
-                                resultEnd = it1;
-                            }
-                            if (it1 == last1) // needle not found
-                            {
-                                return {result, resultEnd};
-                            }
-                            if (found || !pred(*it1, *it2)) // needle not found
-                            {
-                                break;
-                            }
-                            ++it1;
-                            ++it2;
+                            result_begin = new_result_begin;
+                            result_end = new_result_end;
+                            first1 = result_begin;
+                            ++first1;
                         }
-                        ++first1;
                     }
                 }
 
@@ -3568,63 +3638,21 @@ namespace RAH2_NS
                     typename S2,
                     class Pred,
                     std::enable_if_t<
-                        bidirectional_iterator<S1> && bidirectional_iterator<S2>
-                        && not random_access_iterator<I1>>* = nullptr>
+                        bidirectional_iterator<I1> && bidirectional_iterator<I2>
+                        // && not(random_access_iterator<S1> && random_access_iterator<S2>)
+                        >* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
-                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                impl(I1 __first1, S1 __last1, I2 __first2, S2 __last2, Pred __pred) const
                 {
-                    S1 last1_save = last1;
-                    if (first2 == last2)
-                    {
-                        return {last1_save, last1_save};
-                    }
-                    while (first1 != last1)
-                    {
-                        I1 it1 = last1;
-                        I2 it2 = last2;
-                        while (true)
-                        {
-                            if (it2 == first2)
-                                return {it1, last1};
-                            if (it1 == first1)
-                                return {last1_save, last1_save};
-                            --it1;
-                            --it2;
-                            if (!pred(*it1, *it2))
-                                break;
-                        }
-                        --last1;
-                    }
-                    return {last1_save, last1_save};
-                }
-
-                template <
-                    typename I1,
-                    typename S1,
-                    typename I2,
-                    typename S2,
-                    class Pred,
-                    std::enable_if_t<random_access_iterator<S1> && random_access_iterator<S2>>* = nullptr>
-                RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
-                impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
-                {
-                    auto const size2 = last2 - first2;
-                    for (auto begin1 = last1 - size2; begin1 != first1; --begin1)
-                    {
-                        auto it1 = begin1;
-                        for (auto it2 = first2;; ++it1, ++it2)
-                        {
-                            if (it2 == last2)
-                            {
-                                return {begin1, it1};
-                            }
-                            if (!pred(*it1, *it2))
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    return {last1, last1};
+                    auto __i1 = ranges::next(__first1, __last1);
+                    auto __i2 = ranges::next(__first2, __last2);
+                    auto __rresult = this->rsearch(__i1, __first1, __i2, __first2, std::move(__pred));
+                    auto __result_first = ranges::end(__rresult);
+                    auto __result_last = ranges::begin(__rresult);
+                    if (__result_last == __first1)
+                        return {__i1, __i1};
+                    else
+                        return {__result_first, __result_last};
                 }
 
             public:
