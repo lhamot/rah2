@@ -918,14 +918,14 @@ struct test_find_end_
                 range_type,
                 [&]
                 {
-                    auto iter = std::find_end(fwd(r1.begin()), r1.end(), s1.begin(), s1.end());
+                    auto iter = fwd(std::find_end(r1.begin(), r1.end(), s1.begin(), s1.end()));
                     assert(iter != r1.end());
                     assert(
                         RAH2_NS::ranges::distance(r1.begin(), iter) == 1000000 * RELEASE_MULTIPLIER);
                 },
                 [&]
                 {
-                    auto iter = STD::find_end(fwd(r1.begin()), r1.end(), s1.begin(), s1.end());
+                    auto iter = fwd(STD::find_end(r1.begin(), r1.end(), s1.begin(), s1.end()));
                     assert(iter.begin() != r1.end());
                     assert(
                         RAH2_NS::ranges::distance(r1.begin(), iter.begin())
