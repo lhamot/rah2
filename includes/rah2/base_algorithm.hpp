@@ -3584,9 +3584,7 @@ namespace RAH2_NS
                     typename S1,
                     typename I2,
                     typename S2,
-                    typename Pred = ranges::equal_to,
-                    typename Proj1 = identity,
-                    typename Proj2 = identity,
+                    typename Pred,
                     std::enable_if_t<not(bidirectional_iterator<I1> && bidirectional_iterator<I2>)>* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
                 impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
