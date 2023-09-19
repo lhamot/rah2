@@ -3208,26 +3208,6 @@ namespace RAH2_NS
         {
             struct search_fn
             {
-            private:
-                template <typename I1, typename S1, typename I2, typename S2, class Pred>
-                constexpr subrange<I1> impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
-                {
-                    for (;; ++first1)
-                    {
-                        I1 it1 = first1;
-                        for (I2 it2 = first2;; ++it1, ++it2)
-                        {
-                            if (it2 == last2)
-                                return {first1, it1};
-                            if (it1 == last1)
-                                return {it1, it1};
-                            if (!pred(*it1, *it2))
-                                break;
-                        }
-                    }
-                }
-
-            public:
                 template <
                     typename I1,
                     typename S1,
@@ -3246,13 +3226,19 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    return impl(
-                        RAH2_STD::move(first1),
-                        RAH2_STD::move(last1),
-                        RAH2_STD::move(first2),
-                        RAH2_STD::move(last2),
-                        RAH2_NS::ranges::details::wrap_pred_proj(
-                            RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
+                    for (;; ++first1)
+                    {
+                        I1 it1 = first1;
+                        for (I2 it2 = first2;; ++it1, ++it2)
+                        {
+                            if (it2 == last2)
+                                return {first1, it1};
+                            if (it1 == last1)
+                                return {it1, it1};
+                            if (!pred(proj1(*it1), proj2(*it2)))
+                                break;
+                        }
+                    }
                 }
 
                 template <

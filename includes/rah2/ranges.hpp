@@ -1061,13 +1061,11 @@ namespace RAH2_NS
 
                 void next_value()
                 {
-                    while (iter_ != RAH2_NS::ranges::end(view_->base_))
+                    while (iter_ != RAH2_NS::ranges::end(view_->base_)
+                           && not(view_->pred_)(
+                               *(value_pointer_ =
+                                     get_pointer<iter_reference_t<inner_iterator>>::get(iter_))))
                     {
-                        value_pointer_ = get_pointer<iter_reference_t<inner_iterator>>::get(iter_);
-                        auto&& value = *value_pointer_;
-                        if (view_->pred_(value))
-                            break;
-
                         assert(iter_ != RAH2_NS::ranges::end(view_->base_));
                         ++iter_;
                     }
