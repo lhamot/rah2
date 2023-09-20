@@ -908,11 +908,10 @@ struct test_find_end_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
         auto s1 = make_test_view_adapter<CS, Tag, Sized>(search1);
         auto s2 = make_test_view_adapter<CS, Tag, Sized>(search2);
-
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2( // find_last_if_not does not exist in std
-                201700L,
-                202000L,
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(
+                201700L, // version of std::find_end
+                202000L, // version of std::ranges::find_end
                 CS == Common,
                 "find_end",
                 range_type,

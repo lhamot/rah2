@@ -1436,7 +1436,7 @@ auto compare_duration(
 #if RAH2_CPP20
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(                                                          \
     ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F)                                         \
-    call_if_true<PERF_TEST && IS_COMMON && (ALGO_VER <= RAH2_CPP_VER) && (RANGE_VER <= RAH2_CPP_VER)>(      \
+    call_if_true<IS_COMMON && (ALGO_VER <= RAH2_CPP_VER) && (RANGE_VER <= RAH2_CPP_VER)>(                   \
         [&](auto fwd)                                                                                       \
         {                                                                                                   \
             namespace STD = std;                                                                            \
@@ -1478,7 +1478,7 @@ auto compare_duration(
 #else
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(                                                 \
     ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F)                                \
-    call_if_true<PERF_TEST && IS_COMMON && (ALGO_VER <= RAH2_CPP_VER)>(                            \
+    call_if_true<IS_COMMON && (ALGO_VER <= RAH2_CPP_VER)>(                                         \
         [&](auto fwd)                                                                              \
         {                                                                                          \
             namespace STD = std;                                                                   \
@@ -1490,6 +1490,9 @@ auto compare_duration(
             }                                                                                      \
         });
 #endif
+#else
+#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(                                                 \
+    ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F)
 #endif
 
 #define DONT_OPTIM(V)                                                                              \
