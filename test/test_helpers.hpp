@@ -1431,6 +1431,70 @@ auto compare_duration(
     }
 #endif
 
+#if defined(PERF_TEST)
+
+#if RAH2_CPP20
+#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(                                                          \
+    ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F)                                         \
+    call_if_true<IS_COMMON && (ALGO_VER <= RAH2_CPP_VER) && (RANGE_VER <= RAH2_CPP_VER)>(                   \
+        [&](auto fwd)                                                                                       \
+        {                                                                                                   \
+            namespace STD = std;                                                                            \
+            auto test_std = (ALGO_F);                                                                       \
+            {                                                                                               \
+                namespace STD = std::ranges;                                                                \
+                auto test_std_ranges = (RANGE_F);                                                           \
+                {                                                                                           \
+                    namespace STD = RAH2_NS::ranges;                                                        \
+                    auto test_rah2 = (RANGE_F);                                                             \
+                    compare_duration(                                                                       \
+                        test_std, test_std_ranges, test_rah2, ALGO, CONCEPT, __FILE__, __LINE__);           \
+                }                                                                                           \
+            }                                                                                               \
+        });                                                                                                 \
+    call_if_true<PERF_TEST && IS_COMMON && (ALGO_VER <= RAH2_CPP_VER) && (RANGE_VER > RAH2_CPP_VER)>(       \
+        [&](auto fwd)                                                                                       \
+        {                                                                                                   \
+            namespace STD = std;                                                                            \
+            auto test_std = (ALGO_F);                                                                       \
+            {                                                                                               \
+                namespace STD = RAH2_NS::ranges;                                                            \
+                auto test_rah2 = (RANGE_F);                                                                 \
+                compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std", __FILE__, __LINE__);            \
+            }                                                                                               \
+        });                                                                                                 \
+    call_if_true<PERF_TEST && not(IS_COMMON && (ALGO_VER <= RAH2_CPP_VER)) && (RANGE_VER <= RAH2_CPP_VER)>( \
+        [&](auto fwd)                                                                                       \
+        {                                                                                                   \
+            namespace STD = std::ranges;                                                                    \
+            auto test_std_ranges = (RANGE_F);                                                               \
+            {                                                                                               \
+                namespace STD = RAH2_NS::ranges;                                                            \
+                auto test_rah2 = (RANGE_F);                                                                 \
+                compare_duration(                                                                           \
+                    test_std_ranges, test_rah2, ALGO, CONCEPT, "std::ranges", __FILE__, __LINE__);          \
+            }                                                                                               \
+        });
+#else
+#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(                                                 \
+    ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F)                                \
+    call_if_true<IS_COMMON && (ALGO_VER <= RAH2_CPP_VER)>(                                         \
+        [&](auto fwd)                                                                              \
+        {                                                                                          \
+            namespace STD = std;                                                                   \
+            auto test_std = (ALGO_F);                                                              \
+            {                                                                                      \
+                namespace STD = RAH2_NS::ranges;                                                   \
+                auto test_rah2 = (RANGE_F);                                                        \
+                compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std", __FILE__, __LINE__);   \
+            }                                                                                      \
+        });
+#endif
+#else
+#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(                                                 \
+    ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F)
+#endif
+
 #define DONT_OPTIM(V)                                                                              \
     memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
 
