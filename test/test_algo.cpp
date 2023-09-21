@@ -59,6 +59,8 @@ struct test_all_of_
             return value.x == 0;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "all_of",
             range_type,
@@ -68,6 +70,7 @@ struct test_all_of_
                 assert(result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "all_of_proj",
             range_type,
             [&]
@@ -124,6 +127,8 @@ struct test_any_of_
             return value.x == 1;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "any_of",
             range_type,
@@ -133,6 +138,7 @@ struct test_any_of_
                 assert(!result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "any_of_proj",
             range_type,
             [&]
@@ -190,6 +196,8 @@ struct test_none_of_
             return value.x == 1;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "none_of",
             range_type,
@@ -199,6 +207,7 @@ struct test_none_of_
                 assert(result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "none_of_proj",
             range_type,
             [&]
@@ -265,6 +274,8 @@ struct test_for_each_
     {
         std::vector<Coord> coord_vec(1000000 * RELEASE_MULTIPLIER, {1, 2});
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "for_each",
             range_type,
@@ -277,6 +288,7 @@ struct test_for_each_
                     assert(sum == 1000000 * RELEASE_MULTIPLIER);
                 }));
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "for_each_proj",
             range_type,
             (
@@ -346,7 +358,9 @@ struct test_for_each_n_
     {
         static constexpr auto vec_size = 1000000 * RELEASE_MULTIPLIER;
         std::vector<Coord> coord_vec(vec_size, {1, 2});
-        COMPARE_DURATION_TO_STD_ALGO17_AND_RANGES(
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201700L,
+            202000L,
             CS == Common,
             "for_each_n",
             range_type,
@@ -360,6 +374,7 @@ struct test_for_each_n_
                     assert(sum == vec_size);
                 }));
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "for_each_n_proj",
             range_type,
             (
@@ -434,6 +449,8 @@ struct test_count_
         };
         testSuite.test_case("perf");
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "count_noproj",
             range_type,
@@ -443,6 +460,7 @@ struct test_count_
                 assert(count == 79);
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "count_proj",
             range_type,
             [&]
@@ -511,6 +529,8 @@ struct test_count_if_
             return c;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "count_if",
             range_type,
@@ -520,6 +540,7 @@ struct test_count_if_
                 assert(count == 79);
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "count_if_proj",
             range_type,
             [&]
