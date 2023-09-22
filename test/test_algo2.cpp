@@ -87,6 +87,8 @@ struct test_mismatch_
             return a == b;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "mismatch",
             range_type,
@@ -100,6 +102,7 @@ struct test_mismatch_
                 DONT_OPTIM(v1_v2);
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "mismatch_pred_proj",
             range_type,
             [&]
@@ -175,6 +178,8 @@ struct test_equal_
             return a.x == b.y;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "equal",
             range_type,
@@ -187,7 +192,10 @@ struct test_equal_
                     coordRange2.end()));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            "equal_pred", range_type, [&] { assert(STD::equal(coordRange1, coordRange2, pred)); });
+            202000L,
+            "equal_pred",
+            range_type,
+            [&] { assert(STD::equal(coordRange1, coordRange2, pred)); });
     }
     static constexpr bool do_test = true;
 };
@@ -279,6 +287,8 @@ struct test_lexicographical_compare_
             return a.x < b.y;
         };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "lexicographical_compare",
             range_type,
@@ -291,6 +301,7 @@ struct test_lexicographical_compare_
                     coordRange2.end()));
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "lexicographical_compare_pred",
             range_type,
             [&] { assert(not STD::lexicographical_compare(coordRange1, coordRange2, pred)); });
@@ -339,6 +350,8 @@ struct test_find_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "find",
             range_type,
@@ -348,6 +361,7 @@ struct test_find_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "find_proj",
             range_type,
             [&]
@@ -400,6 +414,8 @@ struct test_find_if_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "find_if",
             range_type,
@@ -414,6 +430,7 @@ struct test_find_if_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "find_if_proj",
             range_type,
             [&]
@@ -471,6 +488,8 @@ struct test_find_if_not_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            201100L,
+            202000L,
             CS == Common,
             "find_if",
             range_type,
@@ -485,6 +504,7 @@ struct test_find_if_not_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
+            202000L,
             "find_if_proj",
             range_type,
             [&]
@@ -540,7 +560,8 @@ struct test_find_last_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         {
-            COMPARE_DURATION_TO_STD_RANGES_23(
+            COMPARE_DURATION_TO_STD_RANGES(
+                202300L,
                 "find_last",
                 range_type,
                 [&]
@@ -551,7 +572,8 @@ struct test_find_last_
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES_23(
+            COMPARE_DURATION_TO_STD_RANGES(
+                202300L,
                 "find_last_proj",
                 range_type,
                 [&]
@@ -622,7 +644,8 @@ struct test_find_last_if_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         {
-            COMPARE_DURATION_TO_STD_RANGES_23( // find_last_if does not exist in std
+            COMPARE_DURATION_TO_STD_RANGES( // find_last_if does not exist in std
+                202300L,
                 "find_last_if",
                 range_type,
                 [&]
@@ -638,7 +661,8 @@ struct test_find_last_if_
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES_23(
+            COMPARE_DURATION_TO_STD_RANGES(
+                202300L,
                 "find_last_if_proj",
                 range_type,
                 [&]
@@ -722,7 +746,8 @@ struct test_find_last_if_not_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         {
-            COMPARE_DURATION_TO_STD_RANGES_23( // find_last_if_not does not exist in std
+            COMPARE_DURATION_TO_STD_RANGES( // find_last_if_not does not exist in std
+                202300L,
                 "find_last_if_not",
                 range_type,
                 [&]
@@ -738,7 +763,8 @@ struct test_find_last_if_not_
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES_23(
+            COMPARE_DURATION_TO_STD_RANGES(
+                202300L,
                 "find_last_if_not_proj",
                 range_type,
                 [&]
@@ -856,39 +882,6 @@ struct test_find_end_
         assert(RAH2_NS::ranges::find_end(secret, pass).empty()); // => not found
     }
 
-    template <typename I1, typename S1, typename I2, typename S2, class Pred>
-    RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
-    find_end_fwd(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
-    {
-        auto result = first1;
-        auto resultEnd = first1;
-        for (;;)
-        {
-            auto it1 = first1;
-            auto it2 = first2;
-            for (;;)
-            {
-                bool const found = (it2 == last2);
-                if (it2 == last2) // needle found
-                {
-                    result = first1;
-                    resultEnd = it1;
-                }
-                if (it1 == last1) // needle not found
-                {
-                    return {result, resultEnd};
-                }
-                if (found || !pred(*it1, *it2)) // needle not found
-                {
-                    break;
-                }
-                ++it1;
-                ++it2;
-            }
-            ++first1;
-        }
-    }
-
     template <bool = true>
     void test_perf(char const* range_type)
     {
@@ -933,6 +926,7 @@ struct test_find_end_
         }
         {
             COMPARE_DURATION_TO_STD_RANGES(
+                202000L,
                 "find_end_proj",
                 range_type,
                 [&]
