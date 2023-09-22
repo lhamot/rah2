@@ -1562,13 +1562,17 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    return impl(
-                        RAH2_STD::move(first1),
-                        RAH2_STD::move(last1),
-                        RAH2_STD::move(first2),
-                        RAH2_STD::move(last2),
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
                         details::wrap_pred_proj(
                             RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
+                    return first_last.wrap_iterator(RAH2_STD::move(result));
                 }
 
                 template <
