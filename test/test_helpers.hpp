@@ -1343,7 +1343,11 @@ auto compare_duration(
         });
 #else
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(                                                   \
-    ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F)
+    ALGO_VER, RANGE_VER, IS_COMMON, ALGO, CONCEPT, ALGO_F)                                         \
+    do                                                                                             \
+    {                                                                                              \
+        (void)CONCEPT;                                                                             \
+    } while (true)
 #endif
 
 #if defined(PERF_TEST)
@@ -1361,7 +1365,11 @@ auto compare_duration(
             }                                                                                      \
         });
 #else
-#define COMPARE_DURATION_TO_STD_RANGES(RANGE_VER, ALGO, CONCEPT, ALGO_F)
+#define COMPARE_DURATION_TO_STD_RANGES(RANGE_VER, ALGO, CONCEPT, ALGO_F)                           \
+    do                                                                                             \
+    {                                                                                              \
+        (void)CONCEPT;                                                                             \
+    } while (true)
 #endif
 
 #define DONT_OPTIM(V)                                                                              \
