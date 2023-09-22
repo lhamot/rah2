@@ -1530,6 +1530,18 @@ namespace RAH2_NS
         {
             struct find_first_of_fn
             {
+            private:
+                template <typename I1, typename S1, typename I2, typename S2, class Pred>
+                constexpr I1 impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    for (; first1 != last1; ++first1)
+                        for (auto i = first2; i != last2; ++i)
+                            if (pred(*first1, *i))
+                                return first1;
+                    return first1;
+                }
+
+            public:
                 template <
                     typename I1,
                     typename S1,
@@ -1550,12 +1562,13 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    for (; first1 != last1; ++first1)
-                        for (auto i = first2; i != last2; ++i)
-                            if (RAH2_INVOKE_2(
-                                    pred, (RAH2_INVOKE_1(proj1, *first1)), (RAH2_INVOKE_1(proj2, *i))))
-                                return first1;
-                    return first1;
+                    return impl(
+                        RAH2_STD::move(first1),
+                        RAH2_STD::move(last1),
+                        RAH2_STD::move(first2),
+                        RAH2_STD::move(last2),
+                        details::wrap_pred_proj(
+                            RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2)));
                 }
 
                 template <

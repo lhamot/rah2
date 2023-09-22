@@ -974,6 +974,98 @@ void test_find_end()
 
     foreach_range_combination<test_algo<test_find_end_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_find_first_of_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            std::vector<int> v1{0, 2, 3, 25, 5};
+            std::vector<int> v2 = {19, 10, 3, 4};
+            std::vector<int> v3 = {1, 6, 7, 9};
+            auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
+            auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
+            auto t2 = make_test_view_adapter<CS, Tag, Sized>(v3);
+
+            testSuite.test_case("iter");
+            testSuite.test_case("noproj");
+            auto const found1 =
+                RAH2_NS::ranges::find_first_of(r.begin(), r.end(), t1.begin(), t1.end());
+            assert(found1 != r.end());
+            assert(*found1 == 3);
+            auto const found2 =
+                RAH2_NS::ranges::find_first_of(r.begin(), r.end(), t2.begin(), t2.end());
+            assert(found2 == r.end());
+        }
+
+        {
+            std::vector<Coord> v1 = {{0, 0}, {2, 0}, {3, 0}, {25, 0}, {5, 0}};
+            std::vector<Coord> v2 = {{1, 19}, {1, 10}, {1, 3}, {1, 4}};
+            auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
+            auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
+
+            testSuite.test_case("range");
+            testSuite.test_case("proj");
+            auto const found1 = RAH2_NS::ranges::find_first_of(
+                r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::y);
+            assert(found1 != r.end());
+            assert((*found1).x == 3);
+            auto const found2 = RAH2_NS::ranges::find_first_of(
+                r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::x);
+            assert(found2 == r.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> v1 = {{0, 0}, {2, 0}, {3, 0}, {25, 0}, {5, 0}};
+        v1.insert(v1.begin(), 1000000 * RELEASE_MULTIPLIER, {0, 0});
+        std::vector<Coord> v2 = {{1, 19}, {1, 10}, {1, 3}, {1, 4}};
+        std::vector<Coord> v3 = {{3, 19}, {25, 0}, {3, 0}, {3, 4}};
+        auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
+        auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
+        auto t2 = make_test_view_adapter<CS, Tag, Sized>(v3);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                201700L, // version of std::find_end
+                202000L, // version of std::ranges::find_end
+                CS == Common,
+                "find_first_of",
+                range_type,
+                [&]
+                {
+                    auto const found1 = RAH2_NS::ranges::find_first_of(
+                        fwd(r.begin()), r.end(), t2.begin(), t2.end());
+                    assert(found1 != r.end());
+                    assert(*found1 == Coord(3, 0));
+                    auto const found2 =
+                        RAH2_NS::ranges::find_first_of(r.begin(), r.end(), t1.begin(), t1.end());
+                    assert(found2 == r.end());
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                202000L,
+                "find_first_of_proj",
+                range_type,
+                [&]
+                {
+                    auto const found1 = RAH2_NS::ranges::find_first_of(
+                        r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::y);
+                    assert(found1 != r.end());
+                    assert((*found1).x == 3);
+                    auto const found2 = RAH2_NS::ranges::find_first_of(
+                        r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::x);
+                    assert(found2 == r.end());
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_find_first_of()
 {
     testSuite.test_case("sample");
@@ -1008,6 +1100,8 @@ void test_find_first_of()
         RAH2_NS::ranges::find_first_of(p1, p2, [](auto a, auto b) { return a.y == b.y; });
     assert(RAH2_STD::distance(p1.begin(), found4) == 2); // {3, -3}
     /// [rah2::ranges::find_first_of]
+
+    foreach_range_combination<test_algo<test_find_first_of_>>();
 }
 void test_adjacent_find()
 {
