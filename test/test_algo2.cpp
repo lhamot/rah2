@@ -82,13 +82,7 @@ struct test_mismatch_
 
         auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
         auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-        auto pred = [](intptr_t a, intptr_t b)
-        {
-            return a == b;
-        };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            201100L,
-            202000L,
             CS == Common,
             "mismatch",
             range_type,
@@ -102,11 +96,14 @@ struct test_mismatch_
                 DONT_OPTIM(v1_v2);
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            202000L,
             "mismatch_pred_proj",
             range_type,
             [&]
             {
+                auto pred = [](intptr_t a, intptr_t b)
+                {
+                    return a == b;
+                };
                 volatile const auto v1_v2 =
                     STD::mismatch(coordRange1, coordRange2, pred, &Coord::x, &Coord::x);
                 DONT_OPTIM(v1_v2);
@@ -173,13 +170,7 @@ struct test_equal_
 
         auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
         auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-        auto pred = [](Coord a, Coord b)
-        {
-            return a.x == b.y;
-        };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            201100L,
-            202000L,
             CS == Common,
             "equal",
             range_type,
@@ -192,10 +183,16 @@ struct test_equal_
                     coordRange2.end()));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            202000L,
             "equal_pred",
             range_type,
-            [&] { assert(STD::equal(coordRange1, coordRange2, pred)); });
+            [&]
+            {
+                auto pred = [](Coord a, Coord b)
+                {
+                    return a.x == b.y;
+                };
+                assert(STD::equal(coordRange1, coordRange2, pred));
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -282,13 +279,7 @@ struct test_lexicographical_compare_
 
         auto coordRange1 = make_test_view_adapter<CS, Tag, Sized>(coords_vec);
         auto coordRange2 = make_test_view_adapter<CS, Tag, Sized>(coords_vec2);
-        auto pred = [](Coord a, Coord b)
-        {
-            return a.x < b.y;
-        };
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            201100L,
-            202000L,
             CS == Common,
             "lexicographical_compare",
             range_type,
@@ -301,10 +292,16 @@ struct test_lexicographical_compare_
                     coordRange2.end()));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            202000L,
             "lexicographical_compare_pred",
             range_type,
-            [&] { assert(not STD::lexicographical_compare(coordRange1, coordRange2, pred)); });
+            [&]
+            {
+                auto pred = [](Coord a, Coord b)
+                {
+                    return a.x < b.y;
+                };
+                assert(not STD::lexicographical_compare(coordRange1, coordRange2, pred));
+            });
     }
     static constexpr bool do_test = true;
 };
@@ -350,8 +347,6 @@ struct test_find_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            201100L,
-            202000L,
             CS == Common,
             "find",
             range_type,
@@ -361,7 +356,6 @@ struct test_find_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            202000L,
             "find_proj",
             range_type,
             [&]
@@ -414,8 +408,6 @@ struct test_find_if_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            201100L,
-            202000L,
             CS == Common,
             "find_if",
             range_type,
@@ -430,7 +422,6 @@ struct test_find_if_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            202000L,
             "find_if_proj",
             range_type,
             [&]
@@ -488,8 +479,6 @@ struct test_find_if_not_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-            201100L,
-            202000L,
             CS == Common,
             "find_if",
             range_type,
@@ -504,7 +493,6 @@ struct test_find_if_not_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            202000L,
             "find_if_proj",
             range_type,
             [&]
@@ -558,10 +546,10 @@ struct test_find_last_
         in.push_back(Coord{3, 4});
         in.push_back(Coord{18, 4});
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        (void)r1;
 
         {
-            COMPARE_DURATION_TO_STD_RANGES(
-                202300L,
+            COMPARE_DURATION_TO_STD_RANGES_23(
                 "find_last",
                 range_type,
                 [&]
@@ -572,8 +560,7 @@ struct test_find_last_
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES(
-                202300L,
+            COMPARE_DURATION_TO_STD_RANGES_23(
                 "find_last_proj",
                 range_type,
                 [&]
@@ -642,10 +629,10 @@ struct test_find_last_if_
         in.push_back(Coord{3, 4});
         in.push_back(Coord{18, 4});
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        (void)r1;
 
         {
-            COMPARE_DURATION_TO_STD_RANGES( // find_last_if does not exist in std
-                202300L,
+            COMPARE_DURATION_TO_STD_RANGES_23( // find_last_if does not exist in std
                 "find_last_if",
                 range_type,
                 [&]
@@ -661,8 +648,7 @@ struct test_find_last_if_
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES(
-                202300L,
+            COMPARE_DURATION_TO_STD_RANGES_23(
                 "find_last_if_proj",
                 range_type,
                 [&]
@@ -744,10 +730,10 @@ struct test_find_last_if_not_
         in.push_back(Coord{3, 4});
         in.push_back(Coord{18, 4});
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        (void)r1;
 
         {
-            COMPARE_DURATION_TO_STD_RANGES( // find_last_if_not does not exist in std
-                202300L,
+            COMPARE_DURATION_TO_STD_RANGES_23( // find_last_if_not does not exist in std
                 "find_last_if_not",
                 range_type,
                 [&]
@@ -763,8 +749,7 @@ struct test_find_last_if_not_
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES(
-                202300L,
+            COMPARE_DURATION_TO_STD_RANGES_23(
                 "find_last_if_not_proj",
                 range_type,
                 [&]
@@ -901,10 +886,11 @@ struct test_find_end_
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
         auto s1 = make_test_view_adapter<CS, Tag, Sized>(search1);
         auto s2 = make_test_view_adapter<CS, Tag, Sized>(search2);
+        (void)s1;
+        (void)s2;
+        (void)r1;
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(
-                201700L, // version of std::find_end
-                202000L, // version of std::ranges::find_end
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
                 CS == Common,
                 "find_end",
                 range_type,
@@ -926,7 +912,6 @@ struct test_find_end_
         }
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                202000L,
                 "find_end_proj",
                 range_type,
                 [&]
@@ -1028,11 +1013,12 @@ struct test_find_first_of_
         auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
         auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
         auto t2 = make_test_view_adapter<CS, Tag, Sized>(v3);
+        (void)r;
+        (void)t1;
+        (void)t2;
 
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                201700L, // version of std::find_end
-                202000L, // version of std::ranges::find_end
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
                 "find_first_of",
                 range_type,
@@ -1041,7 +1027,7 @@ struct test_find_first_of_
                     auto const found1 = RAH2_NS::ranges::find_first_of(
                         fwd(r.begin()), r.end(), t2.begin(), t2.end());
                     assert(found1 != r.end());
-                    assert(*found1 == Coord(3, 0));
+                    assert(*found1 == (Coord{3, 0}));
                     auto const found2 =
                         RAH2_NS::ranges::find_first_of(r.begin(), r.end(), t1.begin(), t1.end());
                     assert(found2 == r.end());
@@ -1049,7 +1035,6 @@ struct test_find_first_of_
         }
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                202000L,
                 "find_first_of_proj",
                 range_type,
                 [&]
