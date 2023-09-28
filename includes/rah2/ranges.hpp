@@ -4028,7 +4028,7 @@ namespace RAH2_NS
                 template <
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<derived_from<C, random_access_iterator_tag>>* = nullptr>
-                iterator& operator+=(range_difference_t<R> x)
+                iterator& operator+=(base_diff_type x)
                 {
                     if (x > 0)
                     {
