@@ -1256,10 +1256,10 @@ auto compare_duration(
     call_if_true<IS_COMMON>(                                                                          \
         [&](auto fwd)                                                                                 \
         {                                                                                             \
-            namespace STD = std;                                                                      \
+            namespace STD = RAH2_STD;                                                                 \
             auto test_std = (ALGO_F);                                                                 \
             {                                                                                         \
-                namespace STD = std::ranges;                                                          \
+                namespace STD = RAH2_STD::ranges;                                                     \
                 auto test_std_ranges = (RANGE_F);                                                     \
                 {                                                                                     \
                     namespace STD = RAH2_NS::ranges;                                                  \
@@ -1274,7 +1274,7 @@ auto compare_duration(
     call_if_true<IS_COMMON>(                                                                       \
         [&](auto fwd)                                                                              \
         {                                                                                          \
-            namespace STD = std;                                                                   \
+            namespace STD = RAH2_STD;                                                              \
             auto test_std = (ALGO_F);                                                              \
             {                                                                                      \
                 namespace STD = RAH2_NS::ranges;                                                   \
@@ -1294,10 +1294,10 @@ auto compare_duration(
     call_if_true<IS_COMMON>(                                                                       \
         [&](auto fwd)                                                                              \
         {                                                                                          \
-            namespace STD = std;                                                                   \
+            namespace STD = RAH2_STD;                                                              \
             auto test_std = (ALGO_F);                                                              \
             {                                                                                      \
-                namespace STD = std::ranges;                                                       \
+                namespace STD = RAH2_STD::ranges;                                                  \
                 auto test_std_ranges = (ALGO_F);                                                   \
                 {                                                                                  \
                     namespace STD = RAH2_NS::ranges;                                               \
@@ -1310,7 +1310,7 @@ auto compare_duration(
     call_if_true<not(IS_COMMON)>(                                                                  \
         [&](auto fwd)                                                                              \
         {                                                                                          \
-            namespace STD = std::ranges;                                                           \
+            namespace STD = RAH2_STD::ranges;                                                      \
             auto test_std_ranges = (ALGO_F);                                                       \
             {                                                                                      \
                 namespace STD = RAH2_NS::ranges;                                                   \
@@ -1324,7 +1324,7 @@ auto compare_duration(
     call_if_true<IS_COMMON>(                                                                       \
         [&](auto fwd)                                                                              \
         {                                                                                          \
-            namespace STD = std;                                                                   \
+            namespace STD = RAH2_STD;                                                              \
             auto test_std = (ALGO_F);                                                              \
             {                                                                                      \
                 namespace STD = RAH2_NS::ranges;                                                   \
@@ -1350,7 +1350,7 @@ auto compare_duration(
 #define INTERNAL_COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, ALGO_F)                             \
     do                                                                                             \
     {                                                                                              \
-        namespace STD = std::ranges;                                                               \
+        namespace STD = RAH2_STD::ranges;                                                          \
         auto test_std_ranges = (ALGO_F);                                                           \
         {                                                                                          \
             namespace STD = RAH2_NS::ranges;                                                       \
