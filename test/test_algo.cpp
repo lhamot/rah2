@@ -41,13 +41,13 @@ struct test_all_of_
     void test()
     {
         std::vector<int> raw_yes = {4, 4, 4, 4};
-        assert(RAH2_NS::ranges::all_of(
+        CHECK(RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {4, 4, 3, 4};
-        assert(!RAH2_NS::ranges::all_of(
+        CHECK(!RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
         std::vector<int> raw_empty = {};
-        assert(RAH2_NS::ranges::all_of(
+        CHECK(RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
     }
     template <bool = true>
@@ -66,7 +66,7 @@ struct test_all_of_
             [&]
             {
                 auto result = STD::all_of(fwd(perf_no.begin()), perf_no.end(), is_zero);
-                assert(result);
+                CHECK(result);
             });
         COMPARE_DURATION_TO_STD_RANGES(
             "all_of_proj",
@@ -75,7 +75,7 @@ struct test_all_of_
             {
                 auto result = STD::all_of(
                     perf_no, [](intptr_t x) { return x == 0; }, &Coord::x);
-                assert(result);
+                CHECK(result);
             });
     }
     static constexpr bool do_test = true;
