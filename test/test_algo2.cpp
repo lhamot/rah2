@@ -963,6 +963,7 @@ void test_find_end()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_find_first_of_
 {
+    using Tag2 = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
     template <bool = true>
     void test()
     {
@@ -971,8 +972,8 @@ struct test_find_first_of_
             std::vector<int> v2 = {19, 10, 3, 4};
             std::vector<int> v3 = {1, 6, 7, 9};
             auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
-            auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
-            auto t2 = make_test_view_adapter<CS, Tag, Sized>(v3);
+            auto t1 = make_test_view_adapter<CS, Tag2, Sized>(v2);
+            auto t2 = make_test_view_adapter<CS, Tag2, Sized>(v3);
 
             testSuite.test_case("iter");
             testSuite.test_case("noproj");
@@ -989,7 +990,7 @@ struct test_find_first_of_
             std::vector<Coord> v1 = {{0, 0}, {2, 0}, {3, 0}, {25, 0}, {5, 0}};
             std::vector<Coord> v2 = {{1, 19}, {1, 10}, {1, 3}, {1, 4}};
             auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
-            auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
+            auto t1 = make_test_view_adapter<CS, Tag2, Sized>(v2);
 
             testSuite.test_case("range");
             testSuite.test_case("proj");
@@ -1011,8 +1012,8 @@ struct test_find_first_of_
         std::vector<Coord> v2 = {{1, 19}, {1, 10}, {1, 3}, {1, 4}};
         std::vector<Coord> v3 = {{3, 19}, {25, 0}, {3, 0}, {3, 4}};
         auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
-        auto t1 = make_test_view_adapter<CS, Tag, Sized>(v2);
-        auto t2 = make_test_view_adapter<CS, Tag, Sized>(v3);
+        auto t1 = make_test_view_adapter<CS, Tag2, Sized>(v2);
+        auto t2 = make_test_view_adapter<CS, Tag2, Sized>(v3);
         (void)r;
         (void)t1;
         (void)t2;
