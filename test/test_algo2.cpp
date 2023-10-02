@@ -1049,7 +1049,7 @@ struct test_find_first_of_
                 });
         }
     }
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+    static constexpr bool do_test = true;
 };
 void test_find_first_of()
 {

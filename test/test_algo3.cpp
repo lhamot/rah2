@@ -33,6 +33,37 @@
 
 #include "test_helpers.hpp"
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_adjacent_find_
+{
+    template <bool = true>
+    void test()
+    {
+        std::vector<Coord> const vec = {
+            {0, 0}, {1, 0}, {2, 0}, {3, 0}, {40, 1}, {40, 1}, {41, 0}, {41, 0}, {5, 1}};
+        auto v = make_test_view_adapter<CS, Tag, Sized>(vec);
+        {
+            testSuite.test_case("iter");
+            testSuite.test_case("noproj");
+            auto const it = RAH2_NS::ranges::adjacent_find(v.begin(), v.end());
+            assert(RAH2_NS::ranges::distance(v.begin(), it) == 4);
+        }
+
+        {
+            testSuite.test_case("range");
+            testSuite.test_case("pred");
+            testSuite.test_case("proj");
+            auto const it = RAH2_NS::ranges::adjacent_find(v, RAH2_NS::ranges::greater(), &Coord::x);
+            assert(RAH2_NS::ranges::distance(v.begin(), it) == 7);
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const*) // range_type
+    {
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_adjacent_find()
 {
     testSuite.test_case("sample");
@@ -49,6 +80,8 @@ void test_adjacent_find()
         assert(RAH2_NS::ranges::distance(v.begin(), it) == 7);
     }
     /// [rah2::ranges::adjacent_find]
+
+    foreach_range_combination<test_algo<test_adjacent_find_>>();
 }
 void test_search()
 {
