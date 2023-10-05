@@ -1160,6 +1160,11 @@ namespace RAH2_NS
                 {
                     return pred(RAH2_FWD(v).*proj);
                 }
+                template <typename V1, typename V2>
+                auto operator()(V1&& v1, V2&& v2) const
+                {
+                    return pred(RAH2_FWD(v1).*proj, RAH2_FWD(v2).*proj);
+                }
 
                 operator Pred() &&
                 {
@@ -1188,6 +1193,11 @@ namespace RAH2_NS
                 auto operator()(V&& v) const
                 {
                     return pred(proj(RAH2_FWD(v)));
+                }
+                template <typename V1, typename V2>
+                auto operator()(V1&& v1, V2&& v2) const
+                {
+                    return pred(proj(RAH2_FWD(v1)), proj(RAH2_FWD(v2)));
                 }
 
                 operator Pred() &&
