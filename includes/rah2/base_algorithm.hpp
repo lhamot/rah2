@@ -898,6 +898,22 @@ namespace RAH2_NS
         {
             struct adjacent_find_fn
             {
+            private:
+                template <typename I, typename S, typename Pred>
+                constexpr I impl(I first, S last, Pred pred) const
+                {
+                    if (first == last)
+                        return first;
+                    auto next = RAH2_NS::ranges::next(first);
+                    for (; next != last; ++next, ++first)
+                    {
+                        if (pred(*first, *next))
+                            return first;
+                    }
+                    return next;
+                }
+
+            public:
                 template <
                     typename I,
                     typename S,
@@ -906,15 +922,12 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 constexpr I operator()(I first, S last, Pred pred = {}, Proj proj = {}) const
                 {
-                    if (first == last)
-                        return first;
-                    auto next = RAH2_NS::ranges::next(first);
-                    for (; next != last; ++next, ++first)
-                    {
-                        if (pred(proj(*first), proj(*next)))
-                            return first;
-                    }
-                    return next;
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj)));
+                    return first_last.wrap_iterator(RAH2_STD::move(result));
                 }
 
                 template <
