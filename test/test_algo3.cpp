@@ -114,6 +114,116 @@ void test_adjacent_find()
 
     foreach_range_combination<test_algo<test_adjacent_find_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_search_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::string haystack_{"abcd abcd"};
+        RAH2_STD::string needle_{"bcd"};
+        auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
+        auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
+
+        // the search uses iterator pairs begin()/end():
+        auto const found1 =
+            RAH2_NS::ranges::search(haystack.begin(), haystack.end(), needle.begin(), needle.end());
+        assert(RAH2_STD::distance(haystack.begin(), found1.begin()) == 1);
+        assert(RAH2_STD::distance(haystack.begin(), found1.end()) == 4);
+
+        // the search uses ranges r1, r2:
+        auto const found2 = RAH2_NS::ranges::search(haystack, needle);
+        assert(RAH2_STD::distance(haystack.begin(), found2.begin()) == 1);
+        assert(RAH2_STD::distance(haystack.begin(), found2.end()) == 4);
+
+        // 'needle' range is empty:
+        RAH2_STD::string none_;
+        auto none = make_test_view_adapter<CS, Tag, Sized>(none_);
+        auto const found3 = RAH2_NS::ranges::search(haystack, none);
+        assert(RAH2_STD::distance(haystack.begin(), found3.begin()) == 0);
+        assert(RAH2_STD::distance(haystack.begin(), found3.end()) == 0);
+
+        // 'needle' will not be found:
+        RAH2_STD::string awl_{"efg"};
+        auto awl = make_test_view_adapter<CS, Tag, Sized>(awl_);
+        auto const found4 = RAH2_NS::ranges::search(haystack, awl);
+        assert(RAH2_STD::distance(haystack.begin(), found4.begin()) == 9);
+        assert(RAH2_STD::distance(haystack.begin(), found4.end()) == 9);
+
+        // the search uses custom comparator and projections:
+        RAH2_STD::string bodkin_{"234"};
+        auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
+        auto const found5 = RAH2_NS::ranges::search(
+            haystack,
+            bodkin,
+            [](int const x, int const y) { return x == y; }, // pred
+            [](int const x) { return std::toupper(x); }, // proj1
+            [](int const y) { return y + 'A' - '1'; }); // proj2
+        assert(RAH2_STD::distance(haystack.begin(), found5.begin()) == 1);
+        assert(RAH2_STD::distance(haystack.begin(), found5.end()) == 4);
+    }
+
+    template <typename I, std::enable_if_t<RAH2_NS::input_iterator<RAH2_NS::remove_cvref_t<I>>>* = nullptr>
+    static auto get_begin(I&& i) -> decltype(std::forward<I>(i))
+    {
+        return std::forward<I>(i);
+    }
+
+    template <typename I, std::enable_if_t<!RAH2_NS::input_iterator<RAH2_NS::remove_cvref_t<I>>>* = nullptr>
+    static auto get_begin(I&& i) -> decltype(i.begin())
+    {
+        return i.begin();
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::string haystack_{"abcd abcd"};
+        haystack_.insert(haystack_.begin(), 1000000 * RELEASE_MULTIPLIER, '0');
+        auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
+
+        RAH2_STD::string needle_{"bcd"};
+        auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
+
+        RAH2_STD::string haystack_proj_{"abcd abcd"};
+        haystack_proj_.insert(haystack_proj_.begin(), 200000 * RELEASE_MULTIPLIER, '0');
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "search",
+                range_type,
+                [&]
+                {
+                    // the search uses iterator pairs begin()/end():
+                    auto const found1 = STD::search(
+                        fwd(haystack.begin()), haystack.end(), needle.begin(), needle.end());
+                    assert(*get_begin(found1) == *needle.begin());
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "search_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
+                        RAH2_STD::string bodkin_{"234"};
+                        auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
+                        auto const found5 = STD::search(
+                            haystack_proj,
+                            bodkin,
+                            [](int const x, int const y) { return x == y; },
+                            [](int const x) { return std::toupper(x); },
+                            [](int const y) { return y + 'A' - '1'; });
+                        assert(*found5.begin() == 'b');
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_search()
 {
     testSuite.test_case("sample");
@@ -131,21 +241,18 @@ void test_search()
     auto const found2 = RAH2_NS::ranges::search(haystack, needle);
     assert(found2.begin() - haystack.begin() == 1);
     assert(found2.end() - haystack.begin() == 4);
-    // print(2, haystack, needle, found2);
 
     // 'needle' range is empty:
     RAH2_STD::string none;
     auto const found3 = RAH2_NS::ranges::search(haystack, none);
     assert(found3.begin() - haystack.begin() == 0);
     assert(found3.end() - haystack.begin() == 0);
-    // print(3, haystack, none, found3);
 
     // 'needle' will not be found:
     RAH2_STD::string awl{"efg"};
     auto const found4 = RAH2_NS::ranges::search(haystack, awl);
     assert(found4.begin() - haystack.begin() == 9);
     assert(found4.end() - haystack.begin() == 9);
-    // print(4, haystack, awl, found4);
 
     // the search uses custom comparator and projections:
     RAH2_STD::string bodkin{"234"};
@@ -157,8 +264,9 @@ void test_search()
         [](int const y) { return y + 'A' - '1'; }); // proj2
     assert(found5.begin() - haystack.begin() == 1);
     assert(found5.end() - haystack.begin() == 4);
-    // print(5, haystack, bodkin, found5);
     /// [rah2::ranges::search]
+
+    foreach_range_combination<test_algo<test_search_>>();
 }
 void test_search_n()
 {

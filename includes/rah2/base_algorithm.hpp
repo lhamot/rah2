@@ -3238,6 +3238,394 @@ namespace RAH2_NS
         {
             struct search_fn
             {
+            private:
+                template <typename I1, typename S1, typename I2, typename S2, class Pred>
+                RAH2_CONSTEXPR20 subrange<I1>
+                search_unsized(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    // Coming from gcc
+                    // Too slow with clang_rah2_20_64_NDEBUG
+                    /*
+                    // Test for empty ranges
+                    if (first1 == last1 || first2 == last2)
+                    {
+                        return {first1, first1};
+                    }
+
+                    // General case.
+                    RAH2_NS::iter_reference_t<I2> ref2 = *first2;
+                    I2 const p1 = RAH2_NS::ranges::next(first2);
+
+                    for (;; ++first1)
+                    {
+                        for (;; ++first1)
+                        {
+                            if (first1 == last1)
+                            {
+                                return {first1, first1};
+                            }
+                            if (pred(*first1, ref2))
+                            {
+                                break;
+                            }
+                        }
+
+                        I1 p = p1;
+                        I1 current = first1;
+                        ++current;
+                        if (current == last1)
+                        {
+                            return {current, current};
+                        }
+
+                        while (pred(*current, *p))
+                        {
+                            ++p;
+                            ++current;
+                            if (p == last2)
+                            {
+                                return {first1, current};
+                            }
+                            if (current == last1)
+                            {
+                                return {current, current};
+                            }
+                        }
+                    }
+                    */
+                    /*
+                    // Coming from MSVC std unsized
+                    // failed with g_rah2_14_64_NDEBUG
+                    for (;; ++first1)
+                    { // loop until match or end of a sequence
+                        auto u_mid1 = first1;
+                        for (auto u_mid2 = first2;; ++u_mid1, (void)++u_mid2)
+                        {
+                            if (u_mid2 == last2)
+                            {
+                                //_Seek_wrapped(last1, first1);
+                                //return last1;
+                                return {first1, u_mid1};
+                            }
+                            else if (u_mid1 == last1)
+                            {
+                                return {first1, first1};
+                            }
+                            else if (!pred(*u_mid1, *u_mid2))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    */
+                    // Ok with gcc but not clang
+
+                    if (first2 == last2 || first1 == last1)
+                    {
+                        return {first1, first1};
+                    }
+
+#ifdef __GXX_ABI_VERSION
+                    auto&& front_val = *first2;
+                    for (;; ++first1)
+                    {
+                        I2 it2 = first2;
+                        while ((first1 != last1) && !pred(*first1, front_val))
+                        {
+                            ++first1;
+                        }
+                        I1 it1 = first1;
+                        for (;; ++it1, ++it2)
+                        {
+                            if (it2 == last2)
+                                return {first1, it1};
+                            if (it1 == last1)
+                                return {it1, it1};
+                            if (!pred(*it1, *it2))
+                                break;
+                        }
+                    }
+#else
+                    // from MSVC std::ranges
+                    for (;; ++first1)
+                    {
+                        auto mid1 = first1;
+                        for (auto mid2 = first2;; ++mid1, (void)++mid2)
+                        {
+                            if (mid2 == last2)
+                            { // match
+                                return {RAH2_STD::move(first1), RAH2_STD::move(mid1)};
+                            }
+
+                            if (mid1 == last1)
+                            { // not enough haystack left to find a match
+                                return {mid1, mid1};
+                            }
+
+                            if (!RAH2_INVOKE_2(pred, *mid1, *mid2))
+                            { // mismatch
+                                break;
+                            }
+                        }
+                    }
+                    /*
+                    // Ok with clang (but not cpp20 optimized ) but not gcc
+                    for (;; ++first1)
+                    {
+                        auto mid1 = first1;
+                        for (auto mid2 = first2;; ++mid1, (void)++mid2)
+                        {
+                            if (mid2 == last2)
+                            { // match
+                                return {RAH2_STD::move(first1), RAH2_STD::move(mid1)};
+                            }
+
+                            if (mid1 == last1)
+                            { // not enough haystack left to find a match
+                                return {mid1, mid1};
+                            }
+
+                            if (!RAH2_INVOKE_2(pred, *mid1, *mid2))
+                            { // mismatch
+                                break;
+                            }
+                        }
+                    }
+                    */
+#endif
+                }
+
+                template <class _InIt1, class _InIt2, typename C, class _Pr>
+                RAH2_NODISCARD RAH2_CONSTEXPR20 bool
+                equal_rev_pred_unchecked(_InIt1 first1, _InIt2 first2, C count2, _Pr&& pred) const
+                {
+                    for (; count2 != 0; ++first1, (void)++first2, (void)--count2)
+                    {
+                        if (!pred(*first1, *first2))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+
+                template <typename I1, typename C1, typename I2, typename C2, class Pred>
+                RAH2_CONSTEXPR20 subrange<I1> search_sized_random_access(
+                    I1 first1, I1 last1, C1 count1, I2 first2, I2 last2, C2 count2, Pred pred) const
+                {
+#ifdef __GXX_ABI_VERSION
+                    (void)count1;
+                    (void)count2;
+                    if (first1 == last1 || first2 == last2)
+                        return {first1, first1};
+
+                    for (;;)
+                    {
+                        for (;;)
+                        {
+                            if (first1 == last1)
+                                return {first1, first1};
+                            if (pred(*first1, *first2))
+                                break;
+                            ++first1;
+                        }
+                        auto __cur1 = first1;
+                        auto __cur2 = first2;
+                        for (;;)
+                        {
+                            if (++__cur2 == last2)
+                                return {first1, ++__cur1};
+                            if (++__cur1 == last1)
+                                return {__cur1, __cur1};
+                            if (!(bool)pred(*__cur1, *__cur2))
+                            {
+                                ++first1;
+                                break;
+                            }
+                        }
+                    }
+#else
+                    // GCC style changed to use counts. Good with clang but not gcc...
+                    /*
+                    auto&& front_val = *first2;
+                    for (;; ++first1, --count1)
+                    {
+                        while ((count1 != 0) && !pred(*first1, front_val))
+                        {
+                            ++first1;
+                            --count1;
+                        }
+                        if (count1 < count2)
+                        {
+                            return {first1, first1}; // TODO : Return the true first1
+                        }
+                        I1 it1 = first1;
+                        ++it1;
+                        I2 it2 = first2;
+                        ++it2;
+                        auto c2 = count2 - 1;
+                        for (;; ++it1, ++it2, --c2)
+                        {
+                            if (c2 == 0)
+                                return {first1, it1};
+                            if (!pred(*it1, *it2))
+                                break;
+                        }
+                    }
+                    */
+
+                    // From MSVC. Not good with GCC Release c++20, common_RA_sized
+                    (void)last2;
+                    const auto last_possible = first1 + (count1 - count2);
+                    for (;; ++first1)
+                    {
+                        if (equal_rev_pred_unchecked(first1, first2, count2, pred))
+                        {
+                            auto const result_last1 = first1 + count2;
+                            return {RAH2_STD::move(first1), RAH2_STD::move(result_last1)};
+                        }
+
+                        if (first1 == last_possible)
+                        {
+                            return {last1, last1};
+                        }
+                    }
+#endif
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    class Proj1,
+                    class Proj2,
+                    std::enable_if_t<R1Sized && R2Sized>* = nullptr>
+                RAH2_CONSTEXPR20 subrange<I1> search_iterators(
+                    I1 first1,
+                    S1 last1,
+                    I2 first2,
+                    S2 last2,
+                    Pred pred = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
+                {
+                    auto const count1 = last1 - first1;
+                    auto const count2 = last2 - first2;
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = search_sized_random_access(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        count1,
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        count2,
+                        details::wrap_pred_proj(
+                            RAH2_STD::forward<Pred>(pred),
+                            RAH2_STD::forward<Proj1>(proj1),
+                            RAH2_STD::forward<Proj2>(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    class Proj1,
+                    class Proj2,
+                    std::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
+                RAH2_CONSTEXPR20 subrange<I1> search_iterators(
+                    I1 first1, S1 last1, I2 first2, S2 last2, Pred pred, Proj1 proj1, Proj2 proj2) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = search_unsized(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        details::wrap_pred_proj(
+                            RAH2_STD::forward<Pred>(pred),
+                            RAH2_STD::forward<Proj1>(proj1),
+                            RAH2_STD::forward<Proj2>(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename R1,
+                    typename R2,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    std::enable_if_t<R1Sized && R2Sized>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
+                search_range(R1&& r1, R2&& r2, Pred pred, Proj1 proj1, Proj2 proj2) const
+                {
+                    auto const count1 = RAH2_NS::ranges::size(r1);
+                    auto const count2 = RAH2_NS::ranges::size(r2);
+                    auto first1 = RAH2_NS::ranges::begin(r1);
+                    auto last1 = RAH2_NS::ranges::end(r1);
+                    auto first2 = RAH2_NS::ranges::begin(r2);
+                    auto last2 = RAH2_NS::ranges::end(r2);
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = search_sized_random_access(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        count1,
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        count2,
+                        details::wrap_pred_proj(
+                            RAH2_STD::forward<Pred>(pred),
+                            RAH2_STD::forward<Proj1>(proj1),
+                            RAH2_STD::forward<Proj2>(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename R1,
+                    typename R2,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    std::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
+                search_range(R1&& r1, R2&& r2, Pred pred, Proj1 proj1, Proj2 proj2) const
+                {
+                    return search_iterators<false, false>(
+                        RAH2_NS::ranges::begin(r1),
+                        RAH2_NS::ranges::end(r1),
+                        RAH2_NS::ranges::begin(r2),
+                        RAH2_NS::ranges::end(r2),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
+                }
+
+            public:
                 template <
                     typename I1,
                     typename S1,
@@ -3247,7 +3635,7 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_iterator<I1> && forward_iterator<I2>>* = nullptr>
-                constexpr subrange<I1> operator()(
+                RAH2_CONSTEXPR20 subrange<I1> operator()(
                     I1 first1,
                     S1 last1,
                     I2 first2,
@@ -3256,19 +3644,19 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    for (;; ++first1)
-                    {
-                        I1 it1 = first1;
-                        for (I2 it2 = first2;; ++it1, ++it2)
-                        {
-                            if (it2 == last2)
-                                return {first1, it1};
-                            if (it1 == last1)
-                                return {it1, it1};
-                            if (!pred(proj1(*it1), proj2(*it2)))
-                                break;
-                        }
-                    }
+                    constexpr bool I1SizedRA =
+                        RAH2_NS::sized_sentinel_for<S1, I1> and RAH2_NS::random_access_iterator<I1>;
+                    constexpr bool I2SizedRA =
+                        RAH2_NS::sized_sentinel_for<S2, I2> and RAH2_NS::random_access_iterator<I2>;
+
+                    return search_iterators<I1SizedRA, I2SizedRA>(
+                        RAH2_STD::move(first1),
+                        RAH2_STD::move(last1),
+                        RAH2_STD::move(first2),
+                        RAH2_STD::move(last2),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
 
                 template <
@@ -3278,17 +3666,15 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
-                constexpr RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
+                RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
                 operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(r1),
-                        RAH2_NS::ranges::end(r1),
-                        RAH2_NS::ranges::begin(r2),
-                        RAH2_NS::ranges::end(r2),
-                        RAH2_STD::move(pred),
-                        RAH2_STD::move(proj1),
-                        RAH2_STD::move(proj2));
+                    constexpr bool R1SizedRA = RAH2_NS::ranges::sized_range<R1>
+                                               and RAH2_NS::ranges::random_access_range<R1>;
+                    constexpr bool R2SizedRA = RAH2_NS::ranges::sized_range<R2>
+                                               and RAH2_NS::ranges::random_access_range<R2>;
+                    return search_range<R1SizedRA, R2SizedRA>(
+                        r1, r2, RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
