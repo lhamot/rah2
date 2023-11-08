@@ -901,8 +901,8 @@ namespace RAH2_NS
             }
             owning_view(owning_view const&) = delete;
             owning_view& operator=(owning_view const&) = delete;
-            owning_view(owning_view&&) noexcept = default;
-            owning_view& operator=(owning_view&&) noexcept = default;
+            owning_view(owning_view&&) = default;
+            owning_view& operator=(owning_view&&) = default;
             ~owning_view() = default;
             R& base()
             {

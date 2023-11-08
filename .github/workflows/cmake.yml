@@ -14,9 +14,9 @@ jobs:
         cppstd: [14, 20]
         compiler: [ 
             {os: windows-latest, cpp: msvc, c: msvc }, 
-            {os: macos-latest, cpp: clang++-13, c: clang-13} ,
-            {os: ubuntu-latest, cpp: clang++-13, c: clang-13},
-            {os: ubuntu-latest, cpp: g++, c: gcc} 
+            {os: macos-latest, cpp: clang++, c: clang} ,
+            {os: ubuntu-20.04, cpp: clang++, c: clang},
+            {os: ubuntu-20.04, cpp: g++, c: gcc} 
         ]
         
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
