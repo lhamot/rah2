@@ -2,6 +2,7 @@
 
 #include "concepts.hpp"
 
+#include <stdint.h>
 #include <initializer_list>
 #include <cassert>
 
@@ -753,7 +754,7 @@ namespace RAH2_NS
         {
             template <class S2>
             using less_s_i =
-                decltype(RAH2_STD::declval<S2>() - RAH2_STD::declval<I>(), RAH2_STD::declval<I>() - RAH2_STD::declval<S2>());
+                decltype((RAH2_STD::declval<S2>() - RAH2_STD::declval<I>()) + (RAH2_STD::declval<I>() - RAH2_STD::declval<S2>()));
             static constexpr bool value =
                 sentinel_for_impl<S, I, Diagnostic>::value
                 && concepts::is_true_v<
