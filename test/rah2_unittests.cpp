@@ -371,11 +371,25 @@ void test_range_traits()
     STATIC_ASSERT(!RAH2_NS::ranges::constant_range<int>);
 }
 
+struct show_thousands_sep : std::numpunct<char>
+{
+    show_thousands_sep() = default;
+    show_thousands_sep(show_thousands_sep&) = delete;
+    show_thousands_sep& operator=(show_thousands_sep&) = delete;
+    char do_thousands_sep() const override
+    {
+        return ',';
+    }
+    std::string do_grouping() const override
+    {
+        return "\03";
+    }
+};
+
 int main()
 try
 {
-    std::setlocale(LC_ALL, "");
-    std::cout.imbue(std::locale(""));
+    std::cout.imbue(std::locale(std::locale::classic(), new show_thousands_sep));
 
     testSuite.addTest("Range_concepts", "*", test_range_traits);
     testSuite.addTest("concepts", "*", test_concepts);
