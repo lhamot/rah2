@@ -3254,7 +3254,7 @@ namespace RAH2_NS
                             }
                             else if (it1 == last1)
                             {
-                                return {RAH2_STD::move(it1), RAH2_STD::move(it1)};
+                                return {it1, it1};
                             }
                             else if (!RAH2_INVOKE_2(pred, *it1, *it2))
                             {
@@ -3264,9 +3264,9 @@ namespace RAH2_NS
                     }
                 }
 
-                template <class _InIt1, class _InIt2, typename C, class _Pr>
-                RAH2_NODISCARD RAH2_CONSTEXPR20 bool
-                equal_rev_pred_unchecked(_InIt1 first1, _InIt2 first2, C count2, _Pr&& pred) const
+                template <class It1, class It2, typename C, class Pred>
+                RAH2_NODISCARD static RAH2_CONSTEXPR20 bool
+                test_equal(It1 first1, It2 first2, C count2, Pred&& pred)
                 {
                     for (; count2 != 0; ++first1, (void)++first2, (void)--count2)
                     {
@@ -3283,73 +3283,13 @@ namespace RAH2_NS
                 RAH2_CONSTEXPR20 subrange<I1> search_sized_random_access(
                     I1 first1, I1 last1, C1 count1, I2 first2, I2 last2, C2 count2, Pred pred) const
                 {
-#ifdef __GXX_ABI_VERSION
-                    (void)count1;
-                    (void)count2;
-                    if (first1 == last1 || first2 == last2)
+                    if (first1 == last1)
                         return {first1, first1};
-
-                    for (;;)
-                    {
-                        for (;;)
-                        {
-                            if (first1 == last1)
-                                return {first1, first1};
-                            if (pred(*first1, *first2))
-                                break;
-                            ++first1;
-                        }
-                        auto __cur1 = first1;
-                        auto __cur2 = first2;
-                        for (;;)
-                        {
-                            if (++__cur2 == last2)
-                                return {first1, ++__cur1};
-                            if (++__cur1 == last1)
-                                return {__cur1, __cur1};
-                            if (!(bool)pred(*__cur1, *__cur2))
-                            {
-                                ++first1;
-                                break;
-                            }
-                        }
-                    }
-#else
-                    // GCC style changed to use counts. Good with clang but not gcc...
-                    /*
-                    auto&& front_val = *first2;
-                    for (;; ++first1, --count1)
-                    {
-                        while ((count1 != 0) && !pred(*first1, front_val))
-                        {
-                            ++first1;
-                            --count1;
-                        }
-                        if (count1 < count2)
-                        {
-                            return {first1, first1}; // TODO : Return the true first1
-                        }
-                        I1 it1 = first1;
-                        ++it1;
-                        I2 it2 = first2;
-                        ++it2;
-                        auto c2 = count2 - 1;
-                        for (;; ++it1, ++it2, --c2)
-                        {
-                            if (c2 == 0)
-                                return {first1, it1};
-                            if (!pred(*it1, *it2))
-                                break;
-                        }
-                    }
-                    */
-
-                    // From MSVC. Not good with GCC Release c++20, common_RA_sized
                     (void)last2;
                     const auto last_possible = first1 + (count1 - count2);
                     for (;; ++first1)
                     {
-                        if (equal_rev_pred_unchecked(first1, first2, count2, pred))
+                        if (test_equal(first1, first2, count2, pred))
                         {
                             auto const result_last1 = first1 + count2;
                             return {RAH2_STD::move(first1), RAH2_STD::move(result_last1)};
@@ -3360,7 +3300,6 @@ namespace RAH2_NS
                             return {last1, last1};
                         }
                     }
-#endif
                 }
 
                 template <
