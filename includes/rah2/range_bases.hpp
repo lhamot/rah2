@@ -2,6 +2,7 @@
 
 #include "concepts.hpp"
 
+#include <stdint.h>
 #include <initializer_list>
 #include <cassert>
 
@@ -1878,11 +1879,10 @@ namespace RAH2_NS
             struct advance
             {
                 template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-                RAH2_CONSTEXPR20 iter_difference_t<I>
-                operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                RAH2_CONSTEXPR20 intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
                 {
                     // RAH2_STD::abs is not constexpr until C++23
-                    auto abs = [](iter_difference_t<I> const x)
+                    auto abs = [](intptr_t const x)
                     {
                         return x < 0 ? -x : x;
                     };
@@ -1910,8 +1910,7 @@ namespace RAH2_NS
                     typename S,
                     RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-                RAH2_CONSTEXPR20 iter_difference_t<I>
-                operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                RAH2_CONSTEXPR20 intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
                 {
                     while (n > 0 && i != bound)
                     {
@@ -1933,8 +1932,7 @@ namespace RAH2_NS
                     typename S,
                     RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr,
                     RAH2_STD::enable_if_t<not RAH2_NS::bidirectional_iterator<I>>* = nullptr>
-                RAH2_CONSTEXPR20 iter_difference_t<I>
-                operator()(I& i, iter_difference_t<I> n, S const& bound) const
+                RAH2_CONSTEXPR20 intptr_t operator()(I& i, iter_difference_t<I> n, S const& bound) const
                 {
                     RAH2_ASSERT(n >= 0);
                     while (n > 0 && i != bound)
