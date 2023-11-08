@@ -358,8 +358,8 @@ template <CommonOrSent Sent, typename Cat, bool SizedRange, typename Range>
 class test_view_adapter : public RAH2_NS::ranges::view_interface<test_view<Sent, Cat, SizedRange>>
 {
     Range base_;
-    using base_iterator = RAH2_NS::ranges::iterator_t<Range>;
-    using base_sentinel = RAH2_NS::ranges::sentinel_t<Range>;
+    using base_iterator = RAH2_STD::remove_reference_t<RAH2_NS::ranges::range_reference_t<Range>>*;
+    using base_sentinel = base_iterator;
     using ref = RAH2_NS::ranges::range_reference_t<Range>;
 
 public:
@@ -371,7 +371,8 @@ public:
 
     public:
         iterator() = default;
-        explicit iterator(base_iterator it, base_iterator end)
+        template <typename I, typename U>
+        explicit iterator(I&& it, U&& end)
             : iter_(it)
             , end_(end)
         {
@@ -421,11 +422,22 @@ public:
         }
         RAH2_NS::iter_reference_t<base_iterator> operator*() const
         {
+            assert(iter_ != end_);
             return *iter_;
         }
         RAH2_NS::iter_reference_t<base_iterator> operator*()
         {
+            assert(iter_ != end_);
             return *iter_;
+        }
+
+        base_iterator operator->() const
+        {
+            return iter_;
+        }
+        base_iterator operator->()
+        {
+            return iter_;
         }
         template <
             typename C = Cat,
@@ -459,7 +471,19 @@ public:
 
     auto begin()
     {
-        return iterator(RAH2_NS::ranges::begin(base_), RAH2_NS::ranges::end(base_));
+        auto it = RAH2_NS::ranges::begin(base_);
+        auto end = RAH2_NS::ranges::end(base_);
+        if (it == end)
+        {
+            return iterator(nullptr, nullptr);
+        }
+        else
+        {
+            auto const data = &(*it);
+            auto const size = end - it;
+            auto const end_ptr = data + size;
+            return iterator(data, end_ptr);
+        }
     }
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
@@ -469,7 +493,19 @@ public:
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Common>* = nullptr>
     auto end()
     {
-        return iterator(RAH2_NS::ranges::end(base_), RAH2_NS::ranges::end(base_));
+        auto it = RAH2_NS::ranges::begin(base_);
+        auto end = RAH2_NS::ranges::end(base_);
+        if (it == end)
+        {
+            return iterator(nullptr, nullptr);
+        }
+        else
+        {
+            auto const data = &(*it);
+            auto const size = end - it;
+            auto const end_ptr = data + size;
+            return iterator(end_ptr, end_ptr);
+        }
     }
     template <
         typename C = Cat,
@@ -1330,7 +1366,7 @@ auto compare_duration(
             {                                                                                      \
                 namespace STD = RAH2_NS::ranges;                                                   \
                 auto test_rah2 = (ALGO_F);                                                         \
-                compare_duration(test_std, test_rah2, CONCEPT, ALGO, "std", __FILE__, __LINE__);   \
+                compare_duration(test_std, test_rah2, ALGO, CONCEPT, "std", __FILE__, __LINE__);   \
             }                                                                                      \
         });
 
