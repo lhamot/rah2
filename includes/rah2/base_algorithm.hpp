@@ -3238,6 +3238,201 @@ namespace RAH2_NS
         {
             struct search_fn
             {
+            private:
+                template <typename I1, typename S1, typename I2, typename S2, class Pred>
+                RAH2_CONSTEXPR20 subrange<I1>
+                search_unsized(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
+                {
+                    for (;; ++first1)
+                    {
+                        auto it1 = first1;
+                        for (auto it2 = first2;; ++it1, (void)++it2)
+                        {
+                            if (it2 == last2)
+                            {
+                                return {RAH2_STD::move(first1), RAH2_STD::move(it1)};
+                            }
+                            else if (it1 == last1)
+                            {
+                                return {it1, it1};
+                            }
+                            else if (!RAH2_INVOKE_2(pred, *it1, *it2))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                template <class It1, class It2, typename C, class Pred>
+                RAH2_NODISCARD static RAH2_CONSTEXPR20 bool
+                test_equal(It1 first1, It2 first2, C count2, Pred&& pred)
+                {
+                    for (; count2 != 0; ++first1, (void)++first2, (void)--count2)
+                    {
+                        if (!pred(*first1, *first2))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+
+                template <typename I1, typename C1, typename I2, typename C2, class Pred>
+                RAH2_CONSTEXPR20 subrange<I1> search_sized_random_access(
+                    I1 first1, I1 last1, C1 count1, I2 first2, I2, C2 count2, Pred pred) const
+                {
+                    if (first1 == last1)
+                        return {first1, first1};
+                    const auto last_possible = first1 + (count1 - count2);
+                    for (;; ++first1)
+                    {
+                        if (test_equal(first1, first2, count2, pred))
+                        {
+                            auto const result_last1 = first1 + count2;
+                            return {RAH2_STD::move(first1), RAH2_STD::move(result_last1)};
+                        }
+
+                        if (first1 == last_possible)
+                        {
+                            return {last1, last1};
+                        }
+                    }
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    class Proj1,
+                    class Proj2,
+                    std::enable_if_t<R1Sized && R2Sized>* = nullptr>
+                RAH2_CONSTEXPR20 subrange<I1> search_iterators(
+                    I1 first1,
+                    S1 last1,
+                    I2 first2,
+                    S2 last2,
+                    Pred pred = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
+                {
+                    auto const count1 = last1 - first1;
+                    auto const count2 = last2 - first2;
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = search_sized_random_access(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        count1,
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        count2,
+                        details::wrap_pred_proj(
+                            RAH2_STD::forward<Pred>(pred),
+                            RAH2_STD::forward<Proj1>(proj1),
+                            RAH2_STD::forward<Proj2>(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    class Pred,
+                    class Proj1,
+                    class Proj2,
+                    std::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
+                RAH2_CONSTEXPR20 subrange<I1> search_iterators(
+                    I1 first1, S1 last1, I2 first2, S2 last2, Pred pred, Proj1 proj1, Proj2 proj2) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = search_unsized(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        details::wrap_pred_proj(
+                            RAH2_STD::forward<Pred>(pred),
+                            RAH2_STD::forward<Proj1>(proj1),
+                            RAH2_STD::forward<Proj2>(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename R1,
+                    typename R2,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    std::enable_if_t<R1Sized && R2Sized>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
+                search_range(R1&& r1, R2&& r2, Pred pred, Proj1 proj1, Proj2 proj2) const
+                {
+                    auto const count1 = RAH2_NS::ranges::size(r1);
+                    auto const count2 = RAH2_NS::ranges::size(r2);
+                    auto first1 = RAH2_NS::ranges::begin(r1);
+                    auto last1 = RAH2_NS::ranges::end(r1);
+                    auto first2 = RAH2_NS::ranges::begin(r2);
+                    auto last2 = RAH2_NS::ranges::end(r2);
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = search_sized_random_access(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        count1,
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel),
+                        count2,
+                        details::wrap_pred_proj(
+                            RAH2_STD::forward<Pred>(pred),
+                            RAH2_STD::forward<Proj1>(proj1),
+                            RAH2_STD::forward<Proj2>(proj2)));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
+                template <
+                    bool R1Sized,
+                    bool R2Sized,
+                    typename R1,
+                    typename R2,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
+                    std::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
+                search_range(R1&& r1, R2&& r2, Pred pred, Proj1 proj1, Proj2 proj2) const
+                {
+                    return search_iterators<false, false>(
+                        RAH2_NS::ranges::begin(r1),
+                        RAH2_NS::ranges::end(r1),
+                        RAH2_NS::ranges::begin(r2),
+                        RAH2_NS::ranges::end(r2),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
+                }
+
+            public:
                 template <
                     typename I1,
                     typename S1,
@@ -3247,7 +3442,7 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_iterator<I1> && forward_iterator<I2>>* = nullptr>
-                constexpr subrange<I1> operator()(
+                RAH2_CONSTEXPR20 subrange<I1> operator()(
                     I1 first1,
                     S1 last1,
                     I2 first2,
@@ -3256,19 +3451,19 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    for (;; ++first1)
-                    {
-                        I1 it1 = first1;
-                        for (I2 it2 = first2;; ++it1, ++it2)
-                        {
-                            if (it2 == last2)
-                                return {first1, it1};
-                            if (it1 == last1)
-                                return {it1, it1};
-                            if (!pred(proj1(*it1), proj2(*it2)))
-                                break;
-                        }
-                    }
+                    constexpr bool I1SizedRA =
+                        RAH2_NS::sized_sentinel_for<S1, I1> and RAH2_NS::random_access_iterator<I1>;
+                    constexpr bool I2SizedRA =
+                        RAH2_NS::sized_sentinel_for<S2, I2> and RAH2_NS::random_access_iterator<I2>;
+
+                    return search_iterators<I1SizedRA, I2SizedRA>(
+                        RAH2_STD::move(first1),
+                        RAH2_STD::move(last1),
+                        RAH2_STD::move(first2),
+                        RAH2_STD::move(last2),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
 
                 template <
@@ -3278,17 +3473,15 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<R1> && forward_range<R2>>* = nullptr>
-                constexpr RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
+                RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
                 operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(r1),
-                        RAH2_NS::ranges::end(r1),
-                        RAH2_NS::ranges::begin(r2),
-                        RAH2_NS::ranges::end(r2),
-                        RAH2_STD::move(pred),
-                        RAH2_STD::move(proj1),
-                        RAH2_STD::move(proj2));
+                    constexpr bool R1SizedRA = RAH2_NS::ranges::sized_range<R1>
+                                               and RAH2_NS::ranges::random_access_range<R1>;
+                    constexpr bool R2SizedRA = RAH2_NS::ranges::sized_range<R2>
+                                               and RAH2_NS::ranges::random_access_range<R2>;
+                    return search_range<R1SizedRA, R2SizedRA>(
+                        r1, r2, RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
