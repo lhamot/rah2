@@ -252,7 +252,7 @@ namespace RAH2_NS
             template <class T, class U>
             constexpr bool operator()(T&& t, U&& u) const
             {
-                return t == u;
+                return static_cast<T&&>(t) == static_cast<U&&>(u);
             }
         };
     } // namespace ranges

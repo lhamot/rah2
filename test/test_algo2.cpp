@@ -1025,7 +1025,7 @@ struct test_find_first_of_
                 range_type,
                 [&]
                 {
-                    auto const found1 = RAH2_NS::ranges::find_first_of(
+                    auto const found1 = STD::find_first_of(
                         fwd(r.begin()), r.end(), t2.begin(), t2.end());
                     assert(found1 != r.end());
                     assert(*found1 == (Coord{3, 0}));
@@ -1040,11 +1040,11 @@ struct test_find_first_of_
                 range_type,
                 [&]
                 {
-                    auto const found1 = RAH2_NS::ranges::find_first_of(
+                    auto const found1 = STD::find_first_of(
                         r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::y);
                     assert(found1 != r.end());
                     assert((*found1).x == 3);
-                    auto const found2 = RAH2_NS::ranges::find_first_of(
+                    auto const found2 = STD::find_first_of(
                         r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::x);
                     assert(found2 == r.end());
                 });

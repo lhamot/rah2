@@ -74,27 +74,22 @@ struct test_adjacent_find_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "find_adjacent_find",
+                "adjacent_find",
                 range_type,
                 [&]
                 {
-                    auto const it = RAH2_NS::ranges::adjacent_find(fwd(v.begin()), v.end());
-                    assert(
-                        RAH2_NS::ranges::distance(v.begin(), it)
-                        == (4 + 1000000 * RELEASE_MULTIPLIER));
+                    auto const it = STD::adjacent_find(fwd(v.begin()), v.end());
+                    assert((*it).x == 40);
                 });
         }
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "find_adjacent_find_proj",
+                "adjacent_find_proj",
                 range_type,
                 [&]
                 {
-                    auto const it =
-                        RAH2_NS::ranges::adjacent_find(v, RAH2_NS::ranges::greater(), &Coord::x);
-                    assert(
-                        RAH2_NS::ranges::distance(v.begin(), it)
-                        == (7 + 1000000 * RELEASE_MULTIPLIER));
+                    auto const it = STD::adjacent_find(v, RAH2_NS::ranges::greater(), &Coord::x);
+                    assert((*it).x == 41);
                 });
         }
     }
