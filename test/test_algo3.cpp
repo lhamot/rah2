@@ -179,15 +179,23 @@ struct test_search_
     template <bool = true>
     void test_perf(char const* range_type)
     {
-        RAH2_STD::string haystack_{"abcd abcd"};
-        haystack_.insert(haystack_.begin(), 1000000 * RELEASE_MULTIPLIER, '0');
+        RAH2_STD::string haystack_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            haystack_.push_back('a' + (i % 7));
+        }
+        haystack_ += "abcdefgh cd";
         auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
 
-        RAH2_STD::string needle_{"bcd"};
+        RAH2_STD::string needle_{"bcdefgh"};
         auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
 
-        RAH2_STD::string haystack_proj_{"abcd abcd"};
-        haystack_proj_.insert(haystack_proj_.begin(), 200000 * RELEASE_MULTIPLIER, '0');
+        RAH2_STD::string haystack_proj_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            haystack_proj_.push_back('a' + (i % 3));
+        }
+        haystack_proj_ += "abcdefgh cd";
 
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
@@ -199,6 +207,7 @@ struct test_search_
                     // the search uses iterator pairs begin()/end():
                     auto const found1 = STD::search(
                         fwd(haystack.begin()), haystack.end(), needle.begin(), needle.end());
+                    assert(get_begin(found1) != haystack.end());
                     assert(*get_begin(found1) == *needle.begin());
                 });
         }
@@ -210,14 +219,15 @@ struct test_search_
                     [&]
                     {
                         auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
-                        RAH2_STD::string bodkin_{"234"};
+                        RAH2_STD::string bodkin_{"2345678"};
                         auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
                         auto const found5 = STD::search(
                             haystack_proj,
                             bodkin,
                             [](int const x, int const y) { return x == y; },
                             [](int const x) { return std::toupper(x); },
-                            [](int const y) { return y + 'A' - '1'; });
+                            [](int const y) { return (y - '1') + 'A'; });
+                        assert(found5.begin() != haystack_proj.end());
                         assert(*found5.begin() == 'b');
                     }));
         }

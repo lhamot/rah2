@@ -3243,156 +3243,25 @@ namespace RAH2_NS
                 RAH2_CONSTEXPR20 subrange<I1>
                 search_unsized(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
                 {
-                    // Coming from gcc
-                    // Too slow with clang_rah2_20_64_NDEBUG
-                    /*
-                    // Test for empty ranges
-                    if (first1 == last1 || first2 == last2)
-                    {
-                        return {first1, first1};
-                    }
-
-                    // General case.
-                    RAH2_NS::iter_reference_t<I2> ref2 = *first2;
-                    I2 const p1 = RAH2_NS::ranges::next(first2);
-
                     for (;; ++first1)
                     {
-                        for (;; ++first1)
-                        {
-                            if (first1 == last1)
-                            {
-                                return {first1, first1};
-                            }
-                            if (pred(*first1, ref2))
-                            {
-                                break;
-                            }
-                        }
-
-                        I1 p = p1;
-                        I1 current = first1;
-                        ++current;
-                        if (current == last1)
-                        {
-                            return {current, current};
-                        }
-
-                        while (pred(*current, *p))
-                        {
-                            ++p;
-                            ++current;
-                            if (p == last2)
-                            {
-                                return {first1, current};
-                            }
-                            if (current == last1)
-                            {
-                                return {current, current};
-                            }
-                        }
-                    }
-                    */
-                    /*
-                    // Coming from MSVC std unsized
-                    // failed with g_rah2_14_64_NDEBUG
-                    for (;; ++first1)
-                    { // loop until match or end of a sequence
-                        auto u_mid1 = first1;
-                        for (auto u_mid2 = first2;; ++u_mid1, (void)++u_mid2)
-                        {
-                            if (u_mid2 == last2)
-                            {
-                                //_Seek_wrapped(last1, first1);
-                                //return last1;
-                                return {first1, u_mid1};
-                            }
-                            else if (u_mid1 == last1)
-                            {
-                                return {first1, first1};
-                            }
-                            else if (!pred(*u_mid1, *u_mid2))
-                            {
-                                break;
-                            }
-                        }
-                    }
-                    */
-                    // Ok with gcc but not clang
-
-                    if (first2 == last2 || first1 == last1)
-                    {
-                        return {first1, first1};
-                    }
-
-#ifdef __GXX_ABI_VERSION
-                    auto&& front_val = *first2;
-                    for (;; ++first1)
-                    {
-                        I2 it2 = first2;
-                        while ((first1 != last1) && !pred(*first1, front_val))
-                        {
-                            ++first1;
-                        }
-                        I1 it1 = first1;
-                        for (;; ++it1, ++it2)
+                        auto it1 = first1;
+                        for (auto it2 = first2;; ++it1, (void)++it2)
                         {
                             if (it2 == last2)
-                                return {first1, it1};
-                            if (it1 == last1)
-                                return {it1, it1};
-                            if (!pred(*it1, *it2))
-                                break;
-                        }
-                    }
-#else
-                    // from MSVC std::ranges
-                    for (;; ++first1)
-                    {
-                        auto mid1 = first1;
-                        for (auto mid2 = first2;; ++mid1, (void)++mid2)
-                        {
-                            if (mid2 == last2)
-                            { // match
-                                return {RAH2_STD::move(first1), RAH2_STD::move(mid1)};
+                            {
+                                return {RAH2_STD::move(first1), RAH2_STD::move(it1)};
                             }
-
-                            if (mid1 == last1)
-                            { // not enough haystack left to find a match
-                                return {mid1, mid1};
+                            else if (it1 == last1)
+                            {
+                                return {RAH2_STD::move(it1), RAH2_STD::move(it1)};
                             }
-
-                            if (!RAH2_INVOKE_2(pred, *mid1, *mid2))
-                            { // mismatch
+                            else if (!RAH2_INVOKE_2(pred, *it1, *it2))
+                            {
                                 break;
                             }
                         }
                     }
-                    /*
-                    // Ok with clang (but not cpp20 optimized ) but not gcc
-                    for (;; ++first1)
-                    {
-                        auto mid1 = first1;
-                        for (auto mid2 = first2;; ++mid1, (void)++mid2)
-                        {
-                            if (mid2 == last2)
-                            { // match
-                                return {RAH2_STD::move(first1), RAH2_STD::move(mid1)};
-                            }
-
-                            if (mid1 == last1)
-                            { // not enough haystack left to find a match
-                                return {mid1, mid1};
-                            }
-
-                            if (!RAH2_INVOKE_2(pred, *mid1, *mid2))
-                            { // mismatch
-                                break;
-                            }
-                        }
-                    }
-                    */
-#endif
                 }
 
                 template <class _InIt1, class _InIt2, typename C, class _Pr>
