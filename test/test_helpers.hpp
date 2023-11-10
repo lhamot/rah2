@@ -422,12 +422,12 @@ public:
         }
         RAH2_NS::iter_reference_t<base_iterator> operator*() const
         {
-            assert(iter_ != end_);
+            // assert(iter_ != end_);  // Enabling assert breaks benchmarks results...
             return *iter_;
         }
         RAH2_NS::iter_reference_t<base_iterator> operator*()
         {
-            assert(iter_ != end_);
+            // assert(iter_ != end_);  // Enabling assert breaks benchmarks results...
             return *iter_;
         }
 

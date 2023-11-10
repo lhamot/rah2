@@ -900,7 +900,7 @@ namespace RAH2_NS
             {
             private:
                 template <typename I, typename S, typename Pred>
-                constexpr I impl(I first, S last, Pred pred) const
+                constexpr I impl(I first, S const last, Pred pred) const
                 {
                     if (first == last)
                         return first;
@@ -941,8 +941,8 @@ namespace RAH2_NS
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
