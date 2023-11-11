@@ -1270,12 +1270,30 @@ namespace RAH2_NS
             {
             private:
                 template <typename I, typename S, class T, class Proj>
-                RAH2_CONSTEXPR20 I impl(I first, S last, T const& value, Proj proj = {}) const
+                RAH2_CONSTEXPR20 I impl(I first, S last, T const& value, Proj proj) const
                 {
-                    while ((first != last) && (proj(*first) != value))
+                    for (; first != last; ++first)
                     {
-                        ++first;
+                        if (proj(*first) == value)
+                        {
+                            break;
+                        }
                     }
+
+                    return first;
+                }
+
+                template <typename I, typename S, class T>
+                RAH2_CONSTEXPR20 I impl(I first, S last, T const& value, RAH2_NS::details::identity) const
+                {
+                    for (; first != last; ++first)
+                    {
+                        if (*first == value)
+                        {
+                            break;
+                        }
+                    }
+
                     return first;
                 }
 
