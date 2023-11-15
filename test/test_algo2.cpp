@@ -147,17 +147,17 @@ namespace std
     }
 } // namespace std
 
-namespace RAH2_STD
+namespace RAH2_NS
 {
     namespace ranges
     {
         template <class InputIt1, class InputIt2>
         bool identical(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
         {
-            return RAH2_STD::ranges::equal(first1, last1, first2, last2);
+            return RAH2_NS::ranges::equal(first1, last1, first2, last2);
         }
     } // namespace ranges
-} // namespace RAH2_STD
+} // namespace RAH2_NS
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_equal_
