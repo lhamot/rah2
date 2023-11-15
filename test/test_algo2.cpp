@@ -16,6 +16,7 @@
 #include <EASTL/numeric.h>
 #include <EASTL/set.h>
 #include <EASTL/initializer_list.h>
+#include <EASTL/utility.h>
 
 #else
 #include <array>
