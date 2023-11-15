@@ -17,7 +17,7 @@
 #endif
 
 #ifndef RAH2_STD
-#define RAH2_STD ::std
+#define RAH2_STD std
 #endif
 
 #ifndef RAH2_NS
