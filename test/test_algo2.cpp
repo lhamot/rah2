@@ -34,6 +34,7 @@
 
 #include "test_helpers.hpp"
 
+#if RAH2_USE_EASTL
 namespace eastl
 {
     template <class InputIt1, class InputIt2>
@@ -42,6 +43,7 @@ namespace eastl
         return ::eastl::mismatch(first1, last1, first2);
     }
 } // namespace eastl
+#endif
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
