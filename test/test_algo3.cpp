@@ -296,21 +296,21 @@ struct test_search_n_
         testSuite.test_case("noproj");
         auto result1 = RAH2_NS::ranges::search_n(nums.begin(), nums.end(), count, value);
         CHECK((RAH2_NS::ranges::distance(result1.begin(), result1.end())) == (count));
-        CHECK_EQUAL(std::distance(nums.begin(), result1.begin()), 6);
-        CHECK_EQUAL(std::distance(nums.begin(), result1.end()), 9);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result1.begin()), 6);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result1.end()), 9);
 
         testSuite.test_case("ranges");
         auto result2 = RAH2_NS::ranges::search_n(nums, count, value);
         CHECK((RAH2_NS::ranges::distance(result2.begin(), result2.end())) == (count));
-        CHECK_EQUAL(std::distance(nums.begin(), result2.begin()), 6);
-        CHECK_EQUAL(std::distance(nums.begin(), result2.end()), 9);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result2.begin()), 6);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result2.end()), 9);
 
         testSuite.test_case("proj");
         auto result3 = RAH2_NS::ranges::search_n(
             nums, count, 2, [](auto a, auto b) { return a == b; }, &Coord::x);
         CHECK((RAH2_NS::ranges::distance(result3.begin(), result3.end())) == (count));
-        CHECK_EQUAL(std::distance(nums.begin(), result3.begin()), 6);
-        CHECK_EQUAL(std::distance(nums.begin(), result3.end()), 9);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result3.begin()), 6);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result3.end()), 9);
 
         RAH2_STD::vector<Coord> empty_{};
         auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
@@ -318,8 +318,8 @@ struct test_search_n_
         testSuite.test_case("notfound");
         auto result4 = RAH2_NS::ranges::search_n(empty, count, value);
         CHECK_EQUAL(RAH2_NS::ranges::distance(result4.begin(), result4.end()), 0);
-        CHECK_EQUAL(std::distance(empty.begin(), result4.begin()), 0);
-        CHECK_EQUAL(std::distance(empty.begin(), result4.end()), 0);
+        CHECK_EQUAL(RAH2_STD::distance(empty.begin(), result4.begin()), 0);
+        CHECK_EQUAL(RAH2_STD::distance(empty.begin(), result4.end()), 0);
     }
 
     template <bool = true>
@@ -340,10 +340,11 @@ struct test_search_n_
                         RAH2_NS::ranges::search_n(fwd(nums.begin()), nums.end(), count, value);
                     CHECK((RAH2_NS::ranges::distance(result1.begin(), result1.end())) == (count));
                     CHECK_EQUAL(
-                        std::distance(nums.begin(), result1.begin()),
+                        RAH2_STD::distance(nums.begin(), result1.begin()),
                         1000000 * RELEASE_MULTIPLIER + 6);
                     CHECK_EQUAL(
-                        std::distance(nums.begin(), result1.end()), 1000000 * RELEASE_MULTIPLIER + 9);
+                        RAH2_STD::distance(nums.begin(), result1.end()),
+                        1000000 * RELEASE_MULTIPLIER + 9);
                 });
         }
         {
@@ -356,10 +357,10 @@ struct test_search_n_
                         auto result2 = RAH2_NS::ranges::search_n(nums, count, value);
                         CHECK((RAH2_NS::ranges::distance(result2.begin(), result2.end())) == (count));
                         CHECK_EQUAL(
-                            std::distance(nums.begin(), result2.begin()),
+                            RAH2_STD::distance(nums.begin(), result2.begin()),
                             1000000 * RELEASE_MULTIPLIER + 6);
                         CHECK_EQUAL(
-                            std::distance(nums.begin(), result2.end()),
+                            RAH2_STD::distance(nums.begin(), result2.end()),
                             1000000 * RELEASE_MULTIPLIER + 9);
                     }));
         }
