@@ -16,6 +16,7 @@
 #include <EASTL/numeric.h>
 #include <EASTL/set.h>
 #include <EASTL/initializer_list.h>
+#include <EASTL/utility.h>
 
 #else
 #include <array>
@@ -32,6 +33,17 @@
 #endif
 
 #include "test_helpers.hpp"
+
+#ifdef RAH2_USE_EASTL
+namespace eastl
+{
+    template <class InputIt1, class InputIt2>
+    eastl::pair<InputIt1, InputIt2> mismatch(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2)
+    {
+        return ::eastl::mismatch(first1, last1, first2);
+    }
+} // namespace eastl
+#endif
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_mismatch_
@@ -126,6 +138,27 @@ void test_mismatch()
     foreach_range_combination<test_algo<test_mismatch_>>();
 }
 
+namespace std
+{
+    template <class InputIt1, class InputIt2>
+    bool identical(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
+    {
+        return ::std::equal(first1, last1, first2, last2);
+    }
+} // namespace std
+
+namespace RAH2_NS
+{
+    namespace ranges
+    {
+        template <class InputIt1, class InputIt2>
+        bool identical(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
+        {
+            return RAH2_NS::ranges::equal(first1, last1, first2, last2);
+        }
+    } // namespace ranges
+} // namespace RAH2_NS
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_equal_
 {
@@ -176,7 +209,7 @@ struct test_equal_
             range_type,
             [&]
             {
-                assert(not STD::equal(
+                assert(not STD::identical(
                     fwd(coordRange1.begin()),
                     coordRange1.end(),
                     coordRange2.begin(),
@@ -1025,8 +1058,8 @@ struct test_find_first_of_
                 range_type,
                 [&]
                 {
-                    auto const found1 = STD::find_first_of(
-                        fwd(r.begin()), r.end(), t2.begin(), t2.end());
+                    auto const found1 =
+                        STD::find_first_of(fwd(r.begin()), r.end(), t2.begin(), t2.end());
                     assert(found1 != r.end());
                     assert(*found1 == (Coord{3, 0}));
                     auto const found2 =
