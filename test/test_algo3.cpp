@@ -282,14 +282,15 @@ void test_search()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_search_n_
 {
+    static constexpr int count{3};
+    static constexpr Coord value{2, 0};
+
     template <bool = true>
     void test()
     {
         RAH2_STD::vector<Coord> nums_{
             {1, 0}, {2, 0}, {2, 0}, {3, 0}, {4, 0}, {1, 0}, {2, 0}, {2, 0}, {2, 0}, {1, 0}};
         auto nums = make_test_view_adapter<CS, Tag, Sized>(nums_);
-        constexpr int count{3};
-        constexpr Coord value{2, 0};
 
         testSuite.test_case("iter");
         testSuite.test_case("noproj");
@@ -328,8 +329,6 @@ struct test_search_n_
             {1, 0}, {2, 0}, {2, 0}, {3, 0}, {4, 0}, {1, 0}, {2, 0}, {2, 0}, {2, 0}, {1, 0}};
         nums_.insert(nums_.begin(), 1000000 * RELEASE_MULTIPLIER, {0, 0});
         auto nums = make_test_view_adapter<CS, Tag, Sized>(nums_);
-        int count{3};
-        Coord value{2, 0};
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
