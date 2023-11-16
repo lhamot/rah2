@@ -138,26 +138,17 @@ void test_mismatch()
     foreach_range_combination<test_algo<test_mismatch_>>();
 }
 
-namespace std
+#ifdef RAH2_USE_EASTL
+
+namespace RAH2_STD
 {
     template <class InputIt1, class InputIt2>
-    bool identical(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
+    bool equal(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last)
     {
-        return ::std::equal(first1, last1, first2, last2);
+        return ::eastl::identical(first1, last1, first2, last);
     }
-} // namespace std
-
-namespace RAH2_NS
-{
-    namespace ranges
-    {
-        template <class InputIt1, class InputIt2>
-        bool identical(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
-        {
-            return RAH2_NS::ranges::equal(first1, last1, first2, last2);
-        }
-    } // namespace ranges
-} // namespace RAH2_NS
+} // namespace RAH2_STD
+#endif
 
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_equal_
@@ -209,7 +200,7 @@ struct test_equal_
             range_type,
             [&]
             {
-                assert(not STD::identical(
+                assert(not STD::equal(
                     fwd(coordRange1.begin()),
                     coordRange1.end(),
                     coordRange2.begin(),

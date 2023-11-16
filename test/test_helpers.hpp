@@ -1287,7 +1287,7 @@ auto compare_duration(
 #define COMPUTE_DURATION(ALGO, CONCEPT, STEP, F)                                                   \
     compute_duration((F), ALGO, CONCEPT, STEP, __FILE__, __LINE__)
 
-#define CHECK_EQUAL(A, B) assert((A) == (B))
+#define CHECK_EQUAL(A, B) CHECK((A) == (B))
 
 #define INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F) \
     call_if_true<IS_COMMON>(                                                                          \

@@ -3524,21 +3524,21 @@ namespace RAH2_NS
         {
             struct search_n_fn
             {
+            private:
                 // TODO : Make a faster random_access version like in EASTL
                 template <
                     typename I,
                     typename S,
                     class T,
                     class Pred = RAH2_NS::ranges::equal_to,
-                    class Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr RAH2_NS::ranges::subrange<I> operator()(
+                    class Proj = RAH2_NS::details::identity>
+                static RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I> impl(
                     I first,
                     S last,
                     RAH2_NS::iter_difference_t<I> count,
                     T const& value,
-                    Pred pred = {},
-                    Proj proj = {}) const
+                    Pred pred,
+                    Proj proj)
                 {
                     if (count <= 0)
                         return {first, first};
@@ -3562,13 +3562,43 @@ namespace RAH2_NS
                     return {first, first};
                 }
 
+            public:
+                // TODO : Make a faster random_access version like in EASTL
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I> operator()(
+                    I first,
+                    S last,
+                    RAH2_NS::iter_difference_t<I> count,
+                    T const& value,
+                    Pred pred = {},
+                    Proj proj = {}) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        count,
+                        value,
+                        RAH2_STD::move(pred),
+                        RAH2_STD::ref(proj));
+                    return {
+                        first_last.wrap_iterator(result.begin()),
+                        first_last.wrap_iterator(result.end())};
+                }
+
                 template <
                     typename R,
                     class T,
                     class Pred = RAH2_NS::ranges::equal_to,
                     class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-                constexpr RAH2_NS::ranges::borrowed_subrange_t<R> operator()(
+                RAH2_CONSTEXPR20 RAH2_NS::ranges::borrowed_subrange_t<R> operator()(
                     R&& r, range_difference_t<R> count, T const& value, Pred pred = {}, Proj proj = {}) const
                 {
                     return (*this)(
