@@ -34,7 +34,7 @@
 
 #include "test_helpers.hpp"
 
-#if RAH2_USE_EASTL
+#ifdef RAH2_USE_EASTL
 namespace eastl
 {
     template <class InputIt1, class InputIt2>
