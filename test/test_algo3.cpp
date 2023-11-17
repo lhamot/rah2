@@ -278,6 +278,98 @@ void test_search()
 
     foreach_range_combination<test_algo<test_search_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_search_n_
+{
+    template <bool = true>
+    void test()
+    {
+        int count{3};
+        Coord value{2, 0};
+        RAH2_STD::vector<Coord> nums_{
+            {1, 0}, {2, 0}, {2, 0}, {3, 0}, {4, 0}, {1, 0}, {2, 0}, {2, 0}, {2, 0}, {1, 0}};
+        auto nums = make_test_view_adapter<CS, Tag, Sized>(nums_);
+
+        testSuite.test_case("iter");
+        testSuite.test_case("noproj");
+        auto result1 = RAH2_NS::ranges::search_n(nums.begin(), nums.end(), count, value);
+        CHECK((RAH2_NS::ranges::distance(result1.begin(), result1.end())) == (count));
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result1.begin()), 6);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result1.end()), 9);
+
+        testSuite.test_case("ranges");
+        auto result2 = RAH2_NS::ranges::search_n(nums, count, value);
+        CHECK((RAH2_NS::ranges::distance(result2.begin(), result2.end())) == (count));
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result2.begin()), 6);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result2.end()), 9);
+
+        testSuite.test_case("proj");
+        auto result3 = RAH2_NS::ranges::search_n(
+            nums, count, 2, [](auto a, auto b) { return a == b; }, &Coord::x);
+        CHECK((RAH2_NS::ranges::distance(result3.begin(), result3.end())) == (count));
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result3.begin()), 6);
+        CHECK_EQUAL(RAH2_STD::distance(nums.begin(), result3.end()), 9);
+
+        RAH2_STD::vector<Coord> empty_{};
+        auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+        testSuite.test_case("empty");
+        testSuite.test_case("notfound");
+        auto result4 = RAH2_NS::ranges::search_n(empty, count, value);
+        CHECK_EQUAL(RAH2_NS::ranges::distance(result4.begin(), result4.end()), 0);
+        CHECK_EQUAL(RAH2_STD::distance(empty.begin(), result4.begin()), 0);
+        CHECK_EQUAL(RAH2_STD::distance(empty.begin(), result4.end()), 0);
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        int count{3};
+        Coord value{2, 0};
+        (void)count;
+        (void)value;
+        RAH2_STD::vector<Coord> nums_{
+            {1, 0}, {2, 0}, {2, 0}, {3, 0}, {4, 0}, {1, 0}, {2, 0}, {2, 0}, {2, 0}, {1, 0}};
+        nums_.insert(nums_.begin(), 1000000 * RELEASE_MULTIPLIER, {0, 0});
+        auto nums = make_test_view_adapter<CS, Tag, Sized>(nums_);
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "search_n",
+                range_type,
+                [&]
+                {
+                    auto result1 =
+                        RAH2_NS::ranges::search_n(fwd(nums.begin()), nums.end(), count, value);
+                    CHECK((RAH2_NS::ranges::distance(result1.begin(), result1.end())) == (count));
+                    CHECK_EQUAL(
+                        RAH2_STD::distance(nums.begin(), result1.begin()),
+                        1000000 * RELEASE_MULTIPLIER + 6);
+                    CHECK_EQUAL(
+                        RAH2_STD::distance(nums.begin(), result1.end()),
+                        1000000 * RELEASE_MULTIPLIER + 9);
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "search_n_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = RAH2_NS::ranges::search_n(nums, count, value);
+                        CHECK((RAH2_NS::ranges::distance(result2.begin(), result2.end())) == (count));
+                        CHECK_EQUAL(
+                            RAH2_STD::distance(nums.begin(), result2.begin()),
+                            1000000 * RELEASE_MULTIPLIER + 6);
+                        CHECK_EQUAL(
+                            RAH2_STD::distance(nums.begin(), result2.end()),
+                            1000000 * RELEASE_MULTIPLIER + 9);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_search_n()
 {
     testSuite.test_case("sample");
@@ -319,6 +411,8 @@ void test_search_n()
     auto const result5 = RAH2_NS::ranges::search_n(nums, count, symbol, is_equ, to_ascii);
     assert(result5.begin() - nums.begin() == 6);
     /// [rah2::ranges::search_n]
+
+    foreach_range_combination<test_algo<test_search_n_>>();
 }
 void test_contains()
 {
