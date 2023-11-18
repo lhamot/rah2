@@ -504,6 +504,114 @@ void test_contains()
 
     foreach_range_combination<test_algo<test_contains_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_contains_subrange_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::string haystack_{"abcd abcd"};
+        RAH2_STD::string needle_{"bcd"};
+        auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
+        auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
+
+        testSuite.test_case("iter");
+        auto const found1 = RAH2_NS::ranges::contains_subrange(
+            haystack.begin(), haystack.end(), needle.begin(), needle.end());
+        CHECK(found1);
+
+        // the search uses ranges r1, r2:
+        testSuite.test_case("range");
+        auto const found2 = RAH2_NS::ranges::contains_subrange(haystack, needle);
+        CHECK(found2);
+
+        // 'needle' range is empty:
+        testSuite.test_case("empty");
+        RAH2_STD::string none_;
+        auto none = make_test_view_adapter<CS, Tag, Sized>(none_);
+        auto const found3 = RAH2_NS::ranges::contains_subrange(haystack, none);
+        CHECK(found3);
+
+        // 'needle' will not be found:
+        testSuite.test_case("notfound");
+        RAH2_STD::string awl_{"efg"};
+        auto awl = make_test_view_adapter<CS, Tag, Sized>(awl_);
+        auto const found4 = RAH2_NS::ranges::contains_subrange(haystack, awl);
+        CHECK(not found4);
+
+        // the search uses custom comparator and projections:
+        testSuite.test_case("proj");
+        RAH2_STD::string bodkin_{"234"};
+        auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
+        auto const found5 = RAH2_NS::ranges::contains_subrange(
+            haystack,
+            bodkin,
+            [](int const x, int const y) { return x == y; }, // pred
+            [](int const x) { return std::toupper(x); }, // proj1
+            [](int const y) { return y + 'A' - '1'; }); // proj2
+        CHECK(found5);
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::string haystack_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            haystack_.push_back('a' + (i % 7));
+        }
+        haystack_ += "abcdefgh cd";
+        auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
+        (void)haystack;
+
+        RAH2_STD::string needle_{"bcdefgh"};
+        auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
+        (void)needle;
+
+        RAH2_STD::string haystack_proj_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            haystack_proj_.push_back('a' + (i % 3));
+        }
+        haystack_proj_ += "abcdefgh cd";
+        (void)haystack_proj_;
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES_23(
+                "contains_subrange",
+                range_type,
+                [&]
+                {
+                    // the search uses iterator pairs begin()/end():
+                    auto const found1 = STD::contains_subrange(
+                        fwd(haystack.begin()), haystack.end(), needle.begin(), needle.end());
+                    CHECK(found1);
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES_23(
+                "contains_subrange_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
+                        RAH2_STD::string bodkin_{"2345678"};
+                        auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
+                        auto const found5 = STD::contains_subrange(
+                            haystack_proj,
+                            bodkin,
+                            [](int const x, int const y) { return x == y; },
+                            [](int const x) { return std::toupper(x); },
+                            [](int const y) { return (y - '1') + 'A'; });
+                        CHECK(found5);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_contains_subrange()
 {
     testSuite.test_case("sample");
@@ -526,6 +634,8 @@ void test_contains_subrange()
     assert(not RAH2_NS::ranges::contains_subrange(haystack, bodkin, {}, decrement));
     assert(RAH2_NS::ranges::contains_subrange(haystack, bodkin, {}, {}, decrement));
     /// [rah2::ranges::contains_subrange]
+
+    foreach_range_combination<test_algo<test_contains_subrange_>>();
 }
 void test_starts_with()
 {
