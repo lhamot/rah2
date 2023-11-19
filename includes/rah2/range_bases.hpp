@@ -2489,17 +2489,17 @@ namespace RAH2_NS
         private:
             T* get_ptr()
             {
-                return reinterpret_cast<T*>(&value_);
+                return reinterpret_cast<T*>(value_);
             }
             T const* get_ptr() const
             {
-                return reinterpret_cast<T const*>(&value_);
+                return reinterpret_cast<T const*>(value_);
             }
             void destruct_value()
             {
                 value().~T();
             }
-            RAH2_STD::aligned_storage_t<sizeof(T), RAH2_NS::alignment_of_v<T>> value_{};
+            alignas(RAH2_NS::alignment_of_v<T>) unsigned char value_[sizeof(T)];
             bool is_allocated_ = false;
         };
     } // namespace details
