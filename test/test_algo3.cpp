@@ -854,7 +854,9 @@ struct test_ends_with_
         auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
         (void)haystack;
 
-        RAH2_STD::string needle_(++haystack_.begin(), haystack_.end());
+        auto b = haystack_.begin();
+        ++b;
+        RAH2_STD::string needle_(b, haystack_.end());
         auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
         (void)needle;
 
