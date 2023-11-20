@@ -873,7 +873,7 @@ struct test_ends_with_
         {
             bodkin_.push_back('1' + (i % 3));
         }
-        bodkin_ += {"12345678834"};
+        bodkin_ += "12345678834";
         auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
 
         auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
