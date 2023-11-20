@@ -2004,17 +2004,21 @@ namespace RAH2_NS
                     typename InputSentinel1,
                     typename InputIterator2,
                     typename InputSentinel2,
-                    typename BinaryPredicate>
+                    typename BinaryPredicate,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity>
                 bool operator()(
                     InputIterator1 first1,
                     InputSentinel1 last1,
                     InputIterator2 first2,
                     InputSentinel2 last2,
-                    BinaryPredicate&& predicate) const
+                    BinaryPredicate&& predicate,
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
                 {
                     for (; first1 != last1; ++first1, ++first2)
                     {
-                        if (!predicate(*first1, *first2))
+                        if (!predicate(proj1(*first1), proj2(*first2)))
                             return false;
                     }
                     return first2 == last2;
@@ -2024,16 +2028,24 @@ namespace RAH2_NS
                     typename InputRange1,
                     typename InputRange2,
                     typename BinaryPredicate,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
                 constexpr bool operator()(
-                    InputRange1&& range1, InputRange2&& range2, BinaryPredicate&& predicate) const
+                    InputRange1&& range1,
+                    InputRange2&& range2,
+                    BinaryPredicate&& predicate,
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range1),
                         RAH2_NS::ranges::end(range1),
                         RAH2_NS::ranges::begin(range2),
                         RAH2_NS::ranges::end(range2),
-                        RAH2_STD::forward<BinaryPredicate>(predicate));
+                        RAH2_STD::forward<BinaryPredicate>(predicate),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
