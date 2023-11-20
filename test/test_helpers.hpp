@@ -1373,15 +1373,23 @@ auto compare_duration(
 #define INTERNAL_COMPARE_DURATION_TO_NOTHING_4(IS_COMMON, ALGO, CONCEPT, ALGO_F)                   \
     do                                                                                             \
     {                                                                                              \
-        (void)ALGO;                                                                                \
-        (void)CONCEPT;                                                                             \
+        Fwd fwd;                                                                                   \
+        (void)fwd;                                                                                 \
+        namespace STD = RAH2_NS::ranges;                                                           \
+        auto test_rah2 = (ALGO_F);                                                                 \
+        compute_duration(                                                                          \
+            RAH2_STD::move(test_rah2), ALGO, CONCEPT, "rah2::ranges", __FILE__, __LINE__);         \
     } while (false)
 
 #define INTERNAL_COMPARE_DURATION_TO_NOTHING_3(ALGO, CONCEPT, ALGO_F)                              \
     do                                                                                             \
     {                                                                                              \
-        (void)ALGO;                                                                                \
-        (void)CONCEPT;                                                                             \
+        Fwd fwd;                                                                                   \
+        (void)fwd;                                                                                 \
+        namespace STD = RAH2_NS::ranges;                                                           \
+        auto test_rah2 = (ALGO_F);                                                                 \
+        compute_duration(                                                                          \
+            RAH2_STD::move(test_rah2), ALGO, CONCEPT, "rah2::ranges", __FILE__, __LINE__);         \
     } while (false)
 
 #define INTERNAL_COMPARE_DURATION_TO_STD_RANGES(ALGO, CONCEPT, ALGO_F)                             \

@@ -706,10 +706,19 @@ namespace RAH2_NS
                     typename I2, // RAH2_STD::input_iterator
                     typename S2, // RAH2_STD::sentinel_for<I2>
                     class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
                         (RAH2_NS::forward_iterator<I1> || RAH2_NS::sized_sentinel_for<S1, I1>)&&(
                             RAH2_NS::forward_iterator<I2> || RAH2_NS::sized_sentinel_for<S2, I2>)>* = nullptr>
-                constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = {}) const
+                constexpr bool operator()(
+                    I1 first1,
+                    S1 last1,
+                    I2 first2,
+                    S2 last2,
+                    Pred pred = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
                 {
                     auto const n1 = RAH2_NS::ranges::distance(first1, last1);
                     auto const n2 = RAH2_NS::ranges::distance(first2, last2);
@@ -721,24 +730,31 @@ namespace RAH2_NS
                         RAH2_STD::move(last1),
                         RAH2_STD::move(first2),
                         RAH2_STD::move(last2),
-                        RAH2_STD::move(pred));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
 
                 template <
                     typename R1, // ranges::input_range
                     typename R2, // ranges::input_range
                     class Pred = RAH2_NS::ranges::equal_to,
+                    class Proj1 = RAH2_NS::details::identity,
+                    class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
                         (RAH2_NS::ranges::forward_range<R1> || RAH2_NS::ranges::sized_range<R1>)&&(
                             RAH2_NS::ranges::forward_range<R2> || RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
-                constexpr bool operator()(R1&& r1, R2&& r2, Pred pred = {}) const
+                constexpr bool
+                operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r1),
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
-                        RAH2_STD::move(pred));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
