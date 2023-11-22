@@ -1090,7 +1090,7 @@ struct test_copy_if_
         out.emplace_back();
 
         RAH2_STD::vector<Coord> in2_;
-        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        for (intptr_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
         {
             in2_.emplace_back(Coord{i % 15, 0});
         }
