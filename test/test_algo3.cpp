@@ -1018,8 +1018,7 @@ struct test_copy_
                     }));
         }
     }
-    static constexpr bool do_test =
-        RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>; //  Sized mean sized_range but we need sized_sentinel here
+    static constexpr bool do_test = true;
 };
 void test_copy()
 {
@@ -1035,6 +1034,104 @@ void test_copy()
 
     foreach_range_combination<test_algo<test_copy_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_copy_if_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<int> in_{1, 2, 3, 4, 2, 3, 1};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out{0, 0, 0, 0, 0, 0, 4, 5};
+        testSuite.test_case("iter");
+        auto result = RAH2_NS::ranges::copy_if(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            out.begin(),
+            [](auto i) { return i != 4; });
+        CHECK(result.out == out.begin() + (in_.size() - 1));
+        CHECK(result.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 2, 3, 1, 4, 5}));
+
+        testSuite.test_case("range");
+        auto result2 = RAH2_NS::ranges::copy_if(in, out.begin(), [](auto i) { return i != 4; });
+        CHECK(result2.out == out.begin() + (in_.size() - 1));
+        CHECK(result2.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 2, 3, 1, 4, 5}));
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<int> empty_out;
+
+            auto result3 =
+                RAH2_NS::ranges::copy_if(empty_in, empty_out.begin(), [](auto i) { return i != 4; });
+            CHECK(result3.out == empty_out.begin() + empty_in_.size());
+            CHECK(result3.in == empty_in.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+
+        RAH2_STD::vector<Coord> in2_;
+        for (intptr_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in2_.emplace_back(Coord{i % 15, 0});
+        }
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+        RAH2_STD::vector<Coord> out2;
+        out2.resize(1000000 * RELEASE_MULTIPLIER);
+        out2.emplace_back();
+        out2.emplace_back();
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "copy_if",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::copy_if(
+                        fwd(RAH2_NS::ranges::begin(in)),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        [](auto) { return true; });
+                    DONT_OPTIM(result);
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_if_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = RAH2_NS::ranges::copy_if(
+                            in2, out2.begin(), [](intptr_t i) { return i >= 0; }, &Coord::x);
+                        DONT_OPTIM(result2);
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_copy_if()
 {
     testSuite.test_case("sample");
@@ -1047,6 +1144,8 @@ void test_copy_if()
         std::initializer_list<int>({5, 6})));
     assert(out == (RAH2_STD::vector<int>{2, 4, 5, 6}));
     /// [rah2::ranges::copy_if]
+
+    foreach_range_combination<test_algo<test_copy_if_>>();
 }
 void test_copy_n()
 {
