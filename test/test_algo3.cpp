@@ -1147,6 +1147,56 @@ void test_copy_if()
 
     foreach_range_combination<test_algo<test_copy_if_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_copy_n_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::string const in_{"ABCDEFGH"};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::string out = "123456789";
+
+        testSuite.test_case("iter");
+        auto const res = RAH2_NS::ranges::copy_n(in.begin(), 5, out.begin());
+        assert(out == "ABCDE6789");
+        assert(*(res.in) == 'F');
+        assert(*(res.out) == '6');
+        assert((RAH2_NS::ranges::distance(out.begin(), res.out)) == 5);
+
+        testSuite.test_case("empty");
+        out = "123456789";
+        auto const res2 = RAH2_NS::ranges::copy_n(in.begin(), 0, out.begin());
+        assert(*(res2.in) == 'A');
+        assert(*(res2.out) == '1');
+        CHECK_EQUAL(out, "123456789");
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+
+        RAH2_STD::string const in_(1000000 * RELEASE_MULTIPLIER, '1');
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::string out(1000000 * RELEASE_MULTIPLIER, '0');
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                true,
+                "copy_n",
+                range_type,
+                [&]
+                {
+                    auto const res = RAH2_NS::ranges::copy_n(
+                        fwd(in.begin()), 1000000 * RELEASE_MULTIPLIER - 5, out.begin());
+                    DONT_OPTIM(res);
+                });
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_copy_n()
 {
     testSuite.test_case("sample");
@@ -1164,6 +1214,8 @@ void test_copy_n()
     assert(RAH2_STD::distance(RAH2_STD::begin(in), res.in) == 5);
     assert(RAH2_STD::distance(RAH2_STD::begin(out), res.out) == 5);
     /// [rah2::ranges::copy_n]
+
+    foreach_range_combination<test_algo<test_copy_n_>>();
 }
 void test_copy_backward()
 {
