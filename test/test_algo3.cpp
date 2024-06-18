@@ -1304,7 +1304,11 @@ struct test_move_
 {
     struct NonCopyable
     {
-        int i = {};
+        int i_ = {};
+        NonCopyable(int i)
+            : i_(i)
+        {
+        }
         NonCopyable() = default;
         NonCopyable(NonCopyable const&) = delete;
         NonCopyable& operator=(NonCopyable const&) = delete;
@@ -1313,7 +1317,7 @@ struct test_move_
         ~NonCopyable() = default;
         bool operator==(NonCopyable const& np) const
         {
-            return i == np.i;
+            return i_ == np.i_;
         }
     };
 
