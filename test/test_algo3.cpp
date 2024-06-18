@@ -1217,6 +1217,67 @@ void test_copy_n()
 
     foreach_range_combination<test_algo<test_copy_n_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_copy_backward_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::string const in_{"ABCDEFGH"};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::string out = "123456789";
+
+        testSuite.test_case("iter");
+        auto const res = RAH2_NS::ranges::copy_backward(in.begin(), in.end(), out.end());
+        CHECK_EQUAL(out, "1ABCDEFGH");
+        CHECK_EQUAL(res.in, in.end());
+        CHECK_EQUAL(*(res.out), 'A');
+        CHECK_EQUAL((RAH2_NS::ranges::distance(res.out, out.end())), 8);
+
+        testSuite.test_case("empty");
+        out = "123456789";
+        auto const res2 = RAH2_NS::ranges::copy_backward(in.begin(), in.begin(), out.end());
+        CHECK_EQUAL(res2.in, in.begin());
+        CHECK_EQUAL(res2.out, out.end());
+        CHECK_EQUAL(out, "123456789");
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+
+        RAH2_STD::string const in_(1000000 * RELEASE_MULTIPLIER, '1');
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::string out(1000000 * RELEASE_MULTIPLIER, '0');
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_backward",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto const res = RAH2_NS::ranges::copy_backward(in, out.end());
+                        DONT_OPTIM(res);
+                    }));
+        }
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                true,
+                "copy_backward",
+                range_type,
+                [&]
+                {
+                    auto const res =
+                        RAH2_NS::ranges::copy_backward(fwd(in.begin()), fwd(in.end()), out.end());
+                    DONT_OPTIM(res);
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_copy_backward()
 {
     testSuite.test_case("sample");
@@ -1234,7 +1295,10 @@ void test_copy_backward()
     assert(RAH2_NS::ranges::distance(src.begin(), in_out.in) == 2);
     assert(RAH2_NS::ranges::distance(dst.begin(), in_out.out) == 4);
     /// [rah2::ranges::copy_backward]
+
+    foreach_range_combination<test_algo<test_copy_backward_>>();
 }
+
 void test_move()
 {
     testSuite.test_case("sample");
