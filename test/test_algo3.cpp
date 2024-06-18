@@ -1299,6 +1299,107 @@ void test_copy_backward()
     foreach_range_combination<test_algo<test_copy_backward_>>();
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_move_
+{
+    struct NonCopyable
+    {
+        int i = {};
+        NonCopyable() = default;
+        NonCopyable(NonCopyable const&) = delete;
+        NonCopyable& operator=(NonCopyable const&) = delete;
+        NonCopyable(NonCopyable&&) = default;
+        NonCopyable& operator=(NonCopyable&&) = default;
+        ~NonCopyable() = default;
+        bool operator==(NonCopyable const& np) const
+        {
+            return i == np.i;
+        }
+    };
+
+
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::array<NonCopyable, 3> in_{NonCopyable{1}, NonCopyable{2}, NonCopyable{3}};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::array<NonCopyable, 5> out{
+            NonCopyable{0}, NonCopyable{0}, NonCopyable{0}, NonCopyable{4}, NonCopyable{5}};
+        testSuite.test_case("iter");
+        auto result =
+            RAH2_NS::ranges::move(RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
+        CHECK(result.out == out.begin() + in_.size());
+        CHECK(result.in == in.end());
+        CHECK(
+            out
+            == (RAH2_STD::array<NonCopyable, 5>{
+                NonCopyable{1}, NonCopyable{2}, NonCopyable{3}, NonCopyable{4}, NonCopyable{5}}));
+
+        testSuite.test_case("range");
+        auto result2 = RAH2_NS::ranges::move(in, out.begin());
+        CHECK(result2.out == out.begin() + in_.size());
+        CHECK(result2.in == in.end());
+        CHECK(
+            out
+            == (RAH2_STD::array<NonCopyable, 5>{
+                NonCopyable{1}, NonCopyable{2}, NonCopyable{3}, NonCopyable{4}, NonCopyable{5}}));
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<NonCopyable> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<NonCopyable> empty_out;
+
+            auto result3 = RAH2_NS::ranges::move(empty_in, empty_out.begin());
+            CHECK(result3.out == empty_out.begin() + empty_in_.size());
+            CHECK(result3.in == empty_in.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<NonCopyable> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(NonCopyable{i % 15});
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<NonCopyable> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::move(
+                        RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
+                    CHECK(result.out == out.begin() + in_.size());
+                    CHECK(result.in == in.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = RAH2_NS::ranges::move(in, out.begin());
+                        CHECK(result2.out == out.begin() + in_.size());
+                        CHECK(result2.in == in.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_move()
 {
     testSuite.test_case("sample");
@@ -1321,6 +1422,8 @@ void test_move()
     auto res = RAH2_NS::ranges::move(v, RAH2_NS::back_inserter(l));
     assert(res.in == v.end());
     /// [rah2::ranges::move]
+
+    foreach_range_combination<test_algo<test_move_>>();
 }
 void test_move_backward()
 {
