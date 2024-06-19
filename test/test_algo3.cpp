@@ -1299,29 +1299,37 @@ void test_copy_backward()
     foreach_range_combination<test_algo<test_copy_backward_>>();
 }
 
+struct NonCopyable
+{
+    int i_ = {};
+    NonCopyable(int i)
+        : i_(i)
+    {
+    }
+    NonCopyable() = default;
+    NonCopyable(NonCopyable const&) = delete;
+    NonCopyable& operator=(NonCopyable const&) = delete;
+    NonCopyable(NonCopyable&& nc)
+    {
+        i_ = nc.i_;
+        nc.i_ = -1;
+    }
+    NonCopyable& operator=(NonCopyable&& nc)
+    {
+        i_ = nc.i_;
+        nc.i_ = -1;
+        return *this;
+    }
+    ~NonCopyable() = default;
+    bool operator==(NonCopyable const& np) const
+    {
+        return i_ == np.i_;
+    }
+};
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_move_
 {
-    struct NonCopyable
-    {
-        int i_ = {};
-        NonCopyable(int i)
-            : i_(i)
-        {
-        }
-        NonCopyable() = default;
-        NonCopyable(NonCopyable const&) = delete;
-        NonCopyable& operator=(NonCopyable const&) = delete;
-        NonCopyable(NonCopyable&&) = default;
-        NonCopyable& operator=(NonCopyable&&) = default;
-        ~NonCopyable() = default;
-        bool operator==(NonCopyable const& np) const
-        {
-            return i_ == np.i_;
-        }
-    };
-
-
     template <bool = true>
     void test()
     {
@@ -1340,9 +1348,11 @@ struct test_move_
                 NonCopyable{1}, NonCopyable{2}, NonCopyable{3}, NonCopyable{4}, NonCopyable{5}}));
 
         testSuite.test_case("range");
-        auto result2 = RAH2_NS::ranges::move(in, out.begin());
+        RAH2_STD::array<NonCopyable, 3> in2_{NonCopyable{1}, NonCopyable{2}, NonCopyable{3}};
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+        auto result2 = RAH2_NS::ranges::move(in2, out.begin());
         CHECK(result2.out == out.begin() + in_.size());
-        CHECK(result2.in == in.end());
+        CHECK(result2.in == in2.end());
         CHECK(
             out
             == (RAH2_STD::array<NonCopyable, 5>{
@@ -1368,9 +1378,17 @@ struct test_move_
         RAH2_STD::vector<NonCopyable> in_;
         for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
         {
-            in_.push_back(NonCopyable{i % 15});
+            in_.push_back(NonCopyable{int(i) % 15});
         }
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
+        RAH2_STD::vector<NonCopyable> in2_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in2_.push_back(NonCopyable{int(i) % 15});
+        }
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
         RAH2_STD::vector<NonCopyable> out;
         out.resize(1000000 * RELEASE_MULTIPLIER);
         out.emplace_back();
@@ -1383,9 +1401,9 @@ struct test_move_
                 [&]
                 {
                     auto result = RAH2_NS::ranges::move(
-                        RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
+                        RAH2_NS::ranges::begin(in2), RAH2_NS::ranges::end(in2), out.begin());
                     CHECK(result.out == out.begin() + in_.size());
-                    CHECK(result.in == in.end());
+                    CHECK(result.in == in2.end());
                 });
         }
 
@@ -1429,6 +1447,76 @@ void test_move()
 
     foreach_range_combination<test_algo<test_move_>>();
 }
+
+auto makeNonCopyableVec = [](RAH2_STD::vector<char> const& inChar)
+{
+    RAH2_STD::vector<NonCopyable> in_;
+    RAH2_STD::copy(inChar.begin(), inChar.end(), RAH2_STD::back_inserter(in_));
+    return in_;
+};
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_move_backward_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<NonCopyable> in_ =
+            makeNonCopyableVec({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<NonCopyable> out =
+            makeNonCopyableVec({'1', '2', '3', '4', '5', '6', '7', '8', '9'});
+
+        testSuite.test_case("iter");
+        auto const res = RAH2_NS::ranges::move_backward(in.begin(), in.end(), out.end());
+        CHECK_EQUAL(out, makeNonCopyableVec({'1', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'}));
+        CHECK_EQUAL(res.in, in.end());
+        CHECK_EQUAL(*(res.out), 'A');
+        CHECK_EQUAL((RAH2_NS::ranges::distance(res.out, out.end())), 8);
+
+        testSuite.test_case("empty");
+        out = makeNonCopyableVec({'1', '2', '3', '4', '5', '6', '7', '8', '9'});
+        auto const res2 = RAH2_NS::ranges::move_backward(in.begin(), in.begin(), out.end());
+        CHECK_EQUAL(res2.in, in.begin());
+        CHECK_EQUAL(res2.out, out.end());
+        CHECK_EQUAL(out, makeNonCopyableVec({'1', '2', '3', '4', '5', '6', '7', '8', '9'}));
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+
+        RAH2_STD::string const in_(1000000 * RELEASE_MULTIPLIER, '1');
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::string out(1000000 * RELEASE_MULTIPLIER, '0');
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_backward",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto const res = RAH2_NS::ranges::move_backward(in, out.end());
+                        DONT_OPTIM(res);
+                    }));
+        }
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                true,
+                "copy_backward",
+                range_type,
+                [&]
+                {
+                    auto const res =
+                        RAH2_NS::ranges::move_backward(fwd(in.begin()), fwd(in.end()), out.end());
+                    DONT_OPTIM(res);
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_move_backward()
 {
     testSuite.test_case("sample");
@@ -1448,6 +1536,8 @@ void test_move_backward()
     RAH2_NS::ranges::move_backward(a.begin(), a.begin() + 3, a.end());
     assert(a == (Vec{"", "", "", "▄", "▅", "▁", "▂", "▃"}));
     /// [rah2::ranges::move_backward]
+
+    foreach_range_combination<test_algo<test_move_backward_>>();
 }
 void test_fill()
 {
@@ -1574,8 +1664,7 @@ void test_replace_if()
     testSuite.test_case("sample");
     /// [rah2::ranges::replace_if]
     RAH2_STD::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
-    RAH2_NS::ranges::replace_if(
-        q, [](int x) { return 5 < x; }, 5);
+    RAH2_NS::ranges::replace_if(q, [](int x) { return 5 < x; }, 5);
     assert(q == (RAH2_STD::array<int, 8>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_if]
 }
@@ -1597,8 +1686,7 @@ void test_replace_copy_if()
     RAH2_STD::vector<int> o;
     RAH2_STD::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
     o.resize(q.size());
-    RAH2_NS::ranges::replace_copy_if(
-        q, o.begin(), [](int x) { return 5 < x; }, 5);
+    RAH2_NS::ranges::replace_copy_if(q, o.begin(), [](int x) { return 5 < x; }, 5);
     assert(o == (RAH2_STD::vector<int>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_copy_if]
 }
