@@ -1378,14 +1378,14 @@ struct test_move_
         RAH2_STD::vector<NonCopyable> in_;
         for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
         {
-            in_.push_back(NonCopyable{i % 15});
+            in_.push_back(NonCopyable{int(i) % 15});
         }
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
 
         RAH2_STD::vector<NonCopyable> in2_;
         for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
         {
-            in2_.push_back(NonCopyable{i % 15});
+            in2_.push_back(NonCopyable{int(i) % 15});
         }
         auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
 
