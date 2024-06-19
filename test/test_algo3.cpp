@@ -1349,7 +1349,7 @@ struct test_move_
 
         testSuite.test_case("range");
         RAH2_STD::array<NonCopyable, 3> in2_{NonCopyable{1}, NonCopyable{2}, NonCopyable{3}};
-        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in_);
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
         auto result2 = RAH2_NS::ranges::move(in2, out.begin());
         CHECK(result2.out == out.begin() + in_.size());
         CHECK(result2.in == in2.end());
