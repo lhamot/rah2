@@ -1546,8 +1546,6 @@ struct test_fill_
     template <bool = true>
     void test()
     {
-        RAH2_STD::vector<int> in_{1, 2, 3};
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
         testSuite.test_case("iter");
         auto result = RAH2_NS::ranges::fill(out.begin(), out.end(), 12);
@@ -1561,8 +1559,6 @@ struct test_fill_
 
         testSuite.test_case("empty");
         {
-            RAH2_STD::vector<int> empty_in_;
-            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
             RAH2_STD::vector<int> empty_out;
 
             auto result3 = RAH2_NS::ranges::fill(empty_out.begin(), empty_out.end(), 169);
@@ -1575,12 +1571,6 @@ struct test_fill_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> in_;
-        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
-        {
-            in_.push_back(i % 15);
-        }
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         RAH2_STD::vector<int> out;
         out.resize(1000000 * RELEASE_MULTIPLIER);
         out.emplace_back();
