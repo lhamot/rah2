@@ -1539,6 +1539,69 @@ void test_move_backward()
 
     foreach_range_combination<test_algo<test_move_backward_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_fill_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
+        testSuite.test_case("iter");
+        auto result = RAH2_NS::ranges::fill(out.begin(), out.end(), 12);
+        CHECK(result == out.end());
+        CHECK(out == (RAH2_STD::vector<int>{12, 12, 12, 12, 12}));
+
+        testSuite.test_case("range");
+        auto result2 = RAH2_NS::ranges::fill(out, 72);
+        CHECK(result2 == out.end());
+        CHECK(out == (RAH2_STD::vector<int>{72, 72, 72, 72, 72}));
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_out;
+
+            auto result3 = RAH2_NS::ranges::fill(empty_out.begin(), empty_out.end(), 169);
+            CHECK(result3 == empty_out.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::fill(
+                        RAH2_NS::ranges::begin(out), RAH2_NS::ranges::end(out), 16);
+                    CHECK(result == out.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "copy_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = RAH2_NS::ranges::fill(out, 27);
+                        CHECK(result2 == out.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_fill()
 {
     testSuite.test_case("sample");
@@ -1549,6 +1612,8 @@ void test_fill()
     RAH2_NS::ranges::fill(out.begin(), out.end(), 78);
     assert(out == (RAH2_STD::vector<int>{78, 78, 78, 78, 78}));
     /// [rah2::ranges::fill]
+
+    foreach_range_combination<test_algo<test_fill_>>();
 }
 void test_fill_n()
 {
