@@ -1671,6 +1671,162 @@ void test_fill_n()
 
     foreach_range_combination<test_algo<test_fill_n_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_transform_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<int> in_{1, 2, 3};
+        RAH2_STD::vector<int> in2_{10, 20, 30};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+        RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
+        testSuite.test_case("iter");
+        // one entry
+        auto result = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            out.begin(),
+            [](int a) { return a + 1; });
+        CHECK(result.out == out.begin() + in_.size());
+        CHECK(result.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{2, 3, 4, 4, 5}));
+        // two entry
+        auto result2 = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            RAH2_NS::ranges::begin(in2),
+            RAH2_NS::ranges::end(in2),
+            out.begin(),
+            [](int a, int b) { return a + b; });
+        CHECK(result2.out == out.begin() + in_.size());
+        CHECK(result2.in1 == in.end());
+        CHECK(result2.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{11, 22, 33, 4, 5}));
+
+        testSuite.test_case("range");
+        // one entry
+        auto result3 = RAH2_NS::ranges::transform(in, out.begin(), [](auto i) { return i; });
+        CHECK(result3.out == out.begin() + in_.size());
+        CHECK(result3.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
+        // two entry
+        auto result4 =
+            RAH2_NS::ranges::transform(in, in2, out.begin(), [](int a, int b) { return a + b; });
+        CHECK(result4.out == out.begin() + in_.size());
+        CHECK(result4.in1 == in.end());
+        CHECK(result4.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{11, 22, 33, 4, 5}));
+
+        testSuite.test_case("proj");
+        // iter
+        // one entry
+        auto result5 = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            out.begin(),
+            [](int a) { return a; },
+            [](int a) { return a + 1; });
+        CHECK(result5.out == out.begin() + in_.size());
+        CHECK(result5.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{2, 3, 4, 4, 5}));
+        // two entry
+        auto result6 = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            RAH2_NS::ranges::begin(in2),
+            RAH2_NS::ranges::end(in2),
+            out.begin(),
+            [](int a, int b) { return a + b; },
+            [](int a) { return a + 1; },
+            [](int a) { return a + 2; });
+        CHECK(result6.out == out.begin() + in_.size());
+        CHECK(result6.in1 == in.end());
+        CHECK(result6.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{14, 25, 36, 4, 5}));
+        // Range
+        // one entry
+        auto result7 = RAH2_NS::ranges::transform(
+            in, out.begin(), [](auto i) { return i; }, [](int a) { return a + 1; });
+        CHECK(result7.out == out.begin() + in_.size());
+        CHECK(result7.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{2, 3, 4, 4, 5}));
+        // two entry
+        auto result8 = RAH2_NS::ranges::transform(
+            in,
+            in2,
+            out.begin(),
+            [](int a, int b) { return a + b; },
+            [](int a) { return a + 1; },
+            [](int a) { return a + 2; });
+        CHECK(result8.out == out.begin() + in_.size());
+        CHECK(result8.in1 == in.end());
+        CHECK(result8.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{14, 25, 36, 4, 5}));
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<int> empty_out;
+
+            auto result9 =
+                RAH2_NS::ranges::transform(empty_in, empty_out.begin(), [](auto i) { return i; });
+            CHECK(result9.out == empty_out.begin() + empty_in_.size());
+            CHECK(result9.in == empty_in.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "transform_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::transform(
+                        RAH2_NS::ranges::begin(in),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        [](auto i) { return i; });
+                    CHECK(result.out == out.begin() + in_.size());
+                    CHECK(result.in == in.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "transform_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 =
+                            RAH2_NS::ranges::transform(in, out.begin(), [](auto i) { return i; });
+                        CHECK(result2.out == out.begin() + in_.size());
+                        CHECK(result2.in == in.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_transform()
 {
     testSuite.test_case("sample");
@@ -1692,6 +1848,7 @@ void test_transform()
         assert(vecOut == RAH2_STD::vector<int>({4, 4, 4, 4}));
         /// [rah2::ranges::transform2]
     }
+    foreach_range_combination<test_algo<test_transform_>>();
 }
 void test_generate()
 {
