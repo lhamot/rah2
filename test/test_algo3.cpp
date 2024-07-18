@@ -2024,7 +2024,7 @@ struct test_remove_
         }
         {
             RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
-            in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, Coord{18});
+            in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, Coord{18, 0});
             COMPARE_DURATION_TO_STD_RANGES(
                 "remove_proj",
                 range_type,
