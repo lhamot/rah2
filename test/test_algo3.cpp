@@ -1671,6 +1671,162 @@ void test_fill_n()
 
     foreach_range_combination<test_algo<test_fill_n_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_transform_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<int> in_{1, 2, 3};
+        RAH2_STD::vector<int> in2_{10, 20, 30};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+        RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
+        testSuite.test_case("iter");
+        // one entry
+        auto result = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            out.begin(),
+            [](int a) { return a + 1; });
+        CHECK(result.out == out.begin() + in_.size());
+        CHECK(result.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{2, 3, 4, 4, 5}));
+        // two entry
+        auto result2 = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            RAH2_NS::ranges::begin(in2),
+            RAH2_NS::ranges::end(in2),
+            out.begin(),
+            [](int a, int b) { return a + b; });
+        CHECK(result2.out == out.begin() + in_.size());
+        CHECK(result2.in1 == in.end());
+        CHECK(result2.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{11, 22, 33, 4, 5}));
+
+        testSuite.test_case("range");
+        // one entry
+        auto result3 = RAH2_NS::ranges::transform(in, out.begin(), [](auto i) { return i; });
+        CHECK(result3.out == out.begin() + in_.size());
+        CHECK(result3.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
+        // two entry
+        auto result4 =
+            RAH2_NS::ranges::transform(in, in2, out.begin(), [](int a, int b) { return a + b; });
+        CHECK(result4.out == out.begin() + in_.size());
+        CHECK(result4.in1 == in.end());
+        CHECK(result4.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{11, 22, 33, 4, 5}));
+
+        testSuite.test_case("proj");
+        // iter
+        // one entry
+        auto result5 = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            out.begin(),
+            [](int a) { return a; },
+            [](int a) { return a + 1; });
+        CHECK(result5.out == out.begin() + in_.size());
+        CHECK(result5.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{2, 3, 4, 4, 5}));
+        // two entry
+        auto result6 = RAH2_NS::ranges::transform(
+            RAH2_NS::ranges::begin(in),
+            RAH2_NS::ranges::end(in),
+            RAH2_NS::ranges::begin(in2),
+            RAH2_NS::ranges::end(in2),
+            out.begin(),
+            [](int a, int b) { return a + b; },
+            [](int a) { return a + 1; },
+            [](int a) { return a + 2; });
+        CHECK(result6.out == out.begin() + in_.size());
+        CHECK(result6.in1 == in.end());
+        CHECK(result6.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{14, 25, 36, 4, 5}));
+        // Range
+        // one entry
+        auto result7 = RAH2_NS::ranges::transform(
+            in, out.begin(), [](auto i) { return i; }, [](int a) { return a + 1; });
+        CHECK(result7.out == out.begin() + in_.size());
+        CHECK(result7.in == in.end());
+        CHECK(out == (RAH2_STD::vector<int>{2, 3, 4, 4, 5}));
+        // two entry
+        auto result8 = RAH2_NS::ranges::transform(
+            in,
+            in2,
+            out.begin(),
+            [](int a, int b) { return a + b; },
+            [](int a) { return a + 1; },
+            [](int a) { return a + 2; });
+        CHECK(result8.out == out.begin() + in_.size());
+        CHECK(result8.in1 == in.end());
+        CHECK(result8.in2 == in2.end());
+        CHECK(out == (RAH2_STD::vector<int>{14, 25, 36, 4, 5}));
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<int> empty_out;
+
+            auto result9 =
+                RAH2_NS::ranges::transform(empty_in, empty_out.begin(), [](auto i) { return i; });
+            CHECK(result9.out == empty_out.begin() + empty_in_.size());
+            CHECK(result9.in == empty_in.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "transform_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::transform(
+                        RAH2_NS::ranges::begin(in),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        [](auto i) { return i; });
+                    CHECK(result.out == out.begin() + in_.size());
+                    CHECK(result.in == in.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "transform_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 =
+                            RAH2_NS::ranges::transform(in, out.begin(), [](auto i) { return i; });
+                        CHECK(result2.out == out.begin() + in_.size());
+                        CHECK(result2.in == in.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_transform()
 {
     testSuite.test_case("sample");
@@ -1692,7 +1848,57 @@ void test_transform()
         assert(vecOut == RAH2_STD::vector<int>({4, 4, 4, 4}));
         /// [rah2::ranges::transform2]
     }
+    foreach_range_combination<test_algo<test_transform_>>();
 }
+
+struct test_generate_
+{
+    void test()
+    {
+        RAH2_STD::array<int, 8> v = {};
+        testSuite.test_case("range");
+        RAH2_NS::ranges::generate(v, [n = 1]() mutable { return n++; });
+        assert(v == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+
+        testSuite.test_case("iter");
+        RAH2_STD::array<int, 8> u = {};
+        RAH2_NS::ranges::generate(u.begin(), u.end(), [n = 1]() mutable { return n++; });
+        assert(u == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+    }
+
+    void test_perf()
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        char const* range_type = "no";
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "generate_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::generate(
+                        out.begin(), out.end(), [n = 1]() mutable { return n++; });
+                    CHECK(result == out.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "generate_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result =
+                            RAH2_NS::ranges::generate(out, [n = 1]() mutable { return n++; });
+                        CHECK(result == out.end());
+                    }));
+        }
+    }
+};
 void test_generate()
 {
     testSuite.test_case("sample");
@@ -1701,7 +1907,44 @@ void test_generate()
     RAH2_NS::ranges::generate(v, [n = 1]() mutable { return n++; });
     assert(v == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
     /// [rah2::ranges::generate]
+
+    test_generate_ test_generate;
+    test_generate.test();
+#if defined(PERF_TEST)
+    test_generate.test_perf();
+#endif
 }
+
+struct test_generate_n_
+{
+    void test()
+    {
+        testSuite.test_case("iter");
+        RAH2_STD::array<int, 8> u = {};
+        RAH2_NS::ranges::generate_n(u.begin(), 8, [n = 1]() mutable { return n++; });
+        assert(u == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+    }
+
+    void test_perf()
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        char const* range_type = "no";
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "generate_n_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::generate_n(
+                        out.begin(), 1000000 * RELEASE_MULTIPLIER, [n = 1]() mutable { return n++; });
+                    CHECK(result == out.end());
+                });
+        }
+    }
+};
 void test_generate_n()
 {
     testSuite.test_case("sample");
@@ -1711,7 +1954,95 @@ void test_generate_n()
         v.begin(), static_cast<intptr_t>(v.size()), [n{0}]() mutable { return n++; });
     assert(v == (RAH2_STD::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::ranges::generate_n]
+
+    test_generate_n_ test_generate;
+    test_generate.test();
+#if defined(PERF_TEST)
+    test_generate.test_perf();
+#endif
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_remove_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> in_{1, 2, 1, 3, 1};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            auto const removed = RAH2_NS::ranges::remove(in, 1);
+            assert(RAH2_STD::distance(in.begin(), removed.begin()) == 2);
+            assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in2_{1, 2, 1, 3, 1};
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+            auto const removed2 = RAH2_NS::ranges::remove(in2.begin(), in2.end(), 1);
+            assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
+            assert(RAH2_STD::distance(removed2.begin(), removed2.end()) == 3);
+        }
+
+        testSuite.test_case("proj");
+        {
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            auto const removed = RAH2_NS::ranges::remove(in, 1, &Coord::x);
+            assert(RAH2_STD::distance(in.begin(), removed.begin()) == 2);
+            assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+
+            RAH2_STD::vector<Coord> in2_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+            auto const removed2 = RAH2_NS::ranges::remove(in2.begin(), in2.end(), 1, &Coord::x);
+            assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
+            assert(RAH2_STD::distance(removed2.begin(), removed2.end()) == 3);
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<int> in2_{1, 2, 1, 3, 1};
+            in2_.insert(in2_.end(), 1000000 * RELEASE_MULTIPLIER, 18);
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "remove",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto in2_copy = in2_;
+                        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_copy);
+                        auto const removed = RAH2_NS::ranges::remove(in2.begin(), in2.end(), 1);
+                        assert(
+                            RAH2_STD::distance(fwd(in2.begin()), removed.begin())
+                            == 2 + 1000000 * RELEASE_MULTIPLIER);
+                        assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+                    }));
+        }
+        {
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, Coord{18, 0});
+            COMPARE_DURATION_TO_STD_RANGES(
+                "remove_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto in_copy = in_;
+                        auto in = make_test_view_adapter<CS, Tag, Sized>(in_copy);
+                        auto const removed = RAH2_NS::ranges::remove(in, 1, &Coord::x);
+                        assert(
+                            RAH2_STD::distance(in.begin(), removed.begin())
+                            == 2 + 1000000 * RELEASE_MULTIPLIER);
+                        assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_remove()
 {
     testSuite.test_case("sample");
@@ -1720,10 +2051,98 @@ void test_remove()
     RAH2_STD::vector<int> in{1, 2, 1, 3, 1};
     auto const to_erase = RAH2_NS::ranges::remove(in, 1);
     in.erase(to_erase.begin(), to_erase.end());
-    RAH2_STD::sort(in.begin(), in.end());
     assert(in == RAH2_STD::vector<int>({2, 3}));
     /// [rah2::ranges::remove]
+
+    foreach_range_combination<test_algo<test_remove_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_remove_if_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> in_{1, 2, 1, 3, 1};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            auto const removed = RAH2_NS::ranges::remove_if(in, [](auto v) { return v == 1; });
+            assert(RAH2_STD::distance(in.begin(), removed.begin()) == 2);
+            assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in2_{1, 2, 1, 3, 1};
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+            auto const removed2 =
+                RAH2_NS::ranges::remove_if(in2.begin(), in2.end(), [](auto v) { return v == 1; });
+            assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
+            assert(RAH2_STD::distance(removed2.begin(), removed2.end()) == 3);
+        }
+
+        testSuite.test_case("proj");
+        {
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            auto const removed =
+                RAH2_NS::ranges::remove_if(in, [](auto v) { return v == 1; }, &Coord::x);
+            assert(RAH2_STD::distance(in.begin(), removed.begin()) == 2);
+            assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+
+            RAH2_STD::vector<Coord> in2_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+            auto const removed2 = RAH2_NS::ranges::remove_if(
+                in2.begin(), in2.end(), [](auto v) { return v == 1; }, &Coord::x);
+            assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
+            assert(RAH2_STD::distance(removed2.begin(), removed2.end()) == 3);
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<int> in2_{1, 2, 1, 3, 1};
+            in2_.insert(in2_.end(), 1000000 * RELEASE_MULTIPLIER, 18);
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "remove_if",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto in2_copy = in2_;
+                        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_copy);
+                        auto const removed = RAH2_NS::ranges::remove_if(
+                            in2.begin(), in2.end(), [](auto v) { return v == 1; });
+                        assert(
+                            RAH2_STD::distance(fwd(in2.begin()), removed.begin())
+                            == 2 + 1000000 * RELEASE_MULTIPLIER);
+                        assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+                    }));
+        }
+        {
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, Coord{18, 0});
+            COMPARE_DURATION_TO_STD_RANGES(
+                "remove_if_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto in_copy = in_;
+                        auto in = make_test_view_adapter<CS, Tag, Sized>(in_copy);
+                        auto const removed =
+                            RAH2_NS::ranges::remove_if(in, [](auto v) { return v == 1; }, &Coord::x);
+                        assert(
+                            RAH2_STD::distance(in.begin(), removed.begin())
+                            == 2 + 1000000 * RELEASE_MULTIPLIER);
+                        assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_remove_if()
 {
     testSuite.test_case("sample");
@@ -1734,6 +2153,8 @@ void test_remove_if()
     RAH2_STD::sort(in.begin(), in.end());
     assert(in == RAH2_STD::vector<int>({4, 5}));
     /// [rah2::ranges::remove_if]
+
+    foreach_range_combination<test_algo<test_remove_if_>>();
 }
 void test_remove_copy()
 {

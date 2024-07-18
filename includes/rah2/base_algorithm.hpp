@@ -1864,7 +1864,33 @@ namespace RAH2_NS
                         *result = unaryOperation(*first);
                     return {first, result};
                 }
-                template <typename Range, typename OutputIterator, typename UnaryOperation>
+
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename OutputIterator,
+                    typename UnaryOperation,
+                    typename Proj,
+                    RAH2_STD::enable_if_t<sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                unary_transform_result<InputIterator, OutputIterator> operator()(
+                    InputIterator first,
+                    InputSentinel last,
+                    OutputIterator result,
+                    UnaryOperation unaryOperation,
+                    Proj proj) const
+                {
+                    for (; first != last; ++first, ++result)
+                        *result = unaryOperation(proj(*first));
+                    return {first, result};
+                }
+
+                template <
+                    typename Range,
+                    typename OutputIterator,
+                    typename UnaryOperation,
+                    RAH2_STD::enable_if_t<
+                        input_range<Range>
+                        && output_iterator<OutputIterator, RAH2_NS::ranges::range_value_t<Range>>>* = nullptr>
                 unary_transform_result<iterator_t<Range>, OutputIterator>
                 operator()(Range&& range, OutputIterator result, UnaryOperation unaryOperation) const
                 {
@@ -1873,6 +1899,25 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(range),
                         RAH2_STD::move(result),
                         RAH2_STD::move(unaryOperation));
+                }
+
+                template <
+                    typename Range,
+                    typename OutputIterator,
+                    typename UnaryOperation,
+                    typename Proj,
+                    RAH2_STD::enable_if_t<
+                        input_range<Range>
+                        && output_iterator<OutputIterator, RAH2_NS::ranges::range_value_t<Range>>>* = nullptr>
+                unary_transform_result<iterator_t<Range>, OutputIterator> operator()(
+                    Range&& range, OutputIterator result, UnaryOperation unaryOperation, Proj proj) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(result),
+                        RAH2_STD::move(unaryOperation),
+                        RAH2_STD::move(proj));
                 }
 
                 /// transform
@@ -1901,7 +1946,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         sentinel_for<InputSentinel1, InputIterator1>
                         && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
-                OutputIterator operator()(
+                binary_transform_result<InputIterator1, InputIterator2, OutputIterator> operator()(
                     InputIterator1 first1,
                     InputSentinel1 last1,
                     InputIterator2 first2,
@@ -1911,7 +1956,34 @@ namespace RAH2_NS
                 {
                     for (; (first1 != last1) && (first2 != last2); ++first1, ++first2, ++result)
                         *result = binaryOperation(*first1, *first2);
-                    return result;
+                    return {RAH2_STD::move(first1), RAH2_STD::move(first2), RAH2_STD::move(result)};
+                }
+
+                template <
+                    typename InputIterator1,
+                    typename InputSentinel1,
+                    typename InputIterator2,
+                    typename InputSentinel2,
+                    typename OutputIterator,
+                    typename BinaryOperation,
+                    typename Proj1,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        sentinel_for<InputSentinel1, InputIterator1>
+                        && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
+                binary_transform_result<InputIterator1, InputIterator2, OutputIterator> operator()(
+                    InputIterator1 first1,
+                    InputSentinel1 last1,
+                    InputIterator2 first2,
+                    InputSentinel2 last2,
+                    OutputIterator result,
+                    BinaryOperation binaryOperation,
+                    Proj1 proj1,
+                    Proj2 proj2 = {}) const
+                {
+                    for (; (first1 != last1) && (first2 != last2); ++first1, ++first2, ++result)
+                        *result = binaryOperation(proj1(*first1), proj2(*first2));
+                    return {RAH2_STD::move(first1), RAH2_STD::move(first2), RAH2_STD::move(result)};
                 }
 
                 template <
@@ -1919,12 +1991,19 @@ namespace RAH2_NS
                     typename InputRange2,
                     typename OutputIterator,
                     typename BinaryOperation,
-                    RAH2_STD::enable_if_t<input_range<InputRange1> && input_range<InputRange2>>* = nullptr>
-                OutputIterator operator()(
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_range<RAH2_NS::remove_cvref_t<InputRange1>>
+                        && input_range<RAH2_NS::remove_cvref_t<InputRange2>>>* = nullptr>
+                binary_transform_result<iterator_t<InputRange1>, iterator_t<InputRange2>, OutputIterator>
+                operator()(
                     InputRange1&& range1,
-                    InputRange2 range2,
+                    InputRange2&& range2,
                     OutputIterator result,
-                    BinaryOperation binaryOperation) const
+                    BinaryOperation binaryOperation,
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range1),
@@ -1932,7 +2011,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(range2),
                         RAH2_NS::ranges::end(range2),
                         RAH2_STD::move(result),
-                        RAH2_STD::move(binaryOperation));
+                        RAH2_STD::move(binaryOperation),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
@@ -2828,7 +2909,7 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     typename O,
-                    class T,
+                    typename T,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
                         && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* = nullptr>
@@ -2838,6 +2919,31 @@ namespace RAH2_NS
                     for (; !(first == last); ++first)
                     {
                         if (value != *first)
+                        {
+                            *result = *first;
+                            ++result;
+                        }
+                    }
+                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    typename T,
+                    typename Proj,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* =
+                        nullptr>
+                constexpr RAH2_NS::ranges::remove_copy_result<I, O>
+                operator()(I first, S last, O result, T const& value, Proj proj) const
+                {
+                    auto proj2 = details::move_unary(proj);
+                    for (; !(first == last); ++first)
+                    {
+                        if (value != proj2(*first))
                         {
                             *result = *first;
                             ++result;
@@ -2909,6 +3015,31 @@ namespace RAH2_NS
                 }
 
                 template <
+                    typename I, // RAH2_STD::input_iterator
+                    typename S, // RAH2_STD::sentinel_for<I>
+                    typename O, // RAH2_STD::weakly_incrementable
+                    typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
+                    typename Proj, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
+                    RAH2_STD::enable_if_t<
+                        input_iterator<
+                            I> && sentinel_for<S, I> && weakly_incrementable<O> && indirectly_copyable<I, O>>* =
+                        nullptr>
+                constexpr RAH2_NS::ranges::remove_copy_if_result<I, O>
+                operator()(I first, S last, O result, Pred pred, Proj proj) const
+                {
+                    auto pred_proj = details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+                    for (; first != last; ++first)
+                    {
+                        if (!pred_proj(*first))
+                        {
+                            *result = *first;
+                            ++result;
+                        }
+                    }
+                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                }
+
+                template <
                     typename R, // RAH2_NS::input_range
                     typename O, // RAH2_NS::weakly_incrementable
                     typename Pred,
@@ -2923,6 +3054,20 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(result),
                         RAH2_STD::move(pred));
+                }
+
+                template <
+                    typename R, // RAH2_NS::input_range
+                    typename O, // RAH2_NS::weakly_incrementable
+                    typename Pred,
+                    typename Proj, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
+                    RAH2_STD::enable_if_t<
+                        input_range<R> && weakly_incrementable<O> && indirectly_copyable<iterator_t<R>, O>>* = nullptr>
+                constexpr RAH2_NS::ranges::remove_copy_if_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
+                operator()(R&& r, O result, Pred pred, Proj proj) const
+                {
+                    return (
+                        *this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(result), RAH2_STD::move(pred), RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -2968,7 +3113,12 @@ namespace RAH2_NS
                 ///    ...
                 ///    intArray.erase(remove(intArray.begin(), intArray.end(), 4), intArray.end()); // Erase all elements of value 4.
                 ///
-                template <typename ForwardIterator, typename ForwardSentinel, typename T>
+                template<
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename T,
+                    RAH2_STD::enable_if_t<sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr
+                >
                 subrange<ForwardIterator>
                 operator()(ForwardIterator first, ForwardSentinel last, T const& value) const
                 {
@@ -2976,15 +3126,46 @@ namespace RAH2_NS
                     if (first != last)
                     {
                         ForwardIterator i(first);
-                        return {RAH2_NS::ranges::remove_copy(++i, last, first, value).out, last};
+                        auto in_out = RAH2_NS::ranges::remove_copy(++i, last, first, value);
+                        return {in_out.out, in_out.in};
                     }
-                    return {first, last};
+                    return {first, first};
+                }
+
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename T,
+                    typename Proj
+                >
+                subrange<ForwardIterator> operator()(
+                    ForwardIterator first, ForwardSentinel last, T const& value, Proj proj) const
+                {
+                    first = RAH2_NS::ranges::find(first, last, value, proj);
+                    if (first != last)
+                    {
+                        ForwardIterator i(first);
+                        auto in_out = RAH2_NS::ranges::remove_copy(++i, last, first, value, proj);
+                        return {in_out.out, in_out.in};
+                    }
+                    return {first, first};
                 }
 
                 template <typename ForwardRange, typename T>
                 borrowed_subrange_t<ForwardRange> operator()(ForwardRange&& range, T const& value) const
                 {
                     return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
+                }
+
+                template <
+                    typename ForwardRange,
+                    typename T,
+                    typename Proj>
+                borrowed_subrange_t<ForwardRange>
+                operator()(ForwardRange&& range, T const& value, Proj proj) const
+                {
+                    return (
+                        *this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value, RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -3016,36 +3197,47 @@ namespace RAH2_NS
                 ///    ...
                 ///    intArray.erase(remove(intArray.begin(), intArray.end(), bind2nd(less<int>(), (int)3)), intArray.end()); // Erase all elements less than 3.
                 ///
-                template <typename ForwardIterator, typename ForwardSentinel, typename Predicate>
-                subrange<ForwardIterator>
-                operator()(ForwardIterator first, ForwardSentinel last, Predicate predicate) const
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                subrange<ForwardIterator> operator()(
+                    ForwardIterator first, ForwardSentinel last, Predicate predicate, Proj proj = {}) const
                 {
-                    first = RAH2_NS::ranges::find_if(first, last, predicate);
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(predicate), RAH2_STD::move(proj));
+                    first = RAH2_NS::ranges::find_if(first, last, predicate, proj);
                     if (first != last)
                     {
                         ForwardIterator i(first);
                         ++i;
                         for (; i != last; ++i)
                         {
-                            if (!predicate(*i))
+                            if (!pred_proj(*i))
                             {
                                 *first = RAH2_STD::move(*i);
                                 ++first;
                             }
                         }
-                        return {RAH2_STD::move(first), RAH2_STD::move(last)};
+                        return {RAH2_STD::move(first), RAH2_STD::move(i)};
                     }
-                    return {first, last};
+                    return {first, first};
                 }
 
-                template <typename ForwardRange, typename Predicate>
+                template <
+                    typename ForwardRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
                 borrowed_subrange_t<ForwardRange>
-                operator()(ForwardRange&& range, Predicate predicate) const
+                operator()(ForwardRange&& range, Predicate predicate, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(predicate));
+                        RAH2_NS::ranges::end(range), RAH2_STD::move(predicate), RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
