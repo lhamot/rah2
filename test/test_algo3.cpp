@@ -1986,13 +1986,13 @@ struct test_remove_
 
         testSuite.test_case("proj");
         {
-            RAH2_STD::vector<Coord> in_{{1}, {2}, {1}, {3}, {1}};
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             auto const removed = RAH2_NS::ranges::remove(in, 1, &Coord::x);
             assert(RAH2_STD::distance(in.begin(), removed.begin()) == 2);
             assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
 
-            RAH2_STD::vector<Coord> in2_{{1}, {2}, {1}, {3}, {1}};
+            RAH2_STD::vector<Coord> in2_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
             auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
             auto const removed2 = RAH2_NS::ranges::remove(in2.begin(), in2.end(), 1, &Coord::x);
             assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
@@ -2023,7 +2023,7 @@ struct test_remove_
                     }));
         }
         {
-            RAH2_STD::vector<Coord> in_{{1}, {2}, {1}, {3}, {1}};
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
             in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, Coord{18});
             COMPARE_DURATION_TO_STD_RANGES(
                 "remove_proj",
