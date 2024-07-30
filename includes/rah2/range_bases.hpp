@@ -846,6 +846,25 @@ namespace RAH2_NS
                 && concepts::compiles<Diagnostic, I, same_value_and_ref>;
         };
 
+        template <typename In, typename Out, bool Diagnostic = false>
+        struct indirectly_copyable_impl
+        {
+            template <typename In2>
+            using can_indirect_assign1 =
+                decltype(*RAH2_STD::declval<Out&&>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+            template <typename In2>
+            using can_indirect_assign2 = decltype(*RAH2_STD::declval<Out>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+
+            static constexpr bool is_indirectly_writable =
+                concepts::compiles<
+                    Diagnostic,
+                    In,
+                    can_indirect_assign1> && concepts::compiles<Diagnostic, In, can_indirect_assign2>;
+
+            static constexpr bool value =
+                RAH2_NS::indirectly_readable<
+                    In> && concepts::is_true_v<Diagnostic, is_indirectly_writable>;
+        };
     } // namespace details
 
     template <class Out, class T>
@@ -904,10 +923,8 @@ namespace RAH2_NS
     template <typename I>
     static constexpr bool contiguous_iterator = details::contiguous_iterator_impl<I>::value;
 
-    template <class In, class Out>
-    constexpr bool indirectly_copyable =
-        RAH2_NS::indirectly_readable<In>
-        && RAH2_NS::indirectly_writable<Out, RAH2_NS::iter_reference_t<In>>;
+    template <typename In, typename Out>
+    constexpr bool indirectly_copyable = details::indirectly_copyable_impl<In, Out>::value;
 
     // **************************** <ranges> access ***********************************************
     namespace ranges
