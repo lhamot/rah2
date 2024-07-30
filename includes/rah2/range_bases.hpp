@@ -853,17 +853,15 @@ namespace RAH2_NS
             using can_indirect_assign1 =
                 decltype(*RAH2_STD::declval<Out&&>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
             template <typename In2>
-            using can_indirect_assign2 = decltype(*RAH2_STD::declval<Out>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+            using can_indirect_assign2 =
+                decltype(*RAH2_STD::declval<Out>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
 
             static constexpr bool is_indirectly_writable =
-                concepts::compiles<
-                    Diagnostic,
-                    In,
-                    can_indirect_assign1> && concepts::compiles<Diagnostic, In, can_indirect_assign2>;
+                concepts::compiles<Diagnostic, In, can_indirect_assign1>
+                && concepts::compiles<Diagnostic, In, can_indirect_assign2>;
 
-            static constexpr bool value =
-                RAH2_NS::indirectly_readable<
-                    In> && concepts::is_true_v<Diagnostic, is_indirectly_writable>;
+            static constexpr bool value = details::indirectly_readable_impl<remove_cvref_t<In>>::value
+                                          && concepts::is_true_v<Diagnostic, is_indirectly_writable>;
         };
     } // namespace details
 
@@ -1431,9 +1429,9 @@ namespace RAH2_NS
 
                 template <
                     typename R,
-                    RAH2_STD::enable_if_t<!(
-                        has_size_member<R>
-                        && !disable_sized_range<RAH2_STD::remove_cv_t<R>>)&&has_size_ADL<R>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        !(has_size_member<R> && !disable_sized_range<RAH2_STD::remove_cv_t<R>>)
+                        && has_size_ADL<R>>* = nullptr>
                 constexpr auto operator()(R&& range) const
                 {
                     return size(range);
