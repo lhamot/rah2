@@ -2172,6 +2172,8 @@ struct test_remove_copy_
                 RAH2_STD::vector<int> out;
                 auto const removed =
                     RAH2_NS::ranges::remove_copy(in, RAH2_STD::back_inserter(out), 1);
+                CHECK(removed.in == in.end());
+                // CHECK(removed.out. == out.end());
                 CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
                 CHECK(out == (RAH2_STD::vector<int>{2, 3}));
             }
@@ -2181,6 +2183,8 @@ struct test_remove_copy_
                 RAH2_STD::vector<int> out2;
                 auto const removed2 = RAH2_NS::ranges::remove_copy(
                     in.begin(), in.end(), RAH2_STD::back_inserter(out2), 1);
+                CHECK(removed2.in == in.end());
+                // CHECK(removed2.out == out2.end());
                 CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
                 CHECK(out2 == (RAH2_STD::vector<int>{2, 3}));
             }
@@ -2195,6 +2199,8 @@ struct test_remove_copy_
                 auto const removed =
                     RAH2_NS::ranges::remove_copy(in, RAH2_STD::back_inserter(out), 1, &Coord::x);
                 auto ok = in_ == (RAH2_STD::vector<Coord>{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}});
+                CHECK(removed.in == in.end());
+                // CHECK(removed.out == out.end());
                 CHECK(ok);
                 CHECK(out == (RAH2_STD::vector<Coord>{{2, 0}, {3, 0}}));
             }
@@ -2203,6 +2209,8 @@ struct test_remove_copy_
                 RAH2_STD::vector<Coord> out2;
                 auto const removed2 = RAH2_NS::ranges::remove_copy(
                     in.begin(), in.end(), RAH2_STD::back_inserter(out2), 1, &Coord::x);
+                CHECK(removed2.in == in.end());
+                // CHECK(removed2.out == out2.end());
                 CHECK(in_ == (RAH2_STD::vector<Coord>{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}}));
                 CHECK(out2 == (RAH2_STD::vector<Coord>{{2, 0}, {3, 0}}));
             }
