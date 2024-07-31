@@ -849,16 +849,16 @@ namespace RAH2_NS
         template <typename In, typename Out, bool Diagnostic = false>
         struct indirectly_copyable_impl
         {
-            template <typename In2>
+            template <typename In2, typename Out2>
             using can_indirect_assign1 =
-                decltype(*RAH2_STD::declval<Out&&>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
-            template <typename In2>
+                decltype(*RAH2_STD::declval<Out2&&>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+            template <typename In2, typename Out2>
             using can_indirect_assign2 =
-                decltype(*RAH2_STD::declval<Out>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+                decltype(*RAH2_STD::declval<Out2>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
 
             static constexpr bool is_indirectly_writable =
-                concepts::compiles<Diagnostic, In, can_indirect_assign1>
-                && concepts::compiles<Diagnostic, In, can_indirect_assign2>;
+                concepts::compiles2<Diagnostic, In, Out, can_indirect_assign1>
+                && concepts::compiles2<Diagnostic, In, Out, can_indirect_assign2>;
 
             static constexpr bool value = details::indirectly_readable_impl<remove_cvref_t<In>>::value
                                           && concepts::is_true_v<Diagnostic, is_indirectly_writable>;
