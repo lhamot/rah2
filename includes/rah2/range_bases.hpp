@@ -846,6 +846,23 @@ namespace RAH2_NS
                 && concepts::compiles<Diagnostic, I, same_value_and_ref>;
         };
 
+        template <typename In, typename Out, bool Diagnostic = false>
+        struct indirectly_copyable_impl
+        {
+            template <typename In2, typename Out2>
+            using can_indirect_assign1 =
+                decltype(*RAH2_STD::declval<Out2&&>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+            template <typename In2, typename Out2>
+            using can_indirect_assign2 =
+                decltype(*RAH2_STD::declval<Out2>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
+
+            static constexpr bool is_indirectly_writable =
+                concepts::compiles2<Diagnostic, In, Out, can_indirect_assign1>
+                && concepts::compiles2<Diagnostic, In, Out, can_indirect_assign2>;
+
+            static constexpr bool value = details::indirectly_readable_impl<remove_cvref_t<In>>::value
+                                          && concepts::is_true_v<Diagnostic, is_indirectly_writable>;
+        };
     } // namespace details
 
     template <class Out, class T>
@@ -904,10 +921,8 @@ namespace RAH2_NS
     template <typename I>
     static constexpr bool contiguous_iterator = details::contiguous_iterator_impl<I>::value;
 
-    template <class In, class Out>
-    constexpr bool indirectly_copyable =
-        RAH2_NS::indirectly_readable<In>
-        && RAH2_NS::indirectly_writable<Out, RAH2_NS::iter_reference_t<In>>;
+    template <typename In, typename Out>
+    constexpr bool indirectly_copyable = details::indirectly_copyable_impl<In, Out>::value;
 
     // **************************** <ranges> access ***********************************************
     namespace ranges
@@ -1414,9 +1429,9 @@ namespace RAH2_NS
 
                 template <
                     typename R,
-                    RAH2_STD::enable_if_t<!(
-                        has_size_member<R>
-                        && !disable_sized_range<RAH2_STD::remove_cv_t<R>>)&&has_size_ADL<R>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        !(has_size_member<R> && !disable_sized_range<RAH2_STD::remove_cv_t<R>>)
+                        && has_size_ADL<R>>* = nullptr>
                 constexpr auto operator()(R&& range) const
                 {
                     return size(range);

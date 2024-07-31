@@ -2156,6 +2156,110 @@ void test_remove_if()
 
     foreach_range_combination<test_algo<test_remove_if_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_remove_copy_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            RAH2_STD::vector<int> in_{1, 2, 1, 3, 1};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
+            {
+                testSuite.test_case("range");
+                RAH2_STD::vector<int> out;
+                auto const removed =
+                    RAH2_NS::ranges::remove_copy(in, RAH2_STD::back_inserter(out), 1);
+                CHECK(removed.in == in.end());
+                // CHECK(removed.out. == out.end());
+                CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
+                CHECK(out == (RAH2_STD::vector<int>{2, 3}));
+            }
+
+            {
+                testSuite.test_case("iter");
+                RAH2_STD::vector<int> out2;
+                auto const removed2 = RAH2_NS::ranges::remove_copy(
+                    in.begin(), in.end(), RAH2_STD::back_inserter(out2), 1);
+                CHECK(removed2.in == in.end());
+                // CHECK(removed2.out == out2.end());
+                CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
+                CHECK(out2 == (RAH2_STD::vector<int>{2, 3}));
+            }
+        }
+        testSuite.test_case("proj");
+        {
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
+            {
+                RAH2_STD::vector<Coord> out;
+                auto const removed =
+                    RAH2_NS::ranges::remove_copy(in, RAH2_STD::back_inserter(out), 1, &Coord::x);
+                auto ok = in_ == (RAH2_STD::vector<Coord>{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}});
+                CHECK(removed.in == in.end());
+                // CHECK(removed.out == out.end());
+                CHECK(ok);
+                CHECK(out == (RAH2_STD::vector<Coord>{{2, 0}, {3, 0}}));
+            }
+
+            {
+                RAH2_STD::vector<Coord> out2;
+                auto const removed2 = RAH2_NS::ranges::remove_copy(
+                    in.begin(), in.end(), RAH2_STD::back_inserter(out2), 1, &Coord::x);
+                CHECK(removed2.in == in.end());
+                // CHECK(removed2.out == out2.end());
+                CHECK(in_ == (RAH2_STD::vector<Coord>{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}}));
+                CHECK(out2 == (RAH2_STD::vector<Coord>{{2, 0}, {3, 0}}));
+            }
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
+            in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, {42, 0});
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<Coord> out(1000000 * RELEASE_MULTIPLIER + 3, Coord{0, 0});
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "remove_copy",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto const removed =
+                            RAH2_NS::ranges::remove_copy(in, fwd(out.begin()), 1, &Coord::x);
+                        CHECK(out[1] == (Coord{3, 0}));
+                        CHECK(out[2] == (Coord{42, 0}));
+                    }));
+        }
+        {
+            RAH2_STD::vector<int> in_{1, 2, 1, 3, 1};
+            in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, 42);
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out2(1000000 * RELEASE_MULTIPLIER + 3, 0);
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "remove_copy",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto const removed2 =
+                            RAH2_NS::ranges::remove_copy(fwd(in.begin()), in.end(), out2.begin(), 1);
+                        CHECK(out2[1] == 3);
+                        CHECK(out2[2] == 42);
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_remove_copy()
 {
     testSuite.test_case("sample");
@@ -2167,6 +2271,8 @@ void test_remove_copy()
     RAH2_NS::ranges::remove_copy(str.begin(), str.end(), RAH2_NS::back_inserter(out), '#');
     assert(out == "Small Buffer Optimization");
     /// [rah2::ranges::remove_copy]
+
+    foreach_range_combination<test_algo<test_remove_copy_>>();
 }
 void test_remove_copy_if()
 {
