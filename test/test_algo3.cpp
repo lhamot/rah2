@@ -2224,7 +2224,7 @@ struct test_remove_copy_
             RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
             in_.insert(in_.end(), 1000000 * RELEASE_MULTIPLIER, {42, 0});
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
-            RAH2_STD::vector<Coord> out(1000000 * RELEASE_MULTIPLIER + 3, {0, 0});
+            RAH2_STD::vector<Coord> out(1000000 * RELEASE_MULTIPLIER + 3, Coord{0, 0});
 
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
