@@ -5138,13 +5138,15 @@ namespace RAH2_NS
                 return {};
             }
 
-            template <bool all_sized = sized_range<R1>&& sized_range<R2>, RAH2_STD::enable_if_t<all_sized>* = nullptr>
+            template <
+                bool all_sized = sized_range<R1> && sized_range<R2>,
+                RAH2_STD::enable_if_t<all_sized>* = nullptr>
             auto size()
             {
                 return RAH2_NS::ranges::size(base1_) + RAH2_NS::ranges::size(base2_);
             }
             template <
-                bool all_sized = sized_range<R1 const>&& sized_range<R2 const>,
+                bool all_sized = sized_range<R1 const> && sized_range<R2 const>,
                 RAH2_STD::enable_if_t<all_sized>* = nullptr>
             auto size() const
             {

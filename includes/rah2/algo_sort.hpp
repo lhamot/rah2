@@ -419,9 +419,9 @@ namespace RAH2_NS
                     else
                     {
                         RAH2_DEV_ASSERT(
-                            (RAH2_NS::ranges::is_sorted.
-                             operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                 first, last, compare)));
+                            (RAH2_NS::ranges::is_sorted
+                                 .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                     first, last, compare)));
                         return RL_SourceRange;
                     }
                 }
@@ -459,9 +459,9 @@ namespace RAH2_NS
                             RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
                             RAH2_DEV_ASSERT(
-                                (RAH2_NS::ranges::is_sorted.
-                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                     first, last, compare)));
+                                (RAH2_NS::ranges::is_sorted
+                                     .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                         first, last, compare)));
                             return RL_SourceRange;
                         }
                     }
@@ -473,9 +473,9 @@ namespace RAH2_NS
                             RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
                             RAH2_DEV_ASSERT(
-                                (RAH2_NS::ranges::is_sorted.
-                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                     first, last, compare)));
+                                (RAH2_NS::ranges::is_sorted
+                                     .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                         first, last, compare)));
                             return RL_SourceRange;
                         }
                         else
@@ -483,9 +483,9 @@ namespace RAH2_NS
                             RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
                             RAH2_DEV_ASSERT(
-                                (RAH2_NS::ranges::is_sorted.
-                                 operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                     first, last, compare)));
+                                (RAH2_NS::ranges::is_sorted
+                                     .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
+                                         first, last, compare)));
                             return RL_SourceRange;
                         }
                     }
