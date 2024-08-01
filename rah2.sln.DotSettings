@@ -1,0 +1,28 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=CppClangTidyModernizeUseNodiscard/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=CppEnforceCVQualifiersPlacement/@EntryIndexedValue">WARNING</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=CppRedundantElseKeyword/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=CppRedundantElseKeywordInsideCompoundStatement/@EntryIndexedValue">DO_NOT_SHOW</s:String>
+	<s:String x:Key="/Default/CodeStyle/CodeCleanup/Profiles/=Copy_0020of_0020Built_002Din_003A_0020Full_0020Cleanup/@EntryIndexedValue">&lt;?xml version="1.0" encoding="utf-16"?&gt;&lt;Profile name="Copy of Built-in: Full Cleanup"&gt;&lt;CppAddTypenameTemplateKeywords&gt;True&lt;/CppAddTypenameTemplateKeywords&gt;&lt;CppRemoveCastDescriptor&gt;True&lt;/CppRemoveCastDescriptor&gt;&lt;CppShortenQualifiedName&gt;True&lt;/CppShortenQualifiedName&gt;&lt;CppDeleteRedundantSpecifier&gt;True&lt;/CppDeleteRedundantSpecifier&gt;&lt;CppRemoveStatement&gt;True&lt;/CppRemoveStatement&gt;&lt;CppDeleteRedundantTypenameTemplateKeywords&gt;True&lt;/CppDeleteRedundantTypenameTemplateKeywords&gt;&lt;CppCStyleToStaticCastDescriptor&gt;True&lt;/CppCStyleToStaticCastDescriptor&gt;&lt;CppReplaceExpressionWithBooleanConst&gt;True&lt;/CppReplaceExpressionWithBooleanConst&gt;&lt;CppMakeIfConstexpr&gt;True&lt;/CppMakeIfConstexpr&gt;&lt;CppMakePostfixOperatorPrefix&gt;True&lt;/CppMakePostfixOperatorPrefix&gt;&lt;CppChangeSmartPointerToMakeFunction&gt;True&lt;/CppChangeSmartPointerToMakeFunction&gt;&lt;CppReplaceThrowWithRethrowFix&gt;True&lt;/CppReplaceThrowWithRethrowFix&gt;&lt;CppReplaceExpressionWithNullptr&gt;True&lt;/CppReplaceExpressionWithNullptr&gt;&lt;CppReplaceTieWithStructuredBindingDescriptor&gt;True&lt;/CppReplaceTieWithStructuredBindingDescriptor&gt;&lt;CppUseAssociativeContainsDescriptor&gt;True&lt;/CppUseAssociativeContainsDescriptor&gt;&lt;CppUseEraseAlgorithmDescriptor&gt;True&lt;/CppUseEraseAlgorithmDescriptor&gt;&lt;CppCodeStyleCleanupDescriptor ArrangeBraces="True" ArrangeAuto="True" ArrangeNestedNamespaces="True" ArrangeTypeAliases="True" ArrangeCVQualifiers="True" ArrangeSlashesInIncludeDirectives="True" ArrangeOverridingFunctions="True" SortMemberInitializers="True" /&gt;&lt;CppJoinDeclarationAndAssignmentDescriptor&gt;True&lt;/CppJoinDeclarationAndAssignmentDescriptor&gt;&lt;CppMakeLocalVarConstDescriptor&gt;True&lt;/CppMakeLocalVarConstDescriptor&gt;&lt;CppMakeMethodConst&gt;True&lt;/CppMakeMethodConst&gt;&lt;/Profile&gt;</s:String>
+	<s:String x:Key="/Default/CodeStyle/CodeCleanup/Profiles/=fix_0020const/@EntryIndexedValue">&lt;?xml version="1.0" encoding="utf-16"?&gt;&lt;Profile name="fix const"&gt;&lt;CppCodeStyleCleanupDescriptor ArrangeCVQualifiers="True" /&gt;&lt;/Profile&gt;</s:String>
+	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CppCodeStyle/CVQualifiersPlacement/@EntryValue">AfterType</s:String>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=adaptor/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=cbegin/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=cend/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=constructible/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=deref/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=incrementable/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=initializable/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=invocable/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=irange/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=istream/@EntryIndexedValue">True</s:Boolean>
+	
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=iter/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=noproj/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=permutable/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=pipeable/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=pred/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=rbegin/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=semiregular/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=storable/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=subrange/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
