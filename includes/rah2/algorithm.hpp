@@ -266,8 +266,9 @@ namespace RAH2_NS
                     class T,
                     class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<I> && sentinel_for<S, I>
-                        && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* = nullptr>
+                        forward_iterator<
+                            I> && sentinel_for<S, I> && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
                 impl(I first, S last, T const& value, Proj proj = {}) const
                 {
@@ -368,8 +369,9 @@ namespace RAH2_NS
                     typename S,
                     class Pred,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<I> && sentinel_for<S, I>
-                        && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* = nullptr>
+                        forward_iterator<
+                            I> && sentinel_for<S, I> && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::subrange<I> impl(I first, S last, Pred&& pred) const
                 {
                     for (; first != last; ++first)
@@ -465,8 +467,9 @@ namespace RAH2_NS
                     typename S,
                     class Pred,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<I> && sentinel_for<S, I>
-                        && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* = nullptr>
+                        forward_iterator<
+                            I> && sentinel_for<S, I> && not(bidirectional_iterator<I> && RAH2_NS::is_same_v<I, S>)>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::subrange<I> impl(I first, S last, Pred&& pred) const
                 {
                     for (; first != last; ++first)
@@ -594,8 +597,8 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        forward_iterator<
+                            I1> && sentinel_for<S1, I1> && forward_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr bool operator()(
                     I1 first1,
                     S1 last1,
@@ -648,8 +651,8 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        input_iterator<
+                            I1> && sentinel_for<S1, I1> && input_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr bool operator()(
                     I1 first1,
                     S1 last1,
@@ -774,8 +777,9 @@ namespace RAH2_NS
                     typename I2,
                     typename S2,
                     RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2> && indirectly_swappable<I1, I2>>* = nullptr>
+                        input_iterator<
+                            I1> && sentinel_for<S1, I1> && input_iterator<I2> && sentinel_for<S2, I2> && indirectly_swappable<I1, I2>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
                 operator()(I1 first1, S1 last1, I2 first2, S2 last2) const
                 {
@@ -788,8 +792,8 @@ namespace RAH2_NS
                     typename R1,
                     typename R2,
                     RAH2_STD::enable_if_t<
-                        input_range<R1> && input_range<R2>
-                        && indirectly_swappable<RAH2_NS::ranges::iterator_t<R1>, RAH2_NS::ranges::iterator_t<R2>>>* =
+                        input_range<
+                            R1> && input_range<R2> && indirectly_swappable<RAH2_NS::ranges::iterator_t<R1>, RAH2_NS::ranges::iterator_t<R2>>>* =
                         nullptr>
                 RAH2_NS::ranges::swap_ranges_result<
                     RAH2_NS::ranges::borrowed_iterator_t<R1>,
@@ -869,8 +873,8 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        permutable<I> && sentinel_for<S, I> && bidirectional_iterator<I>
-                        && RAH2_NS::assignable_from<I&, S>>* = nullptr>
+                        permutable<I> && sentinel_for<S, I> && bidirectional_iterator<I> && RAH2_NS::assignable_from<I&, S>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
                 {
@@ -882,8 +886,8 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        permutable<I> && sized_sentinel_for<S, I>
-                        && !(bidirectional_iterator<I> && assignable_from<I&, S>)&&random_access_iterator<I>>* =
+                        permutable<
+                            I> && sized_sentinel_for<S, I> && !(bidirectional_iterator<I> && assignable_from<I&, S>)&&random_access_iterator<I>>* =
                         nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
@@ -895,9 +899,9 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        permutable<I> && sentinel_for<S, I>
-                        && !(bidirectional_iterator<I> && assignable_from<I&, S>)&&!(
-                            sized_sentinel_for<S, I> && random_access_iterator<I>)>* = nullptr>
+                        permutable<
+                            I> && sentinel_for<S, I> && !(bidirectional_iterator<I> && assignable_from<I&, S>)&&!(sized_sentinel_for<S, I> && random_access_iterator<I>)>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
                 {

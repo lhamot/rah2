@@ -471,9 +471,9 @@ struct make_stride_view
     }
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
-    static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>
-                                      && (RAH2_NS::ranges::sized_range<BaseRange>
-                                          || !RAH2_NS::ranges::bidirectional_range<BaseRange>);
+    static constexpr bool is_common =
+        RAH2_NS::ranges::common_range<
+            BaseRange> && (RAH2_NS::ranges::sized_range<BaseRange> || !RAH2_NS::ranges::bidirectional_range<BaseRange>);
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
     using expected_cat = RAH2_NS::ranges::details::

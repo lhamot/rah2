@@ -101,8 +101,8 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<I, O> operator()(I first, S last, O result) const
                 {
                     for (; first != last; ++first, ++result)
@@ -297,8 +297,8 @@ namespace RAH2_NS
                     typename ForwardIterator,
                     typename ForwardSentinel,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<ForwardIterator>
-                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                        forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* =
+                        nullptr>
                 ForwardIterator operator()(ForwardIterator first, ForwardSentinel last) const
                 {
                     if (first != last)
@@ -390,8 +390,8 @@ namespace RAH2_NS
                     typename ForwardSentinel,
                     typename Compare = RAH2_NS::ranges::less,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<ForwardIterator>
-                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                        forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* =
+                        nullptr>
                 constexpr minmax_element_result<ForwardIterator>
                 operator()(ForwardIterator first, ForwardSentinel last, Compare compare = {}) const
                 {
@@ -686,8 +686,9 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator>
-                        && not RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator> && not RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* =
+                        nullptr>
                 RAH2_CONSTEXPR20 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
@@ -705,8 +706,8 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator>
-                        && RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            InputIterator> && RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 RAH2_CONSTEXPR20 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
@@ -786,8 +787,9 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator>
-                        && not RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator> && not RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* =
+                        nullptr>
                 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
@@ -805,8 +807,8 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator>
-                        && RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            InputIterator> && RAH2_NS::sized_sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 bool operator()(
                     InputIterator first_w, InputSentinel last_w, Predicate pred, Proj proj = {}) const
                 {
@@ -825,8 +827,8 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::ranges::input_range<InputRange>
-                        && not RAH2_NS::ranges::sized_range<InputRange>>* = nullptr>
+                        RAH2_NS::ranges::input_range<
+                            InputRange> && not RAH2_NS::ranges::sized_range<InputRange>>* = nullptr>
                 bool operator()(InputRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
@@ -967,8 +969,8 @@ namespace RAH2_NS
                     typename I,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && !RAH2_NS::random_access_iterator<I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            I> && !RAH2_NS::random_access_iterator<I> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
@@ -981,8 +983,8 @@ namespace RAH2_NS
                     typename I,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && RAH2_NS::random_access_iterator<I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            I> && RAH2_NS::random_access_iterator<I> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
@@ -1011,8 +1013,8 @@ namespace RAH2_NS
                     typename S1,
                     typename I2,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::bidirectional_iterator<I1> && RAH2_NS::sentinel_for<S1, I1>
-                        && RAH2_NS::bidirectional_iterator<I2>>* = nullptr>
+                        RAH2_NS::bidirectional_iterator<
+                            I1> && RAH2_NS::sentinel_for<S1, I1> && RAH2_NS::bidirectional_iterator<I2>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_backward_result<I1, I2>
                 operator()(I1 first, S1 last, I2 result) const
                 {
@@ -1071,8 +1073,8 @@ namespace RAH2_NS
                     typename S1,
                     typename I2,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::bidirectional_iterator<I1> && RAH2_NS::sentinel_for<S1, I1>
-                        && RAH2_NS::bidirectional_iterator<I2>>* = nullptr>
+                        RAH2_NS::bidirectional_iterator<
+                            I1> && RAH2_NS::sentinel_for<S1, I1> && RAH2_NS::bidirectional_iterator<I2>>* = nullptr>
                 constexpr copy_backward_result<I1, I2> operator()(I1 first, S1 last, I2 result) const
                 {
                     I1 last1{RAH2_NS::ranges::next(first, RAH2_STD::move(last))};
@@ -1582,8 +1584,8 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        input_iterator<
+                            I1> && sentinel_for<S1, I1> && forward_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr I1 operator()(
                     I1 first1,
                     S1 last1,
@@ -1674,8 +1676,8 @@ namespace RAH2_NS
                     typename Function,
                     class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<InputIterator>
-                        && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            InputIterator> && RAH2_NS::sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 for_each_result<InputIterator, Function> operator()(
                     InputIterator first_w, InputSentinel last_w, Function function, Proj proj = {}) const
                 {
@@ -1889,8 +1891,8 @@ namespace RAH2_NS
                     typename OutputIterator,
                     typename UnaryOperation,
                     RAH2_STD::enable_if_t<
-                        input_range<Range>
-                        && output_iterator<OutputIterator, RAH2_NS::ranges::range_value_t<Range>>>* = nullptr>
+                        input_range<Range> && output_iterator<OutputIterator, RAH2_NS::ranges::range_value_t<Range>>>* =
+                        nullptr>
                 unary_transform_result<iterator_t<Range>, OutputIterator>
                 operator()(Range&& range, OutputIterator result, UnaryOperation unaryOperation) const
                 {
@@ -1907,8 +1909,8 @@ namespace RAH2_NS
                     typename UnaryOperation,
                     typename Proj,
                     RAH2_STD::enable_if_t<
-                        input_range<Range>
-                        && output_iterator<OutputIterator, RAH2_NS::ranges::range_value_t<Range>>>* = nullptr>
+                        input_range<Range> && output_iterator<OutputIterator, RAH2_NS::ranges::range_value_t<Range>>>* =
+                        nullptr>
                 unary_transform_result<iterator_t<Range>, OutputIterator> operator()(
                     Range&& range, OutputIterator result, UnaryOperation unaryOperation, Proj proj) const
                 {
@@ -1944,8 +1946,8 @@ namespace RAH2_NS
                     typename OutputIterator,
                     typename BinaryOperation,
                     RAH2_STD::enable_if_t<
-                        sentinel_for<InputSentinel1, InputIterator1>
-                        && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
+                        sentinel_for<InputSentinel1, InputIterator1> && sentinel_for<InputSentinel2, InputIterator2>>* =
+                        nullptr>
                 binary_transform_result<InputIterator1, InputIterator2, OutputIterator> operator()(
                     InputIterator1 first1,
                     InputSentinel1 last1,
@@ -1969,8 +1971,8 @@ namespace RAH2_NS
                     typename Proj1,
                     typename Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        sentinel_for<InputSentinel1, InputIterator1>
-                        && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
+                        sentinel_for<InputSentinel1, InputIterator1> && sentinel_for<InputSentinel2, InputIterator2>>* =
+                        nullptr>
                 binary_transform_result<InputIterator1, InputIterator2, OutputIterator> operator()(
                     InputIterator1 first1,
                     InputSentinel1 last1,
@@ -1994,8 +1996,8 @@ namespace RAH2_NS
                     typename Proj1 = RAH2_NS::details::identity,
                     typename Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        input_range<RAH2_NS::remove_cvref_t<InputRange1>>
-                        && input_range<RAH2_NS::remove_cvref_t<InputRange2>>>* = nullptr>
+                        input_range<RAH2_NS::remove_cvref_t<
+                            InputRange1>> && input_range<RAH2_NS::remove_cvref_t<InputRange2>>>* = nullptr>
                 binary_transform_result<iterator_t<InputRange1>, iterator_t<InputRange2>, OutputIterator>
                 operator()(
                     InputRange1&& range1,
@@ -2042,9 +2044,9 @@ namespace RAH2_NS
                     typename InputIterator2,
                     typename InputSentinel2,
                     RAH2_STD::enable_if_t<
-                        input_iterator<InputIterator1> && input_iterator<InputIterator2>
-                        && sentinel_for<InputSentinel1, InputIterator1>
-                        && sentinel_for<InputSentinel2, InputIterator2>>* = nullptr>
+                        input_iterator<
+                            InputIterator1> && input_iterator<InputIterator2> && sentinel_for<InputSentinel1, InputIterator1> && sentinel_for<InputSentinel2, InputIterator2>>* =
+                        nullptr>
                 constexpr bool operator()(
                     InputIterator1 first1,
                     InputSentinel1 last1,
@@ -2146,8 +2148,8 @@ namespace RAH2_NS
                     class Proj2 = RAH2_NS::details::identity,
                     typename Comp = RAH2_NS::ranges::less,
                     RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        input_iterator<
+                            I1> && sentinel_for<S1, I1> && input_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr bool impl(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}) const
                 {
                     for (; (first1 != last1) && (first2 != last2); ++first1, (void)++first2)
@@ -2241,8 +2243,8 @@ namespace RAH2_NS
                     class Proj2 = RAH2_NS::details::identity,
                     typename Comp = RAH2_NS::ranges::less,
                     RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        input_iterator<
+                            I1> && sentinel_for<S1, I1> && input_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr bool operator()(
                     I1 first1,
                     S1 last1,
@@ -2366,8 +2368,8 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        input_iterator<
+                            I1> && sentinel_for<S1, I1> && input_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 RAH2_CONSTEXPR20 mismatch_result<I1, I2> operator()(
                     I1 first1,
                     S1 last1,
@@ -2911,8 +2913,9 @@ namespace RAH2_NS
                     typename O,
                     typename T,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
-                        && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_result<I, O>
                 operator()(I first, S last, O result, T const& value) const
                 {
@@ -2934,8 +2937,9 @@ namespace RAH2_NS
                     typename T,
                     typename Proj,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
-                        && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* = nullptr>
+                        RAH2_NS::input_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_result<I, O>
                 operator()(I first, S last, O result, T const& value, Proj proj) const
                 {
@@ -2956,8 +2960,9 @@ namespace RAH2_NS
                     typename O,
                     class T,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>
-                        && RAH2_NS::indirectly_copyable<RAH2_NS::ranges::iterator_t<R>, O>>* = nullptr>
+                        RAH2_NS::ranges::input_range<
+                            R> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<RAH2_NS::ranges::iterator_t<R>, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
                 operator()(R&& r, O result, T const& value) const
                 {
@@ -2973,8 +2978,9 @@ namespace RAH2_NS
                     class T,
                     typename Proj,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>
-                        && RAH2_NS::indirectly_copyable<RAH2_NS::ranges::iterator_t<R>, O>>* = nullptr>
+                        RAH2_NS::ranges::input_range<
+                            R> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<RAH2_NS::ranges::iterator_t<R>, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
                 operator()(R&& r, O result, T const& value, Proj proj) const
                 {
@@ -3015,8 +3021,9 @@ namespace RAH2_NS
                     typename O, // RAH2_STD::weakly_incrementable
                     typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
                     RAH2_STD::enable_if_t<
-                        input_iterator<I> && sentinel_for<S, I> && weakly_incrementable<O>
-                        && indirectly_copyable<I, O>>* = nullptr>
+                        input_iterator<
+                            I> && sentinel_for<S, I> && weakly_incrementable<O> && indirectly_copyable<I, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_if_result<I, O>
                 operator()(I first, S last, O result, Pred pred) const
                 {
@@ -3038,8 +3045,9 @@ namespace RAH2_NS
                     typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
                     typename Proj, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
                     RAH2_STD::enable_if_t<
-                        input_iterator<I> && sentinel_for<S, I> && weakly_incrementable<O>
-                        && indirectly_copyable<I, O>>* = nullptr>
+                        input_iterator<
+                            I> && sentinel_for<S, I> && weakly_incrementable<O> && indirectly_copyable<I, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_if_result<I, O>
                 operator()(I first, S last, O result, Pred pred, Proj proj) const
                 {
@@ -3061,8 +3069,7 @@ namespace RAH2_NS
                     typename O, // RAH2_NS::weakly_incrementable
                     typename Pred,
                     RAH2_STD::enable_if_t<
-                        input_range<R> && weakly_incrementable<O>
-                        && indirectly_copyable<iterator_t<R>, O>>* = nullptr>
+                        input_range<R> && weakly_incrementable<O> && indirectly_copyable<iterator_t<R>, O>>* = nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_if_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
                 operator()(R&& r, O result, Pred pred) const
                 {
@@ -3079,8 +3086,7 @@ namespace RAH2_NS
                     typename Pred,
                     typename Proj, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
                     RAH2_STD::enable_if_t<
-                        input_range<R> && weakly_incrementable<O>
-                        && indirectly_copyable<iterator_t<R>, O>>* = nullptr>
+                        input_range<R> && weakly_incrementable<O> && indirectly_copyable<iterator_t<R>, O>>* = nullptr>
                 constexpr RAH2_NS::ranges::remove_copy_if_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
                 operator()(R&& r, O result, Pred pred, Proj proj) const
                 {
@@ -3219,8 +3225,8 @@ namespace RAH2_NS
                     typename Predicate,
                     typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<ForwardIterator>
-                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                        forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* =
+                        nullptr>
                 subrange<ForwardIterator> operator()(
                     ForwardIterator first, ForwardSentinel last, Predicate predicate, Proj proj = {}) const
                 {
@@ -3717,10 +3723,10 @@ namespace RAH2_NS
                 RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
                 operator()(R1&& r1, R2&& r2, Pred pred = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
-                    constexpr bool R1SizedRA = RAH2_NS::ranges::sized_range<R1>
-                                               and RAH2_NS::ranges::random_access_range<R1>;
-                    constexpr bool R2SizedRA = RAH2_NS::ranges::sized_range<R2>
-                                               and RAH2_NS::ranges::random_access_range<R2>;
+                    constexpr bool R1SizedRA =
+                        RAH2_NS::ranges::sized_range<R1> and RAH2_NS::ranges::random_access_range<R1>;
+                    constexpr bool R2SizedRA =
+                        RAH2_NS::ranges::sized_range<R2> and RAH2_NS::ranges::random_access_range<R2>;
                     return search_range<R1SizedRA, R2SizedRA>(
                         r1, r2, RAH2_STD::move(pred), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
                 }
@@ -4137,8 +4143,8 @@ namespace RAH2_NS
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        forward_iterator<
+                            I1> && sentinel_for<S1, I1> && forward_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr RAH2_NS::ranges::subrange<I1> operator()(
                     I1 first1,
                     S1 last1,
@@ -4224,8 +4230,9 @@ namespace RAH2_NS
                     typename Sentinel2,
                     typename OutputIterator,
                     RAH2_STD::enable_if_t<
-                        input_iterator<InputIterator1> && sentinel_for<Sentinel1, InputIterator1>
-                        && input_iterator<InputIterator2> && sentinel_for<Sentinel2, InputIterator2>>* = nullptr>
+                        input_iterator<
+                            InputIterator1> && sentinel_for<Sentinel1, InputIterator1> && input_iterator<InputIterator2> && sentinel_for<Sentinel2, InputIterator2>>* =
+                        nullptr>
                 set_difference_result<InputIterator1, OutputIterator> operator()(
                     InputIterator1 first1,
                     Sentinel1 last1,
@@ -4727,8 +4734,8 @@ namespace RAH2_NS
                     class Proj2 = RAH2_NS::details::identity,
                     typename Pred = RAH2_NS::ranges::equal_to,
                     RAH2_STD::enable_if_t<
-                        forward_iterator<I1> && sentinel_for<S1, I1> && forward_iterator<I2>
-                        && sentinel_for<S2, I2>>* = nullptr>
+                        forward_iterator<
+                            I1> && sentinel_for<S1, I1> && forward_iterator<I2> && sentinel_for<S2, I2>>* = nullptr>
                 constexpr bool operator()(
                     I1 first1,
                     S1 last1,
@@ -4830,8 +4837,8 @@ namespace RAH2_NS
                     typename Sentinel,
                     typename Compare = RAH2_NS::ranges::less,
                     RAH2_STD::enable_if_t<
-                        bidirectional_iterator<BidirectionalIterator>
-                        && sentinel_for<Sentinel, BidirectionalIterator>>* = nullptr>
+                        bidirectional_iterator<
+                            BidirectionalIterator> && sentinel_for<Sentinel, BidirectionalIterator>>* = nullptr>
                 next_permutation_result<BidirectionalIterator>
                 operator()(BidirectionalIterator first, Sentinel last, Compare compare = {}) const
                 {
@@ -5185,8 +5192,9 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::forward_iterator<I> && RAH2_NS::sentinel_for<S, I>
-                        && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* = nullptr>
+                        RAH2_NS::forward_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<I, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::rotate_copy_result<I, O>
                 operator()(I first, I middle, S last, O result) const
                 {
@@ -5201,8 +5209,9 @@ namespace RAH2_NS
                     typename R,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::ranges::forward_range<R> && RAH2_NS::weakly_incrementable<O>
-                        && RAH2_NS::indirectly_copyable<RAH2_NS::ranges::iterator_t<R>, O>>* = nullptr>
+                        RAH2_NS::ranges::forward_range<
+                            R> && RAH2_NS::weakly_incrementable<O> && RAH2_NS::indirectly_copyable<RAH2_NS::ranges::iterator_t<R>, O>>* =
+                        nullptr>
                 constexpr RAH2_NS::ranges::rotate_copy_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
                 operator()(R&& r, RAH2_NS::ranges::iterator_t<R> middle, O result) const
                 {

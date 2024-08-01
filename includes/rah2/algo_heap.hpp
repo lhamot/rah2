@@ -336,8 +336,8 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     RAH2_STD::enable_if_t<
-                        random_access_iterator<RandomAccessIterator>
-                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                        random_access_iterator<
+                            RandomAccessIterator> && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
                     using difference_type =
@@ -434,8 +434,8 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     RAH2_STD::enable_if_t<
-                        random_access_iterator<RandomAccessIterator>
-                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                        random_access_iterator<
+                            RandomAccessIterator> && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
                     using difference_type =
@@ -525,8 +525,8 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     RAH2_STD::enable_if_t<
-                        random_access_iterator<RandomAccessIterator>
-                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                        random_access_iterator<
+                            RandomAccessIterator> && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
                     // We do bottom-up heap construction as per Sedgewick. Such construction is O(n).
@@ -764,8 +764,8 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     RAH2_STD::enable_if_t<
-                        random_access_iterator<RandomAccessIterator>
-                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                        random_access_iterator<
+                            RandomAccessIterator> && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 bool operator()(RandomAccessIterator first, Sentinel last) const
                 {
                     return (RAH2_NS::ranges::is_heap_until(first, last) == last);

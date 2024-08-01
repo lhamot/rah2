@@ -271,9 +271,10 @@ struct concept_test_impl
         RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<T2>().b()), int>>;
 
     constexpr static bool value =
-        RAH2_NS::concepts::is_true_v<Diagnostic, !RAH2_STD::has_virtual_destructor<T>::value>
-        && RAH2_NS::concepts::compiles<Diagnostic, T, check_build>
-        && RAH2_NS::concepts::compiles<Diagnostic, T, check_true>;
+        RAH2_NS::concepts::is_true_v<
+            Diagnostic,
+            !RAH2_STD::has_virtual_destructor<T>::
+                value> && RAH2_NS::concepts::compiles<Diagnostic, T, check_build> && RAH2_NS::concepts::compiles<Diagnostic, T, check_true>;
 };
 
 template <typename T>
@@ -946,16 +947,16 @@ try
             // assert(iter->member == 2); // Check for mutability
             // assert((*iter).member == 2); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(*iter)>
-                    || (not RAH2_NS::is_reference_v<decltype(*iter)>),
+                RAH2_NS::is_rvalue_reference_v<
+                    decltype(*iter)> || (not RAH2_NS::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_copy)
         {
             assert(elt.member == 2); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(elt)>
-                    || (not RAH2_NS::is_reference_v<decltype(elt)>),
+                RAH2_NS::is_rvalue_reference_v<
+                    decltype(elt)> || (not RAH2_NS::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
         auto r_ref = vec | RAH2_NS::views::transform([](auto a) { return a.member; });
@@ -965,16 +966,16 @@ try
         {
             assert(*iter == 1); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(*iter)>
-                    || (not RAH2_NS::is_reference_v<decltype(*iter)>),
+                RAH2_NS::is_rvalue_reference_v<
+                    decltype(*iter)> || (not RAH2_NS::is_reference_v<decltype(*iter)>),
                 "*iter is not expected to be a reference");
         }
         for (auto&& elt : r_ref)
         {
             assert(elt == 1); // Check for mutability
             static_assert(
-                RAH2_NS::is_rvalue_reference_v<decltype(elt)>
-                    || (not RAH2_NS::is_reference_v<decltype(elt)>),
+                RAH2_NS::is_rvalue_reference_v<
+                    decltype(elt)> || (not RAH2_NS::is_reference_v<decltype(elt)>),
                 "elt is not expected to be a reference");
         }
     }

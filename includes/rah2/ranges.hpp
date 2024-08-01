@@ -151,26 +151,26 @@ namespace RAH2_NS
 #define RAH2_SELF (*static_cast<I*>(this))
 #define RAH2_SELF_CONST (*static_cast<I const*>(this))
 
-#define RAH2_POST_INCR(CAT)                                                                        \
-    template <                                                                                     \
-        typename C = CAT,                                                                          \
-        RAH2_STD::enable_if_t<                                                                     \
-            RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>                                \
-            or RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>                 \
-    auto operator++(int)                                                                           \
-    {                                                                                              \
-        auto it = *this;                                                                           \
-        ++(*this);                                                                                 \
-        return it;                                                                                 \
-    }                                                                                              \
-    template <                                                                                     \
-        typename C = CAT,                                                                          \
-        RAH2_STD::enable_if_t<                                                                     \
-            !RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>                               \
-            and !RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>               \
-    void operator++(int)                                                                           \
-    {                                                                                              \
-        ++(*this);                                                                                 \
+#define RAH2_POST_INCR(CAT)                                                                                                          \
+    template <                                                                                                                       \
+        typename C = CAT,                                                                                                            \
+        RAH2_STD::enable_if_t<                                                                                                       \
+            RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag> or RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* =    \
+            nullptr>                                                                                                                 \
+    auto operator++(int)                                                                                                             \
+    {                                                                                                                                \
+        auto it = *this;                                                                                                             \
+        ++(*this);                                                                                                                   \
+        return it;                                                                                                                   \
+    }                                                                                                                                \
+    template <                                                                                                                       \
+        typename C = CAT,                                                                                                            \
+        RAH2_STD::enable_if_t<                                                                                                       \
+            !RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag> and !RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = \
+            nullptr>                                                                                                                 \
+    void operator++(int)                                                                                                             \
+    {                                                                                                                                \
+        ++(*this);                                                                                                                   \
     }
 
 #define RAH2_POST_DECR                                                                             \
@@ -2189,8 +2189,9 @@ namespace RAH2_NS
             template <
                 typename R2 = R,
                 RAH2_STD::enable_if_t<
-                    !RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
-                    && RAH2_NS::ranges::sized_range<R2>>* = nullptr>
+                    !RAH2_NS::ranges::common_range<
+                        R2> && RAH2_NS::ranges::random_access_range<R2> && RAH2_NS::ranges::sized_range<R2>>* =
+                    nullptr>
             auto begin()
             {
                 return RAH2_NS::ranges::begin(base_);
@@ -2198,9 +2199,10 @@ namespace RAH2_NS
 
             template <
                 typename R2 = R,
-                RAH2_STD::enable_if_t<
-                    !(!RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
-                      && RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
+                RAH2_STD::enable_if_t<!(
+                    !RAH2_NS::ranges::common_range<
+                        R2> && RAH2_NS::ranges::random_access_range<R2> && RAH2_NS::ranges::sized_range<R2>)>* =
+                    nullptr>
             auto begin()
             {
                 return common_iterator(RAH2_NS::ranges::begin(base_));
@@ -2215,8 +2217,9 @@ namespace RAH2_NS
             template <
                 typename R2 = R,
                 RAH2_STD::enable_if_t<
-                    !RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
-                    && RAH2_NS::ranges::sized_range<R2>>* = nullptr>
+                    !RAH2_NS::ranges::common_range<
+                        R2> && RAH2_NS::ranges::random_access_range<R2> && RAH2_NS::ranges::sized_range<R2>>* =
+                    nullptr>
             auto end()
             {
                 return RAH2_NS::ranges::begin(base_) + RAH2_NS::ranges::size(base_);
@@ -2224,9 +2227,10 @@ namespace RAH2_NS
 
             template <
                 typename R2 = R,
-                RAH2_STD::enable_if_t<
-                    !(!RAH2_NS::ranges::common_range<R2> && RAH2_NS::ranges::random_access_range<R2>
-                      && RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
+                RAH2_STD::enable_if_t<!(
+                    !RAH2_NS::ranges::common_range<
+                        R2> && RAH2_NS::ranges::random_access_range<R2> && RAH2_NS::ranges::sized_range<R2>)>* =
+                    nullptr>
 
             auto end()
             {
@@ -2712,8 +2716,8 @@ namespace RAH2_NS
             struct all_type_impl
             {
                 static constexpr bool value =
-                    Check::template value<RAH2_STD::tuple_element_t<Index, Tuple>>
-                    && all_type_impl<Tuple, Index - 1, Check>::value;
+                    Check::template value<
+                        RAH2_STD::tuple_element_t<Index, Tuple>> && all_type_impl<Tuple, Index - 1, Check>::value;
             };
 
             template <typename Tuple, typename Check>
@@ -4096,8 +4100,8 @@ namespace RAH2_NS
             template <
                 typename U = R,
                 RAH2_STD::enable_if_t<
-                    !RAH2_NS::ranges::common_range<U>
-                    and !RAH2_NS::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
+                    !RAH2_NS::ranges::common_range<
+                        U> and !RAH2_NS::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
             sentinel end()
             {
                 return sentinel{RAH2_NS::ranges::end(base_)};
@@ -4106,8 +4110,8 @@ namespace RAH2_NS
             template <
                 typename U = R,
                 RAH2_STD::enable_if_t<
-                    !RAH2_NS::ranges::common_range<U>
-                    and RAH2_NS::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
+                    !RAH2_NS::ranges::common_range<
+                        U> and RAH2_NS::sized_sentinel_for<inner_sentinel, inner_iterator>>* = nullptr>
             iterator end()
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
@@ -4608,8 +4612,9 @@ namespace RAH2_NS
                 template <
                     typename U = R,
                     RAH2_STD::enable_if_t<
-                        bidirectional_range<U>
-                        && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* = nullptr>
+                        bidirectional_range<
+                            U> && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* =
+                        nullptr>
                 iterator& operator--()
                 {
                     assert(view_ != nullptr);
@@ -4623,8 +4628,8 @@ namespace RAH2_NS
                 template <
                     typename U = R,
                     RAH2_STD::enable_if_t<
-                        bidirectional_range<U>
-                        && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* =
+                        bidirectional_range<
+                            U> && assignable_from<RAH2_STD::add_lvalue_reference_t<iterator_t<U>>, sentinel_t<U>>>* =
                         nullptr>
                 RAH2_POST_DECR;
                 RAH2_NS::ranges::range_reference_t<R> operator*() const
