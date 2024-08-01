@@ -14,6 +14,9 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.ref }}
 
+    - name: Setup clang
+      run: sudo apt-get install clang-18
+    
     - name: Get clang version
       run: clang-format --version 
 
