@@ -3,9 +3,11 @@ name: clang_format
 on:
   pull_request:
     branches: [ "master" ]
+    types: closed
     
 jobs:
   clang_format:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
