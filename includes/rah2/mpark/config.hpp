@@ -37,7 +37,8 @@
 #define MPARK_ALWAYS_INLINE inline
 #endif
 
-#if __has_builtin(__builtin_addressof) || (defined(__GNUC__) && __GNUC__ >= 7) || defined(_MSC_VER)
+#if __has_builtin(__builtin_addressof) || \
+    (defined(__GNUC__) && __GNUC__ >= 7) || defined(_MSC_VER)
 #define MPARK_BUILTIN_ADDRESSOF
 #endif
 
@@ -53,8 +54,8 @@
 #define MPARK_TYPE_PACK_ELEMENT
 #endif
 
-#if defined(__cpp_constexpr) && __cpp_constexpr >= 200704                                          \
-    && !(defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ == 9)
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 200704 && \
+    !(defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ == 9)
 #define MPARK_CPP11_CONSTEXPR
 #endif
 
@@ -62,8 +63,9 @@
 #define MPARK_CPP14_CONSTEXPR
 #endif
 
-#if __has_feature(cxx_exceptions) || defined(__cpp_exceptions)                                     \
-    || (defined(_MSC_VER) && defined(_CPPUNWIND)) || defined(__EXCEPTIONS)
+#if __has_feature(cxx_exceptions) || defined(__cpp_exceptions) || \
+    (defined(_MSC_VER) && defined(_CPPUNWIND)) || \
+    defined(__EXCEPTIONS)
 #define MPARK_EXCEPTIONS
 #endif
 
@@ -87,9 +89,9 @@
 #define MPARK_VARIABLE_TEMPLATES
 #endif
 
-#if !defined(__GLIBCXX__) || __has_include(<codecvt>) // >= libstdc++-5
+#if !defined(__GLIBCXX__) || __has_include(<codecvt>)  // >= libstdc++-5
 #define MPARK_TRIVIALITY_TYPE_TRAITS
 #define MPARK_INCOMPLETE_TYPE_TRAITS
 #endif
 
-#endif // MPARK_CONFIG_HPP
+#endif  // MPARK_CONFIG_HPP
