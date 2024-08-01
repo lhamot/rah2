@@ -19,9 +19,10 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 18 all
+          rm llvm.sh
     
     - name: Get clang version
-      run: clang-format --version 
+      run: clang-format-18 --version 
 
     - name: Format All
       run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\|c\)' -exec clang-format --verbose -style=file -i {} \;
