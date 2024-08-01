@@ -15,7 +15,10 @@ jobs:
         ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Setup clang
-      run: sudo apt-get install clang-18
+      run: |
+          deb http://apt.llvm.org/focal/ llvm-toolchain-focal-18 main
+          deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-18 main
+          apt-get install clang-format-18
     
     - name: Get clang version
       run: clang-format --version 
