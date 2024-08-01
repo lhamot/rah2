@@ -16,9 +16,9 @@ jobs:
 
     - name: Setup clang
       run: |
-          deb http://apt.llvm.org/focal/ llvm-toolchain-focal-18 main
-          deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-18 main
-          apt-get install clang-format-18
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18 all
     
     - name: Get clang version
       run: clang-format --version 
