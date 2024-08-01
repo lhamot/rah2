@@ -10,7 +10,7 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.ref }}
 
@@ -21,6 +21,6 @@ jobs:
       run: |
           git config --global user.email "loic.hamot@yahoo.fr"
           git config --global user.name "lhamot"
-          git commit -a --amend --no-edit
-          git push --force-with-lease
+          git commit -a -m "formating"
+          git push
           echo "Complete"
