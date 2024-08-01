@@ -72,8 +72,7 @@ struct test_all_of_
             range_type,
             [&]
             {
-                auto result = STD::all_of(
-                    perf_no, [](intptr_t x) { return x == 0; }, &Coord::x);
+                auto result = STD::all_of(perf_no, [](intptr_t x) { return x == 0; }, &Coord::x);
                 CHECK(result);
             });
     }
@@ -137,8 +136,7 @@ struct test_any_of_
             range_type,
             [&]
             {
-                auto result = STD::any_of(
-                    perf_no, [](intptr_t v) { return v == 1; }, &Coord::x);
+                auto result = STD::any_of(perf_no, [](intptr_t v) { return v == 1; }, &Coord::x);
                 assert(!result);
             });
     }
@@ -203,8 +201,7 @@ struct test_none_of_
             range_type,
             [&]
             {
-                auto result = STD::none_of(
-                    perf_no, [](intptr_t x) { return x == 1; }, &Coord::x);
+                auto result = STD::none_of(perf_no, [](intptr_t x) { return x == 1; }, &Coord::x);
                 assert(result);
             });
     }
@@ -284,8 +281,7 @@ struct test_for_each_
                 {
                     intptr_t sum = 0;
                     auto r3 = make_test_view_adapter<CS, Tag, Sized>(coord_vec);
-                    STD::for_each(
-                        r3, [&sum](intptr_t x) { sum += x; }, &Coord::x);
+                    STD::for_each(r3, [&sum](intptr_t x) { sum += x; }, &Coord::x);
                     assert(sum == 1000000 * RELEASE_MULTIPLIER);
                 }));
     }

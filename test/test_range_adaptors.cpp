@@ -313,8 +313,8 @@ struct make_drop_while_view
     }
     using V = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized =
-        RAH2_NS::ranges::forward_range<
-            V> && RAH2_NS::sized_sentinel_for<RAH2_NS::ranges::sentinel_t<V>, RAH2_NS::ranges::iterator_t<V>>;
+        RAH2_NS::ranges::forward_range<V>
+        && RAH2_NS::sized_sentinel_for<RAH2_NS::ranges::sentinel_t<V>, RAH2_NS::ranges::iterator_t<V>>;
     static constexpr bool is_common = RAH2_NS::ranges::common_range<V>;
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<V>;
