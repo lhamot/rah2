@@ -25,7 +25,7 @@ jobs:
       run: clang-format-18 --version 
 
     - name: Format All
-      run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\|c\)' -exec clang-format --verbose -style=file -i {} \;
+      run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\|c\)' -exec clang-format-18 --verbose -style=file -i {} \;
 
     - name: Amend the last commit
       run: |
