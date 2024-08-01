@@ -2084,8 +2084,8 @@ struct test_remove_if_
         {
             RAH2_STD::vector<Coord> in_{{1, 0}, {2, 0}, {1, 0}, {3, 0}, {1, 0}};
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
-            auto const removed = RAH2_NS::ranges::remove_if(
-                in, [](auto v) { return v == 1; }, &Coord::x);
+            auto const removed =
+                RAH2_NS::ranges::remove_if(in, [](auto v) { return v == 1; }, &Coord::x);
             assert(RAH2_STD::distance(in.begin(), removed.begin()) == 2);
             assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
 
@@ -2132,8 +2132,8 @@ struct test_remove_if_
                     {
                         auto in_copy = in_;
                         auto in = make_test_view_adapter<CS, Tag, Sized>(in_copy);
-                        auto const removed = RAH2_NS::ranges::remove_if(
-                            in, [](auto v) { return v == 1; }, &Coord::x);
+                        auto const removed =
+                            RAH2_NS::ranges::remove_if(in, [](auto v) { return v == 1; }, &Coord::x);
                         assert(
                             RAH2_STD::distance(in.begin(), removed.begin())
                             == 2 + 1000000 * RELEASE_MULTIPLIER);
@@ -2407,8 +2407,7 @@ void test_replace_if()
     testSuite.test_case("sample");
     /// [rah2::ranges::replace_if]
     RAH2_STD::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
-    RAH2_NS::ranges::replace_if(
-        q, [](int x) { return 5 < x; }, 5);
+    RAH2_NS::ranges::replace_if(q, [](int x) { return 5 < x; }, 5);
     assert(q == (RAH2_STD::array<int, 8>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_if]
 }
@@ -2430,8 +2429,7 @@ void test_replace_copy_if()
     RAH2_STD::vector<int> o;
     RAH2_STD::array<int, 8> q{1, 2, 3, 6, 7, 8, 4, 5};
     o.resize(q.size());
-    RAH2_NS::ranges::replace_copy_if(
-        q, o.begin(), [](int x) { return 5 < x; }, 5);
+    RAH2_NS::ranges::replace_copy_if(q, o.begin(), [](int x) { return 5 < x; }, 5);
     assert(o == (RAH2_STD::vector<int>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_copy_if]
 }

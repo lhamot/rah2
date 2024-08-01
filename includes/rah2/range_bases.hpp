@@ -275,12 +275,13 @@ namespace RAH2_NS
 
     // ***************************** <concepts> concept *******************************************
     template <class Derived, class Base>
-    constexpr bool derived_from = RAH2_NS::is_base_of_v<Base, Derived>&&
-        RAH2_NS::is_convertible_v<Derived const volatile*, Base const volatile*>;
+    constexpr bool derived_from =
+        RAH2_NS::is_base_of_v<Base, Derived>
+        && RAH2_NS::is_convertible_v<Derived const volatile*, Base const volatile*>;
 
     template <class T, class... Args>
     constexpr bool constructible_from =
-        RAH2_NS::is_destructible_v<T>&& RAH2_NS::is_constructible_v<T, Args...>;
+        RAH2_NS::is_destructible_v<T> && RAH2_NS::is_constructible_v<T, Args...>;
 
     namespace details
     {
@@ -290,10 +291,8 @@ namespace RAH2_NS
             template <class F>
             using can_static_cast = decltype(static_cast<To>(RAH2_STD::declval<F>()));
 
-            static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    is_convertible_v<From, To>> && concepts::compiles<Diagnostic, From, can_static_cast>;
+            static constexpr bool value = concepts::is_true_v<Diagnostic, is_convertible_v<From, To>>
+                                          && concepts::compiles<Diagnostic, From, can_static_cast>;
         };
 
         template <class LHS, class RHS, bool Diagnostic = false>
@@ -305,9 +304,8 @@ namespace RAH2_NS
                 LHS_>>;
 
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    RAH2_NS::is_lvalue_reference_v<LHS>> && concepts::compiles<Diagnostic, LHS, check_assign>;
+                concepts::is_true_v<Diagnostic, RAH2_NS::is_lvalue_reference_v<LHS>>
+                && concepts::compiles<Diagnostic, LHS, check_assign>;
         };
 
         template <typename T, bool Diagnostic = false>
@@ -317,9 +315,8 @@ namespace RAH2_NS
             using default_ctor = decltype(T2{});
 
             constexpr static bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    RAH2_NS::constructible_from<T>> && concepts::compiles<Diagnostic, T, default_ctor>;
+                concepts::is_true_v<Diagnostic, RAH2_NS::constructible_from<T>>
+                && concepts::compiles<Diagnostic, T, default_ctor>;
         };
     } // namespace details
 
@@ -328,7 +325,7 @@ namespace RAH2_NS
 
     template <class T>
     constexpr bool move_constructible =
-        RAH2_NS::constructible_from<T, T>&& RAH2_NS::convertible_to<T, T>;
+        RAH2_NS::constructible_from<T, T> && RAH2_NS::convertible_to<T, T>;
 
     template <class U, typename V>
     constexpr bool same_as = RAH2_NS::is_same_v<U, V>;
@@ -344,26 +341,27 @@ namespace RAH2_NS
 #endif
 
     template <class T>
-    constexpr bool movable = RAH2_NS::is_object_v<T>&& RAH2_NS::move_constructible<T>&&
-        RAH2_NS::assignable_from<T&, T>&& RAH2_NS::swappable<T>;
+    constexpr bool movable = RAH2_NS::is_object_v<T> && RAH2_NS::move_constructible<T>
+                             && RAH2_NS::assignable_from<T&, T> && RAH2_NS::swappable<T>;
 
     template <class T>
-    constexpr bool copy_constructible = RAH2_NS::move_constructible<T>&&
-        RAH2_NS::constructible_from<T, T&>&& RAH2_NS::convertible_to<T&, T>&&
-            RAH2_NS::constructible_from<T, T const&>&& RAH2_NS::convertible_to<T const&, T>&&
-                RAH2_NS::constructible_from<T, T const>&& RAH2_NS::convertible_to<T const, T>;
+    constexpr bool copy_constructible =
+        RAH2_NS::move_constructible<T> && RAH2_NS::constructible_from<T, T&>
+        && RAH2_NS::convertible_to<T&, T> && RAH2_NS::constructible_from<T, T const&>
+        && RAH2_NS::convertible_to<T const&, T> && RAH2_NS::constructible_from<T, T const>
+        && RAH2_NS::convertible_to<T const, T>;
 
     template <class T>
     constexpr bool copyable =
-        RAH2_NS::copy_constructible<T>&& RAH2_NS::movable<T>&& RAH2_NS::assignable_from<T&, T&>&&
-            RAH2_NS::assignable_from<T&, T const&>&& RAH2_NS::assignable_from<T&, T const>;
+        RAH2_NS::copy_constructible<T> && RAH2_NS::movable<T> && RAH2_NS::assignable_from<T&, T&>
+        && RAH2_NS::assignable_from<T&, T const&> && RAH2_NS::assignable_from<T&, T const>;
 
     template <typename T>
     constexpr bool default_initializable = details::default_initializable_impl<T>::value;
 
     template <class T, bool Diagnostic = false>
-    constexpr bool semiregular = concepts::is_true_v<Diagnostic, RAH2_NS::copyable<T>>&&
-        details::default_initializable_impl<T, Diagnostic>::value;
+    constexpr bool semiregular = concepts::is_true_v<Diagnostic, RAH2_NS::copyable<T>>
+                                 && details::default_initializable_impl<T, Diagnostic>::value;
 
     namespace details
     {
@@ -387,7 +385,7 @@ namespace RAH2_NS
     template <class T, bool Diagnostic = false>
     constexpr bool regular = //
         semiregular<T, Diagnostic> //
-            && equality_comparable<T, Diagnostic>;
+        && equality_comparable<T, Diagnostic>;
 
     template <class T>
     constexpr bool destructible = RAH2_NS::is_nothrow_destructible_v<T>;
@@ -413,11 +411,14 @@ namespace RAH2_NS
                 decltype(static_cast<bool>(RAH2_STD::declval<X>() >= RAH2_STD::declval<Y>()));
 
             static constexpr bool value =
-                concepts::compiles2<
-                    Diagnostic,
-                    NoRefT,
-                    NoRefU,
-                    t_lesser_u> && concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_greater_u> && concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_lesserequal_u> && concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_greaterequal_u> && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_lesser_u> && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_greater_u> && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_lesserequal_u> && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_greaterequal_u>;
+                concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_lesser_u>
+                && concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_greater_u>
+                && concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_lesserequal_u>
+                && concepts::compiles2<Diagnostic, NoRefT, NoRefU, t_greaterequal_u>
+                && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_lesser_u>
+                && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_greater_u>
+                && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_lesserequal_u>
+                && concepts::compiles2<Diagnostic, NoRefU, NoRefT, t_greaterequal_u>;
         };
         template <typename T, typename U>
         constexpr bool partially_ordered_with = partially_ordered_with_impl<T, U>::value;
@@ -426,10 +427,8 @@ namespace RAH2_NS
         struct totally_ordered_impl
         {
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    RAH2_NS::equality_comparable<
-                        T>> && details::partially_ordered_with_impl<T, T, Diagnostic>::value;
+                concepts::is_true_v<Diagnostic, RAH2_NS::equality_comparable<T>>
+                && details::partially_ordered_with_impl<T, T, Diagnostic>::value;
         };
 
     } // namespace details
@@ -538,8 +537,8 @@ namespace RAH2_NS
         struct iterator_concept_impl<
             I,
             RAH2_STD::enable_if_t<
-                !RAH2_NS::is_pointer_v<
-                    I> && !concepts::compiles<false, I, has_iterator_iterator_concept> && concepts::compiles<false, I, has_iterator_traits_iterator_concept>>>
+                !RAH2_NS::is_pointer_v<I> && !concepts::compiles<false, I, has_iterator_iterator_concept>
+                && concepts::compiles<false, I, has_iterator_traits_iterator_concept>>>
         {
             using type = typename RAH2_STD::iterator_traits<I>::iterator_concept;
         };
@@ -548,8 +547,9 @@ namespace RAH2_NS
         struct iterator_concept_impl<
             I,
             RAH2_STD::enable_if_t<
-                !RAH2_NS::is_pointer_v<
-                    I> && !concepts::compiles<false, I, has_iterator_iterator_concept> && !concepts::compiles<false, I, has_iterator_traits_iterator_concept> && concepts::compiles<false, I, has_iterator_traits_iterator_category>>>
+                !RAH2_NS::is_pointer_v<I> && !concepts::compiles<false, I, has_iterator_iterator_concept>
+                && !concepts::compiles<false, I, has_iterator_traits_iterator_concept>
+                && concepts::compiles<false, I, has_iterator_traits_iterator_category>>>
         {
             using type = typename RAH2_STD::iterator_traits<I>::iterator_category;
         };
@@ -567,10 +567,8 @@ namespace RAH2_NS
             using can_indirect_assign2 = decltype(*RAH2_STD::declval<O>() = RAH2_STD::declval<T>());
 
             static constexpr bool value =
-                concepts::compiles<
-                    Diagnostic,
-                    Out,
-                    can_indirect_assign1> && concepts::compiles<Diagnostic, Out, can_indirect_assign2>;
+                concepts::compiles<Diagnostic, Out, can_indirect_assign1>
+                && concepts::compiles<Diagnostic, Out, can_indirect_assign2>;
         };
 
         template <typename In, bool Diagnostic = false>
@@ -607,9 +605,8 @@ namespace RAH2_NS
                 indirectly_writable_impl<Out, RAH2_NS::iter_rvalue_reference_t<In2>>::value>;
 
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    indirectly_readable_impl<In>::value> && concepts::compiles<Diagnostic, In, indirectly_writable>;
+                concepts::is_true_v<Diagnostic, indirectly_readable_impl<In>::value>
+                && concepts::compiles<Diagnostic, In, indirectly_writable>;
         };
 
         template <class In, class Out, bool Diagnostic = false>
@@ -627,12 +624,11 @@ namespace RAH2_NS
             using assignable_from = RAH2_STD::enable_if_t<
                 RAH2_NS::assignable_from<RAH2_NS::iter_value_t<In2>&, RAH2_NS::iter_rvalue_reference_t<In2>>>;
 
-            static constexpr bool value =
-                indirectly_movable_impl<In, Out, Diagnostic>::value
-                && concepts::compiles<
-                    Diagnostic,
-                    In,
-                    indirectly_writable> && concepts::compiles<Diagnostic, In, movable> && concepts::compiles<Diagnostic, In, constructible_from> && concepts::compiles<Diagnostic, In, assignable_from>;
+            static constexpr bool value = indirectly_movable_impl<In, Out, Diagnostic>::value
+                                          && concepts::compiles<Diagnostic, In, indirectly_writable>
+                                          && concepts::compiles<Diagnostic, In, movable>
+                                          && concepts::compiles<Diagnostic, In, constructible_from>
+                                          && concepts::compiles<Diagnostic, In, assignable_from>;
         };
 
         template <class I1, class I2 = I1, bool Diagnostic = false>
@@ -652,10 +648,12 @@ namespace RAH2_NS
                 RAH2_STD::declval<U2 const>(), RAH2_STD::declval<U2 const>()));
 
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    indirectly_readable_impl<I1>::
-                        value> && concepts::is_true_v<Diagnostic, indirectly_readable_impl<I2>::value> && concepts::compiles<Diagnostic, I1, can_swap_1_1> && concepts::compiles<Diagnostic, I1, can_swap_1_2> && concepts::compiles<Diagnostic, I1, can_swap_2_1> && concepts::compiles<Diagnostic, I2, can_swap_2_2>;
+                concepts::is_true_v<Diagnostic, indirectly_readable_impl<I1>::value>
+                && concepts::is_true_v<Diagnostic, indirectly_readable_impl<I2>::value>
+                && concepts::compiles<Diagnostic, I1, can_swap_1_1>
+                && concepts::compiles<Diagnostic, I1, can_swap_1_2>
+                && concepts::compiles<Diagnostic, I1, can_swap_2_1>
+                && concepts::compiles<Diagnostic, I2, can_swap_2_2>;
         };
 
         template <typename I, bool Diagnostic = false>
@@ -663,7 +661,8 @@ namespace RAH2_NS
         {
             template <class T>
             using diff_is_signed_integer = RAH2_STD::enable_if_t<
-                RAH2_NS::is_integral_v<iter_difference_t<T>> && RAH2_NS::is_signed_v<iter_difference_t<T>>>;
+                RAH2_NS::is_integral_v<iter_difference_t<T>>
+                && RAH2_NS::is_signed_v<iter_difference_t<T>>>;
             template <class T>
             using incr_type =
                 RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(++RAH2_STD::declval<T>()), T&>>;
@@ -685,9 +684,9 @@ namespace RAH2_NS
             using check_incr =
                 RAH2_STD::enable_if_t<RAH2_NS::is_same_v<decltype(RAH2_STD::declval<U&>()++), U>>;
 
-            static constexpr bool value =
-                regular<I, Diagnostic> && weakly_incrementable_impl<I, Diagnostic>::value
-                && concepts::compiles<Diagnostic, I, check_incr>;
+            static constexpr bool value = regular<I, Diagnostic>
+                                          && weakly_incrementable_impl<I, Diagnostic>::value
+                                          && concepts::compiles<Diagnostic, I, check_incr>;
         };
 
         template <typename R, bool Diagnostic = false>
@@ -708,9 +707,8 @@ namespace RAH2_NS
             using can_assign_incr = decltype(*RAH2_STD::declval<U&>()++ = RAH2_STD::declval<T&&>());
 
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    input_or_output_iterator_impl<I>::value> && indirectly_writable_impl<I, T, Diagnostic>::value
+                concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value>
+                && indirectly_writable_impl<I, T, Diagnostic>::value
                 && RAH2_NS::concepts::compiles<Diagnostic, I, can_assign_incr>;
         };
 
@@ -719,29 +717,23 @@ namespace RAH2_NS
         {
             template <typename I2>
             using derived_from_input = RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<
-                    iterator_concept<I2>,
-                    RAH2_NS::input_iterator_tag> || RAH2_NS::derived_from<iterator_concept<I2>, RAH2_NS::forward_iterator_tag>>;
+                RAH2_NS::derived_from<iterator_concept<I2>, RAH2_NS::input_iterator_tag>
+                || RAH2_NS::derived_from<iterator_concept<I2>, RAH2_NS::forward_iterator_tag>>;
 
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    input_or_output_iterator_impl<I>::value> && indirectly_readable_impl<I, Diagnostic>::value
-                && concepts::compiles<
-                    Diagnostic,
-                    I,
-                    iterator_concept> && concepts::compiles<Diagnostic, I, derived_from_input>;
+                concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value>
+                && indirectly_readable_impl<I, Diagnostic>::value
+                && concepts::compiles<Diagnostic, I, iterator_concept>
+                && concepts::compiles<Diagnostic, I, derived_from_input>;
         };
 
         template <class S, class I, bool Diagnostic = false>
         struct sentinel_for_impl
         {
             static constexpr bool value =
-                concepts::is_true_v<
-                    Diagnostic,
-                    RAH2_NS::semiregular<
-                        S,
-                        Diagnostic>> && concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value> && weakly_equality_comparable_with_impl<I, S, Diagnostic>::value;
+                concepts::is_true_v<Diagnostic, RAH2_NS::semiregular<S, Diagnostic>>
+                && concepts::is_true_v<Diagnostic, input_or_output_iterator_impl<I>::value>
+                && weakly_equality_comparable_with_impl<I, S, Diagnostic>::value;
         };
 
         template <typename I, bool Diagnostic = false>
@@ -751,10 +743,10 @@ namespace RAH2_NS
             using has_forward_tag = RAH2_STD::enable_if_t<
                 derived_from<details::iterator_concept<U>, RAH2_STD::forward_iterator_tag>>;
 
-            static constexpr bool value =
-                input_iterator_impl<I, Diagnostic>::value
-                && concepts::compiles<Diagnostic, I, has_forward_tag> && incrementable_impl<I, Diagnostic>::value
-                && sentinel_for_impl<I, I, Diagnostic>::value;
+            static constexpr bool value = input_iterator_impl<I, Diagnostic>::value
+                                          && concepts::compiles<Diagnostic, I, has_forward_tag>
+                                          && incrementable_impl<I, Diagnostic>::value
+                                          && sentinel_for_impl<I, I, Diagnostic>::value;
         };
 
         template <class S, class I, bool Diagnostic = false>
@@ -767,9 +759,8 @@ namespace RAH2_NS
                 sentinel_for_impl<S, I, Diagnostic>::value
                 && concepts::is_true_v<
                     Diagnostic,
-                    !RAH2_NS::disable_sized_sentinel_for<
-                        RAH2_STD::remove_cv_t<S>,
-                        RAH2_STD::remove_cv_t<I>>> && concepts::compiles<Diagnostic, S, less_s_i>;
+                    !RAH2_NS::disable_sized_sentinel_for<RAH2_STD::remove_cv_t<S>, RAH2_STD::remove_cv_t<I>>>
+                && concepts::compiles<Diagnostic, S, less_s_i>;
         };
 
         template <typename I, bool Diagnostic = false>
@@ -785,12 +776,10 @@ namespace RAH2_NS
             using has_bidir_cat = RAH2_STD::enable_if_t<
                 derived_from<details::iterator_concept<U>, RAH2_STD::bidirectional_iterator_tag>>;
 
-            static constexpr bool value =
-                forward_iterator_impl<I, Diagnostic>::value
-                && concepts::compiles<
-                    Diagnostic,
-                    I,
-                    has_bidir_cat> && concepts::compiles<Diagnostic, I, can_pre_decr> && concepts::compiles<Diagnostic, I, can_post_decr>;
+            static constexpr bool value = forward_iterator_impl<I, Diagnostic>::value
+                                          && concepts::compiles<Diagnostic, I, has_bidir_cat>
+                                          && concepts::compiles<Diagnostic, I, can_pre_decr>
+                                          && concepts::compiles<Diagnostic, I, can_post_decr>;
         };
 
         template <typename I, bool Diagnostic = false>
@@ -827,12 +816,13 @@ namespace RAH2_NS
 
             static constexpr bool value =
                 bidirectional_iterator_impl<I, Diagnostic>::value
-                && concepts::compiles<Diagnostic, I, has_random_access_cat> && totally_ordered_impl<I, Diagnostic>::value
+                && concepts::compiles<Diagnostic, I, has_random_access_cat>
+                && totally_ordered_impl<I, Diagnostic>::value
                 && sized_sentinel_for_impl<I, I, Diagnostic>::value
-                && concepts::compiles<
-                    Diagnostic,
-                    I,
-                    addEqual> && concepts::compiles<Diagnostic, I, add> && concepts::compiles<Diagnostic, I, add2> && concepts::compiles<Diagnostic, I, subEqual> && concepts::compiles<Diagnostic, I, sub> && concepts::compiles<Diagnostic, I, arr>;
+                && concepts::compiles<Diagnostic, I, addEqual>
+                && concepts::compiles<Diagnostic, I, add> && concepts::compiles<Diagnostic, I, add2>
+                && concepts::compiles<Diagnostic, I, subEqual>
+                && concepts::compiles<Diagnostic, I, sub> && concepts::compiles<Diagnostic, I, arr>;
         };
 
         template <typename I, bool Diagnostic = false>
@@ -851,10 +841,9 @@ namespace RAH2_NS
 
             static constexpr bool value =
                 RAH2_NS::details::random_access_iterator_impl<I, Diagnostic>::value
-                && concepts::compiles<
-                    Diagnostic,
-                    I,
-                    has_contig_tag> && concepts::compiles<Diagnostic, I, ref_is_lvalue> && concepts::compiles<Diagnostic, I, same_value_and_ref>;
+                && concepts::compiles<Diagnostic, I, has_contig_tag>
+                && concepts::compiles<Diagnostic, I, ref_is_lvalue>
+                && concepts::compiles<Diagnostic, I, same_value_and_ref>;
         };
 
         template <typename In, typename Out, bool Diagnostic = false>
@@ -868,11 +857,8 @@ namespace RAH2_NS
                 decltype(*RAH2_STD::declval<Out2>() = RAH2_STD::declval<RAH2_NS::iter_reference_t<In2>>());
 
             static constexpr bool is_indirectly_writable =
-                concepts::compiles2<
-                    Diagnostic,
-                    In,
-                    Out,
-                    can_indirect_assign1> && concepts::compiles2<Diagnostic, In, Out, can_indirect_assign2>;
+                concepts::compiles2<Diagnostic, In, Out, can_indirect_assign1>
+                && concepts::compiles2<Diagnostic, In, Out, can_indirect_assign2>;
 
             static constexpr bool value = details::indirectly_readable_impl<remove_cvref_t<In>>::value
                                           && concepts::is_true_v<Diagnostic, is_indirectly_writable>;
@@ -917,8 +903,9 @@ namespace RAH2_NS
     constexpr bool forward_iterator = details::forward_iterator_impl<I>::value;
 
     template <class I>
-    constexpr bool permutable = RAH2_NS::forward_iterator<I>&&
-        RAH2_NS::indirectly_movable_storable<I, I>&& RAH2_NS::indirectly_swappable<I, I>;
+    constexpr bool permutable =
+        RAH2_NS::forward_iterator<I> && RAH2_NS::indirectly_movable_storable<I, I>
+        && RAH2_NS::indirectly_swappable<I, I>;
 
     template <class S, class I>
     static constexpr bool sized_sentinel_for = details::sized_sentinel_for_impl<S, I>::value;
@@ -1073,8 +1060,8 @@ namespace RAH2_NS
                 typename I,
                 typename S,
                 RAH2_STD::enable_if_t<
-                    contiguous_iterator<RAH2_STD::remove_reference_t<
-                        I>> && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>>* =
+                    contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                    && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>>* =
                     nullptr>
             unwraped_pointers<
                 RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*,
@@ -1098,8 +1085,8 @@ namespace RAH2_NS
                 RAH2_STD::enable_if_t<
                     RAH2_STD::is_assignable<RAH2_NS::remove_cvref_t<I>, S>::value
                     && not(
-                        contiguous_iterator<RAH2_STD::remove_reference_t<
-                            I>> && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
+                        contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                        && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
                     nullptr>
             unwraped_iterators<RAH2_STD::remove_reference_t<I>, RAH2_STD::remove_reference_t<S>>
             unwrap(I&& it, S&& s)
@@ -1113,8 +1100,8 @@ namespace RAH2_NS
                 RAH2_STD::enable_if_t<
                     not RAH2_STD::is_assignable<I, S>::value
                     && not(
-                        contiguous_iterator<RAH2_STD::remove_reference_t<
-                            I>> && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
+                        contiguous_iterator<RAH2_STD::remove_reference_t<I>>
+                        && sized_sentinel_for<RAH2_STD::remove_reference_t<S>, RAH2_STD::remove_reference_t<I>>)>* =
                     nullptr>
             unwraped_iterators<RAH2_STD::remove_reference_t<I>, RAH2_STD::remove_reference_t<S>>
             unwrap(I&& it, S&& s)
@@ -1172,11 +1159,8 @@ namespace RAH2_NS
                 typename Proj1,
                 typename Proj2,
                 RAH2_STD::enable_if_t<
-                    RAH2_NS::is_same_v<
-                        RAH2_NS::details::identity,
-                        RAH2_NS::remove_cvref_t<
-                            Proj1>> and RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj2>>>* =
-                    nullptr>
+                    RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj1>>
+                    and RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj2>>>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj1&&, Proj2&&)
             {
                 return RAH2_STD::forward<Pred>(pred);
@@ -1242,11 +1226,8 @@ namespace RAH2_NS
                 typename Pred,
                 typename Proj,
                 RAH2_STD::enable_if_t<
-                    !RAH2_NS::is_same_v<
-                        RAH2_NS::details::identity,
-                        RAH2_NS::remove_cvref_t<
-                            Proj>> and !RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<Proj>>::value>* =
-                    nullptr>
+                    !RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj>>
+                    and !RAH2_STD::is_member_pointer<RAH2_STD::remove_reference_t<Proj>>::value>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj&& proj)
             {
                 return wrap_pred_proj_fn<
@@ -1278,11 +1259,8 @@ namespace RAH2_NS
                 typename Proj1,
                 typename Proj2,
                 RAH2_STD::enable_if_t<not(
-                    RAH2_NS::is_same_v<
-                        RAH2_NS::details::identity,
-                        RAH2_NS::remove_cvref_t<
-                            Proj1>> and RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj2>>)>* =
-                    nullptr>
+                    RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj1>>
+                    and RAH2_NS::is_same_v<RAH2_NS::details::identity, RAH2_NS::remove_cvref_t<Proj2>>)>* = nullptr>
             auto wrap_pred_proj(Pred&& pred, Proj1&& proj1, Proj2&& proj2)
             {
                 return wrap_pred_proj_fn_proj_fn<
@@ -1319,8 +1297,8 @@ namespace RAH2_NS
                 template <typename R2>
                 using has_end = decltype(ranges::end(RAH2_STD::declval<R2>()));
 
-                static constexpr bool value =
-                    concepts::compiles<Diagnostic, R, has_begin> && concepts::compiles<Diagnostic, R, has_end>;
+                static constexpr bool value = concepts::compiles<Diagnostic, R, has_begin>
+                                              && concepts::compiles<Diagnostic, R, has_end>;
             };
 
             template <class T, bool Diagnostic = false>
@@ -1452,8 +1430,8 @@ namespace RAH2_NS
                 template <
                     typename R,
                     RAH2_STD::enable_if_t<
-                        !(has_size_member<R> && !disable_sized_range<RAH2_STD::remove_cv_t<R>>)&&has_size_ADL<
-                            R>>* = nullptr>
+                        !(has_size_member<R> && !disable_sized_range<RAH2_STD::remove_cv_t<R>>)
+                        && has_size_ADL<R>>* = nullptr>
                 constexpr auto operator()(R&& range) const
                 {
                     return size(range);
@@ -1462,8 +1440,8 @@ namespace RAH2_NS
                 template <
                     typename R,
                     RAH2_STD::enable_if_t<
-                        !has_size_member<
-                            R> && !has_size_ADL<R> && sized_sentinel_for<iterator_t<R>, sentinel_t<R>>>* = nullptr>
+                        !has_size_member<R> && !has_size_ADL<R>
+                        && sized_sentinel_for<iterator_t<R>, sentinel_t<R>>>* = nullptr>
                 constexpr auto operator()(R&& range) const -> decltype(end(range) - begin(range))
                 {
                     return end(range) - begin(range);
@@ -1601,7 +1579,8 @@ namespace RAH2_NS
 
         template <class R>
         constexpr bool borrowed_range =
-            range<R> && (RAH2_NS::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
+            range<R>
+            && (RAH2_NS::is_lvalue_reference_v<R> || enable_borrowed_range<remove_cvref_t<R>>);
 
         namespace details
         {
@@ -1614,10 +1593,8 @@ namespace RAH2_NS
 
                 constexpr static bool value =
                     range_impl<T, Diagnostic>::value
-                    && concepts::compiles<
-                        Diagnostic,
-                        T,
-                        has_ranges_size> && concepts::is_true_v<Diagnostic, !(disable_sized_range<T>)>;
+                    && concepts::compiles<Diagnostic, T, has_ranges_size>
+                    && concepts::is_true_v<Diagnostic, !(disable_sized_range<T>)>;
             };
 
             template <class R, class T, bool Diagnostic = false>
@@ -1688,18 +1665,17 @@ namespace RAH2_NS
 
                 static constexpr bool value =
                     random_access_range_impl<R, Diagnostic>::value
-                    && concepts::compiles<
-                        Diagnostic,
-                        R,
-                        contiguous_iterator> && concepts::compiles<Diagnostic, R, has_data>;
+                    && concepts::compiles<Diagnostic, R, contiguous_iterator>
+                    && concepts::compiles<Diagnostic, R, has_data>;
             };
 
             template <class T, bool Diagnostic = false>
             struct constant_range_impl
             {
                 template <class U>
-                static constexpr bool constant_iterator = input_iterator<U>&&
-                    RAH2_NS::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
+                static constexpr bool constant_iterator =
+                    input_iterator<U>
+                    && RAH2_NS::is_same_v<iter_const_reference_t<U>, iter_reference_t<U>>;
 
                 template <typename U>
                 using const_iter = RAH2_STD::enable_if_t<constant_iterator<iterator_t<U>>>;
@@ -1720,7 +1696,7 @@ namespace RAH2_NS
             derived_from<R, view_base> || derived_from<R, view_interface<R>>;
 
         template <typename T>
-        constexpr bool view = range<T>&& RAH2_NS::movable<T>&& RAH2_NS::ranges::enable_view<T>;
+        constexpr bool view = range<T> && RAH2_NS::movable<T> && RAH2_NS::ranges::enable_view<T>;
 
         template <class R, class T>
         constexpr bool output_range = details::output_range_impl<R, T>::value;
@@ -1757,8 +1733,13 @@ namespace RAH2_NS
 
         template <class T>
         constexpr bool viewable_range =
-            range<
-                T> && ((RAH2_NS::ranges::view<RAH2_NS::remove_cvref_t<T>> && RAH2_NS::constructible_from<RAH2_NS::remove_cvref_t<T>, T>) || (!RAH2_NS::ranges::view<RAH2_NS::remove_cvref_t<T>> && (RAH2_NS::is_lvalue_reference_v<T> || (RAH2_NS::movable<RAH2_STD::remove_reference_t<T>> && !is_initializer_list<T>))));
+            range<T>
+            && ((RAH2_NS::ranges::view<RAH2_NS::remove_cvref_t<T>>
+                 && RAH2_NS::constructible_from<RAH2_NS::remove_cvref_t<T>, T>)
+                || (!RAH2_NS::ranges::view<RAH2_NS::remove_cvref_t<T>>
+                    && (RAH2_NS::is_lvalue_reference_v<T>
+                        || (RAH2_NS::movable<RAH2_STD::remove_reference_t<T>>
+                            && !is_initializer_list<T>))));
 
         // ******************************* ranges views ***********************************************
 #define RAH2_SELF (*static_cast<T* const>(this))
@@ -1883,9 +1864,8 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        !RAH2_NS::sized_sentinel_for<
-                            S,
-                            I> && RAH2_NS::details::weakly_equality_comparable_with<S, I>>* = nullptr>
+                        !RAH2_NS::sized_sentinel_for<S, I>
+                        && RAH2_NS::details::weakly_equality_comparable_with<S, I>>* = nullptr>
                 RAH2_NS::iter_difference_t<I> operator()(I first, S last) const
                 {
                     iter_difference_t<I> len = 0;

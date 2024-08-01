@@ -197,8 +197,8 @@ struct make_reverse_view
     }
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized =
-        RAH2_NS::ranges::sized_range<
-            BaseRange> || RAH2_NS::random_access_iterator<RAH2_NS::ranges::iterator_t<BaseRange>>;
+        RAH2_NS::ranges::sized_range<BaseRange>
+        || RAH2_NS::random_access_iterator<RAH2_NS::ranges::iterator_t<BaseRange>>;
     static constexpr bool is_common = true;
     static constexpr bool do_test = RAH2_NS::ranges::bidirectional_range<BaseRange>;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;

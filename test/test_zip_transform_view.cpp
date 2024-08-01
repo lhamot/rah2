@@ -12,9 +12,9 @@ struct make_zip_transform_view1
     }
     using BaseRange = test_view<CS, Tag, Sized>;
     static constexpr bool is_sized = RAH2_NS::ranges::sized_range<BaseRange>;
-    static constexpr bool is_common =
-        RAH2_NS::ranges::common_range<
-            BaseRange> || (RAH2_NS::ranges::sized_range<BaseRange> && RAH2_NS::ranges::random_access_range<BaseRange>);
+    static constexpr bool is_common = RAH2_NS::ranges::common_range<BaseRange>
+                                      || (RAH2_NS::ranges::sized_range<BaseRange>
+                                          && RAH2_NS::ranges::random_access_range<BaseRange>);
     static constexpr bool do_test = true;
     static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange>;
     using expected_cat = RAH2_NS::ranges::details::
@@ -36,12 +36,12 @@ struct make_zip_transform_view2
         using BaseRange2 = test_view<CS2, Tag2, Sized2>;
         static constexpr bool is_sized =
             RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::sized_range<BaseRange2>;
-        static constexpr bool is_common =
-            (RAH2_NS::ranges::sized_range<BaseRange1> && RAH2_NS::ranges::random_access_range<BaseRange1>)&&(
-                RAH2_NS::ranges::sized_range<BaseRange2> && RAH2_NS::ranges::random_access_range<BaseRange2>);
-        static constexpr bool is_borrowed =
-            RAH2_NS::ranges::enable_borrowed_range<
-                BaseRange1> && RAH2_NS::ranges::enable_borrowed_range<BaseRange2>;
+        static constexpr bool is_common = (RAH2_NS::ranges::sized_range<BaseRange1>
+                                           && RAH2_NS::ranges::random_access_range<BaseRange1>)
+                                          && (RAH2_NS::ranges::sized_range<BaseRange2>
+                                              && RAH2_NS::ranges::random_access_range<BaseRange2>);
+        static constexpr bool is_borrowed = RAH2_NS::ranges::enable_borrowed_range<BaseRange1>
+                                            && RAH2_NS::ranges::enable_borrowed_range<BaseRange2>;
         using expected_cat = RAH2_NS::ranges::details::cap_iterator_tag<
             RAH2_NS::ranges::details::common_iterator_tag<Tag, Tag2>,
             RAH2_STD::input_iterator_tag,

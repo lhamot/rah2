@@ -844,9 +844,9 @@ namespace mpark
                 };
 
                 template <typename F, typename V, typename... Vs>
-                inline static constexpr auto make_fdiagonal()
-                    -> decltype(make_fdiagonal_impl<F, V, Vs...>::impl(
-                        lib::make_index_sequence<lib::decay_t<V>::size()>{}))
+                inline static constexpr auto
+                make_fdiagonal() -> decltype(make_fdiagonal_impl<F, V, Vs...>::impl(
+                                     lib::make_index_sequence<lib::decay_t<V>::size()>{}))
                 {
                     static_assert(
                         lib::all<(lib::decay_t<V>::size() == lib::decay_t<Vs>::size())...>::value,
@@ -1353,7 +1353,8 @@ namespace mpark
 
             template <std::size_t I, typename... Args>
             inline /* auto & */ auto emplace(Args&&... args) -> decltype(this->construct_alt(
-                access::base::get_alt<I>(*this), lib::forward<Args>(args)...))
+                                                                 access::base::get_alt<I>(*this),
+                                                                 lib::forward<Args>(args)...))
             {
                 this->destroy();
                 auto& result = this->construct_alt(

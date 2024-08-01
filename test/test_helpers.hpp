@@ -205,8 +205,8 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag> || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* =
-                nullptr>
+                RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag>
+                || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator(iterator&& other)
             : iter_(other.iter_)
         {
@@ -215,8 +215,8 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag> || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* =
-                nullptr>
+                RAH2_NS::derived_from<C, RAH2_NS::input_iterator_tag>
+                || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator& operator=(iterator&& other)
         {
             iter_ = other.iter_;
@@ -225,8 +225,8 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag> || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* =
-                nullptr>
+                RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>
+                || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator(iterator const& other)
             : iter_(other.iter_)
         {
@@ -235,8 +235,8 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<
-                RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag> || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* =
-                nullptr>
+                RAH2_NS::derived_from<C, RAH2_NS::forward_iterator_tag>
+                || RAH2_NS::derived_from<C, RAH2_NS::output_iterator_tag>>* = nullptr>
         iterator& operator=(iterator const& other)
         {
             iter_ = other.iter_;
@@ -631,47 +631,47 @@ static_assert(RAH2_NS::ranges::contiguous_range<ContiCommonView>, "Should be con
 
 template <typename R>
 constexpr bool is_input_common =
-    RAH2_NS::ranges::input_range<
-        R> && not RAH2_NS::ranges::forward_range<R> && RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::input_range<R> && not RAH2_NS::ranges::forward_range<R>
+    && RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_input_not_common =
-    RAH2_NS::ranges::input_range<
-        R> && not RAH2_NS::ranges::forward_range<R> && not RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::input_range<R> && not RAH2_NS::ranges::forward_range<R>
+    && not RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_forward_common =
-    RAH2_NS::ranges::forward_range<
-        R> && not RAH2_NS::ranges::bidirectional_range<R> && RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::forward_range<R> && not RAH2_NS::ranges::bidirectional_range<R>
+    && RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_forward_not_common =
-    RAH2_NS::ranges::forward_range<
-        R> && not RAH2_NS::ranges::bidirectional_range<R> && not RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::forward_range<R> && not RAH2_NS::ranges::bidirectional_range<R>
+    && not RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_bidirectional_common =
-    RAH2_NS::ranges::bidirectional_range<
-        R> && not RAH2_NS::ranges::random_access_range<R> && RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::bidirectional_range<R> && not RAH2_NS::ranges::random_access_range<R>
+    && RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_bidirectional_not_common =
-    RAH2_NS::ranges::bidirectional_range<
-        R> && not RAH2_NS::ranges::random_access_range<R> && not RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::bidirectional_range<R> && not RAH2_NS::ranges::random_access_range<R>
+    && not RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_random_access_common =
-    RAH2_NS::ranges::random_access_range<
-        R> && not RAH2_NS::ranges::contiguous_range<R> && RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::random_access_range<R> && not RAH2_NS::ranges::contiguous_range<R>
+    && RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_random_access_not_common =
-    RAH2_NS::ranges::random_access_range<
-        R> && not RAH2_NS::ranges::contiguous_range<R> && not RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::random_access_range<R> && not RAH2_NS::ranges::contiguous_range<R>
+    && not RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_contiguous_common =
-    RAH2_NS::ranges::contiguous_range<R>&& RAH2_NS::ranges::common_range<R>;
+    RAH2_NS::ranges::contiguous_range<R> && RAH2_NS::ranges::common_range<R>;
 
 template <typename R>
 constexpr bool is_contiguous_not_common =
