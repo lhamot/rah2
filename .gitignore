@@ -1,0 +1,11 @@
+.vs
+x64
+test/Debug
+test/Release
+**/.opencppcov
+**/LastCoverageResults.log
+*.exe
+/Release
+/Debug
+/build
+/Testing
