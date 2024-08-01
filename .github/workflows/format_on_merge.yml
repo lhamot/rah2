@@ -15,6 +15,7 @@ jobs:
         ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Format All
+      run: clang-format --version 
       run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\|c\)' -exec clang-format --verbose -style=file -i {} \;
 
     - name: Amend the last commit
