@@ -10,9 +10,9 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
       with:
-        ref: ${{ github.ref_name }}
+        ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Format All
       run: find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\|c\)' -exec clang-format --verbose -style=file -i {} \;
