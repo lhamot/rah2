@@ -2869,7 +2869,7 @@ namespace RAH2_NS
                     for (; first != last; ++first)
                         if (pred(proj2(*first)))
                             *first = new_value;
-                    return RAH2_STD::move(first);
+                    return first;
                 }
 
                 template <
