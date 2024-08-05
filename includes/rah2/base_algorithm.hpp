@@ -2814,12 +2814,14 @@ namespace RAH2_NS
                     typename S,
                     class T1,
                     class T2,
-                    RAH2_STD::enable_if_t<
-                        input_iterator<I> && sentinel_for<S, I> && indirectly_writable<I, T2 const&>>* = nullptr>
-                constexpr I operator()(I first, S last, T1 const& old_value, T2 const& new_value) const
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr I operator()(
+                    I first, S last, T1 const& old_value, T2 const& new_value, Proj proj = {}) const
                 {
+                    auto proj2 = RAH2_NS::ranges::details::move_unary(proj);
                     for (; first != last; ++first)
-                        if (old_value == *first)
+                        if (old_value == proj2(*first))
                             *first = new_value;
                     return first;
                 }
@@ -2828,13 +2830,12 @@ namespace RAH2_NS
                     typename R, // input_range
                     class T1,
                     class T2,
-                    RAH2_STD::enable_if_t<
-                        input_range<R> && indirectly_writable<iterator_t<R>, T2 const&>>* = nullptr>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
                 constexpr borrowed_iterator_t<R>
-                operator()(R&& r, T1 const& old_value, T2 const& new_value) const
+                operator()(R&& r, T1 const& old_value, T2 const& new_value, Proj proj = {}) const
                 {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), old_value, new_value);
+                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), old_value, new_value, proj);
                 }
             };
         } // namespace niebloids
