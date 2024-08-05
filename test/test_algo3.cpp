@@ -2494,6 +2494,104 @@ void test_replace()
 
     foreach_range_combination<test_algo<test_replace_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_replace_if_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            RAH2_STD::vector<int> out{0, 4, 0, 4, 5};
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::replace_if(
+                out.begin(), out.end(), [](auto v) { return v == 4; }, 15);
+            CHECK(result == out.end());
+            CHECK(out == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
+
+            testSuite.test_case("range");
+            auto result2 = RAH2_NS::ranges::replace_if(
+                out, [](auto v) { return v == 15; }, 72);
+            CHECK(result2 == out.end());
+            CHECK(out == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
+        }
+
+        {
+            testSuite.test_case("proj");
+            {
+                RAH2_STD::vector<Coord> out{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                testSuite.test_case("iter");
+                auto result = RAH2_NS::ranges::replace_if(
+                    out.begin(), out.end(), [](auto v) { return v == 4; }, Coord{15, 0}, &Coord::x);
+                CHECK(result == out.end());
+                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
+            }
+
+            testSuite.test_case("range");
+            {
+                RAH2_STD::vector<Coord> out{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                auto result2 = RAH2_NS::ranges::replace_if(
+                    out, [](auto v) { return v == 15; }, Coord{72, 0}, &Coord::x);
+                CHECK(result2 == out.end());
+                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_out;
+
+            auto result3 = RAH2_NS::ranges::replace_if(
+                empty_out.begin(), empty_out.end(), [](auto v) { return v == 169; }, 0);
+            CHECK(result3 == empty_out.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out;
+        out.resize(100000 * RELEASE_MULTIPLIER);
+        out.emplace_back(10);
+        out.emplace_back(10);
+
+        RAH2_STD::vector<Coord> out2;
+        out2.resize(100000 * RELEASE_MULTIPLIER);
+        out2.emplace_back(Coord{10, 11});
+        out2.emplace_back(Coord{10, 11});
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "replace_if_iter",
+                range_type,
+                [&]
+                {
+                    auto result = RAH2_NS::ranges::replace_if(
+                        RAH2_NS::ranges::begin(out),
+                        RAH2_NS::ranges::end(out),
+                        [](auto v) { return v == 10; },
+                        11);
+                    CHECK(result == out.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "replace_if_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = RAH2_NS::ranges::replace_if(
+                            out2, [](auto v) { return v == 10; }, Coord{11, 11}, &Coord::x);
+                        CHECK(result2 == out2.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_replace_if()
 {
     testSuite.test_case("sample");
@@ -2502,6 +2600,8 @@ void test_replace_if()
     RAH2_NS::ranges::replace_if(q, [](int x) { return 5 < x; }, 5);
     assert(q == (RAH2_STD::array<int, 8>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_if]
+
+    foreach_range_combination<test_algo<test_replace_if_>>();
 }
 void test_replace_copy()
 {
