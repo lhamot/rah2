@@ -2647,7 +2647,8 @@ struct test_replace_copy_
             RAH2_STD::vector<Coord> in_{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             RAH2_STD::vector<Coord> out(5, Coord{-1, -1});
-            auto result = RAH2_NS::ranges::replace_copy(in, out.begin(), 15, Coord{72, 0}, &Coord::x);
+            auto result =
+                RAH2_NS::ranges::replace_copy(in, out.begin(), 15, Coord{72, 0}, &Coord::x);
             CHECK(result.in == in.end());
             CHECK(result.out == out.end());
             CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
@@ -2703,7 +2704,8 @@ struct test_replace_copy_
                     [&]
                     {
                         auto result =
-                            STD::replace_copy(in2, out2.begin(), 10, Coord{11, 11}, &Coord::x);
+                            STD::replace_copy(
+                            in2, out2.begin(), 10, Coord{11, 11}, &Coord::x);
                         DONT_OPTIM(result);
                     }));
         }
