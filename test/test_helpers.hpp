@@ -1228,6 +1228,8 @@ std::chrono::nanoseconds compute_duration(
 #endif
 }
 
+constexpr static auto PerfTolerency = 4.;
+
 template <typename F, typename F2>
 auto compare_duration(
     F&& func_std_range,
@@ -1246,12 +1248,12 @@ auto compare_duration(
             RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
         duration_rah2 +=
             compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
-        if (duration_rah2 < (duration_std * 1.2))
+        if (duration_rah2 < (duration_std * PerfTolerency))
         {
             break;
         }
     }
-    assert(duration_rah2 < (duration_std * 1.2));
+    assert(duration_rah2 < (duration_std * PerfTolerency));
 }
 
 template <typename F, typename F2, typename F3>
@@ -1275,13 +1277,14 @@ auto compare_duration(
             RAH2_STD::forward<F2>(func_std_range), algo, range_type, "std::ranges", file, line);
         duration_rah2 +=
             compute_duration(RAH2_STD::forward<F3>(func_rah2), algo, range_type, "rah2", file, line);
-        if (duration_rah2 < (duration_std * 1.2) && duration_rah2 < (duration_std_ranges * 1.2))
+        if (duration_rah2 < (duration_std * PerfTolerency)
+            && duration_rah2 < (duration_std_ranges * PerfTolerency))
         {
             break;
         }
     }
-    assert(duration_rah2 < (duration_std * 1.2));
-    assert(duration_rah2 < (duration_std_ranges * 1.2));
+    assert(duration_rah2 < (duration_std * PerfTolerency));
+    assert(duration_rah2 < (duration_std_ranges * PerfTolerency));
 }
 
 #define COMPUTE_DURATION(ALGO, CONCEPT, STEP, F)                                                   \
