@@ -2530,6 +2530,7 @@ struct test_replace_if_
         {
             RAH2_STD::vector<int> empty_out_;
             auto empty_out = make_test_view_adapter<CS, Tag, Sized>(empty_out_);
+            CHECK(empty_out.begin() == empty_out.end());
 
             auto result3 = RAH2_NS::ranges::replace_if(
                 empty_out.begin(), empty_out.end(), [](auto v) { return v == 169; }, 0);
