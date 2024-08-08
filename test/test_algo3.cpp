@@ -2388,45 +2388,49 @@ struct test_replace_
     void test()
     {
         {
-            RAH2_STD::vector<int> out{0, 4, 0, 4, 5};
+            RAH2_STD::vector<int> out_{0, 4, 0, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::replace(out.begin(), out.end(), 4, 15);
             CHECK(result == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
 
             testSuite.test_case("range");
             auto result2 = RAH2_NS::ranges::replace(out, 15, 72);
             CHECK(result2 == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
         }
 
         {
             testSuite.test_case("proj");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 testSuite.test_case("iter");
                 auto result =
                     RAH2_NS::ranges::replace(out.begin(), out.end(), 4, Coord{15, 0}, &Coord::x);
                 CHECK(result == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
             }
 
             testSuite.test_case("range");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 auto result2 = RAH2_NS::ranges::replace(out, 15, Coord{72, 0}, &Coord::x);
                 CHECK(result2 == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
             }
         }
 
         testSuite.test_case("empty");
         {
-            RAH2_STD::vector<int> empty_out;
+            RAH2_STD::vector<int> empty_out_;
+            auto empty_out = make_test_view_adapter<CS, Tag, Sized>(empty_out_);
 
             auto result3 = RAH2_NS::ranges::replace(empty_out.begin(), empty_out.end(), 169, 0);
             CHECK(result3 == empty_out.end());
-            CHECK(empty_out.empty());
+            CHECK(empty_out_.empty());
         }
     }
 
@@ -2434,15 +2438,17 @@ struct test_replace_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out;
-        out.resize(100000 * RELEASE_MULTIPLIER);
-        out.emplace_back(10);
-        out.emplace_back(10);
+        RAH2_STD::vector<int> out_;
+        out_.resize(100000 * RELEASE_MULTIPLIER);
+        out_.emplace_back(10);
+        out_.emplace_back(10);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
 
-        RAH2_STD::vector<Coord> out2;
-        out2.resize(100000 * RELEASE_MULTIPLIER);
-        out2.emplace_back(Coord{10, 11});
-        out2.emplace_back(Coord{10, 11});
+        RAH2_STD::vector<Coord> out2_;
+        out2_.resize(100000 * RELEASE_MULTIPLIER);
+        out2_.emplace_back(Coord{10, 11});
+        out2_.emplace_back(Coord{10, 11});
+        auto out2 = make_test_view_adapter<CS, Tag, Sized>(out2_);
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
@@ -2490,43 +2496,47 @@ struct test_replace_if_
     void test()
     {
         {
-            RAH2_STD::vector<int> out{0, 4, 0, 4, 5};
+            RAH2_STD::vector<int> out_{0, 4, 0, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::replace_if(
                 out.begin(), out.end(), [](auto v) { return v == 4; }, 15);
             CHECK(result == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
 
             testSuite.test_case("range");
             auto result2 = RAH2_NS::ranges::replace_if(out, [](auto v) { return v == 15; }, 72);
             CHECK(result2 == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
         }
 
         {
             testSuite.test_case("proj");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 testSuite.test_case("iter");
                 auto result = RAH2_NS::ranges::replace_if(
                     out.begin(), out.end(), [](auto v) { return v == 4; }, Coord{15, 0}, &Coord::x);
                 CHECK(result == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
             }
 
             testSuite.test_case("range");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 auto result2 = RAH2_NS::ranges::replace_if(
                     out, [](auto v) { return v == 15; }, Coord{72, 0}, &Coord::x);
                 CHECK(result2 == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
             }
         }
 
         testSuite.test_case("empty");
         {
-            RAH2_STD::vector<int> empty_out;
+            RAH2_STD::vector<int> empty_out_;
+            auto empty_out = make_test_view_adapter<CS, Tag, Sized>(empty_out_);
 
             auto result3 = RAH2_NS::ranges::replace_if(
                 empty_out.begin(), empty_out.end(), [](auto v) { return v == 169; }, 0);
@@ -2539,15 +2549,17 @@ struct test_replace_if_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out;
-        out.resize(100000 * RELEASE_MULTIPLIER);
-        out.emplace_back(10);
-        out.emplace_back(10);
+        RAH2_STD::vector<int> out_;
+        out_.resize(100000 * RELEASE_MULTIPLIER);
+        out_.emplace_back(10);
+        out_.emplace_back(10);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
 
-        RAH2_STD::vector<Coord> out2;
-        out2.resize(100000 * RELEASE_MULTIPLIER);
-        out2.emplace_back(Coord{10, 11});
-        out2.emplace_back(Coord{10, 11});
+        RAH2_STD::vector<Coord> out2_;
+        out2_.resize(100000 * RELEASE_MULTIPLIER);
+        out2_.emplace_back(Coord{10, 11});
+        out2_.emplace_back(Coord{10, 11});
+        auto out2 = make_test_view_adapter<CS, Tag, Sized>(out2_);
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
