@@ -889,24 +889,14 @@ struct test_find_end_
         (void)s2;
         (void)r1;
         {
-            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
                 "find_end",
                 range_type,
                 [&]
                 {
-                    auto iter = fwd(std::find_end(fwd(r1.begin()), r1.end(), s1.begin(), s1.end()));
-                    assert(iter != r1.end());
-                    assert(
-                        RAH2_NS::ranges::distance(r1.begin(), iter) == 1000000 * RELEASE_MULTIPLIER);
-                },
-                [&]
-                {
                     auto iter = fwd(STD::find_end(fwd(r1.begin()), r1.end(), s1.begin(), s1.end()));
-                    assert(iter.begin() != r1.end());
-                    assert(
-                        RAH2_NS::ranges::distance(r1.begin(), iter.begin())
-                        == 1000000 * RELEASE_MULTIPLIER);
+                    DONT_OPTIM(iter);
                 });
         }
         {
