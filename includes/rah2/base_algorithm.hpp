@@ -3364,33 +3364,51 @@ namespace RAH2_NS
                 /// Note: The predicate version of replace_copy_if is replace_copy and not another variation of replace_copy_if.
                 /// This is because both versions would have the same parameter count and there could be ambiguity.
                 ///
-                template <typename InputIterator, typename InputSentinel, typename OutputIterator, typename Predicate, typename T>
+                template <
+                    typename InputIterator,
+                    typename InputSentinel,
+                    typename OutputIterator,
+                    typename Predicate,
+                    typename T,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<InputIterator> && sentinel_for<InputSentinel, InputIterator>>* = nullptr>
                 replace_copy_if_result<InputIterator, OutputIterator> operator()(
                     InputIterator first,
                     InputSentinel last,
                     OutputIterator result,
                     Predicate predicate,
-                    T const& new_value) const
+                    T const& new_value,
+                    Proj proj = {}) const
                 {
+                    auto proj2 = details::move_unary(proj);
                     for (; first != last; ++first, ++result)
-                        *result = predicate(*first) ? new_value : *first;
+                        *result = predicate(proj2(*first)) ? new_value : *first;
                     return {first, result};
                 }
 
-                template <typename InputRange, typename OutputIterator, typename Predicate, typename T>
+                template <
+                    typename InputRange,
+                    typename OutputIterator,
+                    typename Predicate,
+                    typename T,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<InputRange>>* = nullptr>
                 replace_copy_if_result<RAH2_NS::ranges::borrowed_iterator_t<InputRange>, OutputIterator>
                 operator()(
                     InputRange&& range,
                     OutputIterator result,
                     Predicate predicate,
-                    T const& new_value) const
+                    T const& new_value,
+                    Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
                         RAH2_STD::move(result),
                         RAH2_STD::move(predicate),
-                        new_value);
+                        new_value,
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids

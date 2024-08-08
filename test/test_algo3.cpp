@@ -2718,6 +2718,127 @@ void test_replace_copy()
 
     foreach_range_combination<test_algo<test_replace_copy_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_replace_copy_if_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in_{0, 4, 0, 4, 5};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out(5, 1);
+            auto result = RAH2_NS::ranges::replace_copy_if(
+                in.begin(), in.end(), out.begin(), [](auto v) { return v == 4; }, 15);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
+        }
+
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> in_{0, 4, 0, 4, 5};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out(5, 1);
+            auto result = RAH2_NS::ranges::replace_copy_if(
+                in, out.begin(), [](auto v) { return v == 4; }, 72);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
+        }
+
+        testSuite.test_case("proj");
+        {
+            RAH2_STD::vector<Coord> in_{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<Coord> out(5, Coord{-1, -1});
+            auto result = RAH2_NS::ranges::replace_copy_if(
+                in.begin(),
+                in.end(),
+                out.begin(),
+                [](auto v) { return v == 4; },
+                Coord{15, 0},
+                &Coord::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
+        }
+
+        {
+            RAH2_STD::vector<Coord> in_{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<Coord> out(5, Coord{-1, -1});
+            auto result = RAH2_NS::ranges::replace_copy_if(
+                in, out.begin(), [](auto v) { return v == 15; }, Coord{72, 0}, &Coord::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
+        }
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> in_;
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out;
+            auto result = RAH2_NS::ranges::replace_copy_if(
+                in.begin(), in.end(), out.begin(), [](auto v) { return v == 169; }, 0);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        in_.resize(100000 * RELEASE_MULTIPLIER);
+        in_.emplace_back(10);
+        in_.emplace_back(10);
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out(100000 * RELEASE_MULTIPLIER + 2);
+
+        RAH2_STD::vector<Coord> in2_;
+        in2_.resize(100000 * RELEASE_MULTIPLIER);
+        in2_.emplace_back(Coord{10, 11});
+        in2_.emplace_back(Coord{10, 11});
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+        RAH2_STD::vector<Coord> out2(100000 * RELEASE_MULTIPLIER + 2);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "replace_copy_if_iter",
+                range_type,
+                [&]
+                {
+                    auto result = STD::replace_copy_if(
+                        RAH2_NS::ranges::begin(fwd(in)),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        [](auto v) { return v == 10; },
+                        11);
+                    DONT_OPTIM(result);
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "replace_copy_if_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result = STD::replace_copy_if(
+                            in2, out2.begin(), [](auto v) { return v == 10; }, Coord{11, 11}, &Coord::x);
+                        DONT_OPTIM(result);
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_replace_copy_if()
 {
     testSuite.test_case("sample");
@@ -2728,6 +2849,8 @@ void test_replace_copy_if()
     RAH2_NS::ranges::replace_copy_if(q, o.begin(), [](int x) { return 5 < x; }, 5);
     assert(o == (RAH2_STD::vector<int>{1, 2, 3, 5, 5, 5, 4, 5}));
     /// [rah2::ranges::replace_copy_if]
+
+    foreach_range_combination<test_algo<test_replace_copy_if_>>();
 }
 void test_swap_ranges()
 {
