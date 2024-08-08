@@ -2878,7 +2878,7 @@ namespace RAH2_NS
                     class T,
                     typename Pred, // indirect_unary_predicate<iterator_t<R>>>
                     typename Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<input_range<R> && output_range<R, T>>* = nullptr>
+                    RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
                 constexpr borrowed_iterator_t<R>
                 operator()(R&& r, Pred pred, T const& new_value, Proj proj = {}) const
                 {

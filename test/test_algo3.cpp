@@ -339,15 +339,8 @@ struct test_search_n_
                 range_type,
                 [&]
                 {
-                    auto result1 =
-                        RAH2_NS::ranges::search_n(fwd(nums.begin()), nums.end(), count, value);
-                    CHECK((RAH2_NS::ranges::distance(result1.begin(), result1.end())) == (count));
-                    CHECK_EQUAL(
-                        RAH2_STD::distance(nums.begin(), result1.begin()),
-                        1000000 * RELEASE_MULTIPLIER + 6);
-                    CHECK_EQUAL(
-                        RAH2_STD::distance(nums.begin(), result1.end()),
-                        1000000 * RELEASE_MULTIPLIER + 9);
+                    auto result1 = STD::search_n(fwd(nums.begin()), nums.end(), count, value);
+                    DONT_OPTIM(result1);
                 });
         }
         {
@@ -357,7 +350,7 @@ struct test_search_n_
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::search_n(nums, count, value);
+                        auto result2 = STD::search_n(nums, count, value);
                         CHECK((RAH2_NS::ranges::distance(result2.begin(), result2.end())) == (count));
                         CHECK_EQUAL(
                             RAH2_STD::distance(nums.begin(), result2.begin()),
@@ -462,24 +455,23 @@ struct test_contains_
         nums_.insert(nums_.begin(), 1000000 * RELEASE_MULTIPLIER, {0, 0});
         auto nums = make_test_view_adapter<CS, Tag, Sized>(nums_);
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
+            COMPARE_DURATION_TO_STD_RANGES_23(
                 "contains",
                 range_type,
                 [&]
                 {
-                    auto result1 = RAH2_NS::ranges::contains(fwd(nums.begin()), nums.end(), value);
+                    auto result1 = STD::contains(nums.begin(), nums.end(), value);
                     CHECK(result1);
                 });
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES(
+            COMPARE_DURATION_TO_STD_RANGES_23(
                 "contains_proj",
                 range_type,
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::contains(nums, value);
+                        auto result2 = STD::contains(nums, value);
                         CHECK(result2);
                     }));
         }
@@ -998,8 +990,8 @@ struct test_copy_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::copy(
-                        RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
+                    auto result =
+                        STD::copy(RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
                     CHECK(result.out == out.begin() + in_.size());
                     CHECK(result.in == in.end());
                 });
@@ -1012,7 +1004,7 @@ struct test_copy_
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::copy(in, out.begin());
+                        auto result2 = STD::copy(in, out.begin());
                         CHECK(result2.out == out.begin() + in_.size());
                         CHECK(result2.in == in.end());
                     }));
@@ -1108,7 +1100,7 @@ struct test_copy_if_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::copy_if(
+                    auto result = STD::copy_if(
                         fwd(RAH2_NS::ranges::begin(in)),
                         RAH2_NS::ranges::end(in),
                         out.begin(),
@@ -1124,7 +1116,7 @@ struct test_copy_if_
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::copy_if(
+                        auto result2 = STD::copy_if(
                             in2, out2.begin(), [](intptr_t i) { return i >= 0; }, &Coord::x);
                         DONT_OPTIM(result2);
                     }));
@@ -1189,8 +1181,8 @@ struct test_copy_n_
                 range_type,
                 [&]
                 {
-                    auto const res = RAH2_NS::ranges::copy_n(
-                        fwd(in.begin()), 1000000 * RELEASE_MULTIPLIER - 5, out.begin());
+                    auto const res =
+                        STD::copy_n(fwd(in.begin()), 1000000 * RELEASE_MULTIPLIER - 5, out.begin());
                     DONT_OPTIM(res);
                 });
         }
@@ -1259,19 +1251,18 @@ struct test_copy_backward_
                 (
                     [&]
                     {
-                        auto const res = RAH2_NS::ranges::copy_backward(in, out.end());
+                        auto const res = STD::copy_backward(in, out.end());
                         DONT_OPTIM(res);
                     }));
         }
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                true,
+                CS == Common,
                 "copy_backward",
                 range_type,
                 [&]
                 {
-                    auto const res =
-                        RAH2_NS::ranges::copy_backward(fwd(in.begin()), fwd(in.end()), out.end());
+                    auto const res = STD::copy_backward(fwd(in.begin()), fwd(in.end()), out.end());
                     DONT_OPTIM(res);
                 });
         }
@@ -1396,11 +1387,11 @@ struct test_move_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_iter",
+                "move_iter",
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::move(
+                    auto result = STD::move(
                         RAH2_NS::ranges::begin(in2), RAH2_NS::ranges::end(in2), out.begin());
                     CHECK(result.out == out.begin() + in_.size());
                     CHECK(result.in == in2.end());
@@ -1409,12 +1400,12 @@ struct test_move_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_ranges",
+                "move_ranges",
                 range_type,
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::move(in, out.begin());
+                        auto result2 = STD::move(in, out.begin());
                         CHECK(result2.out == out.begin() + in_.size());
                         CHECK(result2.in == in.end());
                     }));
@@ -1498,19 +1489,18 @@ struct test_move_backward_
                 (
                     [&]
                     {
-                        auto const res = RAH2_NS::ranges::move_backward(in, out.end());
+                        auto const res = STD::move_backward(in, out.end());
                         DONT_OPTIM(res);
                     }));
         }
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                true,
+                CS == Common,
                 "copy_backward",
                 range_type,
                 [&]
                 {
-                    auto const res =
-                        RAH2_NS::ranges::move_backward(fwd(in.begin()), fwd(in.end()), out.end());
+                    auto const res = STD::move_backward(fwd(in.begin()), fwd(in.end()), out.end());
                     DONT_OPTIM(res);
                 });
         }
@@ -1582,8 +1572,8 @@ struct test_fill_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::fill(
-                        RAH2_NS::ranges::begin(out), RAH2_NS::ranges::end(out), 16);
+                    auto result =
+                        STD::fill(RAH2_NS::ranges::begin(out), RAH2_NS::ranges::end(out), 16);
                     CHECK(result == out.end());
                 });
         }
@@ -1595,7 +1585,7 @@ struct test_fill_
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::fill(out, 27);
+                        auto result2 = STD::fill(out, 27);
                         CHECK(result2 == out.end());
                     }));
         }
@@ -1652,8 +1642,8 @@ struct test_fill_n_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::fill_n(
-                        RAH2_NS::ranges::begin(out), 1000000 * RELEASE_MULTIPLIER, 16);
+                    auto result =
+                        STD::fill_n(RAH2_NS::ranges::begin(out), 1000000 * RELEASE_MULTIPLIER, 16);
                     CHECK(result == (out.end() - 2));
                 });
         }
@@ -1801,7 +1791,7 @@ struct test_transform_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::transform(
+                    auto result = STD::transform(
                         RAH2_NS::ranges::begin(in),
                         RAH2_NS::ranges::end(in),
                         out.begin(),
@@ -1818,8 +1808,7 @@ struct test_transform_
                 (
                     [&]
                     {
-                        auto result2 =
-                            RAH2_NS::ranges::transform(in, out.begin(), [](auto i) { return i; });
+                        auto result2 = STD::transform(in, out.begin(), [](auto i) { return i; });
                         CHECK(result2.out == out.begin() + in_.size());
                         CHECK(result2.in == in.end());
                     }));
@@ -1879,8 +1868,8 @@ struct test_generate_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::generate(
-                        out.begin(), out.end(), [n = 1]() mutable { return n++; });
+                    auto result =
+                        STD::generate(out.begin(), out.end(), [n = 1]() mutable { return n++; });
                     CHECK(result == out.end());
                 });
         }
@@ -1892,8 +1881,7 @@ struct test_generate_
                 (
                     [&]
                     {
-                        auto result =
-                            RAH2_NS::ranges::generate(out, [n = 1]() mutable { return n++; });
+                        auto result = STD::generate(out, [n = 1]() mutable { return n++; });
                         CHECK(result == out.end());
                     }));
         }
@@ -1938,7 +1926,7 @@ struct test_generate_n_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::generate_n(
+                    auto result = STD::generate_n(
                         out.begin(), 1000000 * RELEASE_MULTIPLIER, [n = 1]() mutable { return n++; });
                     CHECK(result == out.end());
                 });
@@ -2015,11 +2003,8 @@ struct test_remove_
                     {
                         auto in2_copy = in2_;
                         auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_copy);
-                        auto const removed = RAH2_NS::ranges::remove(in2.begin(), in2.end(), 1);
-                        assert(
-                            RAH2_STD::distance(fwd(in2.begin()), removed.begin())
-                            == 2 + 1000000 * RELEASE_MULTIPLIER);
-                        assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+                        auto const removed = STD::remove(fwd(in2.begin()), in2.end(), 1);
+                        DONT_OPTIM(removed);
                     }));
         }
         {
@@ -2033,7 +2018,7 @@ struct test_remove_
                     {
                         auto in_copy = in_;
                         auto in = make_test_view_adapter<CS, Tag, Sized>(in_copy);
-                        auto const removed = RAH2_NS::ranges::remove(in, 1, &Coord::x);
+                        auto const removed = STD::remove(in, 1, &Coord::x);
                         assert(
                             RAH2_STD::distance(in.begin(), removed.begin())
                             == 2 + 1000000 * RELEASE_MULTIPLIER);
@@ -2113,12 +2098,9 @@ struct test_remove_if_
                     {
                         auto in2_copy = in2_;
                         auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_copy);
-                        auto const removed = RAH2_NS::ranges::remove_if(
-                            in2.begin(), in2.end(), [](auto v) { return v == 1; });
-                        assert(
-                            RAH2_STD::distance(fwd(in2.begin()), removed.begin())
-                            == 2 + 1000000 * RELEASE_MULTIPLIER);
-                        assert(RAH2_STD::distance(removed.begin(), removed.end()) == 3);
+                        auto const removed = STD::remove_if(
+                            fwd(in2.begin()), in2.end(), [](auto v) { return v == 1; });
+                        DONT_OPTIM(removed);
                     }));
         }
         {
@@ -2133,7 +2115,7 @@ struct test_remove_if_
                         auto in_copy = in_;
                         auto in = make_test_view_adapter<CS, Tag, Sized>(in_copy);
                         auto const removed =
-                            RAH2_NS::ranges::remove_if(in, [](auto v) { return v == 1; }, &Coord::x);
+                            STD::remove_if(in, [](auto v) { return v == 1; }, &Coord::x);
                         assert(
                             RAH2_STD::distance(in.begin(), removed.begin())
                             == 2 + 1000000 * RELEASE_MULTIPLIER);
@@ -2224,15 +2206,13 @@ struct test_remove_copy_
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             RAH2_STD::vector<Coord> out(1000000 * RELEASE_MULTIPLIER + 3, Coord{0, 0});
 
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "remove_copy",
+            COMPARE_DURATION_TO_STD_RANGES(
+                "remove_copy_range",
                 range_type,
                 (
                     [&]
                     {
-                        auto const removed =
-                            RAH2_NS::ranges::remove_copy(in, fwd(out.begin()), 1, &Coord::x);
+                        auto const removed = STD::remove_copy(in, out.begin(), 1, &Coord::x);
                         CHECK(out[1] == (Coord{3, 0}));
                         CHECK(out[2] == (Coord{42, 0}));
                     }));
@@ -2243,14 +2223,15 @@ struct test_remove_copy_
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             RAH2_STD::vector<int> out2(1000000 * RELEASE_MULTIPLIER + 3, 0);
 
-            COMPARE_DURATION_TO_STD_RANGES(
-                "remove_copy",
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "remove_copy_iter",
                 range_type,
                 (
                     [&]
                     {
                         auto const removed2 =
-                            RAH2_NS::ranges::remove_copy(fwd(in.begin()), in.end(), out2.begin(), 1);
+                            STD::remove_copy(fwd(in.begin()), in.end(), out2.begin(), 1);
                         CHECK(out2[1] == 3);
                         CHECK(out2[2] == 42);
                     }));
@@ -2342,15 +2323,14 @@ struct test_remove_copy_if_
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             RAH2_STD::vector<Coord> out(1000000 * RELEASE_MULTIPLIER + 3, Coord{0, 0});
 
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
-                "remove_copy_if",
+            COMPARE_DURATION_TO_STD_RANGES(
+                "remove_copy_if_range",
                 range_type,
                 (
                     [&]
                     {
-                        auto const removed = RAH2_NS::ranges::remove_copy_if(
-                            in, fwd(out.begin()), [](auto v) { return v == 1; }, &Coord::x);
+                        auto const removed = STD::remove_copy_if(
+                            in, out.begin(), [](auto v) { return v == 1; }, &Coord::x);
                         CHECK(out[1] == (Coord{3, 0}));
                         CHECK(out[2] == (Coord{42, 0}));
                     }));
@@ -2361,13 +2341,14 @@ struct test_remove_copy_if_
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             RAH2_STD::vector<int> out2(1000000 * RELEASE_MULTIPLIER + 3, 0);
 
-            COMPARE_DURATION_TO_STD_RANGES(
-                "remove_copy_if",
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "remove_copy_if_iter",
                 range_type,
                 (
                     [&]
                     {
-                        auto const removed2 = RAH2_NS::ranges::remove_copy_if(
+                        auto const removed2 = STD::remove_copy_if(
                             fwd(in.begin()), in.end(), out2.begin(), [](auto v) { return v == 1; });
                         CHECK(out2[1] == 3);
                         CHECK(out2[2] == 42);
@@ -2401,45 +2382,49 @@ struct test_replace_
     void test()
     {
         {
-            RAH2_STD::vector<int> out{0, 4, 0, 4, 5};
+            RAH2_STD::vector<int> out_{0, 4, 0, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::replace(out.begin(), out.end(), 4, 15);
             CHECK(result == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
 
             testSuite.test_case("range");
             auto result2 = RAH2_NS::ranges::replace(out, 15, 72);
             CHECK(result2 == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
         }
 
         {
             testSuite.test_case("proj");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 testSuite.test_case("iter");
                 auto result =
                     RAH2_NS::ranges::replace(out.begin(), out.end(), 4, Coord{15, 0}, &Coord::x);
                 CHECK(result == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
             }
 
             testSuite.test_case("range");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 auto result2 = RAH2_NS::ranges::replace(out, 15, Coord{72, 0}, &Coord::x);
                 CHECK(result2 == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
             }
         }
 
         testSuite.test_case("empty");
         {
-            RAH2_STD::vector<int> empty_out;
+            RAH2_STD::vector<int> empty_out_;
+            auto empty_out = make_test_view_adapter<CS, Tag, Sized>(empty_out_);
 
             auto result3 = RAH2_NS::ranges::replace(empty_out.begin(), empty_out.end(), 169, 0);
             CHECK(result3 == empty_out.end());
-            CHECK(empty_out.empty());
+            CHECK(empty_out_.empty());
         }
     }
 
@@ -2447,15 +2432,17 @@ struct test_replace_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out;
-        out.resize(100000 * RELEASE_MULTIPLIER);
-        out.emplace_back(10);
-        out.emplace_back(10);
+        RAH2_STD::vector<int> out_;
+        out_.resize(100000 * RELEASE_MULTIPLIER);
+        out_.emplace_back(10);
+        out_.emplace_back(10);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
 
-        RAH2_STD::vector<Coord> out2;
-        out2.resize(100000 * RELEASE_MULTIPLIER);
-        out2.emplace_back(Coord{10, 11});
-        out2.emplace_back(Coord{10, 11});
+        RAH2_STD::vector<Coord> out2_;
+        out2_.resize(100000 * RELEASE_MULTIPLIER);
+        out2_.emplace_back(Coord{10, 11});
+        out2_.emplace_back(Coord{10, 11});
+        auto out2 = make_test_view_adapter<CS, Tag, Sized>(out2_);
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
@@ -2463,8 +2450,8 @@ struct test_replace_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::replace(
-                        RAH2_NS::ranges::begin(out), RAH2_NS::ranges::end(out), 10, 11);
+                    auto result =
+                        STD::replace(RAH2_NS::ranges::begin(out), RAH2_NS::ranges::end(out), 10, 11);
                     CHECK(result == out.end());
                 });
         }
@@ -2476,7 +2463,7 @@ struct test_replace_
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::replace(out2, 10, Coord{11, 11}, &Coord::x);
+                        auto result2 = STD::replace(out2, 10, Coord{11, 11}, &Coord::x);
                         CHECK(result2 == out2.end());
                     }));
         }
@@ -2502,43 +2489,49 @@ struct test_replace_if_
     void test()
     {
         {
-            RAH2_STD::vector<int> out{0, 4, 0, 4, 5};
+            RAH2_STD::vector<int> out_{0, 4, 0, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::replace_if(
                 out.begin(), out.end(), [](auto v) { return v == 4; }, 15);
             CHECK(result == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 15, 0, 15, 5}));
 
             testSuite.test_case("range");
             auto result2 = RAH2_NS::ranges::replace_if(out, [](auto v) { return v == 15; }, 72);
             CHECK(result2 == out.end());
-            CHECK(out == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
+            CHECK(out_ == (RAH2_STD::vector<int>{0, 72, 0, 72, 5}));
         }
 
         {
             testSuite.test_case("proj");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {4, 0}, {0, 0}, {4, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 testSuite.test_case("iter");
                 auto result = RAH2_NS::ranges::replace_if(
                     out.begin(), out.end(), [](auto v) { return v == 4; }, Coord{15, 0}, &Coord::x);
                 CHECK(result == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}}));
             }
 
             testSuite.test_case("range");
             {
-                RAH2_STD::vector<Coord> out{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                RAH2_STD::vector<Coord> out_{{0, 0}, {15, 0}, {0, 0}, {15, 0}, {5, 0}};
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 auto result2 = RAH2_NS::ranges::replace_if(
                     out, [](auto v) { return v == 15; }, Coord{72, 0}, &Coord::x);
                 CHECK(result2 == out.end());
-                CHECK(out == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
+                CHECK(out_ == (RAH2_STD::vector<Coord>{{0, 0}, {72, 0}, {0, 0}, {72, 0}, {5, 0}}));
             }
         }
 
         testSuite.test_case("empty");
         {
-            RAH2_STD::vector<int> empty_out;
+            RAH2_STD::vector<int> empty_out_;
+            auto empty_out = make_test_view_adapter<CS, Tag, Sized>(empty_out_);
+            CHECK(empty_out.begin() == empty_out.end());
+            CHECK(empty_out.empty());
 
             auto result3 = RAH2_NS::ranges::replace_if(
                 empty_out.begin(), empty_out.end(), [](auto v) { return v == 169; }, 0);
@@ -2551,15 +2544,17 @@ struct test_replace_if_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out;
-        out.resize(100000 * RELEASE_MULTIPLIER);
-        out.emplace_back(10);
-        out.emplace_back(10);
+        RAH2_STD::vector<int> out_;
+        out_.resize(100000 * RELEASE_MULTIPLIER);
+        out_.emplace_back(10);
+        out_.emplace_back(10);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
 
-        RAH2_STD::vector<Coord> out2;
-        out2.resize(100000 * RELEASE_MULTIPLIER);
-        out2.emplace_back(Coord{10, 11});
-        out2.emplace_back(Coord{10, 11});
+        RAH2_STD::vector<Coord> out2_;
+        out2_.resize(100000 * RELEASE_MULTIPLIER);
+        out2_.emplace_back(Coord{10, 11});
+        out2_.emplace_back(Coord{10, 11});
+        auto out2 = make_test_view_adapter<CS, Tag, Sized>(out2_);
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
@@ -2567,7 +2562,7 @@ struct test_replace_if_
                 range_type,
                 [&]
                 {
-                    auto result = RAH2_NS::ranges::replace_if(
+                    auto result = STD::replace_if(
                         RAH2_NS::ranges::begin(out),
                         RAH2_NS::ranges::end(out),
                         [](auto v) { return v == 10; },
@@ -2583,7 +2578,7 @@ struct test_replace_if_
                 (
                     [&]
                     {
-                        auto result2 = RAH2_NS::ranges::replace_if(
+                        auto result2 = STD::replace_if(
                             out2, [](auto v) { return v == 10; }, Coord{11, 11}, &Coord::x);
                         CHECK(result2 == out2.end());
                     }));

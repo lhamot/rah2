@@ -355,7 +355,8 @@ public:
 };
 
 template <CommonOrSent Sent, typename Cat, bool SizedRange, typename Range>
-class test_view_adapter : public RAH2_NS::ranges::view_interface<test_view<Sent, Cat, SizedRange>>
+class test_view_adapter
+    : public RAH2_NS::ranges::view_interface<test_view_adapter<Sent, Cat, SizedRange, Range>>
 {
     Range base_;
     using base_iterator = RAH2_STD::remove_reference_t<RAH2_NS::ranges::range_reference_t<Range>>*;
