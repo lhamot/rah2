@@ -2223,6 +2223,7 @@ struct test_remove_copy_
                     [&]
                     {
                         auto const removed = STD::remove_copy(in, out.begin(), 1, &Coord::x);
+                        DONT_OPTIM(removed);
                         CHECK(out[1] == (Coord{3, 0}));
                         CHECK(out[2] == (Coord{42, 0}));
                     }));
@@ -2242,6 +2243,7 @@ struct test_remove_copy_
                     {
                         auto const removed2 =
                             STD::remove_copy(fwd(in.begin()), in.end(), out2.begin(), 1);
+                        DONT_OPTIM(removed2);
                         CHECK(out2[1] == 3);
                         CHECK(out2[2] == 42);
                     }));
