@@ -1222,6 +1222,7 @@ std::chrono::nanoseconds compute_duration(
               << ((end - start) / count).count() << std::endl;
     return (end - start) / count;
 #else
+    (void)count;
     (void)algo;
     (void)range_type;
     (void)step;
