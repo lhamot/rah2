@@ -1244,9 +1244,9 @@ auto compare_duration(
     char const* file,
     int line)
 {
+#ifdef PERF_TEST
     std::chrono::nanoseconds duration_std{};
     std::chrono::nanoseconds duration_rah2{};
-#ifdef PERF_TEST
     for (size_t i = 0; i < 4; ++i)
     {
         duration_std += compute_duration(
