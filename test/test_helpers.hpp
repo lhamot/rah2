@@ -1019,16 +1019,16 @@ struct test_algo
     {
         template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
         void call(char const*
-#if defined(PERF_TEST)
+// #if defined(PERF_TEST)
                       range_type
-#endif
+// #endif
         ) const
         {
             auto t1 = MakeR<Sentinel, Cat, Sized>();
             t1.template test<>();
-#if defined(PERF_TEST)
+// #if defined(PERF_TEST)
             t1.template test_perf<>(range_type);
-#endif
+// #endif
         }
     };
     template <CommonOrSent Sentinel, typename Cat, bool Sized>
@@ -1180,6 +1180,9 @@ void call_if_true(Func&&)
 #define RELEASE_MULTIPLIER 1
 #endif
 
+#define DONT_OPTIM(V)                                                                              \
+    memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
+
 static auto perf_test_duration = std::chrono::seconds(1);
 
 template <typename F>
@@ -1191,7 +1194,6 @@ std::chrono::nanoseconds compute_duration(
     char const* file,
     int line)
 {
-#ifdef PERF_TEST
     size_t count = 0;
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
@@ -1199,6 +1201,7 @@ std::chrono::nanoseconds compute_duration(
     func();
     ++count;
     end = std::chrono::high_resolution_clock::now();
+#ifdef PERF_TEST
     if ((end - start) < std::chrono::microseconds(100))
     {
         std::cerr << "Too short function (" << ((end - start) / count).count() << ") at " << file
@@ -1243,6 +1246,7 @@ auto compare_duration(
 {
     std::chrono::nanoseconds duration_std{};
     std::chrono::nanoseconds duration_rah2{};
+#ifdef PERF_TEST
     for (size_t i = 0; i < 4; ++i)
     {
         duration_std += compute_duration(
@@ -1255,6 +1259,13 @@ auto compare_duration(
         }
     }
     assert(duration_rah2 < (duration_std * PerfTolerency));
+#else
+    auto time1 = compute_duration(RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
+    DONT_OPTIM(time1);
+    auto time2 =
+        compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
+    DONT_OPTIM(time2);
+#endif
 }
 
 template <typename F, typename F2, typename F3>
@@ -1409,7 +1420,7 @@ auto compare_duration(
         }                                                                                          \
     } while (false)
 
-#if defined(PERF_TEST)
+// #if defined(PERF_TEST)
 #if RAH2_CPP23 && !defined(RAH2_USE_EASTL)
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES
 #define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_STD_RANGES
@@ -1437,16 +1448,13 @@ auto compare_duration(
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
 #endif
-#else
-#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
-#define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
-#define COMPARE_DURATION_TO_STD_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_3
-#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
-#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
-#endif
-
-#define DONT_OPTIM(V)                                                                              \
-    memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
+//#else
+//#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
+//#define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
+//#define COMPARE_DURATION_TO_STD_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_3
+//#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
+//#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
+//#endif
 
 struct Coord
 {

@@ -691,7 +691,8 @@ struct test_starts_with_
         auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
         (void)haystack;
 
-        RAH2_STD::string needle_{"bcdefgh"};
+        RAH2_STD::string needle_ = haystack_;
+        needle_.pop_back();
         auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
         (void)needle;
 
@@ -702,6 +703,13 @@ struct test_starts_with_
         }
         haystack_proj_ += "abcdefgh cd";
         (void)haystack_proj_;
+        auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
+
+        RAH2_STD::string needle2_ = haystack_proj_;
+        needle2_.pop_back();
+        auto needle2 = make_test_view_adapter<CS, Tag, Sized>(needle2_);
+        (void)needle2;
+
 
         {
             COMPARE_DURATION_TO_STD_RANGES_23(
@@ -722,15 +730,12 @@ struct test_starts_with_
                 (
                     [&]
                     {
-                        auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
-                        RAH2_STD::string bodkin_{"2345678"};
-                        auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
                         auto const found5 = STD::starts_with(
                             haystack_proj,
-                            bodkin,
+                            needle2,
                             [](int const x, int const y) { return x == y; },
                             [](int const x) { return std::toupper(x); },
-                            [](int const y) { return (y - '1') + 'A'; });
+                            [](int const y) { return std::toupper(y); });
                         CHECK(found5);
                     }));
         }
