@@ -589,7 +589,7 @@ public:
             return iterator(data, end_ptr);
         }
     }
-    template <typename R = Range, RAH2_STD::enable_if_t<RAH2_STD::ranges::range<R const> > * = nullptr >
+    template <typename R = Range, RAH2_STD::enable_if_t<RAH2_NS::ranges::range<R const>>* = nullptr>
     auto begin() const
     {
         auto it = RAH2_NS::ranges::begin(base_);
@@ -634,14 +634,14 @@ public:
     }
     template <
         CommonOrSent S = Sent,
-        RAH2_STD::enable_if_t<S == Sentinel && RAH2_STD::ranges::range<Range const>>* = nullptr>
+        RAH2_STD::enable_if_t<S == Sentinel && RAH2_NS::ranges::range<Range const>>* = nullptr>
     auto end() const
     {
         return RAH2_NS::default_sentinel_t{};
     }
     template <
         CommonOrSent S = Sent,
-        RAH2_STD::enable_if_t<S == Common && RAH2_STD::ranges::range<Range const>>* = nullptr>
+        RAH2_STD::enable_if_t<S == Common && RAH2_NS::ranges::range<Range const>>* = nullptr>
     auto end() const
     {
         auto it = RAH2_NS::ranges::begin(base_);
