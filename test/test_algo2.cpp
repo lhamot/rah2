@@ -905,7 +905,10 @@ struct test_find_end_
         auto a = RAH2_STD::ranges::borrowed_subrange_t<
             test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>>();
         DONT_OPTIM(a);
-        #endif
+        auto b = RAH2_STD::ranges::subrange<
+            test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>::iterator>();
+        DONT_OPTIM(b);
+#endif
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
