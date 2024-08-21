@@ -902,7 +902,7 @@ struct test_find_end_
         }
 
 #if RAH2_CPP20
-        using IT = RAH2_STD::ranges::iterator_t<test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>>;
+        using IT = test_view_adapter<Sentinel, std::forward_iterator_tag, false, std::vector<Coord, std::allocator<Coord>>>::iterator;
         IT it;
         DONT_OPTIM(it);
         STATIC_ASSERT(std::copyable<IT>);
