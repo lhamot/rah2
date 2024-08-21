@@ -612,6 +612,10 @@ try
     }
 
     {
+#if (defined(__GNUC__) && !defined(__clang__))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
         /// [for_each_pipeable]
         auto range =
             RAH2_NS::views::iota(0, 3)
@@ -661,6 +665,9 @@ try
         assert(count == 3);
         assert(count2 == 9);
         assert(count3 == 27);
+#if (defined(__GNUC__) && !defined(__clang__))
+#pragma GCC diagnostic pop
+#endif
     }
 
     {

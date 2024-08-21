@@ -691,7 +691,8 @@ struct test_starts_with_
         auto haystack = make_test_view_adapter<CS, Tag, Sized>(haystack_);
         (void)haystack;
 
-        RAH2_STD::string needle_{"bcdefgh"};
+        RAH2_STD::string needle_ = haystack_;
+        needle_.pop_back();
         auto needle = make_test_view_adapter<CS, Tag, Sized>(needle_);
         (void)needle;
 
@@ -702,6 +703,12 @@ struct test_starts_with_
         }
         haystack_proj_ += "abcdefgh cd";
         (void)haystack_proj_;
+        auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
+
+        RAH2_STD::string needle2_ = haystack_proj_;
+        needle2_.pop_back();
+        auto needle2 = make_test_view_adapter<CS, Tag, Sized>(needle2_);
+        (void)needle2;
 
         {
             COMPARE_DURATION_TO_STD_RANGES_23(
@@ -722,15 +729,12 @@ struct test_starts_with_
                 (
                     [&]
                     {
-                        auto haystack_proj = make_test_view_adapter<CS, Tag, Sized>(haystack_proj_);
-                        RAH2_STD::string bodkin_{"2345678"};
-                        auto bodkin = make_test_view_adapter<CS, Tag, Sized>(bodkin_);
                         auto const found5 = STD::starts_with(
                             haystack_proj,
-                            bodkin,
+                            needle2,
                             [](int const x, int const y) { return x == y; },
                             [](int const x) { return std::toupper(x); },
-                            [](int const y) { return (y - '1') + 'A'; });
+                            [](int const y) { return std::toupper(y); });
                         CHECK(found5);
                     }));
         }
@@ -1175,16 +1179,23 @@ struct test_copy_n_
         RAH2_STD::string out(1000000 * RELEASE_MULTIPLIER, '0');
 
         {
+#ifdef RAH2_USE_EASTL
+            // EASTL doesn't know about input_iterator type and so use the forward incrementation on iterator. (ex : "*result++ = *first++;")
+            constexpr bool static DoTest = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+#else
+            constexpr bool static DoTest = true;
+#endif
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                true,
+                DoTest,
                 "copy_n",
                 range_type,
-                [&]
-                {
-                    auto const res =
-                        STD::copy_n(fwd(in.begin()), 1000000 * RELEASE_MULTIPLIER - 5, out.begin());
-                    DONT_OPTIM(res);
-                });
+                (
+                    [&]
+                    {
+                        auto const res = STD::copy_n(
+                            fwd(in.begin()), 1000000 * RELEASE_MULTIPLIER - 5, out.begin());
+                        DONT_OPTIM(res);
+                    }));
         }
     }
     static constexpr bool do_test = true;
@@ -2213,6 +2224,7 @@ struct test_remove_copy_
                     [&]
                     {
                         auto const removed = STD::remove_copy(in, out.begin(), 1, &Coord::x);
+                        DONT_OPTIM(removed);
                         CHECK(out[1] == (Coord{3, 0}));
                         CHECK(out[2] == (Coord{42, 0}));
                     }));
@@ -2232,6 +2244,7 @@ struct test_remove_copy_
                     {
                         auto const removed2 =
                             STD::remove_copy(fwd(in.begin()), in.end(), out2.begin(), 1);
+                        DONT_OPTIM(removed2);
                         CHECK(out2[1] == 3);
                         CHECK(out2[2] == 42);
                     }));
@@ -2331,6 +2344,7 @@ struct test_remove_copy_if_
                     {
                         auto const removed = STD::remove_copy_if(
                             in, out.begin(), [](auto v) { return v == 1; }, &Coord::x);
+                        DONT_OPTIM(removed);
                         CHECK(out[1] == (Coord{3, 0}));
                         CHECK(out[2] == (Coord{42, 0}));
                     }));
@@ -2350,6 +2364,7 @@ struct test_remove_copy_if_
                     {
                         auto const removed2 = STD::remove_copy_if(
                             fwd(in.begin()), in.end(), out2.begin(), [](auto v) { return v == 1; });
+                        DONT_OPTIM(removed2);
                         CHECK(out2[1] == 3);
                         CHECK(out2[2] == 42);
                     }));

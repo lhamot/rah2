@@ -15,8 +15,8 @@ jobs:
         compiler: [ 
             {os: windows-latest, cpp: msvc, c: msvc }, 
             {os: macos-latest, cpp: clang++, c: clang} ,
-            {os: ubuntu-20.04, cpp: clang++, c: clang},
-            {os: ubuntu-20.04, cpp: g++, c: gcc} 
+            {os: ubuntu-22.04, cpp: clang++-18, c: clang-18},
+            {os: ubuntu-22.04, cpp: g++, c: gcc} 
         ]
         
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -26,6 +26,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
+    - name: Install clang
+      if: ${{ startsWith(matrix.compiler.os, 'ubuntu') && startsWith(matrix.compiler.cpp, 'clang') }}
+      run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18 all
+          rm llvm.sh
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.

@@ -361,7 +361,11 @@ class test_view_adapter
     Range base_;
     using base_iterator = RAH2_STD::remove_reference_t<RAH2_NS::ranges::range_reference_t<Range>>*;
     using base_sentinel = base_iterator;
+    using const_base_iterator =
+        RAH2_STD::remove_reference_t<RAH2_NS::ranges::range_reference_t<Range const>>*;
+    using const_base_sentinel = const_base_iterator;
     using ref = RAH2_NS::ranges::range_reference_t<Range>;
+    using const_ref = RAH2_NS::ranges::range_reference_t<Range const>;
 
 public:
     class iterator
@@ -464,6 +468,106 @@ public:
         }
     };
 
+    class const_iterator
+        : public RAH2_NS::ranges::iterator_facade<const_iterator, RAH2_NS::ranges::sentinel_iterator, ref, Cat>
+    {
+        const_base_iterator iter_;
+        const_base_iterator end_;
+
+    public:
+        const_iterator() = default;
+        template <typename I, typename U>
+        explicit const_iterator(I&& it, U&& end)
+            : iter_(it)
+            , end_(end)
+        {
+        }
+
+        const_iterator& operator++()
+        {
+            ++iter_;
+            return *this;
+        }
+        RAH2_POST_INCR(Cat)
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+        const_iterator& operator+=(intptr_t value)
+        {
+            iter_ += value;
+            return *this;
+        }
+
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
+        const_iterator& operator--()
+        {
+            --iter_;
+            return *this;
+        }
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
+        RAH2_POST_DECR;
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+        auto operator-(const_iterator const& other) const
+        {
+            return iter_ - other.iter_;
+        }
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+        const_iterator& operator-=(intptr_t value)
+        {
+            iter_ -= value;
+            return *this;
+        }
+        RAH2_NS::iter_reference_t<base_iterator> operator*() const
+        {
+            // assert(iter_ != end_);  // Enabling assert breaks benchmarks results...
+            return *iter_;
+        }
+        RAH2_NS::iter_reference_t<base_iterator> operator*()
+        {
+            // assert(iter_ != end_);  // Enabling assert breaks benchmarks results...
+            return *iter_;
+        }
+
+        base_iterator operator->() const
+        {
+            return iter_;
+        }
+        base_iterator operator->()
+        {
+            return iter_;
+        }
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
+        friend constexpr bool operator==(const_iterator const& it1, const_iterator const& it2)
+        {
+            return it1.iter_ == it2.iter_;
+        }
+        friend constexpr bool operator==(RAH2_NS::default_sentinel_t const&, const_iterator const& it)
+        {
+            return it.iter_ == it.end_;
+        }
+        friend constexpr bool operator==(const_iterator const& it, RAH2_NS::default_sentinel_t const&)
+        {
+            return it.iter_ == it.end_;
+        }
+        template <
+            typename C = Cat,
+            RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
+        friend bool operator<(const_iterator const& it1, const_iterator const& it2)
+        {
+            return it1.iter_ < it2.iter_;
+        }
+    };
+
     test_view_adapter() = default;
     explicit test_view_adapter(Range r)
         : base_(std::move(r))
@@ -486,6 +590,23 @@ public:
             return iterator(data, end_ptr);
         }
     }
+    template <typename R = Range, RAH2_STD::enable_if_t<RAH2_NS::ranges::range<R const>>* = nullptr>
+    auto begin() const
+    {
+        auto it = RAH2_NS::ranges::begin(base_);
+        auto end = RAH2_NS::ranges::end(base_);
+        if (it == end)
+        {
+            return const_iterator(nullptr, nullptr);
+        }
+        else
+        {
+            auto const data = &(*it);
+            auto const size = end - it;
+            auto const end_ptr = data + size;
+            return const_iterator(data, end_ptr);
+        }
+    }
     template <CommonOrSent S = Sent, RAH2_STD::enable_if_t<S == Sentinel>* = nullptr>
     auto end()
     {
@@ -506,6 +627,32 @@ public:
             auto const size = end - it;
             auto const end_ptr = data + size;
             return iterator(end_ptr, end_ptr);
+        }
+    }
+    template <
+        CommonOrSent S = Sent,
+        RAH2_STD::enable_if_t<S == Sentinel && RAH2_NS::ranges::range<Range const>>* = nullptr>
+    auto end() const
+    {
+        return RAH2_NS::default_sentinel_t{};
+    }
+    template <
+        CommonOrSent S = Sent,
+        RAH2_STD::enable_if_t<S == Common && RAH2_NS::ranges::range<Range const>>* = nullptr>
+    auto end() const
+    {
+        auto it = RAH2_NS::ranges::begin(base_);
+        auto end = RAH2_NS::ranges::end(base_);
+        if (it == end)
+        {
+            return const_iterator(nullptr, nullptr);
+        }
+        else
+        {
+            auto const data = &(*it);
+            auto const size = end - it;
+            auto const end_ptr = data + size;
+            return const_iterator(end_ptr, end_ptr);
         }
     }
     template <
@@ -1019,16 +1166,16 @@ struct test_algo
     {
         template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
         void call(char const*
-#if defined(PERF_TEST)
+                      // #if defined(PERF_TEST)
                       range_type
-#endif
+                  // #endif
         ) const
         {
             auto t1 = MakeR<Sentinel, Cat, Sized>();
             t1.template test<>();
-#if defined(PERF_TEST)
+            // #if defined(PERF_TEST)
             t1.template test_perf<>(range_type);
-#endif
+            // #endif
         }
     };
     template <CommonOrSent Sentinel, typename Cat, bool Sized>
@@ -1180,6 +1327,9 @@ void call_if_true(Func&&)
 #define RELEASE_MULTIPLIER 1
 #endif
 
+#define DONT_OPTIM(V)                                                                              \
+    memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
+
 static auto perf_test_duration = std::chrono::seconds(1);
 
 template <typename F>
@@ -1191,7 +1341,6 @@ std::chrono::nanoseconds compute_duration(
     char const* file,
     int line)
 {
-#ifdef PERF_TEST
     size_t count = 0;
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
@@ -1199,6 +1348,7 @@ std::chrono::nanoseconds compute_duration(
     func();
     ++count;
     end = std::chrono::high_resolution_clock::now();
+#ifdef PERF_TEST
     if ((end - start) < std::chrono::microseconds(100))
     {
         std::cerr << "Too short function (" << ((end - start) / count).count() << ") at " << file
@@ -1219,6 +1369,7 @@ std::chrono::nanoseconds compute_duration(
               << ((end - start) / count).count() << std::endl;
     return (end - start) / count;
 #else
+    (void)count;
     (void)algo;
     (void)range_type;
     (void)step;
@@ -1241,6 +1392,7 @@ auto compare_duration(
     char const* file,
     int line)
 {
+#ifdef PERF_TEST
     std::chrono::nanoseconds duration_std{};
     std::chrono::nanoseconds duration_rah2{};
     for (size_t i = 0; i < 4; ++i)
@@ -1255,6 +1407,14 @@ auto compare_duration(
         }
     }
     assert(duration_rah2 < (duration_std * PerfTolerency));
+#else
+    auto time1 =
+        compute_duration(RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
+    DONT_OPTIM(time1);
+    auto time2 =
+        compute_duration(RAH2_STD::forward<F2>(func_rah2), algo, range_type, "rah2", file, line);
+    DONT_OPTIM(time2);
+#endif
 }
 
 template <typename F, typename F2, typename F3>
@@ -1409,7 +1569,7 @@ auto compare_duration(
         }                                                                                          \
     } while (false)
 
-#if defined(PERF_TEST)
+// #if defined(PERF_TEST)
 #if RAH2_CPP23 && !defined(RAH2_USE_EASTL)
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES
 #define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_STD_RANGES
@@ -1437,16 +1597,13 @@ auto compare_duration(
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
 #endif
-#else
-#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
-#define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
-#define COMPARE_DURATION_TO_STD_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_3
-#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
-#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
-#endif
-
-#define DONT_OPTIM(V)                                                                              \
-    memcpy((char*)&testSuite.avoid_optim, (char*)&V, RAH2_STD::min(sizeof(V), sizeof(size_t)))
+//#else
+//#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
+//#define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
+//#define COMPARE_DURATION_TO_STD_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_3
+//#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
+//#define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
+//#endif
 
 struct Coord
 {
