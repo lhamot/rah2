@@ -1180,24 +1180,25 @@ struct test_copy_n_
         RAH2_STD::string out(1000000 * RELEASE_MULTIPLIER, '0');
 
         {
+#ifdef RAH2_USE_EASTL
+            // EASTL doesn't know about input_iterator type and so use the forward incrementation on iterator. (ex : "*result++ = *first++;")
+            constexpr bool static DoTest = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+#else
+            constexpr bool static DoTest = true;
+#endif
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                true,
+                DoTest,
                 "copy_n",
                 range_type,
-                [&]
+                ([&]
                 {
                     auto const res =
                         STD::copy_n(fwd(in.begin()), 1000000 * RELEASE_MULTIPLIER - 5, out.begin());
                     DONT_OPTIM(res);
-                });
+                }));
         }
     }
-#if defined(RAH2_USE_EASTL) && defined(PERF_TEST)
-    // EASTL doesn't know about input_iterator type and so use the forward incrementation on iterator. (ex : "*result++ = *first++;")
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
-#else
     static constexpr bool do_test = true;
-#endif
 };
 void test_copy_n()
 {
