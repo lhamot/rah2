@@ -907,8 +907,7 @@ struct test_find_end_
         DONT_OPTIM(it);
         auto cont = RAH2_STD::contiguous_iterator<IT>;
         DONT_OPTIM(cont);
-        auto a = RAH2_STD::ranges::view_interface<
-            typename test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>::iterator>();
+        auto a = RAH2_STD::ranges::view_interface<test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>>();
         DONT_OPTIM(a);
         auto b = RAH2_STD::ranges::subrange<
             typename test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>::iterator>();
