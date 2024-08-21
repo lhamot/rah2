@@ -902,13 +902,18 @@ struct test_find_end_
         }
 
 #if RAH2_CPP20
+        using SR = std::ranges::subrange<test_view_adapter<Sentinel, std::forward_iterator_tag, false, std::vector<Coord, std::allocator<Coord>>>::iterator, test_view_adapter<Sentinel, std::forward_iterator_tag, false, std::vector<Coord, std::allocator<Coord>>>::iterator, std::ranges::subrange_kind::unsized>;
+        SR sr;
+        DONT_OPTIM(sr);
         using IT = RAH2_STD::ranges::iterator_t<test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>>;
         IT it;
         DONT_OPTIM(it);
         auto cont = RAH2_STD::contiguous_iterator<IT>;
         DONT_OPTIM(cont);
-        auto a = RAH2_STD::ranges::view_interface<test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>>();
-        DONT_OPTIM(a);
+
+        //view_interface<subrange<_It, _Sent, _Kind>>
+        auto c = RAH2_STD::ranges::subrange(r1);
+        DONT_OPTIM(c);
         auto b = RAH2_STD::ranges::subrange<
             typename test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>::iterator>();
         DONT_OPTIM(b);
