@@ -905,6 +905,8 @@ struct test_find_end_
         using IT = RAH2_STD::ranges::iterator_t<test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>>;
         IT it;
         DONT_OPTIM(it);
+        auto cont = RAH2_STD::contiguous_iterator<IT>;
+        DONT_OPTIM(cont);
         auto a = RAH2_STD::ranges::view_interface<
             typename test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>::iterator>();
         DONT_OPTIM(a);
