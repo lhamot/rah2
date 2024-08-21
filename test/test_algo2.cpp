@@ -26,7 +26,6 @@
 #include <forward_list>
 #include <set>
 #include <cstring>
-#include <utility>
 #endif
 
 #if RAH2_CPP20
@@ -900,26 +899,6 @@ struct test_find_end_
                     DONT_OPTIM(iter);
                 });
         }
-
-#if RAH2_CPP20
-        using IT = test_view_adapter<Sentinel, std::forward_iterator_tag, false, std::vector<Coord, std::allocator<Coord>>>::iterator;
-        IT it;
-        DONT_OPTIM(it);
-        STATIC_ASSERT(std::copyable<IT>);
-        using SR = std::ranges::subrange<test_view_adapter<Sentinel, std::forward_iterator_tag, false, std::vector<Coord, std::allocator<Coord>>>::iterator, test_view_adapter<Sentinel, std::forward_iterator_tag, false, std::vector<Coord, std::allocator<Coord>>>::iterator, std::ranges::subrange_kind::unsized>;
-        SR sr;
-        DONT_OPTIM(sr);
-        auto cont = RAH2_STD::contiguous_iterator<IT>;
-        DONT_OPTIM(cont);
-
-        //view_interface<subrange<_It, _Sent, _Kind>>
-        auto c = RAH2_STD::ranges::subrange(r1);
-        DONT_OPTIM(c);
-        auto b = RAH2_STD::ranges::subrange<
-            typename test_view_adapter<CS, Tag, Sized, RAH2_STD::vector<Coord>>::iterator>();
-        DONT_OPTIM(b);
-#endif
-
         {
             COMPARE_DURATION_TO_STD_RANGES(
                 "find_end_proj",

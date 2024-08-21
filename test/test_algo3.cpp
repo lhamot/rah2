@@ -1192,7 +1192,7 @@ struct test_copy_n_
                 });
         }
     }
-#ifdef RAH2_USE_EASTL
+#if defined(RAH2_USE_EASTL) && defined(PERF_TEST)
     // EASTL doesn't know about input_iterator type and so use the forward incrementation on iterator. (ex : "*result++ = *first++;")
     static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
 #else
