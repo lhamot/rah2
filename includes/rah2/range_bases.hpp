@@ -2001,8 +2001,8 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<
-                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::assignable_from<I&, S>>* = nullptr>
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>
+                        && RAH2_NS::assignable_from<I&, S>>* = nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     i = RAH2_STD::move(bound);
@@ -2012,9 +2012,8 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<
-                            I> && RAH2_NS::sentinel_for<S, I> && not RAH2_NS::assignable_from<I&, S> && RAH2_NS::sized_sentinel_for<S, I>>* =
-                        nullptr>
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>
+                        && not RAH2_NS::assignable_from<I&, S> && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     advance(i, bound - i);
@@ -2024,9 +2023,9 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<
-                            I> && RAH2_NS::sentinel_for<S, I> && not RAH2_NS::assignable_from<I&, S> && not RAH2_NS::sized_sentinel_for<S, I>>* =
-                        nullptr>
+                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>
+                        && not RAH2_NS::assignable_from<I&, S>
+                        && not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     while (i != bound)
