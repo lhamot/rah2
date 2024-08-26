@@ -181,7 +181,7 @@ namespace RAH2_NS
         };
 
         template <typename T>
-        struct is_initializer_list_impl<RAH2_STD::initializer_list<T>>
+        struct is_initializer_list_impl<std::initializer_list<T>>
         {
             static constexpr bool value = true;
         };

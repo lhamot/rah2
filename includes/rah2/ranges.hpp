@@ -993,7 +993,7 @@ namespace RAH2_NS
                     }
 
                     template <typename V>
-                    auto operator()(RAH2_STD::initializer_list<V>& range) const
+                    auto operator()(std::initializer_list<V>& range) const
                     {
                         return views::ref(range);
                     }
