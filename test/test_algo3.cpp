@@ -2884,7 +2884,7 @@ struct test_swap_
             CHECK(result.in2 == out.begin() + in_.size());
             CHECK(result.in1 == in.end());
             CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
-            CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12, 4, 5}));
+            CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12}));
         }
 
         {
@@ -2896,7 +2896,7 @@ struct test_swap_
             CHECK(result2.in2 == out.begin() + in_.size());
             CHECK(result2.in1 == in.end());
             CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
-            CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12, 4, 5}));
+            CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12}));
         }
 
         {
