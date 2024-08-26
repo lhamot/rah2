@@ -1451,9 +1451,9 @@ namespace RAH2_NS
             struct ssize_impl
             {
                 template <typename R>
-                RAH2_STD::ptrdiff_t operator()(R&& range) const
+                std::ptrdiff_t operator()(R&& range) const
                 {
-                    return static_cast<RAH2_STD::ptrdiff_t>(size_impl{}(RAH2_STD::forward<R>(range)));
+                    return static_cast<std::ptrdiff_t>(size_impl{}(RAH2_STD::forward<R>(range)));
                 }
             };
 
@@ -2190,9 +2190,9 @@ namespace RAH2_NS
 
     template <class C>
     constexpr auto ssize(const C& c)
-        -> RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
+        -> RAH2_STD::common_type_t<std::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
     {
-        return RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>(
+        return RAH2_STD::common_type_t<std::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>(
             c.size());
     }
 
@@ -2203,11 +2203,11 @@ namespace RAH2_NS
         return N;
     }
 
-    template <class T, RAH2_STD::ptrdiff_t N>
-    constexpr RAH2_STD::ptrdiff_t ssize(const T (&array)[N]) noexcept
+    template <class T, std::ptrdiff_t N>
+    constexpr std::ptrdiff_t ssize(const T (&array)[N]) noexcept
     {
         (void)array;
-        return static_cast<RAH2_STD::ptrdiff_t>(N);
+        return static_cast<std::ptrdiff_t>(N);
     }
 
     template <class C>

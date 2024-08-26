@@ -4946,7 +4946,7 @@ namespace RAH2_NS
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
                 iter += RAH2_NS::details::min(
-                    begin_idx_, RAH2_STD::ptrdiff_t(RAH2_NS::ranges::size(base_)));
+                    begin_idx_, std::ptrdiff_t(RAH2_NS::ranges::size(base_)));
                 return iter;
             }
 
