@@ -2867,6 +2867,95 @@ void test_replace_copy_if()
 
     foreach_range_combination<test_algo<test_replace_copy_if_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_swap_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in_{1, 2, 3};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out{10, 11, 12, 4, 5};
+            auto result = RAH2_NS::ranges::swap_ranges(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
+            CHECK(result.in2 == out.begin() + in_.size());
+            CHECK(result.in1 == in.end());
+            CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
+            CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12, 4, 5}));
+        }
+
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> in_{1, 2, 3};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out{10, 11, 12, 4, 5};
+            auto result2 = RAH2_NS::ranges::swap_ranges(in, out);
+            CHECK(result2.in2 == out.begin() + in_.size());
+            CHECK(result2.in1 == in.end());
+            CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
+            CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12, 4, 5}));
+        }
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<int> empty_out;
+
+            auto result3 = RAH2_NS::ranges::swap_ranges(empty_in, empty_out);
+            CHECK(result3.in2 == empty_out.begin() + empty_in_.size());
+            CHECK(result3.in1 == empty_in.end());
+            CHECK(empty_out.empty());
+            CHECK(empty_in_.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "swap_iter",
+                range_type,
+                [&]
+                {
+                    auto result = STD::swap_ranges(
+                        RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
+                    CHECK(result.in2 == out.begin() + in_.size());
+                    CHECK(result.in1 == in.end());
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "swap_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::swap_ranges(in, out);
+                        CHECK(result2.in2 == out.begin() + in_.size());
+                        CHECK(result2.in1 == in.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_swap_ranges()
 {
     testSuite.test_case("sample");
@@ -2888,7 +2977,80 @@ void test_swap_ranges()
     assert(q == (RAH2_STD::list<char>{'2', '3', 'C', 'D', 'E', '6'}));
     assert(p == (RAH2_STD::vector<char>{'1', 'A', 'B', '4', '5'}));
     /// [rah2::ranges::swap_ranges]
+
+    foreach_range_combination<test_algo<test_swap_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_reverse_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::reverse(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{5, 4, 3, 2, 1}));
+        }
+
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result2 = RAH2_NS::ranges::reverse(out);
+            CHECK(result2 == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{6, 5, 4, 3, 2, 1}));
+        }
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> out_{};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result3 = RAH2_NS::ranges::reverse(out.begin(), out.end());
+            CHECK(result3 == out.end());
+            CHECK(out_.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        out_.emplace_back();
+        out_.emplace_back();
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "reverse_iter",
+                range_type,
+                [&]
+                {
+                    STD::reverse(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out));
+                    CHECK(out.front() == 0);
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "reverse_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::reverse(out);
+                        DONT_OPTIM(result2);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_reverse()
 {
     testSuite.test_case("sample");
@@ -2903,6 +3065,8 @@ void test_reverse()
     RAH2_NS::ranges::reverse(a);
     assert(a == (RAH2_STD::array<int, 5>{5, 4, 3, 2, 1}));
     /// [rah2::ranges::reverse]
+
+    foreach_range_combination<test_algo<test_reverse_>>();
 }
 void test_reverse_copy()
 {
