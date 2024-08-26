@@ -3469,7 +3469,7 @@ namespace RAH2_NS
                 {
                     auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
                     auto first2 = first_last.iterator;
-                    auto last2 = RAH2_STD::ranges::next(first2, first_last.sentinel);
+                    auto last2 = RAH2_NS::ranges::next(first2, first_last.sentinel);
                     reverse_impl(RAH2_MOV(first2), last2);
                     return first_last.wrap_iterator(RAH2_MOV(last2));
                 }
@@ -5397,7 +5397,7 @@ namespace RAH2_NS
 
                 template <typename R // no-throw-input-range
                           >
-                // requires RAH2_STD::destructible<RAH2_STD::ranges::range_value_t<R>>
+                // requires RAH2_NS::destructible<RAH2_STD::ranges::range_value_t<R>>
                 constexpr RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const noexcept
                 {
                     return operator()(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
