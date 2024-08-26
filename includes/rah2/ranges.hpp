@@ -1989,7 +1989,7 @@ namespace RAH2_NS
             using Cat = RAH2_STD::conditional_t<
                 RAH2_NS::ranges::common_range<R>, // If common
                 input_iter_cat, // do not use common_iterator
-                std::conditional_t< // If sized random_access
+                RAH2_STD::conditional_t< // If sized random_access
                     RAH2_NS::ranges::sized_range<R> && RAH2_NS::ranges::random_access_range<R>,
                     input_iter_cat, // do not use common_iterator (move begin to end)
                     details::cap_iterator_tag<input_iter_cat, RAH2_NS::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
@@ -2004,7 +2004,7 @@ namespace RAH2_NS
             {
             }
 
-            // TODO : Move in RAH_NS for std::common_iterator
+            // TODO : Move in RAH_NS for RAH2_STD::common_iterator
             class common_iterator
                 : public iterator_facade<common_iterator, default_sentinel_t, iter_reference_t<base_iterator>, Cat>
             {

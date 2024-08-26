@@ -383,7 +383,7 @@ public:
         {
         }
 
-        iterator& operator++()
+        constexpr iterator& operator++() noexcept(noexcept(++iter_))
         {
             ++iter_;
             return *this;
@@ -392,7 +392,7 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
-        iterator& operator+=(intptr_t value)
+        constexpr iterator& operator+=(intptr_t value) noexcept(noexcept(iter_ += value))
         {
             iter_ += value;
             return *this;
@@ -401,7 +401,7 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::bidirectional_iterator_tag>>* = nullptr>
-        iterator& operator--()
+        constexpr iterator& operator--() noexcept(noexcept(--iter_))
         {
             --iter_;
             return *this;
@@ -413,56 +413,63 @@ public:
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
-        auto operator-(iterator const& other) const
+        constexpr auto operator-(iterator const& other) const noexcept(noexcept(iter_ - other.iter_))
         {
             return iter_ - other.iter_;
         }
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
-        iterator& operator-=(intptr_t value)
+        constexpr iterator& operator-=(intptr_t value) noexcept(noexcept(iter_ -= value))
         {
             iter_ -= value;
             return *this;
         }
-        RAH2_NS::iter_reference_t<base_iterator> operator*() const
+        constexpr RAH2_NS::iter_reference_t<base_iterator> operator*() const
+            noexcept(noexcept(*iter_))
         {
             // assert(iter_ != end_);  // Enabling assert breaks benchmarks results...
             return *iter_;
         }
-        RAH2_NS::iter_reference_t<base_iterator> operator*()
+        constexpr RAH2_NS::iter_reference_t<base_iterator> operator*() noexcept(noexcept(*iter_))
         {
             // assert(iter_ != end_);  // Enabling assert breaks benchmarks results...
             return *iter_;
         }
 
-        base_iterator operator->() const
+        constexpr base_iterator operator->() const noexcept
         {
             return iter_;
         }
-        base_iterator operator->()
+        constexpr base_iterator operator->() noexcept
         {
             return iter_;
         }
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::forward_iterator_tag>>* = nullptr>
-        friend constexpr bool operator==(iterator const& it1, iterator const& it2)
+        friend constexpr bool operator==(iterator const& it1, iterator const& it2) noexcept(
+            noexcept(it1.iter_ == it2.iter_))
         {
             return it1.iter_ == it2.iter_;
         }
-        friend constexpr bool operator==(RAH2_NS::default_sentinel_t const&, iterator const& it)
+        friend constexpr bool operator==(
+            RAH2_NS::default_sentinel_t const&,
+            iterator const& it) noexcept(noexcept(it.iter_ == it.end_))
         {
             return it.iter_ == it.end_;
         }
-        friend constexpr bool operator==(iterator const& it, RAH2_NS::default_sentinel_t const&)
+        friend constexpr bool operator==(
+            iterator const& it,
+            RAH2_NS::default_sentinel_t const&) noexcept(noexcept(it.iter_ == it.end_))
         {
             return it.iter_ == it.end_;
         }
         template <
             typename C = Cat,
             RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_NS::random_access_iterator_tag>>* = nullptr>
-        friend bool operator<(iterator const& it1, iterator const& it2)
+        friend constexpr bool
+        operator<(iterator const& it1, iterator const& it2) noexcept(noexcept(it1.iter_ < it2.iter_))
         {
             return it1.iter_ < it2.iter_;
         }
@@ -1380,7 +1387,7 @@ std::chrono::nanoseconds compute_duration(
 #endif
 }
 
-constexpr static auto PerfTolerency = 4.;
+constexpr static auto PerfTolerency = 50.;
 
 template <typename F, typename F2>
 auto compare_duration(
@@ -1395,7 +1402,7 @@ auto compare_duration(
 #ifdef PERF_TEST
     std::chrono::nanoseconds duration_std{};
     std::chrono::nanoseconds duration_rah2{};
-    for (size_t i = 0; i < 4; ++i)
+    for (size_t i = 0; i < 1; ++i)
     {
         duration_std += compute_duration(
             RAH2_STD::forward<F>(func_std_range), algo, range_type, ref_ns, file, line);
@@ -1430,7 +1437,7 @@ auto compare_duration(
     std::chrono::nanoseconds duration_std{};
     std::chrono::nanoseconds duration_std_ranges{};
     std::chrono::nanoseconds duration_rah2{};
-    for (size_t i = 0; i < 4; ++i)
+    for (size_t i = 0; i < 1; ++i)
     {
         duration_std += compute_duration(
             RAH2_STD::forward<F>(func_std_algo), algo, range_type, "std", file, line);

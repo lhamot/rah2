@@ -3423,30 +3423,35 @@ namespace RAH2_NS
         {
             struct reverse
             {
-                template <typename BidirectionalIterator, typename Sentinel>
-                static BidirectionalIterator reverse_impl(
-                    BidirectionalIterator first, Sentinel last, RAH2_ITC_NS::bidirectional_iterator_tag)
+                template <
+                    typename BidirectionalIterator,
+                    RAH2_STD::enable_if_t<not RAH2_NS::random_access_iterator<BidirectionalIterator>>* = nullptr>
+                static RAH2_CONSTEXPR20 void
+                reverse_impl(BidirectionalIterator first, BidirectionalIterator last)
                 {
-                    for (; (first != last) && (first != --last);
-                         ++first) // We are not allowed to use operator <, <=, >, >= with a
-                        RAH2_NS::ranges::iter_swap(
-                            first, last); // generic (bidirectional or otherwise) iterator.
-                    return first;
+                    for (; (first != last) && (first != --last); ++first)
+                    {
+                        // We are not allowed to use operator <, <=, >, >= with a
+                        // generic (bidirectional or otherwise) iterator.
+                        RAH2_NS::ranges::iter_swap(first, last);
+                    }
                 }
 
-                template <typename RandomAccessIterator, typename Sentinel>
-                static RandomAccessIterator reverse_impl(
-                    RandomAccessIterator first, Sentinel last, RAH2_ITC_NS::random_access_iterator_tag)
+                template <
+                    typename RandomAccessIterator,
+                    RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<RandomAccessIterator>>* = nullptr>
+                RAH2_CONSTEXPR20 void static reverse_impl(
+                    RandomAccessIterator first, RandomAccessIterator last)
                 {
                     if (first != last)
                     {
-                        for (; first < --last;
-                             ++first) // With a random access iterator, we can use operator < to more efficiently implement
-                            RAH2_NS::ranges::iter_swap(
-                                first,
-                                last); // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
+                        for (; first < --last; ++first)
+                        {
+                            // With a random access iterator, we can use operator < to more efficiently implement
+                            // this algorithm. A generic iterator doesn't necessarily have an operator < defined.
+                            RAH2_NS::ranges::iter_swap(first, last);
+                        }
                     }
-                    return first;
                 }
 
                 /// reverse
@@ -3459,18 +3464,21 @@ namespace RAH2_NS
                 /// Complexity: Exactly '(last - first) / 2' swaps.
                 ///
                 template <typename BidirectionalIterator, typename Sentinel>
-                BidirectionalIterator operator()(BidirectionalIterator first, Sentinel last) const
+                RAH2_CONSTEXPR20 BidirectionalIterator
+                operator()(BidirectionalIterator first, Sentinel last) const
                 {
-                    using IC = RAH2_NS::details::iterator_concept<BidirectionalIterator>;
-                    return reverse_impl(first, last, IC());
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto first2 = first_last.iterator;
+                    auto last2 = RAH2_NS::ranges::next(first2, first_last.sentinel);
+                    reverse_impl(RAH2_MOV(first2), last2);
+                    return first_last.wrap_iterator(RAH2_MOV(last2));
                 }
 
                 template <typename BidirectionalRange>
-                borrowed_iterator_t<BidirectionalRange> operator()(BidirectionalRange&& range) const
+                RAH2_CONSTEXPR20 borrowed_iterator_t<BidirectionalRange>
+                operator()(BidirectionalRange&& range) const
                 {
-                    using IC = details::range_iter_categ_t<BidirectionalRange>;
-                    return reverse_impl(
-                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), IC());
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
                 }
             };
         } // namespace niebloids
@@ -3599,7 +3607,7 @@ namespace RAH2_NS
                     class Pred,
                     class Proj1,
                     class Proj2,
-                    std::enable_if_t<R1Sized && R2Sized>* = nullptr>
+                    RAH2_STD::enable_if_t<R1Sized && R2Sized>* = nullptr>
                 RAH2_CONSTEXPR20 subrange<I1> search_iterators(
                     I1 first1,
                     S1 last1,
@@ -3640,7 +3648,7 @@ namespace RAH2_NS
                     class Pred,
                     class Proj1,
                     class Proj2,
-                    std::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
+                    RAH2_STD::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
                 RAH2_CONSTEXPR20 subrange<I1> search_iterators(
                     I1 first1, S1 last1, I2 first2, S2 last2, Pred pred, Proj1 proj1, Proj2 proj2) const
                 {
@@ -3669,7 +3677,7 @@ namespace RAH2_NS
                     class Pred = RAH2_NS::ranges::equal_to,
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
-                    std::enable_if_t<R1Sized && R2Sized>* = nullptr>
+                    RAH2_STD::enable_if_t<R1Sized && R2Sized>* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
                 search_range(R1&& r1, R2&& r2, Pred pred, Proj1 proj1, Proj2 proj2) const
                 {
@@ -3706,7 +3714,7 @@ namespace RAH2_NS
                     class Pred = RAH2_NS::ranges::equal_to,
                     class Proj1 = RAH2_NS::details::identity,
                     class Proj2 = RAH2_NS::details::identity,
-                    std::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
+                    RAH2_STD::enable_if_t<!(R1Sized && R2Sized)>* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_STD::enable_if_t<forward_range<R1>, subrange<iterator_t<R1>>>
                 search_range(R1&& r1, R2&& r2, Pred pred, Proj1 proj1, Proj2 proj2) const
                 {
@@ -4126,7 +4134,7 @@ namespace RAH2_NS
                     typename I2,
                     typename S2,
                     typename Pred,
-                    std::enable_if_t<not(bidirectional_iterator<I1> && bidirectional_iterator<I2>)>* = nullptr>
+                    RAH2_STD::enable_if_t<not(bidirectional_iterator<I1> && bidirectional_iterator<I2>)>* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
                 impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
                 {
@@ -4159,13 +4167,13 @@ namespace RAH2_NS
                     typename I2,
                     typename S2,
                     class Pred,
-                    std::enable_if_t<bidirectional_iterator<I1> && bidirectional_iterator<I2>>* = nullptr>
+                    RAH2_STD::enable_if_t<bidirectional_iterator<I1> && bidirectional_iterator<I2>>* = nullptr>
                 RAH2_CONSTEXPR20 RAH2_NS::ranges::subrange<I1>
                 impl(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred) const
                 {
                     auto const i1 = RAH2_NS::ranges::next(first1, last1);
                     auto const i2 = RAH2_NS::ranges::next(first2, last2);
-                    auto const rresult = this->rsearch(i1, first1, i2, first2, std::move(pred));
+                    auto const rresult = this->rsearch(i1, first1, i2, first2, RAH2_STD::move(pred));
                     auto const result_first = rresult.end();
                     auto const result_last = rresult.begin();
                     if (result_last == first1)
@@ -5389,7 +5397,7 @@ namespace RAH2_NS
 
                 template <typename R // no-throw-input-range
                           >
-                // requires RAH2_STD::destructible<RAH2_STD::ranges::range_value_t<R>>
+                // requires RAH2_NS::destructible<RAH2_STD::ranges::range_value_t<R>>
                 constexpr RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const noexcept
                 {
                     return operator()(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
