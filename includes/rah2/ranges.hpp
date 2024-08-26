@@ -631,19 +631,19 @@ namespace RAH2_NS
         } // namespace views
         // ******************************* istream_view ******************************************************
 
-        template <typename Val, class CharT, class Traits = std::char_traits<CharT>>
+        template <typename Val, class CharT, class Traits = RAH2_STD::char_traits<CharT>>
         class basic_istream_view : public view_interface<basic_istream_view<Val, CharT, Traits>>
         {
-            std::istream* stream_ = nullptr;
+            RAH2_STD::istream* stream_ = nullptr;
             Val value_;
 
         public:
-            explicit basic_istream_view(std::istream* stream)
+            explicit basic_istream_view(RAH2_STD::istream* stream)
                 : stream_(stream)
             {
             }
 
-            std::istream* stream() const
+            RAH2_STD::istream* stream() const
             {
                 return stream_;
             }
@@ -993,7 +993,7 @@ namespace RAH2_NS
                     }
 
                     template <typename V>
-                    auto operator()(std::initializer_list<V>& range) const
+                    auto operator()(RAH2_STD::initializer_list<V>& range) const
                     {
                         return views::ref(range);
                     }
@@ -1989,7 +1989,7 @@ namespace RAH2_NS
             using Cat = RAH2_STD::conditional_t<
                 RAH2_NS::ranges::common_range<R>, // If common
                 input_iter_cat, // do not use common_iterator
-                std::conditional_t< // If sized random_access
+                RAH2_STD::conditional_t< // If sized random_access
                     RAH2_NS::ranges::sized_range<R> && RAH2_NS::ranges::random_access_range<R>,
                     input_iter_cat, // do not use common_iterator (move begin to end)
                     details::cap_iterator_tag<input_iter_cat, RAH2_NS::input_iterator_tag, RAH2_NS::bidirectional_iterator_tag>>>;
@@ -2004,7 +2004,7 @@ namespace RAH2_NS
             {
             }
 
-            // TODO : Move in RAH_NS for std::common_iterator
+            // TODO : Move in RAH_NS for RAH2_STD::common_iterator
             class common_iterator
                 : public iterator_facade<common_iterator, default_sentinel_t, iter_reference_t<base_iterator>, Cat>
             {
@@ -4945,8 +4945,8 @@ namespace RAH2_NS
             auto begin()
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
-                iter +=
-                    RAH2_NS::details::min(begin_idx_, std::ptrdiff_t(RAH2_NS::ranges::size(base_)));
+                iter += RAH2_NS::details::min(
+                    begin_idx_, RAH2_STD::ptrdiff_t(RAH2_NS::ranges::size(base_)));
                 return iter;
             }
 

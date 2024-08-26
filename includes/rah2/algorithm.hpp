@@ -1429,7 +1429,7 @@ namespace RAH2_NS
                     typename T, // RAH2_STD::copyable
                     typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<const T*, Proj>>
                     >
-                constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
+                constexpr T operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
                 {
                     return *RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp));
                 }
@@ -1472,7 +1472,7 @@ namespace RAH2_NS
                 }
 
                 template <typename T, typename Comp = RAH2_NS::ranges::less>
-                constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
+                constexpr T operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
                 {
                     return *RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp));
                 }
@@ -1527,7 +1527,7 @@ namespace RAH2_NS
 
                 template <typename T, typename Comp = RAH2_NS::ranges::less>
                 constexpr RAH2_NS::ranges::minmax_result<T>
-                operator()(std::initializer_list<T> r, Comp comp = {}) const
+                operator()(RAH2_STD::initializer_list<T> r, Comp comp = {}) const
                 {
                     auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::ref(comp));
                     return {*result.min, *result.max};

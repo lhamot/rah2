@@ -181,7 +181,7 @@ namespace RAH2_NS
         };
 
         template <typename T>
-        struct is_initializer_list_impl<std::initializer_list<T>>
+        struct is_initializer_list_impl<RAH2_STD::initializer_list<T>>
         {
             static constexpr bool value = true;
         };
@@ -1451,9 +1451,9 @@ namespace RAH2_NS
             struct ssize_impl
             {
                 template <typename R>
-                std::ptrdiff_t operator()(R&& range) const
+                RAH2_STD::ptrdiff_t operator()(R&& range) const
                 {
-                    return static_cast<std::ptrdiff_t>(size_impl{}(RAH2_STD::forward<R>(range)));
+                    return static_cast<RAH2_STD::ptrdiff_t>(size_impl{}(RAH2_STD::forward<R>(range)));
                 }
             };
 
@@ -2001,8 +2001,8 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
-                    RAH2_STD::enable_if_t<RAH2_NS::assignable_from<I&, S>>* = nullptr>
+                        RAH2_NS::input_or_output_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && RAH2_NS::assignable_from<I&, S>>* = nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     i = RAH2_STD::move(bound);
@@ -2012,9 +2012,9 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
-                    RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
-                    RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                        RAH2_NS::input_or_output_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && not RAH2_NS::assignable_from<I&, S> && RAH2_NS::sized_sentinel_for<S, I>>* =
+                        nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     advance(i, bound - i);
@@ -2024,9 +2024,9 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr,
-                    RAH2_STD::enable_if_t<not RAH2_NS::assignable_from<I&, S>>* = nullptr,
-                    RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                        RAH2_NS::input_or_output_iterator<
+                            I> && RAH2_NS::sentinel_for<S, I> && not RAH2_NS::assignable_from<I&, S> && not RAH2_NS::sized_sentinel_for<S, I>>* =
+                        nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
                     while (i != bound)
@@ -2099,7 +2099,7 @@ namespace RAH2_NS
         return c.begin();
     }
 
-    template <class T, std::size_t N>
+    template <class T, RAH2_STD::size_t N>
     constexpr T* begin(T (&array)[N]) noexcept
     {
         return array;
@@ -2123,7 +2123,7 @@ namespace RAH2_NS
         return c.end();
     }
 
-    template <class T, std::size_t N>
+    template <class T, RAH2_STD::size_t N>
     constexpr T* end(T (&array)[N]) noexcept
     {
         return array + N;
@@ -2147,7 +2147,7 @@ namespace RAH2_NS
         return c.rbegin();
     }
 
-    template <class T, std::size_t N>
+    template <class T, RAH2_STD::size_t N>
     constexpr RAH2_STD::reverse_iterator<T*> rbegin(T (&array)[N])
     {
         return RAH2_STD::reverse_iterator<T*>(array + N);
@@ -2171,7 +2171,7 @@ namespace RAH2_NS
         return c.rend();
     }
 
-    template <class T, std::size_t N>
+    template <class T, RAH2_STD::size_t N>
     constexpr RAH2_STD::reverse_iterator<T*> rend(T (&array)[N])
     {
         return RAH2_STD::reverse_iterator<T*>(array);
@@ -2191,24 +2191,24 @@ namespace RAH2_NS
 
     template <class C>
     constexpr auto ssize(const C& c)
-        -> RAH2_STD::common_type_t<std::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
+        -> RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>
     {
         return RAH2_STD::common_type_t<RAH2_STD::ptrdiff_t, RAH2_STD::make_signed_t<decltype(c.size())>>(
             c.size());
     }
 
-    template <class T, std::size_t N>
-    constexpr std::size_t size(const T (&array)[N]) noexcept
+    template <class T, RAH2_STD::size_t N>
+    constexpr RAH2_STD::size_t size(const T (&array)[N]) noexcept
     {
         (void)array;
         return N;
     }
 
-    template <class T, std::ptrdiff_t N>
-    constexpr std::ptrdiff_t ssize(const T (&array)[N]) noexcept
+    template <class T, RAH2_STD::ptrdiff_t N>
+    constexpr RAH2_STD::ptrdiff_t ssize(const T (&array)[N]) noexcept
     {
         (void)array;
-        return static_cast<std::ptrdiff_t>(N);
+        return static_cast<RAH2_STD::ptrdiff_t>(N);
     }
 
     template <class C>
@@ -2217,7 +2217,7 @@ namespace RAH2_NS
         return c.empty();
     }
 
-    template <class T, std::size_t N>
+    template <class T, RAH2_STD::size_t N>
     RAH2_NODISCARD constexpr bool empty(const T (&array)[N]) noexcept
     {
         (void)array;
@@ -2236,7 +2236,7 @@ namespace RAH2_NS
         return c.data();
     }
 
-    template <class T, std::size_t N>
+    template <class T, RAH2_STD::size_t N>
     constexpr T* data(T (&array)[N]) noexcept
     {
         return array;
