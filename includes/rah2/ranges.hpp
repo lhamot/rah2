@@ -634,16 +634,16 @@ namespace RAH2_NS
         template <typename Val, class CharT, class Traits = std::char_traits<CharT>>
         class basic_istream_view : public view_interface<basic_istream_view<Val, CharT, Traits>>
         {
-            RAH2_STD::istream* stream_ = nullptr;
+            std::istream* stream_ = nullptr;
             Val value_;
 
         public:
-            explicit basic_istream_view(RAH2_STD::istream* stream)
+            explicit basic_istream_view(std::istream* stream)
                 : stream_(stream)
             {
             }
 
-            RAH2_STD::istream* stream() const
+            std::istream* stream() const
             {
                 return stream_;
             }
