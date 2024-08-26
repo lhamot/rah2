@@ -3425,7 +3425,7 @@ namespace RAH2_NS
             {
                 template <
                     typename BidirectionalIterator,
-                    RAH2_STD::enable_if_t<not RAH2_STD::random_access_iterator<BidirectionalIterator>>* = nullptr>
+                    RAH2_STD::enable_if_t<not RAH2_NS::random_access_iterator<BidirectionalIterator>>* = nullptr>
                 static RAH2_CONSTEXPR20 void
                 reverse_impl(BidirectionalIterator first, BidirectionalIterator last)
                 {
@@ -3439,7 +3439,7 @@ namespace RAH2_NS
 
                 template <
                     typename RandomAccessIterator,
-                    RAH2_STD::enable_if_t<RAH2_STD::random_access_iterator<RandomAccessIterator>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<RandomAccessIterator>>* = nullptr>
                 RAH2_CONSTEXPR20 void static reverse_impl(
                     RandomAccessIterator first, RandomAccessIterator last)
                 {
