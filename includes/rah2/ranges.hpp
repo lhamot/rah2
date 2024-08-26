@@ -631,7 +631,7 @@ namespace RAH2_NS
         } // namespace views
         // ******************************* istream_view ******************************************************
 
-        template <typename Val, class CharT, class Traits = RAH2_STD::char_traits<CharT>>
+        template <typename Val, class CharT, class Traits = std::char_traits<CharT>>
         class basic_istream_view : public view_interface<basic_istream_view<Val, CharT, Traits>>
         {
             RAH2_STD::istream* stream_ = nullptr;
@@ -4945,8 +4945,8 @@ namespace RAH2_NS
             auto begin()
             {
                 auto iter = RAH2_NS::ranges::begin(base_);
-                iter += RAH2_NS::details::min(
-                    begin_idx_, std::ptrdiff_t(RAH2_NS::ranges::size(base_)));
+                iter +=
+                    RAH2_NS::details::min(begin_idx_, std::ptrdiff_t(RAH2_NS::ranges::size(base_)));
                 return iter;
             }
 
