@@ -3511,9 +3511,10 @@ namespace RAH2_NS
                 reverse_copy_result<BidirectionalIterator, OutputIterator>
                 operator()(BidirectionalIterator first, Sentinel last, OutputIterator result) const
                 {
-                    auto ret = RAH2_NS::ranges::next(first, last);
-                    for (; last != first; ++result)
-                        *result = *--last;
+                    auto last2 = RAH2_NS::ranges::next(first, last);
+                    auto ret = last2;
+                    for (; last2 != first; ++result)
+                        *result = *--last2;
                     return {RAH2_STD::move(ret), RAH2_STD::move(result)};
                 }
 
@@ -4989,7 +4990,9 @@ namespace RAH2_NS
 
                 do
                 {
-                    swap(*first++, *current++);
+                    swap(*first, *current);
+                    ++first;
+                    ++current;
 
                     if (first == middle)
                         middle = current;
@@ -5000,7 +5003,9 @@ namespace RAH2_NS
 
                 while (current != last)
                 {
-                    swap(*first++, *current++);
+                    swap(*first, *current);
+                    ++first;
+                    ++current;
 
                     if (first == middle)
                         middle = current;
@@ -5169,8 +5174,8 @@ namespace RAH2_NS
                 static subrange<RandomAccessIterator>
                 rotate_impl(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last)
                 {
-                    if (RAH2_STD::next(first)
-                        == middle) // If moving trivial types by a single element, memcpy is fast for that case.
+                    // If moving trivial types by a single element, memcpy is fast for that case.
+                    if (RAH2_STD::next(first) == middle)
                         return move_rotate_left_by_one(first, last);
                     if (RAH2_STD::next(middle) == last)
                         return move_rotate_right_by_one(first, last);
@@ -5195,20 +5200,33 @@ namespace RAH2_NS
                     {
                         if (middle != last)
                         {
+                            auto first_last = details::unwrap(RAH2_STD::move(first), last);
+                            auto middle_last =
+                                details::unwrap(RAH2_STD::move(middle), RAH2_STD::move(last));
+
+                            auto last2 =
+                                RAH2_NS::ranges::next(middle_last.iterator, middle_last.sentinel);
                             using IC = RAH2_NS::details::iterator_concept<ForwardIterator>;
                             using value_type =
                                 typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
 
-                            return details::rotate_helper < IC,
-                                   RAH2_STD::is_trivially_move_assignable<value_type>::value
+                            constexpr auto is_trivially_move_assignable =
+                                RAH2_STD::is_trivially_move_assignable<value_type>::value
 #if not RAH2_CPP20
-                                       || // This is the best way of telling if we can move types via memmove, but without a conforming C++11 compiler it usually returns false.
-                                       RAH2_STD::is_pod<value_type>::value
+                                || // This is the best way of telling if we can move types via memmove, but without a conforming C++11 compiler it usually returns false.
+                                RAH2_STD::is_pod<value_type>::value
 #endif
-                                       || // This is a more conservative way of telling if we can move types via memmove, and most compilers support it, but it doesn't have as full of coverage as is_trivially_move_assignable.
-                                       RAH2_NS::is_scalar<value_type>::value
-                                           > // This is the most conservative means and works with all compilers, but works only for scalars.
-                                           ::rotate_impl(first, middle, last);
+                                || // This is a more conservative way of telling if we can move types via memmove, and most compilers support it, but it doesn't have as full of coverage as is_trivially_move_assignable.
+                                // This is the most conservative means and works with all compilers, but works only for scalars.
+                                RAH2_NS::is_scalar<value_type>::value;
+
+                            using HelperType =
+                                details::rotate_helper<IC, is_trivially_move_assignable>;
+                            auto result = HelperType::rotate_impl(
+                                first_last.iterator, middle_last.iterator, last2);
+                            return {
+                                first_last.wrap_iterator(result.begin()),
+                                first_last.wrap_iterator(result.end())};
                         }
 
                         return {RAH2_STD::move(first), RAH2_STD::move(middle)};
