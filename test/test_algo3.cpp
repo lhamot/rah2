@@ -3113,7 +3113,7 @@ struct test_reverse_copy_
     }
 
     template <bool = true>
-    void test_perf([[maybe_unused]] char const* range_type)
+    void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
         RAH2_STD::vector<int> in_;
