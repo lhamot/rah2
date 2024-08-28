@@ -989,15 +989,15 @@ struct test_copy_
         out.emplace_back();
 
         {
-            COMPARE_DURATION_TO_STD_RANGES(
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
                 "copy_iter",
                 range_type,
                 [&]
                 {
                     auto result =
-                        STD::copy(RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
-                    CHECK(result.out == out.begin() + in_.size());
-                    CHECK(result.in == in.end());
+                        STD::copy(RAH2_NS::ranges::begin(fwd(in)), RAH2_NS::ranges::end(in), out.begin());
+                    DONT_OPTIM(result);
                 });
         }
 
@@ -1257,7 +1257,7 @@ struct test_copy_backward_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_backward",
+                "copy_backward_range",
                 range_type,
                 (
                     [&]
@@ -1269,7 +1269,7 @@ struct test_copy_backward_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_backward",
+                "copy_backward_iter",
                 range_type,
                 [&]
                 {
@@ -1397,15 +1397,15 @@ struct test_move_
         out.emplace_back();
 
         {
-            COMPARE_DURATION_TO_STD_RANGES(
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
                 "move_iter",
                 range_type,
                 [&]
                 {
                     auto result = STD::move(
-                        RAH2_NS::ranges::begin(in2), RAH2_NS::ranges::end(in2), out.begin());
-                    CHECK(result.out == out.begin() + in_.size());
-                    CHECK(result.in == in2.end());
+                        RAH2_NS::ranges::begin(fwd(in2)), RAH2_NS::ranges::end(in2), out.begin());
+                    DONT_OPTIM(result);
                 });
         }
 
@@ -1578,14 +1578,14 @@ struct test_fill_
         out.emplace_back();
 
         {
-            COMPARE_DURATION_TO_STD_RANGES(
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
                 "copy_iter",
                 range_type,
                 [&]
                 {
-                    auto result =
-                        STD::fill(RAH2_NS::ranges::begin(out), RAH2_NS::ranges::end(out), 16);
-                    CHECK(result == out.end());
+                    STD::fill(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), 16);
+                    DONT_OPTIM(out.back());
                 });
         }
 
@@ -1601,7 +1601,8 @@ struct test_fill_
                     }));
         }
     }
-    static constexpr bool do_test = true;
+    // Only use an output iterator, so no need to test several input iterator types
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
 };
 void test_fill()
 {
@@ -1648,18 +1649,20 @@ struct test_fill_n_
         out.emplace_back();
 
         {
-            COMPARE_DURATION_TO_STD_RANGES(
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
                 "copy_iter",
                 range_type,
                 [&]
                 {
                     auto result =
-                        STD::fill_n(RAH2_NS::ranges::begin(out), 1000000 * RELEASE_MULTIPLIER, 16);
+                        STD::fill_n(RAH2_NS::ranges::begin(fwd(out)), 1000000 * RELEASE_MULTIPLIER, 16);
                     CHECK(result == (out.end() - 2));
                 });
         }
     }
-    static constexpr bool do_test = true;
+    // Only use an output iterator, so no need to test several input iterator types
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
 };
 void test_fill_n()
 {
@@ -3068,6 +3071,89 @@ void test_reverse()
 
     foreach_range_combination<test_algo<test_reverse_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_reverse_copy_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<int> in_{1, 2, 3};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        {
+            RAH2_STD::vector<int> out{3, 2, 1, 4, 5};
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::reverse_copy(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
+            CHECK(result.out == out.begin() + in_.size());
+            CHECK(result.in == in.end());
+            CHECK(out == (RAH2_STD::vector<int>{3, 2, 1, 4, 5}));
+        }
+
+        {
+            RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
+            testSuite.test_case("range");
+            auto result2 = RAH2_NS::ranges::reverse_copy(in, out.begin());
+            CHECK(result2.out == out.begin() + in_.size());
+            CHECK(result2.in == in.end());
+            CHECK(out == (RAH2_STD::vector<int>{3, 2, 1, 4, 5}));
+        }
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<int> empty_out;
+
+            auto result3 = RAH2_NS::ranges::reverse_copy(empty_in, empty_out.begin());
+            CHECK(result3.out == empty_out.begin() + empty_in_.size());
+            CHECK(result3.in == empty_in.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf([[maybe_unused]] char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+        out.emplace_back();
+        out.emplace_back();
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "reverse_copy_iter",
+                range_type,
+                [&]
+                {
+                    auto result = STD::reverse_copy(
+                        RAH2_NS::ranges::begin(fwd(in)), RAH2_NS::ranges::end(in), out.begin());
+                    DONT_OPTIM(result);
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "reverse_copy_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::reverse_copy(in, out.begin());
+                        CHECK(result2.out == out.begin() + in_.size());
+                        CHECK(result2.in == in.end());
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_reverse_copy()
 {
     testSuite.test_case("sample");
@@ -3080,7 +3166,87 @@ void test_reverse_copy()
     RAH2_NS::ranges::reverse_copy(y, x.begin());
     assert(x == (RAH2_STD::string{"12345"}));
     /// [rah2::ranges::reverse_copy]
+
+    foreach_range_combination<test_algo<test_reverse_copy_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_rotate_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto middle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::rotate(out.begin(), middle, out.end());
+            CHECK(RAH2_NS::ranges::begin(result) == RAH2_NS::ranges::next(out.begin(), 3));
+            CHECK(RAH2_NS::ranges::end(result) == RAH2_NS::end(out));
+            CHECK(out_ == (RAH2_STD::vector<int>{3, 4, 5, 1, 2}));
+        }
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto middle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::rotate(out, middle);
+            CHECK(RAH2_NS::begin(result) == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(RAH2_NS::end(result) == RAH2_NS::end(out));
+            CHECK(out_ == (RAH2_STD::vector<int>{3, 4, 5, 6, 1, 2}));
+        }
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> out_{};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::rotate(out.begin(), out.begin(), out.end());
+            CHECK(RAH2_NS::begin(result) == RAH2_NS::end(out));
+            CHECK(RAH2_NS::end(result) == RAH2_NS::end(out));
+            CHECK(out_.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        out_.emplace_back();
+        out_.emplace_back();
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "rotate_iter",
+                range_type,
+                [&]
+                {
+                    STD::rotate(
+                        RAH2_NS::ranges::begin(fwd(out)),
+                        ++RAH2_NS::ranges::begin(fwd(out)),
+                        RAH2_NS::ranges::end(out));
+                    CHECK(out.front() == 0);
+                });
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "rotate_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::rotate(out, ++RAH2_NS::ranges::begin(out));
+                        DONT_OPTIM(result2);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_rotate()
 {
     testSuite.test_case("sample");
@@ -3105,6 +3271,8 @@ void test_rotate()
     RAH2_NS::ranges::rotate(s, s.end() - 3);
     assert(s == (RAH2_STD::string{"NOPABCDEFGHIJKLM"}));
     /// [rah2::ranges::rotate]
+
+    foreach_range_combination<test_algo<test_rotate_>>();
 }
 void test_rotate_copy()
 {
