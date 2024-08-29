@@ -815,13 +815,20 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
                 {
-                    if (n <= 0)
-                        return {RAH2_STD::move(first), RAH2_STD::move(last)};
+                    if (n < 0)
+                    {
+                        terminate(); // n < 0 is undefined behaviour
+                    }
+                    if (n == 0)
+                    {
+                        auto last2 = RAH2_NS::ranges::next(first, last);
+                        return {RAH2_STD::move(first), RAH2_STD::move(last2)};
+                    }
                     auto mid = first;
                     auto diff = RAH2_NS::ranges::advance(first, n, last);
-                    if (diff != 0)
+                    if (diff != 0) // return [first, first] if n > size(range)
                     {
-                        return {RAH2_STD::move(mid), RAH2_STD::move(last)};
+                        return {RAH2_STD::move(mid), RAH2_STD::move(first)};
                     }
                     auto result = RAH2_NS::ranges::move(first, last, mid);
                     return {RAH2_STD::move(mid), RAH2_STD::move(result.out)};
@@ -903,12 +910,14 @@ namespace RAH2_NS
                 {
                     if (n <= 0)
                     {
-                        return first;
+                        auto last2 = RAH2_NS::ranges::next(first, last);
+                        return {first, last2};
                     }
                     auto result = first;
                     if (RAH2_NS::ranges::advance(result, n, last) != 0)
                     {
-                        return last;
+                        auto last2 = RAH2_NS::ranges::next(first, last);
+                        return {last2, last2};
                     }
 
                     // Invariant: next(first, n) == result
