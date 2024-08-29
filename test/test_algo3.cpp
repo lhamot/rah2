@@ -3527,11 +3527,13 @@ struct test_shift_left_
                 CS == CommonOrSent::Common,
                 "shift_left_iter",
                 range_type,
-                [&]
-                {
-                    STD::shift_left(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), 12);
-                    CHECK(out.front() == 0);
-                });
+                (
+                    [&]
+                    {
+                        STD::shift_left(
+                            RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), 12);
+                        CHECK(out.front() == 0);
+                    }));
         }
 
         {
