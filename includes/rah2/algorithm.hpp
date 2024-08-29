@@ -815,11 +815,7 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
                 {
-                    if (n < 0)
-                    {
-                        terminate(); // n < 0 is undefined behaviour
-                    }
-                    if (n == 0)
+                    if (n <= 0)
                     {
                         auto last2 = RAH2_NS::ranges::next(first, last);
                         return {RAH2_STD::move(first), RAH2_STD::move(last2)};
@@ -858,11 +854,7 @@ namespace RAH2_NS
                 static constexpr RAH2_NS::ranges::subrange<I>
                 impl(I first, S last, iter_difference_t<I> n)
                 {
-                    if (n < 0)
-                    {
-                        terminate(); // n < 0 is undefined behavior
-                    }
-                    if (n == 0)
+                    if (n <= 0)
                     {
                         return {first, last};
                     }
@@ -912,11 +904,7 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
                 {
-                    if (n < 0)
-                    {
-                        terminate(); // n < 0 is undefined behavior
-                    }
-                    if (n == 0)
+                    if (n <= 0)
                     {
                         auto last2 = RAH2_NS::ranges::next(first, last);
                         return {first, last2};
