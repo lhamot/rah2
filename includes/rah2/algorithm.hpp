@@ -828,7 +828,7 @@ namespace RAH2_NS
                     auto diff = RAH2_NS::ranges::advance(first, n, last);
                     if (diff != 0) // return [first, first] if n > size(range)
                     {
-                        return {RAH2_STD::move(mid), RAH2_STD::move(first)};
+                        return {mid, mid};
                     }
                     auto result = RAH2_NS::ranges::move(first, last, mid);
                     return {RAH2_STD::move(mid), RAH2_STD::move(result.out)};
@@ -858,14 +858,18 @@ namespace RAH2_NS
                 static constexpr RAH2_NS::ranges::subrange<I>
                 impl(I first, S last, iter_difference_t<I> n)
                 {
-                    if (n <= 0)
+                    if (n < 0)
                     {
-                        return {RAH2_STD::move(first), RAH2_STD::move(last)};
+                        terminate(); // n < 0 is undefined behavior
+                    }
+                    if (n == 0)
+                    {
+                        return {first, last};
                     }
                     auto mid = last;
                     if (RAH2_NS::ranges::advance(mid, -n, first) != 0)
                     {
-                        return {RAH2_STD::move(first), RAH2_STD::move(last)};
+                        return {last, last};
                     }
                     auto result = RAH2_NS::ranges::move_backward(
                         RAH2_STD::move(first), RAH2_STD::move(mid), last);
@@ -908,7 +912,11 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::subrange<I>
                 operator()(I first, S last, iter_difference_t<I> n) const
                 {
-                    if (n <= 0)
+                    if (n < 0)
+                    {
+                        terminate(); // n < 0 is undefined behavior
+                    }
+                    if (n == 0)
                     {
                         auto last2 = RAH2_NS::ranges::next(first, last);
                         return {first, last2};
@@ -938,7 +946,7 @@ namespace RAH2_NS
                             // Note that distance(first, trail) == distance(result, last)
                             auto move_in_out = RAH2_NS::ranges::move(
                                 RAH2_STD::move(first), RAH2_STD::move(trail), RAH2_STD::move(result));
-                            return {move_in_out.out, result};
+                            return {result, move_in_out.out};
                         }
                     }
 
@@ -956,7 +964,7 @@ namespace RAH2_NS
                                 trail = RAH2_STD::move(mid, result, RAH2_STD::move(trail));
                                 auto move_in_out = RAH2_NS::ranges::move(
                                     RAH2_STD::move(first), RAH2_STD::move(mid), RAH2_STD::move(trail));
-                                return {move_in_out.out, trail};
+                                return {result, move_in_out.out};
                             }
                             RAH2_NS::ranges::iter_swap(mid, trail);
                         }

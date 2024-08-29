@@ -3275,7 +3275,6 @@ void test_rotate()
     foreach_range_combination<test_algo<test_rotate_>>();
 }
 
-
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_rotate_copy_
 {
@@ -3341,9 +3340,7 @@ struct test_rotate_copy_
                 [&]
                 {
                     auto result = STD::rotate_copy(
-                        RAH2_NS::ranges::begin(fwd(in)), middle,
-                        RAH2_NS::ranges::end(in),
-                        out.begin());
+                        RAH2_NS::ranges::begin(fwd(in)), middle, RAH2_NS::ranges::end(in), out.begin());
                     DONT_OPTIM(result);
                 });
         }
@@ -3532,10 +3529,7 @@ struct test_shift_left_
                 range_type,
                 [&]
                 {
-                    STD::shift_left(
-                        RAH2_NS::ranges::begin(fwd(out)),
-                        RAH2_NS::ranges::end(out),
-                        12);
+                    STD::shift_left(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), 12);
                     CHECK(out.front() == 0);
                 });
         }
@@ -3562,7 +3556,8 @@ void test_shift_left()
     RAH2_STD::vector<int> b{1, 2, 3, 4, 5, 6, 7};
 
     auto b8 = RAH2_NS::ranges::shift_left(b, 8); // has no effect: n >= last - first
-    assert(RAH2_NS::ranges::equal(b8, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(RAH2_NS::ranges::equal(b, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(RAH2_NS::ranges::empty(b8));
     assert(b == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     auto b0 = RAH2_NS::ranges::shift_left(b, 0); // has no effect: n == 0
@@ -3597,18 +3592,18 @@ struct test_shift_right_
             testSuite.test_case("range");
             RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6};
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
-            auto result = RAH2_NS::ranges::shift_right(out, 4);
-            CHECK(RAH2_NS::ranges::begin(result) == RAH2_NS::ranges::next(out.begin(), 0));
-            CHECK(RAH2_NS::ranges::end(result) == RAH2_NS::ranges::next(out.begin(), 2));
-            CHECK(out_ == (RAH2_STD::vector<int>{5, 6, 3, 4, 5, 6}));
+            auto result = RAH2_NS::ranges::shift_right(out, 2);
+            CHECK(RAH2_NS::ranges::begin(result) == RAH2_NS::ranges::next(out.begin(), 2));
+            CHECK(RAH2_NS::ranges::end(result) == out.end());
+            CHECK(RAH2_NS::ranges::equal(result, RAH2_STD::vector<int>{1, 2, 3, 4}));
         }
 
         {
             RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6};
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             auto result = RAH2_NS::ranges::shift_right(out, 9);
-            CHECK(RAH2_NS::ranges::begin(result) == RAH2_NS::ranges::next(out.begin(), 0));
-            CHECK(RAH2_NS::ranges::end(result) == RAH2_NS::ranges::next(out.begin(), 6));
+            CHECK(RAH2_NS::ranges::begin(result) == out.end());
+            CHECK(RAH2_NS::ranges::end(result) == out.end());
             CHECK(out_ == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6}));
         }
 
@@ -3668,7 +3663,8 @@ void test_shift_right()
     RAH2_STD::vector<int> b{1, 2, 3, 4, 5, 6, 7};
 
     auto b8 = RAH2_NS::ranges::shift_right(b, 8); // has no effect: n >= last - first
-    assert(RAH2_NS::ranges::equal(b8, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(RAH2_NS::ranges::equal(b, RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
+    assert(RAH2_NS::ranges::empty(b8));
     assert(b == (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7}));
 
     auto b0 = RAH2_NS::ranges::shift_right(b, 0); // has no effect: n == 0
