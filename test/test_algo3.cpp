@@ -3435,7 +3435,10 @@ struct test_shuffle_
                 range_type,
                 [&]
                 {
-                    STD::shuffle(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), g);
+                    STD::shuffle(
+                        make_iterator_diff_32(RAH2_NS::ranges::begin(fwd(out))),
+                        make_iterator_diff_32(RAH2_NS::ranges::end(out)),
+                        g);
                     CHECK(out.front() == 0);
                 });
         }

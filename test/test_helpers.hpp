@@ -702,6 +702,29 @@ auto make_test_view_adapter(Range&& r)
     return test_view_adapter<Sent, Cat, Sized, RAH2_NS::views::all_t<Range>>(RAH2_NS::views::all(r));
 }
 
+// This iterator is needed because eastl::shuffle do not accept iterator with 64bit difference
+template <typename I>
+struct iterator_diff_32 : public I
+{
+    using difference_type = int32_t;
+
+    iterator_diff_32(I it)
+        : I(it)
+    {
+    }
+
+    constexpr int32_t operator-(iterator_diff_32<I> const& other) const
+    {
+        return int32_t(I(*this) - I(other));
+    }
+};
+
+template <typename I>
+auto make_iterator_diff_32(I it)
+{
+    return iterator_diff_32<I>(it);
+}
+
 // output
 using OutputCommonView = test_view<Common, RAH2_NS::output_iterator_tag, false>;
 static_assert(
