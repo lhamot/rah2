@@ -186,15 +186,11 @@ public:
         }
     }
 
-    class iterator;
-    struct sentinel
-    {
-    };
-
     using ref_type =
         RAH2_STD::conditional_t<RAH2_NS::is_same_v<Cat, RAH2_NS::output_iterator_tag>, int&, int const&>;
 
-    class iterator : public RAH2_NS::ranges::iterator_facade<iterator, sentinel, ref_type, Cat>
+    class iterator
+        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::default_sentinel_t, ref_type, Cat>
     {
         RAH2_STD::vector<int>::iterator iter_;
         RAH2_STD::vector<int>::iterator end_;
@@ -369,7 +365,7 @@ class test_view_adapter
 
 public:
     class iterator
-        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::ranges::sentinel_iterator, ref, Cat>
+        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::default_sentinel_t, ref, Cat>
     {
         base_iterator iter_;
         base_iterator end_;
@@ -476,7 +472,7 @@ public:
     };
 
     class const_iterator
-        : public RAH2_NS::ranges::iterator_facade<const_iterator, RAH2_NS::ranges::sentinel_iterator, ref, Cat>
+        : public RAH2_NS::ranges::iterator_facade<const_iterator, RAH2_NS::default_sentinel_t, ref, Cat>
     {
         const_base_iterator iter_;
         const_base_iterator end_;
