@@ -3389,20 +3389,20 @@ struct test_shuffle_
             testSuite.test_case("iter");
             std::random_device rd;
             std::mt19937 g(rd());
-            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5};
+            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             RAH2_NS::ranges::shuffle(out.begin(), out.end(), g);
-            CHECK(out_ != (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
+            CHECK(out_ != (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}));
         }
 
         {
             testSuite.test_case("range");
             std::random_device rd;
             std::mt19937 g(rd());
-            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6};
+            RAH2_STD::vector<int> out_{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             RAH2_NS::ranges::shuffle(out, g);
-            CHECK(out_ != (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6}));
+            CHECK(out_ != (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}));
         }
 
         {
@@ -3420,7 +3420,7 @@ struct test_shuffle_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out_;
+        RAH2_STD::vector<uint32_t> out_;
         out_.resize(1000000 * RELEASE_MULTIPLIER);
         out_.emplace_back();
         out_.emplace_back();
@@ -3460,7 +3460,7 @@ void test_shuffle()
     /// [rah2::ranges::shuffle]
     std::random_device rd;
     std::mt19937 g(rd());
-    RAH2_STD::vector<int> in{1, 2, 3, 4, 5, 6};
+    RAH2_STD::vector<uint32_t> in{1, 2, 3, 4, 5, 6};
     RAH2_NS::ranges::shuffle(in, g);
     /// [rah2::ranges::shuffle]
 
