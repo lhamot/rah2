@@ -206,14 +206,14 @@ namespace RAH2_NS
             template <
                 typename Sent = S,
                 RAH2_STD::enable_if_t<!RAH2_NS::is_same_v<Sent, void> and !RAH2_NS::is_same_v<Sent, I>>* = nullptr>
-            friend bool operator!=(Sent const& sent, I const& it)
+            friend bool operator!=(S const& sent, I const& it)
             {
                 return !(it == sent);
             }
             template <
                 typename Sent = S,
                 RAH2_STD::enable_if_t<!RAH2_NS::is_same_v<Sent, void> and !RAH2_NS::is_same_v<Sent, I>>* = nullptr>
-            friend bool operator!=(I const& it, Sent const& sent)
+            friend bool operator!=(I const& it, S const& sent)
             {
                 return !(it == sent);
             }
