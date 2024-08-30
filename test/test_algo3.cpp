@@ -3428,6 +3428,18 @@ struct test_shuffle_
         std::random_device rd;
         std::mt19937 g(rd());
 
+#ifdef RAH2_USE_EASTL
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "shuffle_iter",
+                range_type,
+                [&]
+                {
+                    STD::shuffle(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), g);
+                    CHECK(out.front() == 0);
+                });
+        }
+#else
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == CommonOrSent::Common,
@@ -3435,13 +3447,11 @@ struct test_shuffle_
                 range_type,
                 [&]
                 {
-                    STD::shuffle(
-                        make_iterator_diff_32(RAH2_NS::ranges::begin(fwd(out))),
-                        make_iterator_diff_32(RAH2_NS::ranges::end(out)),
-                        g);
+                    STD::shuffle(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), g);
                     CHECK(out.front() == 0);
                 });
         }
+#endif
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
