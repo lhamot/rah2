@@ -131,12 +131,55 @@ namespace RAH2_NS
         {
             struct copy_fn
             {
-                template <typename I, typename S, typename O>
-                constexpr RAH2_NS::ranges::copy_result<I, O> operator()(I first, S last, O result) const
+                template <typename I>
+                constexpr static bool CanUseMemcpy =
+                    RAH2_NS::contiguous_iterator<I>
+                    && RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value;
+
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    RAH2_STD::enable_if_t<!(
+                        CanUseMemcpy<I> && CanUseMemcpy<O> && RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
+                static constexpr RAH2_NS::ranges::copy_result<I, O> impl(I first, S last, O result)
                 {
                     for (; first != last; ++first, (void)++result)
                         *result = *first;
                     return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        CanUseMemcpy<I> && CanUseMemcpy<O> && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                static constexpr RAH2_NS::ranges::copy_result<I, O> impl(I first, S last, O result)
+                {
+                    auto last2 = RAH2_NS::ranges::next(first, last);
+                    auto const byte_size = (char*)&(*last2) - (char*)&(*first);
+                    if (byte_size != 0)
+                    {
+                        memcpy((void*)&(*result), (void*)&(*first), byte_size);
+                        auto const elt_count = (last - first);
+                        first += elt_count;
+                        result += elt_count;
+                    }
+                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                }
+
+                template <typename I, typename S, typename O>
+                constexpr RAH2_NS::ranges::copy_result<I, O> operator()(I first, S last, O result) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto first2 = first_last.iterator;
+                    auto last2 = first_last.sentinel;
+
+                    auto impl_result = impl(first2, last2, RAH2_STD::move(result));
+                    return {
+                        first_last.wrap_iterator(RAH2_STD::move(impl_result.in)),
+                        RAH2_STD::move(impl_result.out)};
                 }
 
                 template <typename R, typename O>

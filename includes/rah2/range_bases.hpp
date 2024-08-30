@@ -485,17 +485,25 @@ namespace RAH2_NS
     // **************************** <iterator> Customization Point Object *************************
     namespace ranges
     {
-        template <class T>
-        constexpr auto iter_move(T&& t) -> RAH2_STD::remove_reference_t<decltype(*t)>
+        struct iter_move_cpo
         {
-            return RAH2_STD::move(*t);
-        }
+            template <class T>
+            constexpr auto operator()(T&& t) const -> RAH2_STD::remove_reference_t<decltype(*t)>
+            {
+                return RAH2_STD::move(*t);
+            }
+        };
+        constexpr iter_move_cpo iter_move;
 
-        template <class ForwardIterator1, class ForwardIterator2>
-        constexpr void iter_swap(ForwardIterator1 left, ForwardIterator2 right)
+        struct iter_swap_cpo
         {
-            RAH2_STD::swap(*left, *right);
-        }
+            template <class ForwardIterator1, class ForwardIterator2>
+            constexpr void operator()(ForwardIterator1 left, ForwardIterator2 right) const
+            {
+                RAH2_STD::swap(*left, *right);
+            }
+        };
+        constexpr iter_swap_cpo iter_swap;
     } // namespace ranges
 
     // **************************** <iterator> concepts *******************************************

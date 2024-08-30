@@ -186,15 +186,11 @@ public:
         }
     }
 
-    class iterator;
-    struct sentinel
-    {
-    };
-
     using ref_type =
         RAH2_STD::conditional_t<RAH2_NS::is_same_v<Cat, RAH2_NS::output_iterator_tag>, int&, int const&>;
 
-    class iterator : public RAH2_NS::ranges::iterator_facade<iterator, sentinel, ref_type, Cat>
+    class iterator
+        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::default_sentinel_t, ref_type, Cat>
     {
         RAH2_STD::vector<int>::iterator iter_;
         RAH2_STD::vector<int>::iterator end_;
@@ -369,7 +365,7 @@ class test_view_adapter
 
 public:
     class iterator
-        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::ranges::sentinel_iterator, ref, Cat>
+        : public RAH2_NS::ranges::iterator_facade<iterator, RAH2_NS::default_sentinel_t, ref, Cat>
     {
         base_iterator iter_;
         base_iterator end_;
@@ -476,7 +472,7 @@ public:
     };
 
     class const_iterator
-        : public RAH2_NS::ranges::iterator_facade<const_iterator, RAH2_NS::ranges::sentinel_iterator, ref, Cat>
+        : public RAH2_NS::ranges::iterator_facade<const_iterator, RAH2_NS::default_sentinel_t, ref, Cat>
     {
         const_base_iterator iter_;
         const_base_iterator end_;
@@ -705,7 +701,7 @@ auto make_test_view_adapter(Range&& r)
 // output
 using OutputCommonView = test_view<Common, RAH2_NS::output_iterator_tag, false>;
 static_assert(
-    RAH2_NS::input_or_output_iterator<RAH2_NS::ranges::iterator_t<OutputCommonView>>,
+    RAH2_NS::details::input_or_output_iterator_impl<RAH2_NS::ranges::iterator_t<OutputCommonView>, true>::value,
     "Should be input");
 static_assert(not RAH2_NS::ranges::input_range<OutputCommonView>, "Should be input");
 static_assert(RAH2_NS::ranges::output_range<OutputCommonView, int>, "Should be output");
@@ -1584,6 +1580,8 @@ auto compare_duration(
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2                                               \
     INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES
+#define COMPARE_DURATION_TO_STD_ALGO_20_AND_RANGES_23                                              \
+    INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES
 #elif RAH2_CPP20 && !defined(RAH2_USE_EASTL)
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES
 #define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
@@ -1591,18 +1589,21 @@ auto compare_duration(
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2                                               \
     INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES
+#define COMPARE_DURATION_TO_STD_ALGO_20_AND_RANGES_23 INTERNAL_COMPARE_DURATION_TO_STD_ALGO
 #elif RAH2_CPP17 && !defined(RAH2_USE_EASTL)
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO
 #define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
 #define COMPARE_DURATION_TO_STD_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_3
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_STD_ALGO_2
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO
+#define COMPARE_DURATION_TO_STD_ALGO_20_AND_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_4
 #else
 #define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_STD_ALGO
 #define COMPARE_DURATION_TO_STD_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_3
 #define COMPARE_DURATION_TO_STD_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_3
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2 INTERNAL_COMPARE_DURATION_TO_NOTHING_5
 #define COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4
+#define COMPARE_DURATION_TO_STD_ALGO_20_AND_RANGES_23 INTERNAL_COMPARE_DURATION_TO_NOTHING_4
 #endif
 //#else
 //#define COMPARE_DURATION_TO_STD_ALGO_AND_RANGES INTERNAL_COMPARE_DURATION_TO_NOTHING_4

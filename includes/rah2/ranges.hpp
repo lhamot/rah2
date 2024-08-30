@@ -181,10 +181,6 @@ namespace RAH2_NS
         return it;                                                                                 \
     }
 
-        struct sentinel_iterator
-        {
-        };
-
         template <typename I, typename S, typename R, typename C>
         struct iterator_facade;
 
@@ -206,14 +202,14 @@ namespace RAH2_NS
             template <
                 typename Sent = S,
                 RAH2_STD::enable_if_t<!RAH2_NS::is_same_v<Sent, void> and !RAH2_NS::is_same_v<Sent, I>>* = nullptr>
-            friend bool operator!=(Sent const& sent, I const& it)
+            friend bool operator!=(S const& sent, I const& it)
             {
                 return !(it == sent);
             }
             template <
                 typename Sent = S,
                 RAH2_STD::enable_if_t<!RAH2_NS::is_same_v<Sent, void> and !RAH2_NS::is_same_v<Sent, I>>* = nullptr>
-            friend bool operator!=(I const& it, Sent const& sent)
+            friend bool operator!=(I const& it, S const& sent)
             {
                 return !(it == sent);
             }
@@ -1364,18 +1360,31 @@ namespace RAH2_NS
                 base_sentinel end_;
 
                 friend constexpr bool
-                operator==(counted_iterator<iterator_t<R>> const& y, sentinel const& x)
+                operator==(counted_iterator<base_iterator> const& y, sentinel const& x)
                 {
                     return y.count() == 0 || y.base() == x.end_;
                 }
 
                 friend constexpr bool
-                operator==(sentinel const& x, counted_iterator<iterator_t<R>> const& y)
+                operator==(sentinel const& x, counted_iterator<base_iterator> const& y)
                 {
                     return y.count() == 0 || y.base() == x.end_;
                 }
+
+                friend constexpr bool
+                operator!=(counted_iterator<base_iterator> const& y, sentinel const& x)
+                {
+                    return !(y.count() == 0 || y.base() == x.end_);
+                }
+
+                friend constexpr bool
+                operator!=(sentinel const& x, counted_iterator<base_iterator> const& y)
+                {
+                    return !(y.count() == 0 || y.base() == x.end_);
+                }
             };
 
+            using iterator = counted_iterator<base_iterator>;
             take_view(R input_view, base_diff_type count_)
                 : input_view_(RAH2_STD::move(input_view))
                 , count_(count_)
@@ -1410,7 +1419,7 @@ namespace RAH2_NS
             template <bool S = sized_range<R>, RAH2_STD::enable_if_t<!S>* = nullptr>
             auto begin()
             {
-                return counted_iterator<iterator_t<R>>(ranges::begin(input_view_), count_);
+                return iterator(ranges::begin(input_view_), count_);
             }
 
             template <
@@ -1428,7 +1437,7 @@ namespace RAH2_NS
                 RAH2_STD::enable_if_t<S && !RA>* = nullptr>
             auto begin()
             {
-                return counted_iterator<iterator_t<R>>(
+                return iterator(
                     ranges::begin(input_view_), ranges::range_difference_t<R>(this->size()));
             }
 
@@ -4458,7 +4467,8 @@ namespace RAH2_NS
             using base_cat = RAH2_STD::random_access_iterator_tag;
 
         public:
-            class iterator : public iterator_facade<iterator, sentinel_iterator, T, base_cat>
+            class iterator
+                : public iterator_facade<iterator, RAH2_NS::default_sentinel_t, T, base_cat>
             {
                 T val_ = T();
                 T step_ = T(1);
