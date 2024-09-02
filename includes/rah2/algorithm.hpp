@@ -973,6 +973,21 @@ namespace RAH2_NS
 
         namespace niebloids
         {
+            template<size_t N>
+            struct ShouldBeU32;
+            template <>
+            struct ShouldBeU32<uint8_t>
+            {
+            };
+            template <>
+            struct ShouldBeU32<uint16_t>
+            {
+            };
+            template <>
+            struct ShouldBeU32<uint32_t>
+            {
+            };
+
             struct sample_fn
             {
                 template <
@@ -1023,12 +1038,16 @@ namespace RAH2_NS
                     */
 
 #ifdef RAH2_USE_EASTL
-                    using unsigned_difference_type = uint32_t;
+                    using difference_type = int32_t;
 #else
                     using difference_type =
                         typename RAH2_STD::iterator_traits<I>::difference_type;
+#endif
                     using unsigned_difference_type =
                         typename RAH2_STD::make_unsigned<difference_type>::type;
+
+#ifdef RAH2_USE_EASTL
+                    ShouldBeU32<unsigned_difference_type> test;
 #endif
                     using uniform_int_distrib =
                         RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
