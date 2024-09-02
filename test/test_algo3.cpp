@@ -3769,6 +3769,8 @@ struct test_sample_
         out2.emplace_back();
         out2.emplace_back();
 
+#ifndef RAH2_USE_EASTL
+        // eastl do not have sample algo, so there is nothing to compare
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
@@ -3785,6 +3787,7 @@ struct test_sample_
                     DONT_OPTIM(result);
                 });
         }
+#endif
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
