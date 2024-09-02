@@ -1048,7 +1048,9 @@ namespace RAH2_NS
 
 #ifdef RAH2_USE_EASTL
                     ShouldBeU32<unsigned_difference_type> test;
+                    (void)test;
 #endif
+
                     using uniform_int_distrib =
                         RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
                     using uniform_int_distribution_param_type =
