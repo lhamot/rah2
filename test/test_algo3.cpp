@@ -3772,7 +3772,7 @@ struct test_sample_
 #ifndef RAH2_USE_EASTL
         // eastl do not have sample algo, so there is nothing to compare
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
                 "sample_iter",
                 range_type,
