@@ -1011,6 +1011,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::forward_iterator<I>>* = nullptr>
                 O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
+                    /*
 #ifdef RAH2_USE_EASTL
                     using diff_t = uint32_t;
 #else
@@ -1019,12 +1020,32 @@ namespace RAH2_NS
                     using distrib_t = RAH2_STD::uniform_int_distribution<diff_t>;
                     using param_t = typename distrib_t::param_type;
                     distrib_t D{};
+                    */
+
+#ifdef RAH2_USE_EASTL
+                    using unsigned_difference_type = uint32_t;
+#else
+                    using difference_type =
+                        typename RAH2_STD::iterator_traits<I>::difference_type;
+                    using unsigned_difference_type =
+                        typename RAH2_STD::make_unsigned<difference_type>::type;
+#endif
+                    using uniform_int_distrib =
+                        RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                    using uniform_int_distribution_param_type =
+                        typename uniform_int_distrib::param_type;
+
+                    uniform_int_distrib uid;                     
 
                     // this branch preserves "stability" of the sample elements
                     auto rest{RAH2_NS::ranges::distance(first, last)};
                     for (n = RAH2_NS::details::min(n, rest); n != 0; ++first)
                     {
-                        if (D(gen, param_t(diff_t(0), static_cast<diff_t>(--rest))) < n)
+                        if (uid(gen,
+                                uniform_int_distribution_param_type(
+                                    unsigned_difference_type(0),
+                                    static_cast<unsigned_difference_type>(--rest)))
+                            < unsigned_difference_type(n))
                         {
                             *out++ = *first;
                             --n;
