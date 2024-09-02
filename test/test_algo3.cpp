@@ -3746,32 +3746,21 @@ struct test_sample_
 
         std::random_device rd;
         std::mt19937 g(rd());
-        RAH2_STD::vector<int> in_;
-        for (size_t i = 0; i < 1000010 * RELEASE_MULTIPLIER; ++i)
-        {
-            in_.push_back(i % 15);
-        }
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
-        RAH2_STD::vector<int> out;
-        out.resize(1000000 * RELEASE_MULTIPLIER);
-        out.emplace_back();
-        out.emplace_back();
-
-        RAH2_STD::vector<Coord> in2_;
-        for (intptr_t i = 0; i < 1000010 * RELEASE_MULTIPLIER; ++i)
-        {
-            in2_.emplace_back(Coord{i % 15, 0});
-        }
-        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
-
-        RAH2_STD::vector<Coord> out2;
-        out2.resize(1000000 * RELEASE_MULTIPLIER);
-        out2.emplace_back();
-        out2.emplace_back();
 
 #ifndef RAH2_USE_EASTL
         // eastl do not have sample algo, so there is nothing to compare
         {
+            RAH2_STD::vector<int> in_;
+            for (size_t i = 0; i < 1000010 * RELEASE_MULTIPLIER; ++i)
+            {
+                in_.push_back(i % 15);
+            }
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out;
+            out.resize(1000000 * RELEASE_MULTIPLIER);
+            out.emplace_back();
+            out.emplace_back();
+
             COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
                 "sample_iter",
@@ -3790,6 +3779,18 @@ struct test_sample_
 #endif
 
         {
+            RAH2_STD::vector<Coord> in2_;
+            for (intptr_t i = 0; i < 1000010 * RELEASE_MULTIPLIER; ++i)
+            {
+                in2_.emplace_back(Coord{i % 15, 0});
+            }
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+            RAH2_STD::vector<Coord> out2;
+            out2.resize(1000000 * RELEASE_MULTIPLIER);
+            out2.emplace_back();
+            out2.emplace_back();
+
             COMPARE_DURATION_TO_STD_RANGES(
                 "sample_range",
                 range_type,
