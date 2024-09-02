@@ -998,20 +998,40 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<!RAH2_NS::forward_iterator<I>>* = nullptr>
                 O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
-                    using diff_t = RAH2_NS::iter_difference_t<I>;
-                    using distrib_t = RAH2_STD::uniform_int_distribution<diff_t>;
-                    using param_t = typename distrib_t::param_type;
-                    distrib_t D{};
+                    //using diff_t = RAH2_NS::iter_difference_t<I>;
+                    //using distrib_t = RAH2_STD::uniform_int_distribution<diff_t>;
+                    //using param_t = typename distrib_t::param_type;
+                    //distrib_t D{};
+
+#ifdef RAH2_USE_EASTL
+                    using difference_type = int32_t;
+#else
+                    using difference_type = typename RAH2_STD::iterator_traits<I>::difference_type;
+#endif
+                    using unsigned_difference_type =
+                        typename RAH2_STD::make_unsigned<difference_type>::type;
+
+#ifdef RAH2_USE_EASTL
+                    ShouldBeU32<unsigned_difference_type> test;
+                    (void)test;
+#endif
+
+                    using uniform_int_distrib =
+                        RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                    using uniform_int_distribution_param_type =
+                        typename uniform_int_distrib::param_type;
+
+                    uniform_int_distrib uid;
 
                     // O is a random_access_iterator
-                    diff_t sample_size{};
+                    difference_type sample_size{};
                     // copy [first, first + M) elements to "random access" output
                     for (; first != last && sample_size != n; ++first)
                         out[sample_size++] = *first;
                     // overwrite some of the copied elements with randomly selected ones
                     for (auto pop_size{sample_size}; first != last; ++first, ++pop_size)
                     {
-                        auto const i{D(gen, param_t{0, pop_size})};
+                        auto const i{uid(gen, uniform_int_distribution_param_type{0, pop_size})};
                         if (i < n)
                             out[i] = *first;
                     }
