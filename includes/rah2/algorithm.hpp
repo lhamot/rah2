@@ -973,7 +973,7 @@ namespace RAH2_NS
 
         namespace niebloids
         {
-            template<size_t N>
+            template<typename N>
             struct ShouldBeU32;
             template <>
             struct ShouldBeU32<uint8_t>
