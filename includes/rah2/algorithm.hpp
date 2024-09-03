@@ -1031,8 +1031,12 @@ namespace RAH2_NS
                     // overwrite some of the copied elements with randomly selected ones
                     for (auto pop_size{sample_size}; first != last; ++first, ++pop_size)
                     {
-                        auto const i{uid(gen, uniform_int_distribution_param_type{0, pop_size})};
-                        if (i < n)
+                        auto const i{
+                            uid(gen,
+                                uniform_int_distribution_param_type{
+                                    static_cast<unsigned_difference_type>(0),
+                                    static_cast<unsigned_difference_type>(pop_size)})};
+                        if (i < unsigned_difference_type(n))
                             out[i] = *first;
                     }
                     return out + sample_size;
