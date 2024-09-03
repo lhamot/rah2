@@ -973,21 +973,6 @@ namespace RAH2_NS
 
         namespace niebloids
         {
-            template<typename N>
-            struct ShouldBeU32;
-            template <>
-            struct ShouldBeU32<uint8_t>
-            {
-            };
-            template <>
-            struct ShouldBeU32<uint16_t>
-            {
-            };
-            template <>
-            struct ShouldBeU32<uint32_t>
-            {
-            };
-
             struct sample_fn
             {
                 template <
@@ -998,11 +983,6 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<!RAH2_NS::forward_iterator<I>>* = nullptr>
                 O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
-                    //using diff_t = RAH2_NS::iter_difference_t<I>;
-                    //using distrib_t = RAH2_STD::uniform_int_distribution<diff_t>;
-                    //using param_t = typename distrib_t::param_type;
-                    //distrib_t D{};
-
 #ifdef RAH2_USE_EASTL
                     using difference_type = int32_t;
 #else
@@ -1010,11 +990,6 @@ namespace RAH2_NS
 #endif
                     using unsigned_difference_type =
                         typename RAH2_STD::make_unsigned<difference_type>::type;
-
-#ifdef RAH2_USE_EASTL
-                    ShouldBeU32<unsigned_difference_type> test;
-                    (void)test;
-#endif
 
                     using uniform_int_distrib =
                         RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
@@ -1050,17 +1025,6 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::forward_iterator<I>>* = nullptr>
                 O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
-                    /*
-#ifdef RAH2_USE_EASTL
-                    using diff_t = uint32_t;
-#else
-                    using diff_t = RAH2_NS::iter_difference_t<I>;
-#endif
-                    using distrib_t = RAH2_STD::uniform_int_distribution<diff_t>;
-                    using param_t = typename distrib_t::param_type;
-                    distrib_t D{};
-                    */
-
 #ifdef RAH2_USE_EASTL
                     using difference_type = int32_t;
 #else
@@ -1070,17 +1034,12 @@ namespace RAH2_NS
                     using unsigned_difference_type =
                         typename RAH2_STD::make_unsigned<difference_type>::type;
 
-#ifdef RAH2_USE_EASTL
-                    ShouldBeU32<unsigned_difference_type> test;
-                    (void)test;
-#endif
-
                     using uniform_int_distrib =
                         RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
                     using uniform_int_distribution_param_type =
                         typename uniform_int_distrib::param_type;
 
-                    uniform_int_distrib uid;                     
+                    uniform_int_distrib uid;
 
                     // this branch preserves "stability" of the sample elements
                     auto rest{RAH2_NS::ranges::distance(first, last)};
