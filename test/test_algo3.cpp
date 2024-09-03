@@ -3694,6 +3694,115 @@ void test_shift_right()
 
     foreach_range_combination<test_algo<test_shift_right_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_sample_
+{
+    template <bool = true>
+    void test()
+    {
+        std::random_device rd;
+        std::mt19937 g(rd());
+        RAH2_STD::vector<int> in_{1, 2, 3, 4, 2, 3, 1};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> out{0, 0, 0, 0, 0, 0, 4, 5};
+            auto result = RAH2_NS::ranges::sample(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), 3, g);
+            CHECK(result == out.begin() + 3);
+            CHECK(RAH2_NS::ranges::none_of(
+                out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
+        }
+
+        {
+            testSuite.test_case("range");
+            RAH2_STD::vector<int> out{0, 0, 0, 0, 0, 0, 4, 5};
+            auto result = RAH2_NS::ranges::sample(in, out.begin(), 3, g);
+            CHECK(result == out.begin() + 3);
+            CHECK(RAH2_NS::ranges::none_of(
+                out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
+        }
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            RAH2_STD::vector<int> empty_out;
+
+            auto result = RAH2_NS::ranges::sample(empty_in, empty_out.begin(), 0, g);
+            CHECK(result == empty_out.begin());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+
+#ifndef RAH2_USE_EASTL
+        // eastl do not have sample algo, so there is nothing to compare
+        {
+            RAH2_STD::vector<int> in_;
+            for (size_t i = 0; i < 1000010 * RELEASE_MULTIPLIER; ++i)
+            {
+                in_.push_back(i % 15);
+            }
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out;
+            out.resize(1000000 * RELEASE_MULTIPLIER);
+            out.emplace_back();
+            out.emplace_back();
+
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                CS == Common,
+                "sample_iter",
+                range_type,
+                [&]
+                {
+                    auto result = STD::sample(
+                        fwd(RAH2_NS::ranges::begin(in)),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        1000000 * RELEASE_MULTIPLIER,
+                        g);
+                    DONT_OPTIM(result);
+                });
+        }
+#endif
+
+        {
+            RAH2_STD::vector<Coord> in2_;
+            for (intptr_t i = 0; i < 1000010 * RELEASE_MULTIPLIER; ++i)
+            {
+                in2_.emplace_back(Coord{i % 15, 0});
+            }
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+            RAH2_STD::vector<Coord> out2;
+            out2.resize(1000000 * RELEASE_MULTIPLIER);
+            out2.emplace_back();
+            out2.emplace_back();
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "sample_range",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 =
+                            STD::sample(in2, out2.begin(), 1000000 * RELEASE_MULTIPLIER, g);
+                        DONT_OPTIM(result2);
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_sample()
 {
     testSuite.test_case("sample");
@@ -3715,6 +3824,8 @@ void test_sample()
     assert(RAH2_NS::ranges::equal(in.begin(), in.end(), out.begin(), o));
 
     /// [rah2::ranges::sample]
+
+    foreach_range_combination<test_algo<test_sample_>>();
 }
 void test_unique()
 {
