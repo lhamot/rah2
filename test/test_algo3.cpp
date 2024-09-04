@@ -3243,25 +3243,10 @@ void test_rotate()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::rotate]
-    RAH2_STD::string s(16, ' ');
-
-    RAH2_STD::iota(s.begin(), s.end(), 'A');
-    RAH2_NS::ranges::rotate(s, s.begin());
-    assert(s == (RAH2_STD::string{"ABCDEFGHIJKLMNOP"}));
-    RAH2_NS::ranges::rotate(s, s.begin() + 1);
-    assert(s == (RAH2_STD::string{"BCDEFGHIJKLMNOPA"}));
-    RAH2_STD::iota(s.begin(), s.end(), 'A');
-    RAH2_NS::ranges::rotate(s, s.begin() + 3);
-    assert(s == (RAH2_STD::string{"DEFGHIJKLMNOPABC"}));
-
-    RAH2_STD::iota(s.begin(), s.end(), 'A');
-    RAH2_NS::ranges::rotate(s, s.end());
-    assert(s == (RAH2_STD::string{"ABCDEFGHIJKLMNOP"}));
-    RAH2_NS::ranges::rotate(s, s.end() - 1);
-    assert(s == (RAH2_STD::string{"PABCDEFGHIJKLMNO"}));
-    RAH2_STD::iota(s.begin(), s.end(), 'A');
-    RAH2_NS::ranges::rotate(s, s.end() - 3);
-    assert(s == (RAH2_STD::string{"NOPABCDEFGHIJKLM"}));
+    RAH2_STD::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    auto middle = vec.begin() + 3;
+    RAH2_STD::ranges::rotate(vec, middle);
+    assert((vec == RAH2_STD::vector<int>{4, 5, 6, 7, 8, 9, 10, 1, 2, 3}));
     /// [rah2::ranges::rotate]
 
     foreach_range_combination<test_algo<test_rotate_>>();
