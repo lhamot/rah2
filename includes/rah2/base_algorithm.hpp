@@ -1049,6 +1049,12 @@ namespace RAH2_NS
         {
             struct move_backward_fn
             {
+
+                RAH2_EXT_WARNING_PUSH
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
                 template <
                     typename I1,
                     typename S1,
@@ -1066,6 +1072,7 @@ namespace RAH2_NS
                     }
                     return {RAH2_STD::move(last2), RAH2_STD::move(result)};
                 }
+                RAH2_EXT_WARNING_POP
 
                 template <
                     typename R,
@@ -2094,7 +2101,7 @@ namespace RAH2_NS
                     InputIterator2 first2,
                     InputSentinel2 last2) const
                 {
-                    for (; first1 != last1; ++first1, ++first2)
+                    for (; first1 != last1 && first2 != last2; ++first1, ++first2)
                     {
                         if (!(*first1 == *first2)) // Note that we always express value comparisons in terms of < or ==.
                             return false;
@@ -4039,10 +4046,12 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     class Proj = RAH2_NS::details::identity,
-                    typename C = RAH2_NS::ranges::equal_to,
-                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr subrange<I> operator()(I first, S last, C comp = {}, Proj proj = {}) const
+                    typename C = RAH2_NS::ranges::equal_to>
+                static constexpr subrange<I> impl(I first, S last, C comp, Proj proj)
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(comp), RAH2_STD::move(proj));
+
                     first = RAH2_NS::ranges::adjacent_find(first, last, comp, proj);
                     if (first == last)
                         return {first, first};
@@ -4050,10 +4059,26 @@ namespace RAH2_NS
                     ++first;
                     while (++first != last)
                     {
-                        if (!comp(proj(*i), proj(*first)))
+                        if (!pred_proj(*i, *first))
                             *++i = RAH2_NS::ranges::iter_move(first);
                     }
                     return {++i, first};
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    class Proj = RAH2_NS::details::identity,
+                    typename C = RAH2_NS::ranges::equal_to,
+                    RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr subrange<I> operator()(I first, S last, C comp = {}, Proj proj = {}) const
+                {
+                    return impl(
+                        RAH2_STD::move(first),
+                        RAH2_STD::move(last),
+                        RAH2_STD::move(comp),
+                        RAH2_STD::move(proj));
+                    ;
                 }
 
                 template <

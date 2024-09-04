@@ -1084,10 +1084,14 @@ namespace RAH2_NS
                     typename S, // RAH2_STD::sentinel_for<I>
                     typename O, // RAH2_STD::weakly_incrementable
                     typename C = RAH2_NS::ranges::equal_to,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 constexpr RAH2_NS::ranges::unique_copy_result<I, O>
-                operator()(I first, S last, O result, C comp = {}) const
+                operator()(I first, S last, O result, C comp = {}, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(comp), RAH2_STD::move(proj));
+
                     if (!(first == last))
                     {
                         RAH2_NS::iter_value_t<I> value = *first;
@@ -1096,7 +1100,7 @@ namespace RAH2_NS
                         while (!(++first == last))
                         {
                             auto&& value2 = *first;
-                            if (!RAH2_INVOKE_2(comp, value2, value))
+                            if (!RAH2_INVOKE_2(pred_proj, value2, value))
                             {
                                 value = RAH2_STD::forward<decltype(value2)>(value2);
                                 *result = value;
@@ -1112,15 +1116,17 @@ namespace RAH2_NS
                     typename R, // ranges::input_range
                     typename O, // RAH2_STD::weakly_incrementable
                     typename C = RAH2_NS::ranges::equal_to,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
                 constexpr RAH2_NS::ranges::unique_copy_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
-                operator()(R&& r, O result, C comp = {}) const
+                operator()(R&& r, O result, C comp = {}, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(result),
-                        RAH2_STD::move(comp));
+                        RAH2_STD::move(comp),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -1134,16 +1140,20 @@ namespace RAH2_NS
                 template <
                     typename I, // RAH2_STD::input_iterator
                     typename S, // RAH2_STD::sentinel_for<I
-                    typename Pred // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
-                    >
-                constexpr bool operator()(I first, S last, Pred pred) const
+                    typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<sentinel_for<S, I>>* = nullptr>
+                constexpr bool operator()(I first, S last, Pred pred, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+
                     for (; first != last; ++first)
-                        if (!RAH2_INVOKE_1(pred, *first))
+                        if (!pred_proj(*first))
                             break;
 
                     for (; first != last; ++first)
-                        if (RAH2_INVOKE_1(pred, *first))
+                        if (pred_proj(*first))
                             return false;
 
                     return true;
@@ -1151,12 +1161,16 @@ namespace RAH2_NS
 
                 template <
                     typename R, // ranges::input_range
-                    typename Pred // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
-                    >
-                constexpr bool operator()(R&& r, Pred pred) const
+                    typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::range<R>>* = nullptr>
+                constexpr bool operator()(R&& r, Pred pred, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(pred));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids

@@ -379,6 +379,11 @@ public:
         {
         }
 
+        auto base() const
+        {
+            return iter_;
+        }
+
         constexpr iterator& operator++() noexcept(noexcept(++iter_))
         {
             ++iter_;
@@ -1233,6 +1238,18 @@ template <typename A, typename B, typename C, typename D>
 bool operator==(RAH2_STD::pair<A, B> a, RAH2_STD::tuple<D, C> b)
 {
     return RAH2_STD::get<0>(a) == RAH2_STD::get<0>(b) && RAH2_STD::get<1>(a) == RAH2_STD::get<1>(b);
+}
+
+template <
+    typename A,
+    typename B,
+    RAH2_STD::enable_if_t<
+        RAH2_NS::ranges::range<A> && RAH2_NS::ranges::range<B>
+        && !RAH2_NS::is_same_v<RAH2_NS::remove_cvref_t<A>, RAH2_STD::string>
+        && !RAH2_NS::is_same_v<RAH2_NS::remove_cvref_t<B>, RAH2_STD::string>>* = nullptr>
+bool operator==(A&& a, B&& b)
+{
+    return RAH2_NS::ranges::equal(a, b);
 }
 
 struct PairEqualImpl
