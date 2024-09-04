@@ -1061,18 +1061,14 @@ RAH2_EXT_WARNING_PUSH
                     typename I2,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::bidirectional_iterator<I1> && RAH2_NS::sentinel_for<S1, I1>
-                        && RAH2_NS::bidirectional_iterator<I2>
-                        && RAH2_NS::output_iterator<I2, RAH2_NS::iter_value_t<I1>>>* = nullptr>
+                        && RAH2_NS::bidirectional_iterator<I2>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_backward_result<I1, I2>
                 operator()(I1 first, S1 last, I2 result) const
                 {
                     auto last2 = RAH2_NS::ranges::next(first, last);
                     auto i = last2;
-                    while (i != first)
+                    for (; i != first; *--result = RAH2_NS::ranges::iter_move(--i))
                     {
-                        --result;
-                        --i;
-                        *result = RAH2_MOV(*i);
                     }
                     return {RAH2_STD::move(last2), RAH2_STD::move(result)};
                 }

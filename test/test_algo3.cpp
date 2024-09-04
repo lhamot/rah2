@@ -1522,12 +1522,20 @@ void test_move_backward()
 {
     testSuite.test_case("sample");
     /// [rah2::ranges::move_backward]
-    using Vec = RAH2_STD::vector<int>;
-    Vec a{0, 1, 2, 3, 4, 5, 6, 7};
+    using Vec = RAH2_STD::vector<RAH2_STD::string>;
+    Vec a{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
     Vec b(a.size());
 
     RAH2_NS::ranges::move_backward(a, b.end());
-    assert(b == (Vec{0, 1, 2, 3, 4, 5, 6, 7}));
+    assert(a == (Vec{"", "", "", "", "", "", "", ""}));
+    assert(b == (Vec{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}));
+
+    RAH2_NS::ranges::move_backward(b.begin(), b.end(), a.end());
+    assert(b == (Vec{"", "", "", "", "", "", "", ""}));
+    assert(a == (Vec{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}));
+
+    RAH2_NS::ranges::move_backward(a.begin(), a.begin() + 3, a.end());
+    assert(a == (Vec{"", "", "", "▄", "▅", "▁", "▂", "▃"}));
     /// [rah2::ranges::move_backward]
 
     foreach_range_combination<test_algo<test_move_backward_>>();
