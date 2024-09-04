@@ -3827,6 +3827,104 @@ void test_sample()
 
     foreach_range_combination<test_algo<test_sample_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_unique_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in_{2, 3, 1, 1, 1, 5, 3, 3, 4};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            auto result = RAH2_NS::ranges::unique(
+                RAH2_NS::ranges::begin(in),
+                RAH2_NS::ranges::end(in));
+            CHECK(result.begin() == RAH2_NS::ranges::next(in.begin(), 6));
+            CHECK(result.end() == in.end());
+        }
+
+        {
+            RAH2_STD::vector<Coord> in_{
+                {2, 0}, {3, 0}, {1, 0}, {11, 0}, {1, 0}, {5, 0}, {13, 0}, {3, 0}, {4, 0}};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            testSuite.test_case("range");
+            auto result = RAH2_NS::ranges::unique(
+                in, [](auto a, auto b) { return a % 10 == b % 10; }, &Coord::x);
+            CHECK(result.begin() == RAH2_NS::ranges::next(in.begin(), 6));
+            CHECK(result.end() == in.end());
+        }
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            auto result = RAH2_NS::ranges::unique(empty_in);
+            CHECK(result.begin() == empty_in.begin());
+            CHECK(result.end() == empty_in.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(0);
+            in_.push_back(0);
+            in_.push_back(1);
+            in_.push_back(2);
+            in_.push_back(2);
+            in_.push_back(2);
+            in_.push_back(3);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "unique_iter",
+                range_type,
+                [&]
+                {
+                    auto result = STD::unique(
+                        fwd(RAH2_NS::ranges::begin(in)),
+                        RAH2_NS::ranges::end(in));
+                    DONT_OPTIM(result);
+                });
+        }
+
+        RAH2_STD::vector<Coord> in2_;
+        for (intptr_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in2_.push_back({0, 0});
+            in2_.push_back({11, 0});
+            in2_.push_back({1, 0});
+            in2_.push_back({12, 0});
+            in2_.push_back({2, 0});
+            in2_.push_back({2, 0});
+            in2_.push_back({3, 0});
+        }
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "unique_proj_range",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::unique(
+                            in2, [](auto a, auto b) { return a % 10 == b % 10; }, &Coord::x);
+                        DONT_OPTIM(result2);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_unique()
 {
     testSuite.test_case("sample");
@@ -3844,7 +3942,115 @@ void test_unique()
         assert(in == RAH2_STD::vector<int>({2, 1, 5, 3, 4}));
         /// [rah2::ranges::unique_pred]
     }
+
+    foreach_range_combination<test_algo<test_unique_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_unique_copy_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            testSuite.test_case("iter");
+            RAH2_STD::vector<int> in_{2, 3, 1, 1, 1, 5, 3, 3, 4};
+            RAH2_STD::vector<int> out(in_.size());
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            auto result = RAH2_NS::ranges::unique_copy(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin());
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.begin() + 6);
+            CHECK((out == RAH2_STD::vector<int>{2, 3, 1, 5, 3, 4, 0, 0, 0}));
+        }
+
+        {
+            RAH2_STD::vector<Coord> in_{
+                {2, 0}, {3, 0}, {1, 0}, {11, 0}, {1, 0}, {5, 0}, {13, 0}, {3, 0}, {4, 0}};
+            RAH2_STD::vector<Coord> out(in_.size());
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            testSuite.test_case("range");
+            auto result = RAH2_NS::ranges::unique_copy(
+                in, out.begin(), [](auto a, auto b) { return a % 10 == b % 10; }, &Coord::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.begin() + 6);
+            CHECK((out
+                 == RAH2_STD::vector<Coord>{
+                     {2, 0}, {3, 0}, {1, 0}, {5, 0}, {13, 0}, {4, 0}, {0, 0}, {0, 0}}));
+        }
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> empty_in_;
+            RAH2_STD::vector<int> out(2);
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            auto result = RAH2_NS::ranges::unique_copy(empty_in, out.begin());
+            CHECK(result.in == empty_in.end());
+            CHECK(result.out == out.begin());
+            CHECK((out == RAH2_STD::vector<int>{}));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(0);
+            in_.push_back(0);
+            in_.push_back(1);
+            in_.push_back(2);
+            in_.push_back(2);
+            in_.push_back(2);
+            in_.push_back(3);
+        }
+        RAH2_STD::vector<int> out(in_.size() + 2);
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "unique_copy_iter",
+                range_type,
+                [&]
+                {
+                    auto result = STD::unique_copy(
+                        fwd(RAH2_NS::ranges::begin(in)), RAH2_NS::ranges::end(in), out.begin());
+                    DONT_OPTIM(result);
+                });
+        }
+
+        RAH2_STD::vector<Coord> in2_;
+        for (intptr_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in2_.push_back({0, 0});
+            in2_.push_back({11, 0});
+            in2_.push_back({1, 0});
+            in2_.push_back({12, 0});
+            in2_.push_back({2, 0});
+            in2_.push_back({2, 0});
+            in2_.push_back({3, 0});
+        }
+        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+        RAH2_STD::vector<Coord> out2(in2_.size() + 2);
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "unique_copy_proj_range",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::unique_copy(
+                            in2, out2.begin(), [](auto a, auto b) { return a % 10 == b % 10; }, &Coord::x);
+                        DONT_OPTIM(result2);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_unique_copy()
 {
     testSuite.test_case("sample");
@@ -3859,7 +4065,108 @@ void test_unique_copy()
         [](char c1, char c2) { return c1 == ' ' && c2 == ' '; });
     assert(s2 == (RAH2_STD::string{"The string with many spaces!"}));
     /// [rah2::ranges::unique_copy]
+
+    foreach_range_combination<test_algo<test_unique_copy_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_is_partitioned_
+{
+    static bool is_even(int n)
+    {
+        return n % 2 == 0;
+    }
+
+    static bool is_even_64(intptr_t n)
+    {
+        return n % 2 == 0;
+    }    
+
+    static bool is_even_coord(Coord n)
+    {
+        return n.x % 2 == 0;
+    }    
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            RAH2_STD::vector<int> all_even_ = {2, 4, 6, 8};
+            auto all_even = make_test_view_adapter<CS, Tag, Sized>(all_even_);
+            CHECK(RAH2_NS::ranges::is_partitioned(all_even.begin(), all_even.end(), is_even));
+        }
+
+        {
+            RAH2_STD::vector<int> all_odd_ = {1, 3, 5, 7};
+            auto all_odd = make_test_view_adapter<CS, Tag, Sized>(all_odd_);
+            CHECK(RAH2_NS::ranges::is_partitioned(all_odd.begin(), all_odd.end(), is_even));
+        }
+
+        {
+            RAH2_STD::vector<int> mixed_ = {2, 3, 4, 5};
+            auto mixed = make_test_view_adapter<CS, Tag, Sized>(mixed_);
+            CHECK(!RAH2_NS::ranges::is_partitioned(mixed.begin(), mixed.end(), is_even));
+        }
+
+        {
+            RAH2_STD::vector<int> partitioned_ = {2, 4, 6, 1, 3, 5};
+            auto partitioned = make_test_view_adapter<CS, Tag, Sized>(partitioned_);
+            CHECK(RAH2_NS::ranges::is_partitioned(partitioned.begin(), partitioned.end(), is_even));
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<Coord> all_even_ = {{2, 0}, {4, 0}, {6, 0}, {8, 0}};
+            auto all_even = make_test_view_adapter<CS, Tag, Sized>(all_even_);
+            CHECK(RAH2_NS::ranges::is_partitioned(all_even, is_even_64, &Coord::x));
+        }
+
+        {
+            RAH2_STD::vector<Coord> all_odd_ = {{1, 0}, {3, 0}, {5, 0}, {7, 0}};
+            auto all_odd = make_test_view_adapter<CS, Tag, Sized>(all_odd_);
+            CHECK(RAH2_NS::ranges::is_partitioned(all_odd, is_even_64, &Coord::x));
+        }
+
+        {
+            RAH2_STD::vector<Coord> mixed_ = {{2, 0}, {3, 0}, {4, 0}, {5, 0}};
+            auto mixed = make_test_view_adapter<CS, Tag, Sized>(mixed_);
+            CHECK(!RAH2_NS::ranges::is_partitioned(mixed, is_even_64, &Coord::x));
+        }
+
+        {
+            RAH2_STD::vector<Coord> partitioned_ = {{2, 0}, {4, 0}, {6, 0}, {1, 0}, {3, 0}, {5, 0}};
+            auto partitioned = make_test_view_adapter<CS, Tag, Sized>(partitioned_);
+            CHECK(RAH2_NS::ranges::is_partitioned(partitioned, is_even_64, &Coord::x));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER);
+        perf_.insert(perf_.end(), 1000000 * RELEASE_MULTIPLIER, {1, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "is_partitioned",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_partitioned(fwd(perf.begin()), perf.end(), is_even_coord);
+                CHECK(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "is_partitioned_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_partitioned(perf, is_even_64, &Coord::x);
+                CHECK(result);
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_is_partitioned()
 {
     testSuite.test_case("sample");
@@ -3880,6 +4187,8 @@ void test_is_partitioned()
     assert(RAH2_NS::ranges::is_partitioned(v.cbegin(), v.cend(), is_even) == false);
     assert(RAH2_NS::ranges::is_partitioned(v.crbegin(), v.crend(), is_even));
     /// [rah2::ranges::is_partitioned]
+
+    foreach_range_combination<test_algo<test_is_partitioned_>>();
 }
 void test_partition()
 {
