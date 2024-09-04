@@ -3995,22 +3995,22 @@ struct test_unique_copy_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> in_;
-        for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
-        {
-            in_.push_back(0);
-            in_.push_back(0);
-            in_.push_back(1);
-            in_.push_back(2);
-            in_.push_back(2);
-            in_.push_back(2);
-            in_.push_back(3);
-        }
-        RAH2_STD::vector<int> out(in_.size() + 2);
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
-
 #ifndef RAH2_USE_EASTL
         {
+            RAH2_STD::vector<int> in_;
+            for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in_.push_back(0);
+                in_.push_back(0);
+                in_.push_back(1);
+                in_.push_back(2);
+                in_.push_back(2);
+                in_.push_back(2);
+                in_.push_back(3);
+            }
+            RAH2_STD::vector<int> out(in_.size() + 2);
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
                 "unique_copy_iter",
@@ -4024,22 +4024,21 @@ struct test_unique_copy_
         }
 #endif
 
-
-        RAH2_STD::vector<Coord> in2_;
-        for (intptr_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
         {
-            in2_.push_back({0, 0});
-            in2_.push_back({11, 0});
-            in2_.push_back({1, 0});
-            in2_.push_back({12, 0});
-            in2_.push_back({2, 0});
-            in2_.push_back({2, 0});
-            in2_.push_back({3, 0});
-        }
-        auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
-        RAH2_STD::vector<Coord> out2(in2_.size() + 2);
+            RAH2_STD::vector<Coord> in2_;
+            for (intptr_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in2_.push_back({0, 0});
+                in2_.push_back({11, 0});
+                in2_.push_back({1, 0});
+                in2_.push_back({12, 0});
+                in2_.push_back({2, 0});
+                in2_.push_back({2, 0});
+                in2_.push_back({3, 0});
+            }
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+            RAH2_STD::vector<Coord> out2(in2_.size() + 2);
 
-        {
             COMPARE_DURATION_TO_STD_RANGES(
                 "unique_copy_proj_range",
                 range_type,
