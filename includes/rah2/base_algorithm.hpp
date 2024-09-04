@@ -1055,7 +1055,8 @@ namespace RAH2_NS
                     typename I2,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::bidirectional_iterator<I1> && RAH2_NS::sentinel_for<S1, I1>
-                        && RAH2_NS::bidirectional_iterator<I2>>* = nullptr>
+                        && RAH2_NS::bidirectional_iterator<I2>
+                        && RAH2_NS::output_iterator<I2, RAH2_NS::iter_value_t<I1>>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_backward_result<I1, I2>
                 operator()(I1 first, S1 last, I2 result) const
                 {
