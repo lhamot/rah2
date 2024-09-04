@@ -1049,6 +1049,12 @@ namespace RAH2_NS
         {
             struct move_backward_fn
             {
+
+RAH2_EXT_WARNING_PUSH
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
                 template <
                     typename I1,
                     typename S1,
@@ -1070,8 +1076,9 @@ namespace RAH2_NS
                     }
                     return {RAH2_STD::move(last2), RAH2_STD::move(result)};
                 }
+RAH2_EXT_WARNING_POP
 
-                template <
+            template <
                     typename R,
                     typename I,
                     RAH2_STD::enable_if_t<
