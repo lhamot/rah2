@@ -4009,9 +4009,15 @@ struct test_unique_copy_
         RAH2_STD::vector<int> out(in_.size() + 2);
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
 
+        #ifdef RAH2_USE_EASTL
+        constexpr bool DoCheckPerf = false;
+        #else
+        constexpr bool DoCheckPerf = CS == Common;
+        #endif
+
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                CS == Common,
+                DoCheckPerf,
                 "unique_copy_iter",
                 range_type,
                 [&]

@@ -1062,8 +1062,11 @@ namespace RAH2_NS
                 {
                     auto last2 = RAH2_NS::ranges::next(first, last);
                     auto i = last2;
-                    for (; i != first; *--result = RAH2_NS::ranges::iter_move(--i))
+                    while (i != first)
                     {
+                        --result;
+                        --i;
+                        *result = RAH2_MOV(*i);
                     }
                     return {RAH2_STD::move(last2), RAH2_STD::move(result)};
                 }
