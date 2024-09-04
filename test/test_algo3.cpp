@@ -4009,15 +4009,10 @@ struct test_unique_copy_
         RAH2_STD::vector<int> out(in_.size() + 2);
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
 
-        #ifdef RAH2_USE_EASTL
-        constexpr bool DoCheckPerf = false;
-        #else
-        constexpr bool DoCheckPerf = CS == Common;
-        #endif
-
+#ifndef RAH2_USE_EASTL
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
-                DoCheckPerf,
+                CS == Common,
                 "unique_copy_iter",
                 range_type,
                 [&]
@@ -4027,6 +4022,8 @@ struct test_unique_copy_
                     DONT_OPTIM(result);
                 });
         }
+#endif
+
 
         RAH2_STD::vector<Coord> in2_;
         for (intptr_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)

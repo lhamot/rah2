@@ -1,12 +1,13 @@
 PATH = %PATH%;C:\msys64\ucrt64\bin;C:\Program Files\LLVM\bin
 
 rem call :test_rah2 g 14 32 0
+call :test_rah2 g 14 64 3 NDEBUG
+pause
 call :test_rah2 g 14 64 0 DEBUG
 call :test_rah2 clang 20 64 3 NDEBUG
 call :test_rah2 clang 17 64 0 DEBUG
 call :test_rah2 clang 14 64 0 DEBUG
 call :test_rah2 g 20 64 0 DEBUG
-call :test_rah2 g 14 64 3 NDEBUG
 call :test_rah2 g 20 64 3 NDEBUG
 call :test_rah2 clang 20 64 0 DEBUG
 call :test_rah2 clang 14 64 3 NDEBUG
