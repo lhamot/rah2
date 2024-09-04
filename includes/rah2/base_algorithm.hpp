@@ -1066,8 +1066,7 @@ namespace RAH2_NS
                     {
                         --result;
                         --i;
-                        auto&& r = *result;
-                        r = RAH2_MOV(*i);
+                        *result = RAH2_MOV(*i);
                     }
                     return {RAH2_STD::move(last2), RAH2_STD::move(result)};
                 }

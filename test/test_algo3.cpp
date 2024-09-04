@@ -3245,7 +3245,7 @@ void test_rotate()
     /// [rah2::ranges::rotate]
     RAH2_STD::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     auto middle = vec.begin() + 3;
-    RAH2_STD::ranges::rotate(vec, middle);
+    RAH2_NS::ranges::rotate(vec, middle);
     assert((vec == RAH2_STD::vector<int>{4, 5, 6, 7, 8, 9, 10, 1, 2, 3}));
     /// [rah2::ranges::rotate]
 
