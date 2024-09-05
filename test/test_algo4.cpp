@@ -1042,6 +1042,160 @@ void test_is_partitioned()
 
     foreach_range_combination<test_algo<test_is_partitioned_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_partition_
+{
+    static bool is_even(int n)
+    {
+        return n % 2 == 0;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // empty
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out.begin(), out.end(), is_even);
+            CHECK(result.begin() == out.begin());
+            CHECK(result.end() == out.begin());
+            CHECK(out_ == (RAH2_STD::vector<int>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<int> out_{2};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out.begin(), out.end(), is_even);
+            CHECK(result.begin() == RAH2_NS::ranges::next(out.begin(), 1));
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 1));
+            CHECK(out_ == (RAH2_STD::vector<int>{2}));
+        }
+        {
+            // all true
+            RAH2_STD::vector<int> out_{2, 4, 6, 8};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out.begin(), out.end(), is_even);
+            CHECK(result.begin() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(out_ == (RAH2_STD::vector<int>{2, 4, 6, 8}));
+        }
+        {
+            // all false
+            RAH2_STD::vector<int> out_{1, 3, 5, 7};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out.begin(), out.end(), is_even);
+            CHECK(result.begin() == out.begin());
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(out_ == (RAH2_STD::vector<int>{1, 3, 5, 7}));
+        }
+        {
+            // mixed
+            RAH2_STD::vector<int> out_{2, 3, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out.begin(), out.end(), is_even);
+            CHECK(result.begin() == RAH2_NS::ranges::next(out.begin(), 2));
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(RAH2_NS::ranges::is_partitioned(out_, is_even));
+        }
+
+        testSuite.test_case("range");
+        {
+            // empty
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out, is_even);
+            CHECK(result.begin() == out.begin());
+            CHECK(result.end() == out.begin());
+            CHECK(out_ == (RAH2_STD::vector<int>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<int> out_{2};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out, is_even);
+            CHECK(result.begin() == RAH2_NS::ranges::next(out.begin(), 1));
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 1));
+            CHECK(out_ == (RAH2_STD::vector<int>{2}));
+        }
+        {
+            // all true
+            RAH2_STD::vector<int> out_{2, 4, 6, 8};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out, is_even);
+            CHECK(result.begin() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(out_ == (RAH2_STD::vector<int>{2, 4, 6, 8}));
+        }
+        {
+            // all false
+            RAH2_STD::vector<int> out_{1, 3, 5, 7};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out, is_even);
+            CHECK(result.begin() == out.begin());
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(out_ == (RAH2_STD::vector<int>{1, 3, 5, 7}));
+        }
+        {
+            // mixed
+            RAH2_STD::vector<int> out_{2, 3, 4, 5};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partition(out, is_even);
+            CHECK(result.begin() == RAH2_NS::ranges::next(out.begin(), 2));
+            CHECK(result.end() == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(RAH2_NS::ranges::is_partitioned(out_, is_even));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "partition_iter",
+                range_type,
+                ([&]
+                {
+                    RAH2_STD::vector<int> out_;
+                    out_.reserve(2000000 * RELEASE_MULTIPLIER);
+                    for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+                    {
+                        out_.emplace_back(0);
+                        out_.emplace_back(1);
+                    }
+                    auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                    STD::partition(
+                        RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), is_even);
+                    CHECK(out.front() == 0);
+                }));
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "partition_ranges",
+                range_type,
+                (
+                    ([&]
+                    {
+                        RAH2_STD::vector<int> out_;
+                        out_.reserve(2000000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            out_.emplace_back(0);
+                            out_.emplace_back(1);
+                        }
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        STD::partition(out, is_even);
+                        CHECK(out.front() == 0);
+                    })));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_partition()
 {
     testSuite.test_case("sample");
@@ -1053,6 +1207,8 @@ void test_partition()
     RAH2_STD::sort(boundary.begin(), in.end());
     assert(in == RAH2_STD::vector<int>({4, 5, 1, 2, 3}));
     /// [rah2::ranges::partition]
+
+    foreach_range_combination<test_algo<test_partition_>>();
 }
 void test_partition_copy()
 {
