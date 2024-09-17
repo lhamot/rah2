@@ -379,6 +379,17 @@ public:
         {
         }
 
+        template<bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+        friend auto operator-(RAH2_NS::default_sentinel_t, iterator const& it)
+        {
+            return it.end_ - it.iter_;
+        }
+        template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+        friend auto operator-(iterator const& it, RAH2_NS::default_sentinel_t)
+        {
+            return it.iter_ - it.end_;
+        }
+
         auto base() const
         {
             return iter_;
@@ -491,6 +502,17 @@ public:
         {
         }
 
+        template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+        friend auto operator-(RAH2_NS::default_sentinel_t, const_iterator const& it)
+        {
+            return it.end_ - it.iter_;
+        }
+        template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+        friend auto operator-(const_iterator const& it, RAH2_NS::default_sentinel_t)
+        {
+            return it.iter_ - it.end_;
+        }
+
         const_iterator& operator++()
         {
             ++iter_;
@@ -580,6 +602,12 @@ public:
     explicit test_view_adapter(Range r)
         : base_(std::move(r))
     {
+    }
+
+    template <bool IsSized = SizedRange, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+    auto size() const
+    {
+        return base_.size();
     }
 
     auto begin()

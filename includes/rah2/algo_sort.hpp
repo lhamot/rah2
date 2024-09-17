@@ -587,13 +587,22 @@ namespace RAH2_NS
                 ///        case that the iterator range is a bidirectional iterator instead of just an
                 ///        input iterator (one direction).
                 ///
-                template <typename InputIterator, typename Sentinel, typename Predicate>
-                subrange<InputIterator, Sentinel>
-                operator()(InputIterator begin, Sentinel end, Predicate predicate) const
+                template <
+                    typename InputIterator,
+                    typename Sentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<InputIterator> && sentinel_for<Sentinel, InputIterator>>* = nullptr>
+                subrange<InputIterator, Sentinel> operator()(
+                    InputIterator begin, Sentinel end, Predicate predicate, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(predicate), RAH2_STD::move(proj));
+
                     if (begin != end)
                     {
-                        while (predicate(*begin))
+                        while (pred_proj(*begin))
                         {
                             if (++begin == end)
                                 return {begin, end};
@@ -603,7 +612,7 @@ namespace RAH2_NS
 
                         while (++middle != end)
                         {
-                            if (predicate(*middle))
+                            if (pred_proj(*middle))
                             {
                                 RAH2_STD::swap(*begin, *middle);
                                 ++begin;
@@ -614,13 +623,18 @@ namespace RAH2_NS
                     return {begin, end};
                 }
 
-                template <typename InputRange, typename Predicate>
-                auto operator()(InputRange&& range, Predicate predicate) const
+                template <
+                    typename InputRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<InputRange>>* = nullptr>
+                auto operator()(InputRange&& range, Predicate predicate, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(predicate));
+                        RAH2_STD::move(predicate),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -636,14 +650,22 @@ namespace RAH2_NS
                 /// Performs the same function as @p partition() with the additional
                 /// guarantee that the relative ordering of elements in each group is
                 /// preserved.
-                template <typename ForwardIterator, typename ForwardSentinel, typename Predicate>
-                subrange<ForwardIterator>
-                operator()(ForwardIterator first, ForwardSentinel last, Predicate pred) const
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
+                subrange<ForwardIterator> operator()(
+                    ForwardIterator first, ForwardSentinel last, Predicate pred, Proj proj = {}) const
                 {
-                    first = RAH2_NS::ranges::find_if_not(first, last, pred);
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+
+                    first = RAH2_NS::ranges::find_if_not(first, last, pred, proj);
 
                     if (first == last)
-                        return {first, last};
+                        return {first, first};
 
                     using value_type =
                         typename RAH2_STD::iterator_traits<ForwardIterator>::value_type;
@@ -669,7 +691,7 @@ namespace RAH2_NS
                     ++first;
                     for (; first != last; ++first)
                     {
-                        if (pred(*first))
+                        if (pred_proj(*first))
                         {
                             *result1 = RAH2_STD::move(*first);
                             ++result1;
@@ -690,16 +712,21 @@ namespace RAH2_NS
                     allocator.deallocate(buffer, requested_size * sizeof(value_type));
 #endif
 
-                    return {result1, last};
+                    return {result1, first};
                 }
 
-                template <typename ForwardRange, typename Predicate>
-                auto operator()(ForwardRange&& range, Predicate pred) const
+                template <
+                    typename ForwardRange,
+                    typename Predicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::range<ForwardRange>>* = nullptr>
+                auto operator()(ForwardRange&& range, Predicate pred, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(pred));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids

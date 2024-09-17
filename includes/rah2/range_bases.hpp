@@ -1921,7 +1921,8 @@ namespace RAH2_NS
                         auto const dist = abs(n) - abs(distToBound);
                         if (dist > 0) // bound is lower
                         {
-                            i = RAH2_STD::move(bound);
+                            // i = RAH2_STD::move(bound);
+                            RAH2_STD::advance(i, bound - i);
                             return n - distToBound;
                         }
                     }
@@ -2024,7 +2025,7 @@ namespace RAH2_NS
                         && not RAH2_NS::assignable_from<I&, S> && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
                 RAH2_CONSTEXPR20 void operator()(I& i, S bound) const
                 {
-                    advance(i, bound - i);
+                    operator()(i, bound - i);
                 }
 
                 template <

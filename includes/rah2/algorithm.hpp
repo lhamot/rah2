@@ -1189,18 +1189,27 @@ namespace RAH2_NS
                     typename S, // RAH2_STD::sentinel_for<I>
                     typename O1, // RAH2_STD::weakly_incrementable
                     typename O2, // RAH2_STD::weakly_incrementable
-                    // class Proj = RAH2_STD::identity,
-                    typename Pred // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
-                    >
+                    typename Proj = RAH2_STD::identity,
+                    typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
+                    RAH2_STD::enable_if_t<sentinel_for<S, I>>* = nullptr>
                 // requires RAH2_STD::indirectly_copyable<I, O1> && RAH2_STD::indirectly_copyable<I, O2>
                 constexpr RAH2_NS::ranges::partition_copy_result<I, O1, O2>
-                operator()(I first, S last, O1 out_true, O2 out_false, Pred pred) const
+                operator()(I first, S last, O1 out_true, O2 out_false, Pred pred, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+
                     for (; first != last; ++first)
-                        if (!!RAH2_INVOKE_1(pred, *first))
+                    {
+                        if (RAH2_INVOKE_1(pred_proj, *first))
+                        {
                             *out_true = *first, ++out_true;
+                        }
                         else
+                        {
                             *out_false = *first, ++out_false;
+                        }
+                    }
                     return {
                         RAH2_STD::move(first), RAH2_STD::move(out_true), RAH2_STD::move(out_false)};
                 }
@@ -1209,21 +1218,22 @@ namespace RAH2_NS
                     typename R, // ranges::input_range
                     typename O1, /// RAH2_STD::weakly_incrementable
                     typename O2, // RAH2_STD::weakly_incrementable
-                    // class Proj = RAH2_STD::identity,
-                    typename Pred // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<iterator_t<R>, Proj>>
-                    >
+                    typename Proj = RAH2_STD::identity,
+                    typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<iterator_t<R>, Proj>>
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::range<R>>* = nullptr>
                 //requires RAH2_STD::indirectly_copyable<ranges::iterator_t<R>, O1>
                 //         && RAH2_STD::indirectly_copyable<ranges::iterator_t<R>, O2>
                 constexpr RAH2_NS::ranges::
                     partition_copy_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O1, O2>
-                    operator()(R&& r, O1 out_true, O2 out_false, Pred pred) const
+                    operator()(R&& r, O1 out_true, O2 out_false, Pred pred, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_STD::move(out_true),
                         RAH2_STD::move(out_false),
-                        RAH2_STD::move(pred));
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -1234,14 +1244,23 @@ namespace RAH2_NS
         {
             struct partition_point_fn
             {
-                template <class ForwardIt, class UnaryPredicate>
-                constexpr ForwardIt operator()(ForwardIt first, ForwardIt last, UnaryPredicate p) const
+                template <
+                    typename ForwardIt,
+                    typename Sentinel,
+                    typename UnaryPredicate,
+                    typename Proj = RAH2_STD::identity,
+                    RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIt>>* = nullptr>
+                constexpr ForwardIt
+                operator()(ForwardIt first, Sentinel last, UnaryPredicate pred, Proj proj = {}) const
                 {
-                    for (auto length = RAH2_STD::distance(first, last); 0 < length;)
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+
+                    for (auto length = RAH2_NS::ranges::distance(first, last); 0 < length;)
                     {
                         auto half = length / 2;
                         auto middle = RAH2_STD::next(first, half);
-                        if (p(*middle))
+                        if (pred_proj(*middle))
                         {
                             first = RAH2_STD::next(middle);
                             length -= (half + 1);
@@ -1253,12 +1272,19 @@ namespace RAH2_NS
                     return first;
                 }
 
-                template <class ForwardRange, class UnaryPredicate>
+                template <
+                    typename ForwardRange,
+                    typename UnaryPredicate,
+                    typename Proj = RAH2_STD::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::range<ForwardRange>>* = nullptr>
                 constexpr borrowed_iterator_t<ForwardRange>
-                operator()(ForwardRange&& range, UnaryPredicate p) const
+                operator()(ForwardRange&& range, UnaryPredicate pred, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_STD::move(p));
+                        RAH2_NS::ranges::begin(range),
+                        RAH2_NS::ranges::end(range),
+                        RAH2_STD::move(pred),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
