@@ -3643,7 +3643,8 @@ namespace RAH2_NS
 
                         if (first1 == last_possible)
                         {
-                            return {first1, first1};
+                            auto l = RAH2_NS::ranges::next(first1, last1);
+                            return {l, l};
                         }
                     }
                 }

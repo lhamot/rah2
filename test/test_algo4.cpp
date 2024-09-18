@@ -1365,8 +1365,8 @@ struct test_partition_copy_
             CHECK(
                 (RAH2_NS::ranges::views::take(out, 2) == RAH2_STD::vector<Coord>{{2, 0}, {4, 0}}
                  || RAH2_NS::ranges::views::take(out, 2) == RAH2_STD::vector<Coord>{{4, 0}, {2, 0}}));
-            CHECK(
-                (RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<Coord>{{3, 0}, {5, 0}}
+            CHECK((
+                RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<Coord>{{3, 0}, {5, 0}}
                 || RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<Coord>{{5, 0}, {3, 0}}));
         }
     }
