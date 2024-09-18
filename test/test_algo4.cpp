@@ -1569,6 +1569,10 @@ struct test_stable_partition_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
+#if defined(__clang__)
+        RAH2_EXT_WARNING_PUSH
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == CommonOrSent::Common,
@@ -1590,6 +1594,9 @@ struct test_stable_partition_
                         CHECK(out.front() == 0);
                     }));
         }
+#if defined(__clang__)
+        RAH2_EXT_WARNING_POP
+#endif
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
