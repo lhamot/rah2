@@ -1189,7 +1189,7 @@ namespace RAH2_NS
                     typename S, // RAH2_STD::sentinel_for<I>
                     typename O1, // RAH2_STD::weakly_incrementable
                     typename O2, // RAH2_STD::weakly_incrementable
-                    typename Proj = RAH2_STD::identity,
+                    typename Proj = RAH2_NS::details::identity,
                     typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<I, Proj>>
                     RAH2_STD::enable_if_t<sentinel_for<S, I>>* = nullptr>
                 // requires RAH2_STD::indirectly_copyable<I, O1> && RAH2_STD::indirectly_copyable<I, O2>
@@ -1218,7 +1218,7 @@ namespace RAH2_NS
                     typename R, // ranges::input_range
                     typename O1, /// RAH2_STD::weakly_incrementable
                     typename O2, // RAH2_STD::weakly_incrementable
-                    typename Proj = RAH2_STD::identity,
+                    typename Proj = RAH2_NS::details::identity,
                     typename Pred, // RAH2_STD::indirect_unary_predicate<RAH2_STD::projected<iterator_t<R>, Proj>>
                     RAH2_STD::enable_if_t<RAH2_NS::ranges::range<R>>* = nullptr>
                 //requires RAH2_STD::indirectly_copyable<ranges::iterator_t<R>, O1>
@@ -1248,7 +1248,7 @@ namespace RAH2_NS
                     typename ForwardIt,
                     typename Sentinel,
                     typename UnaryPredicate,
-                    typename Proj = RAH2_STD::identity,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIt>>* = nullptr>
                 constexpr ForwardIt
                 operator()(ForwardIt first, Sentinel last, UnaryPredicate pred, Proj proj = {}) const
@@ -1275,7 +1275,7 @@ namespace RAH2_NS
                 template <
                     typename ForwardRange,
                     typename UnaryPredicate,
-                    typename Proj = RAH2_STD::identity,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<RAH2_NS::ranges::range<ForwardRange>>* = nullptr>
                 constexpr borrowed_iterator_t<ForwardRange>
                 operator()(ForwardRange&& range, UnaryPredicate pred, Proj proj = {}) const
