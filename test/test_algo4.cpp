@@ -1191,8 +1191,8 @@ struct test_partition_
                         out_.reserve(2000000 * RELEASE_MULTIPLIER);
                         for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
                         {
-                            out_.emplace_back(0);
-                            out_.emplace_back(1);
+                            out_.emplace_back(Coord{0, 0});
+                            out_.emplace_back(Coord{1, 0});
                         }
                         auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                         STD::partition(out, is_even_64, &Coord::x);
