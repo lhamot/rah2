@@ -1375,6 +1375,7 @@ struct test_partition_copy_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
+#ifndef RAH2_USE_EASTL
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == CommonOrSent::Common,
@@ -1401,6 +1402,7 @@ struct test_partition_copy_
                         DONT_OPTIM(result);
                     }));
         }
+#endif
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
