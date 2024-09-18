@@ -1267,7 +1267,7 @@ struct test_partition_copy_
             CHECK(result.in == in.end());
             CHECK(result.out1 == out.begin() + 4);
             CHECK(result.out2 == out2.begin());
-            CHECK(RAH2_NS::ranges::take_view(out, 4) == (RAH2_STD::vector<int>{2, 4, 6, 8}));
+            CHECK(RAH2_NS::ranges::views::take(out, 4) == (RAH2_STD::vector<int>{2, 4, 6, 8}));
         }
         {
             // all false
@@ -1279,7 +1279,7 @@ struct test_partition_copy_
             CHECK(result.in == in.end());
             CHECK(result.out1 == out.begin());
             CHECK(result.out2 == out2.begin() + 4);
-            CHECK(RAH2_NS::ranges::take_view(out2, 4) == (RAH2_STD::vector<int>{1, 3, 5, 7}));
+            CHECK(RAH2_NS::ranges::views::take(out2, 4) == (RAH2_STD::vector<int>{1, 3, 5, 7}));
         }
         {
             // mixed
@@ -1292,11 +1292,11 @@ struct test_partition_copy_
             CHECK(result.out1 == out.begin() + 2);
             CHECK(result.out2 == out2.begin() + 2);
             CHECK(
-                (RAH2_NS::ranges::take_view(out, 2) == RAH2_STD::vector<int>{2, 4}
-                 || RAH2_NS::ranges::take_view(out, 2) == RAH2_STD::vector<int>{4, 2}));
+                (RAH2_NS::ranges::views::take(out, 2) == RAH2_STD::vector<int>{2, 4}
+                 || RAH2_NS::ranges::views::take(out, 2) == RAH2_STD::vector<int>{4, 2}));
             CHECK(
-                (RAH2_NS::ranges::take_view(out2, 2) == RAH2_STD::vector<int>{3, 5}
-                 || RAH2_NS::ranges::take_view(out2, 2) == RAH2_STD::vector<int>{5, 3}));
+                (RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<int>{3, 5}
+                 || RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<int>{5, 3}));
         }
 
         testSuite.test_case("range");
@@ -1335,7 +1335,7 @@ struct test_partition_copy_
             CHECK(result.out1 == out.begin() + 4);
             CHECK(result.out2 == out2.begin());
             CHECK(
-                RAH2_NS::ranges::take_view(out, 4)
+                RAH2_NS::ranges::views::take(out, 4)
                 == (RAH2_STD::vector<Coord>{{2, 0}, {4, 0}, {6, 0}, {8, 0}}));
         }
         {
@@ -1349,7 +1349,7 @@ struct test_partition_copy_
             CHECK(result.out1 == out.begin());
             CHECK(result.out2 == out2.begin() + 4);
             CHECK(
-                RAH2_NS::ranges::take_view(out2, 4)
+                RAH2_NS::ranges::views::take(out2, 4)
                 == (RAH2_STD::vector<Coord>{{1, 0}, {3, 0}, {5, 0}, {7, 0}}));
         }
         {
@@ -1363,11 +1363,11 @@ struct test_partition_copy_
             CHECK(result.out1 == out.begin() + 2);
             CHECK(result.out2 == out2.begin() + 2);
             CHECK(
-                (RAH2_NS::ranges::take_view(out, 2) == RAH2_STD::vector<Coord>{{2, 0}, {4, 0}}
-                 || RAH2_NS::ranges::take_view(out, 2) == RAH2_STD::vector<Coord>{{4, 0}, {2, 0}}));
+                (RAH2_NS::ranges::views::take(out, 2) == RAH2_STD::vector<Coord>{{2, 0}, {4, 0}}
+                 || RAH2_NS::ranges::views::take(out, 2) == RAH2_STD::vector<Coord>{{4, 0}, {2, 0}}));
             CHECK(
-                (RAH2_NS::ranges::take_view(out2, 2) == RAH2_STD::vector<Coord>{{3, 0}, {5, 0}}
-                 || RAH2_NS::ranges::take_view(out2, 2) == RAH2_STD::vector<Coord>{{5, 0}, {3, 0}}));
+                (RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<Coord>{{3, 0}, {5, 0}}
+                || RAH2_NS::ranges::views::take(out2, 2) == RAH2_STD::vector<Coord>{{5, 0}, {3, 0}}));
         }
     }
 
