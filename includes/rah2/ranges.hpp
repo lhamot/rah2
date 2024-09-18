@@ -2460,6 +2460,20 @@ namespace RAH2_NS
                     return iter_ - it2.iter_;
                 }
                 template <
+                    bool SizedSentinel = RAH2_NS::sized_sentinel_for<inner_sentinel, inner_iterator>,
+                    RAH2_STD::enable_if_t<SizedSentinel>* = nullptr>
+                auto operator-(sentinel const& st) const
+                {
+                    return st.sent - iter_;
+                }
+                template <
+                    bool SizedSentinel = RAH2_NS::sized_sentinel_for<inner_sentinel, inner_iterator>,
+                    RAH2_STD::enable_if_t<SizedSentinel>* = nullptr>
+                friend auto operator-(sentinel const& st, iterator const& it)
+                {
+                    return it.iter_ - st.sent;
+                }
+                template <
                     typename C = base_cat,
                     RAH2_STD::enable_if_t<RAH2_NS::derived_from<C, RAH2_STD::random_access_iterator_tag>>* = nullptr>
                 iterator& operator+=(difference_type value)
@@ -2484,6 +2498,17 @@ namespace RAH2_NS
             auto end()
             {
                 return sentinel{RAH2_NS::ranges::end(base_)};
+            }
+
+            template <bool IsSized = RAH2_NS::ranges::sized_range<R const>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            auto size() const
+            {
+                return RAH2_NS::ranges::size(base_);
+            }
+            template <bool IsSized = RAH2_NS::ranges::sized_range<R>, RAH2_STD::enable_if_t<IsSized>* = nullptr>
+            auto size()
+            {
+                return RAH2_NS::ranges::size(base_);
             }
         };
         template <typename T>

@@ -3626,9 +3626,9 @@ namespace RAH2_NS
                     return true;
                 }
 
-                template <typename I1, typename C1, typename I2, typename C2, class Pred>
+                template <typename I1, typename S1, typename C1, typename I2, typename S2, typename C2, class Pred>
                 RAH2_CONSTEXPR20 subrange<I1> search_sized_random_access(
-                    I1 first1, I1 last1, C1 count1, I2 first2, I2, C2 count2, Pred pred) const
+                    I1 first1, S1 last1, C1 count1, I2 first2, S2, C2 count2, Pred pred) const
                 {
                     if (first1 == last1)
                         return {first1, first1};
@@ -3643,7 +3643,8 @@ namespace RAH2_NS
 
                         if (first1 == last_possible)
                         {
-                            return {last1, last1};
+                            auto l = RAH2_NS::ranges::next(first1, last1);
+                            return {l, l};
                         }
                     }
                 }
