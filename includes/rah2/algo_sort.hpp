@@ -47,33 +47,48 @@ namespace RAH2_NS
                     return last;
                 }
 
-                template <typename ForwardIterator, typename Sentinel, typename Compare>
-                ForwardIterator operator()(ForwardIterator first, Sentinel last, Compare compare) const
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity>
+                ForwardIterator
+                operator()(ForwardIterator first, Sentinel last, Compare compare, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     if (first != last)
                     {
                         ForwardIterator next = first;
 
                         while (++next != last)
                         {
-                            if (compare(*next, *first))
+                            if (pred_proj(*next, *first))
                                 return next;
 
                             first = next;
                         }
+                        return next;
                     }
-
-                    return last;
+                    else
+                    {
+                        return first;
+                    }
                 }
 
                 template <
                     typename ForwardRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-                auto operator()(ForwardRange&& r, Compare compare) const
+                auto operator()(ForwardRange&& r, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(compare));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
 
                 template <typename ForwardRange>
@@ -92,23 +107,31 @@ namespace RAH2_NS
                 template <
                     typename I, // RAH2_STD::forward_iterator
                     typename S, // RAH2_STD::sentinel_for<I>
-                    // class Proj = RAH2_STD::identity,
                     typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I, Proj>>
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_iterator<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr bool operator()(I first, S last, Comp comp = {}) const
+                constexpr bool operator()(I first, S last, Comp comp = {}, Proj proj = {}) const
                 {
-                    return RAH2_NS::ranges::is_sorted_until(first, last, comp) == last;
+                    return RAH2_NS::ranges::is_sorted_until(
+                               RAH2_STD::move(first),
+                               RAH2_STD::move(last),
+                               RAH2_STD::move(comp),
+                               RAH2_STD::move(proj))
+                           == last;
                 }
 
                 template <
                     typename R, // ranges::forward_range
-                    // class Proj = RAH2_STD::identity,
                     typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<ranges::iterator_t<R>, Proj>>
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-                constexpr bool operator()(R&& r, Comp comp = {}) const
+                constexpr bool operator()(R&& r, Comp comp = {}, Proj proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::ref(comp));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        RAH2_STD::move(comp),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
