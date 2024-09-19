@@ -1712,6 +1712,98 @@ void test_partition_point()
 
     foreach_range_combination<test_algo<test_partition_point_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_is_sorted_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            RAH2_STD::vector<int> sorted_ = {8, 6, 4, 2};
+            auto sorted = make_test_view_adapter<CS, Tag, Sized>(sorted_);
+            CHECK(RAH2_NS::ranges::is_sorted(sorted.begin(), sorted.end(), descending));
+        }
+
+        {
+            RAH2_STD::vector<int> not_sorted_ = {2, 3, 4, 5};
+            auto not_sorted = make_test_view_adapter<CS, Tag, Sized>(not_sorted_);
+            CHECK(!RAH2_NS::ranges::is_sorted(not_sorted.begin(), not_sorted.end(), descending));
+        }
+
+        {
+            RAH2_STD::vector<int> empty_{};
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::is_sorted(empty.begin(), empty.end(), descending));
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<Coord> sorted_ = {{8, 0}, {6, 0}, {4, 0}, {2, 0}};
+            auto sorted = make_test_view_adapter<CS, Tag, Sized>(sorted_);
+            CHECK(RAH2_NS::ranges::is_sorted(sorted, descending_64, &Coord::x));
+        }
+
+        {
+            RAH2_STD::vector<Coord> not_sorted_ = {{1, 0}, {3, 0}, {5, 0}, {7, 0}};
+            auto not_sorted = make_test_view_adapter<CS, Tag, Sized>(not_sorted_);
+            CHECK(!RAH2_NS::ranges::is_sorted(not_sorted, descending_64, &Coord::x));
+        }
+
+        {
+            RAH2_STD::vector<Coord> empty_{};
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::is_sorted(empty, descending_64, &Coord::x));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER);
+        perf_iter_.insert(perf_iter_.end(), 1000000 * RELEASE_MULTIPLIER, 1);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {1, 0});
+        perf_.insert(perf_.end(), 1000000 * RELEASE_MULTIPLIER, {0, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "is_sorted",
+            range_type,
+            [&]
+            {
+                auto result =
+                    STD::is_sorted(fwd(perf_iter.begin()), perf_iter.end());
+                CHECK(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "is_sorted_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_sorted(perf, descending_64, &Coord::x);
+                CHECK(result);
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_is_sorted()
 {
     testSuite.test_case("sample");
@@ -1728,6 +1820,8 @@ void test_is_sorted()
     assert(not RAH2_NS::ranges::is_sorted(digits));
     assert(RAH2_NS::ranges::is_sorted(digits, RAH2_NS::ranges::greater{}));
     /// [rah2::ranges::is_sorted]
+
+    foreach_range_combination<test_algo<test_is_sorted_>>();
 }
 void test_is_sorted_until()
 {
