@@ -1822,6 +1822,103 @@ void test_is_sorted()
 
     foreach_range_combination<test_algo<test_is_sorted_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_is_sorted_until_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            RAH2_STD::vector<int> sorted_ = {2, 4, 6, 8};
+            auto not_sorted = make_test_view_adapter<CS, Tag, Sized>(sorted_);
+            auto point = RAH2_NS::ranges::is_sorted_until(not_sorted.begin(), not_sorted.end());
+            CHECK(point == not_sorted.end());
+        }
+
+        {
+            RAH2_STD::vector<int> not_sorted_ = {2, 4, 6, 5};
+            auto not_sorted = make_test_view_adapter<CS, Tag, Sized>(not_sorted_);
+            auto point = RAH2_NS::ranges::is_sorted_until(not_sorted.begin(), not_sorted.end());
+            CHECK(RAH2_NS::ranges::distance(not_sorted.begin(), point) == 3);
+        }
+
+        {
+            RAH2_STD::vector<int> empty_{};
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            auto point = RAH2_NS::ranges::is_sorted_until(empty.begin(), empty.end());
+            CHECK(empty.end() == point);
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<Coord> sorted_ = {{8, 0}, {6, 0}, {4, 0}, {2, 0}};
+            auto sorted = make_test_view_adapter<CS, Tag, Sized>(sorted_);
+            auto point = RAH2_NS::ranges::is_sorted_until(sorted, descending_64, &Coord::x);
+            CHECK(sorted.end() == point);
+        }
+
+        {
+            RAH2_STD::vector<Coord> not_sorted_ = {{8, 0}, {7, 0}, {5, 0}, {7, 0}};
+            auto not_sorted = make_test_view_adapter<CS, Tag, Sized>(not_sorted_);
+            auto point = RAH2_NS::ranges::is_sorted_until(not_sorted, descending_64, &Coord::x);
+            CHECK(RAH2_NS::ranges::distance(not_sorted.begin(), point) == 3);
+        }
+
+        {
+            RAH2_STD::vector<Coord> empty_{};
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            auto point = RAH2_NS::ranges::is_sorted_until(empty, descending_64, &Coord::x);
+            CHECK(empty.end() == point);
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER);
+        perf_iter_.insert(perf_iter_.end(), 1000000 * RELEASE_MULTIPLIER, 1);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {1, 0});
+        perf_.insert(perf_.end(), 1000000 * RELEASE_MULTIPLIER, {0, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "is_sorted_until",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_sorted_until(fwd(perf_iter.begin()), perf_iter.end());
+                DONT_OPTIM(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "is_sorted_until_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_sorted_until(perf, descending_64, &Coord::x);
+                DONT_OPTIM(result);
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_is_sorted_until()
 {
     testSuite.test_case("sample");
@@ -1844,6 +1941,8 @@ void test_is_sorted_until()
     auto const sorted_end6 = RAH2_NS::ranges::is_sorted_until(a6);
     assert(RAH2_NS::ranges::distance(a6.begin(), sorted_end6) == 6);
     /// [rah2::ranges::is_sorted_until]
+
+    foreach_range_combination<test_algo<test_is_sorted_until_>>();
 }
 void test_sort()
 {
