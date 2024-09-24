@@ -31,27 +31,28 @@ namespace RAH2_NS
                         forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
                 ForwardIterator operator()(ForwardIterator first, Sentinel last) const
                 {
-                    if (first != last)
+                    if (first == last)
                     {
-                        ForwardIterator next = first;
-
-                        while (++next != last)
-                        {
-                            if (*next < *first)
-                                return next;
-
-                            first = next;
-                        }
+                        return first;
                     }
+                    ForwardIterator next = first;
 
-                    return last;
+                    while (++next != last)
+                    {
+                        if (*next < *first)
+                            return next;
+
+                        first = next;
+                    }
+                    return next;
                 }
 
                 template <
                     typename ForwardIterator,
                     typename Sentinel,
                     typename Compare,
-                    typename Proj = RAH2_NS::details::identity>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<RAH2_NS::sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
                 ForwardIterator
                 operator()(ForwardIterator first, Sentinel last, Compare compare, Proj proj = {}) const
                 {
