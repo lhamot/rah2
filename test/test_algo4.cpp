@@ -2067,7 +2067,7 @@ struct test_sort_
                         }
                         auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                         STD::sort(out, comp_64, &Coord::x);
-                        CHECK(out.front() == Coord{1, 0});
+                        CHECK((out.front() == Coord{1, 0}));
                     })));
         }
     }
