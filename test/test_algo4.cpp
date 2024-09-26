@@ -2032,7 +2032,7 @@ struct test_sort_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == CommonOrSent::Common,
-                "partition_iter",
+                "sort_iter",
                 range_type,
                 (
                     [&]
@@ -2052,7 +2052,7 @@ struct test_sort_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "partition_ranges",
+                "sort_ranges",
                 range_type,
                 ((
                     [&]
@@ -2092,6 +2092,154 @@ void test_sort()
 
     foreach_range_combination<test_algo<test_sort_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_partial_sort_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // empty
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partial_sort(out.begin(), out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<int> out_{2};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partial_sort(out.begin(), out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2}));
+            auto result2 = RAH2_NS::ranges::partial_sort(out.begin(), ++out.begin(), out.end());
+            CHECK(result2 == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<int> out_{2, 4, 6, 8};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto midle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::partial_sort(out.begin(), midle, out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2, 4, 6, 8}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<int> out_{7, 3, 5, 1};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto midle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::partial_sort(out.begin(), midle, out.end());
+            CHECK(result == out.end());
+            CHECK(
+                (out_ == (RAH2_STD::vector<int>{1, 3, 5, 7}))
+                || (out_ == (RAH2_STD::vector<int>{1, 3, 7, 5}))
+            );
+        }
+
+        testSuite.test_case("range");
+        {
+            // empty
+            RAH2_STD::vector<Coord> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partial_sort(out, out.begin(), comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<Coord> out_{Coord{2, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partial_sort(out, out.begin(), comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{Coord{2, 0}}));
+            auto result2 = RAH2_NS::ranges::partial_sort(out, ++out.begin(), comp_64, &Coord::x);
+            CHECK(result2 == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{Coord{2, 0}}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<Coord> out_{Coord{8, 0}, Coord{6, 0}, Coord{4, 0}, Coord{2, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto midle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::partial_sort(out, midle, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{{8, 0}, {6, 0}, {4, 0}, {2, 0}}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<Coord> out_{Coord{1, 0}, Coord{3, 0}, Coord{5, 0}, Coord{7, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto midle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::partial_sort(out, midle, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(
+                (out_ == (RAH2_STD::vector<Coord>{{7, 0}, {5, 0}, {1, 0}, {3, 0}}))
+                || (out_ == (RAH2_STD::vector<Coord>{{7, 0}, {5, 0}, {3, 0}, {1, 0}}))
+            );
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "partial_sort_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        RAH2_STD::vector<int> out_;
+                        out_.reserve(200000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            out_.emplace_back(0);
+                            out_.emplace_back(1);
+                        }
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        auto midle =
+                            RAH2_NS::ranges::next(fwd(out).begin(), 100000 * RELEASE_MULTIPLIER);
+                        STD::partial_sort(
+                            RAH2_NS::ranges::begin(out), fwd(midle), RAH2_NS::ranges::end(out));
+                        CHECK(out.front() == 0);
+                    }));
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "partial_sort_ranges",
+                range_type,
+                ((
+                    [&]
+                    {
+                        RAH2_STD::vector<Coord> out_;
+                        out_.reserve(20000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 10000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            out_.emplace_back(Coord{0, 0});
+                            out_.emplace_back(Coord{1, 0});
+                        }
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        auto midle = RAH2_NS::ranges::next(out.begin(), 10000 * RELEASE_MULTIPLIER);
+                        STD::partial_sort(out, midle, comp_64, &Coord::x);
+                        CHECK((out.front() == Coord{1, 0}));
+                    })));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_partial_sort()
 {
     testSuite.test_case("sample");
@@ -2107,6 +2255,8 @@ void test_partial_sort()
     RAH2_NS::ranges::partial_sort(s.begin(), s.begin() + m, s.end(), RAH2_NS::ranges::greater{});
     assert((RAH2_NS::ranges::equal(s | RAH2_NS::ranges::views::take(3), RAH2_STD::string("cba"))));
     /// [rah2::ranges::partial_sort]
+
+    foreach_range_combination<test_algo<test_partial_sort_>>();
 }
 void test_partial_sort_copy()
 {
