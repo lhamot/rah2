@@ -901,7 +901,8 @@ namespace RAH2_NS
             struct partial_sort
             {
                 template <typename RandomAccessIterator, typename Sentinel>
-                void operator()(RandomAccessIterator first, RandomAccessIterator middle, Sentinel last) const
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first, RandomAccessIterator middle, Sentinel last) const
                 {
                     using difference_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
@@ -910,7 +911,8 @@ namespace RAH2_NS
 
                     RAH2_NS::ranges::make_heap(first, middle);
 
-                    for (RandomAccessIterator i = middle; i < last; ++i)
+                    RandomAccessIterator i = middle;
+                    for (; i != last; ++i)
                     {
                         if (RAH2_STD::less<value_type>()(*i, *first))
                         {
@@ -928,59 +930,78 @@ namespace RAH2_NS
                     }
 
                     RAH2_NS::ranges::sort_heap(first, middle);
+                    return i;
                 }
 
                 template <typename RandomAccessRange, typename RandomAccessIterator>
-                void operator()(RandomAccessRange&& range, RandomAccessIterator middle) const
+                RandomAccessIterator
+                operator()(RandomAccessRange&& range, RandomAccessIterator middle) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range), middle, RAH2_NS::ranges::end(range));
                 }
 
-                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-                void operator()(
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity>
+                RandomAccessIterator operator()(
                     RandomAccessIterator first,
                     RandomAccessIterator middle,
                     Sentinel last,
-                    Compare compare) const
+                    Compare compare,
+                    Proj proj = {}) const
                 {
                     using difference_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
 
-                    RAH2_NS::ranges::make_heap(first, middle, compare);
+                    RAH2_NS::ranges::make_heap(first, middle, pred_proj);
 
-                    for (RandomAccessIterator i = middle; i < last; ++i)
+                    RandomAccessIterator i = middle;
+                    for (; i != last; ++i)
                     {
-                        if (compare(*i, *first))
+                        if (pred_proj(*i, *first))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj(
                                 *first, *i)); // Validate that the compare function is sane.
                             value_type temp(RAH2_STD::forward<value_type>(*i));
                             *i = RAH2_STD::forward<value_type>(*first);
-                            details::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+                            details::adjust_heap<RandomAccessIterator, difference_type, value_type, decltype(pred_proj)>(
                                 first,
                                 difference_type(0),
                                 difference_type(middle - first),
                                 difference_type(0),
                                 RAH2_STD::forward<value_type>(temp),
-                                compare);
+                                pred_proj);
                         }
                     }
 
-                    RAH2_NS::ranges::sort_heap(first, middle, compare);
+                    RAH2_NS::ranges::sort_heap(first, middle, pred_proj);
+                    return i;
                 }
 
-                template <typename RandomAccessRange, typename RandomAccessIterator, typename Compare>
-                void operator()(
-                    RandomAccessRange&& range, RandomAccessIterator middle, Compare compare) const
+                template <
+                    typename RandomAccessRange,
+                    typename RandomAccessIterator,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity>
+                RandomAccessIterator operator()(
+                    RandomAccessRange&& range,
+                    RandomAccessIterator middle,
+                    Compare compare,
+                    Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         middle,
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
