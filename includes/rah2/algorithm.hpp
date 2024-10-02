@@ -1302,10 +1302,27 @@ namespace RAH2_NS
                     typename S1, // RAH2_STD::sentinel_for<I1>
                     typename I2, // RAH2_STD::random_access_iterator
                     typename S2, // RAH2_STD::sentinel_for<I2>
-                    class Comp = RAH2_NS::ranges::less>
-                constexpr RAH2_NS::ranges::partial_sort_copy_result<I1, I2>
-                operator()(I1 first, S1 last, I2 result_first, S2 result_last, Comp comp = {}) const
+                    class Comp = RAH2_NS::ranges::less,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::sentinel_for<S1, I1> && RAH2_NS::sentinel_for<S2, I2>>* = nullptr>
+                constexpr RAH2_NS::ranges::partial_sort_copy_result<I1, I2> operator()(
+                    I1 first,
+                    S1 last,
+                    I2 result_first,
+                    S2 result_last,
+                    Comp comp = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
                 {
+                    auto pred_out =
+                        details::wrap_pred_proj(RAH2_STD::move(comp), RAH2_STD::move(proj2));
+                    auto pred_in_out = details::wrap_pred_proj(
+                        RAH2_STD::move(comp), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
+                    auto p1 = details::wrap_unary(RAH2_FWD(proj1));
+                    auto p2 = details::wrap_unary(RAH2_FWD(proj2));
+
                     if (result_first == result_last)
                         return {
                             RAH2_NS::ranges::next(RAH2_STD::move(first), RAH2_STD::move(last)),
@@ -1314,26 +1331,26 @@ namespace RAH2_NS
                     auto out_last{result_first};
                     // copy first N elements
                     for (; !(first == last or out_last == result_last); ++out_last, ++first)
-                        *out_last = *first;
+                        p2(*out_last) = p1(*first);
 
                     // convert N copied elements into a max-heap
-                    RAH2_NS::ranges::make_heap(result_first, out_last, comp);
+                    RAH2_NS::ranges::make_heap(result_first, out_last, pred_out);
 
                     // process the rest of the input range (if any), preserving the heap property
                     for (; first != last; ++first)
                     {
-                        if (RAH2_INVOKE_2(comp, *first, *result_first))
+                        if (RAH2_INVOKE_2(pred_in_out, *first, *result_first))
                         {
                             // pop out the biggest item and push in a newly found smaller one
-                            RAH2_NS::ranges::pop_heap(result_first, out_last, comp);
-                            *(out_last - 1) = *first;
-                            RAH2_NS::ranges::push_heap(result_first, out_last, comp);
+                            RAH2_NS::ranges::pop_heap(result_first, out_last, pred_out);
+                            p2(*(out_last - 1)) = p1(*first);
+                            RAH2_NS::ranges::push_heap(result_first, out_last, pred_out);
                         }
                     }
 
                     // first N elements in the output range is still
                     // a heap - convert it into a sorted range
-                    RAH2_NS::ranges::sort_heap(result_first, out_last, comp);
+                    RAH2_NS::ranges::sort_heap(result_first, out_last, pred_out);
 
                     return {RAH2_STD::move(first), RAH2_STD::move(out_last)};
                 }
@@ -1341,18 +1358,22 @@ namespace RAH2_NS
                 template <
                     typename R1, // ranges::input_range
                     typename R2, // ranges::random_access_range
-                    class Comp = RAH2_NS::ranges::less>
+                    class Comp = RAH2_NS::ranges::less,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::input_range<R1> && RAH2_NS::ranges::random_access_range<R2>>* = nullptr>
                 constexpr RAH2_NS::ranges::partial_sort_copy_result<
                     RAH2_NS::ranges::borrowed_iterator_t<R1>,
                     RAH2_NS::ranges::borrowed_iterator_t<R2>>
-                operator()(R1&& r, R2&& result_r, Comp comp = {}) const
+                operator()(R1&& r, R2&& result_r, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
                         RAH2_NS::ranges::begin(result_r),
                         RAH2_NS::ranges::end(result_r),
-                        RAH2_STD::move(comp));
+                        RAH2_STD::move(comp), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids

@@ -2256,6 +2256,220 @@ void test_partial_sort()
 
     foreach_range_combination<test_algo<test_partial_sort_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_partial_sort_copy_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // empty
+            RAH2_STD::vector<int> in_;
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::input_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partial_sort_copy(in.begin(), in.end(), out.begin(), out.end());
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+        }
+        {
+            // single to empty
+            RAH2_STD::vector<int> in_{2};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::partial_sort_copy(in.begin(), in.end(), out.begin(), out.end());
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+        }
+        {
+            // single to single
+            RAH2_STD::vector<int> in_{2};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<int> out_(1);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in.begin(), in.end(), out.begin(), out.end());
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<int> in_{2, 4, 6, 8};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<int> out_(2);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in.begin(), in.end(), out.begin(), out.end());
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2, 4}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<int> in_{7, 3, 5, 1};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<int> out_(2);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in.begin(), in.end(), out.begin(), out.end());
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{1, 3}));
+        }
+
+        testSuite.test_case("range");
+        {
+            // empty
+            RAH2_STD::vector<Coord> in_;
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<Complex> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in, out, comp_64, &Coord::x, &Complex::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Complex>{}));
+        }
+        {
+            // single to empty
+            RAH2_STD::vector<Coord> in_{Coord{2, 0}};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<Complex> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in, out, comp_64, &Coord::x, &Complex::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Complex>{}));
+        }
+
+        {
+            // single to single
+            RAH2_STD::vector<Coord> in_{Coord{2, 0}};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<Complex> out_(1);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in, out, comp_64, &Coord::x, &Complex::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Complex>{Complex{2, 0}}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<Coord> in_{Coord{8, 0}, Coord{6, 0}, Coord{4, 0}, Coord{2, 0}};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<Complex> out_(2);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in, out, comp_64, &Coord::x, &Complex::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Complex>{{8, 0}, {6, 0}}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<Coord> in_{Coord{1, 0}, Coord{3, 0}, Coord{5, 0}, Coord{7, 0}};
+            auto in =
+                make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                    in_);
+            RAH2_STD::vector<Complex> out_(2);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result =
+                RAH2_NS::ranges::partial_sort_copy(in, out, comp_64, &Coord::x, &Complex::x);
+            CHECK(result.in == in.end());
+            CHECK(result.out == out.end());
+            CHECK((out_ == (RAH2_STD::vector<Complex>{{7, 0}, {5, 0}})));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "partial_sort_copy_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        RAH2_STD::vector<int> in_;
+                        in_.reserve(200000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            in_.emplace_back(0);
+                            in_.emplace_back(1);
+                        }
+                        auto in =
+                            make_test_view_adapter<CommonOrSent::Common, RAH2_STD::forward_iterator_tag, false>(
+                                in_);
+                        RAH2_STD::vector<int> out_(100000 * RELEASE_MULTIPLIER);
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        auto result = STD::partial_sort_copy(
+                            RAH2_NS::ranges::begin(fwd(in)),
+                            RAH2_NS::ranges::end(in),
+                            RAH2_NS::ranges::begin(out),
+                            RAH2_NS::ranges::end(out));
+                        DONT_OPTIM(result);
+                    }));
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "partial_sort_copy_ranges",
+                range_type,
+                ((
+                    [&]
+                    {
+                        RAH2_STD::vector<Coord> in_;
+                        in_.reserve(20000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 10000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            in_.emplace_back(Coord{0, 0});
+                            in_.emplace_back(Coord{1, 0});
+                        }
+                        auto in =
+                            make_test_view_adapter<CommonOrSent::Sentinel, RAH2_STD::forward_iterator_tag, false>(
+                                in_);
+                        RAH2_STD::vector<Complex> out_(20000 * RELEASE_MULTIPLIER);
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        auto result =
+                            STD::partial_sort_copy(in, out, comp_64, &Coord::x, &Complex::x);
+                        DONT_OPTIM(result);
+                    })));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_partial_sort_copy()
 {
     testSuite.test_case("sample");
@@ -2275,6 +2489,8 @@ void test_partial_sort_copy()
     assert(lastI_lastO.in == source.end());
     assert(lastI_lastO.out == dest2.begin() + 5);
     /// [rah2::ranges::partial_sort_copy]
+
+    foreach_range_combination<test_algo<test_partial_sort_copy_>>();
 }
 void test_stable_sort()
 {
