@@ -2415,6 +2415,7 @@ struct test_partial_sort_copy_
     {
         testSuite.test_case("perf");
         {
+#ifndef RAH2_USE_EASTL
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == CommonOrSent::Common,
                 "partial_sort_copy_iter",
@@ -2441,6 +2442,7 @@ struct test_partial_sort_copy_
                             RAH2_NS::ranges::end(out));
                         DONT_OPTIM(result);
                     }));
+#endif
         }
 
         {
