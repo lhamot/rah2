@@ -2480,6 +2480,7 @@ void test_partial_sort_copy()
     std::forward_list<int> const source{4, 2, 5, 1, 3};
 
     RAH2_STD::vector<int> dest1{10, 11, 12};
+    STATIC_ASSERT(RAH2_NS::ranges::input_range<const std::forward_list<int>&>);
     auto lastI_lastO = RAH2_NS::ranges::partial_sort_copy(source, dest1);
     assert(dest1 == (RAH2_STD::vector<int>{1, 2, 3}));
     assert(lastI_lastO.in == source.end());
