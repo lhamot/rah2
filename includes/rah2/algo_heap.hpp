@@ -81,6 +81,10 @@ namespace RAH2_NS
                 T value,
                 Compare compare)
             {
+#if (defined(__GNUC__) && !defined(__clang__))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
                 for (Distance parentPosition =
                          (position - 1)
                          >> 1; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
@@ -92,6 +96,9 @@ namespace RAH2_NS
                     position = parentPosition;
                 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+#pragma GCC diagnostic pop
+#endif
                 *(first + position) = RAH2_STD::forward<ValueType>(value);
             }
 

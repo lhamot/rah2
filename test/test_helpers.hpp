@@ -1692,3 +1692,53 @@ struct Coord
         return !(a < b);
     }
 };
+
+struct Complex
+{
+    intptr_t x;
+    intptr_t y;
+
+    Complex& operator=(Coord c)
+    {
+        x = c.x;
+        y = c.y;
+        return *this;
+    }
+
+    /*
+    Complex(Coord c)
+        : x(c.x)
+        , y(c.y)
+    {
+    }
+    */
+
+    bool operator==(Complex c) const
+    {
+        return x == c.x and y == c.y;
+    }
+    bool operator!=(Complex c) const
+    {
+        return x != c.x || y != c.y;
+    }
+
+    friend bool operator<(Complex a, Complex b)
+    {
+        return (a.x != b.x) ? (a.x < b.x) : (a.y < b.y);
+    }
+
+    friend bool operator<=(Complex a, Complex b)
+    {
+        return (a < b) || (a == b);
+    }
+
+    friend bool operator>(Complex a, Complex b)
+    {
+        return !(a < b) && !(a == b);
+    }
+
+    friend bool operator>=(Complex a, Complex b)
+    {
+        return !(a < b);
+    }
+};
