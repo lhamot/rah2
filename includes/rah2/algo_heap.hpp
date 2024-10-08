@@ -87,7 +87,7 @@ namespace RAH2_NS
 #endif
                 for (Distance parentPosition =
                          (position - 1)
-                          / 2; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
+                          >> 2; // This formula assumes that (position > 0). // We use '>> 1' instead of '/ 2' because we have seen VC++ generate better code with >>.
                      (position > topPosition) && compare(*(first + parentPosition), value);
                      parentPosition = (position - 1) >> 1)
                 {
