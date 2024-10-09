@@ -1480,7 +1480,7 @@ namespace RAH2_NS
                 RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
 #ifdef RAH2_USE_EASTL
-                    RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+                    return RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
                         first, last, *RAH2_STD::get_default_allocator(0));
 #else
                     using Allocator = RAH2_STD::allocator<
