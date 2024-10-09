@@ -2500,6 +2500,136 @@ void test_partial_sort_copy()
 
     foreach_range_combination<test_algo<test_partial_sort_copy_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_stable_sort_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // empty
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<int> out_{2};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<int> out_{2, 4, 6, 8};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{2, 4, 6, 8}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<int> out_{7, 3, 5, 1};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<int>{1, 3, 5, 7}));
+        }
+
+        testSuite.test_case("range");
+        {
+            // empty
+            RAH2_STD::vector<Coord> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<Coord> out_{Coord{2, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{Coord{2, 0}}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<Coord> out_{
+                Coord{8, 0}, Coord{6, 0}, Coord{4, 1}, Coord{4, 2}, Coord{2, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{{8, 0}, {6, 0}, {4, 1} , {4, 2}, {2, 0}}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<Coord> out_{
+                Coord{1, 0}, Coord{3, 1}, Coord{3, 2}, Coord{5, 0}, Coord{7, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(out_ == (RAH2_STD::vector<Coord>{{7, 0}, {5, 0}, {3, 1}, {3, 2}, {1, 0}}));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "stable_sort_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        RAH2_STD::vector<int> out_;
+                        out_.reserve(200000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            out_.emplace_back(0);
+                            out_.emplace_back(1);
+                        }
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        STD::stable_sort(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out));
+                        CHECK(out.front() == 0);
+                    }));
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "stable_sort_ranges",
+                range_type,
+                ((
+                    [&]
+                    {
+                        RAH2_STD::vector<Coord> out_;
+                        out_.reserve(20000 * RELEASE_MULTIPLIER);
+                        for (size_t i = 0; i < 10000 * RELEASE_MULTIPLIER; ++i)
+                        {
+                            out_.emplace_back(Coord{0, 0});
+                            out_.emplace_back(Coord{1, 0});
+                        }
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        STD::stable_sort(out, comp_64, &Coord::x);
+                        CHECK((out.front() == Coord{1, 0}));
+                    })));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_stable_sort()
 {
     testSuite.test_case("sample");
@@ -2535,6 +2665,8 @@ void test_stable_sort()
                 {{4, 1}, {2, 1}, {1, 1}, {4, 2}, {2, 2}, {4, 3}, {4, 4}})));
         /// [rah2::ranges::stable_sort_pred]
     }
+
+    foreach_range_combination<test_algo<test_stable_sort_>>();
 }
 void test_nth_element()
 {
