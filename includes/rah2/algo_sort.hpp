@@ -556,7 +556,7 @@ namespace RAH2_NS
                 using value_type =
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                difference_type const nCount = RAH2_STD::ranges::distance(first, last);
+                difference_type const nCount = RAH2_NS::ranges::distance(first, last);
 
                 if (nCount > 1)
                 {
