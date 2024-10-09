@@ -364,9 +364,10 @@ namespace RAH2_NS
                 static void
                 sort(RandomAccessIterator first, Sentinel last, T* pBuffer, StrictWeakOrdering compare)
                 {
-                    if (sort_impl(first, last, pBuffer, difference_type(0), compare) == RL_Buffer)
+                    auto const lastIt = RAH2_NS::ranges::next(first, last);
+                    if (sort_impl(first, lastIt, pBuffer, difference_type(0), compare) == RL_Buffer)
                     {
-                        difference_type const nCount = last - first;
+                        difference_type const nCount = lastIt - first;
                         RAH2_NS::ranges::copy(pBuffer, pBuffer + nCount, first);
                     }
                     RAH2_DEV_ASSERT((RAH2_NS::ranges::is_sorted.
@@ -396,7 +397,7 @@ namespace RAH2_NS
                 // (i.e. it is legal to pass 0).
                 static ResultLocation sort_impl(
                     RandomAccessIterator first,
-                    Sentinel last,
+                    RandomAccessIterator last,
                     T* pBuffer,
                     difference_type lastSortedEnd,
                     StrictWeakOrdering compare)
@@ -417,7 +418,7 @@ namespace RAH2_NS
                         {
                             RAH2_NS::ranges::details::insertion_sort_already_started<
                                 RandomAccessIterator,
-                                Sentinel,
+                                RandomAccessIterator,
                                 StrictWeakOrdering>(first, last, first + lastSortedEnd, compare);
                             return RL_SourceRange;
                         }
@@ -442,10 +443,10 @@ namespace RAH2_NS
                     }
                     else
                     {
-                        RAH2_DEV_ASSERT(
-                            (RAH2_NS::ranges::is_sorted
-                                 .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                     first, last, compare)));
+                        RAH2_DEV_ASSERT((
+                            RAH2_NS::ranges::is_sorted.
+                            operator()<RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering>(
+                                first, last, compare)));
                         return RL_SourceRange;
                     }
                 }
@@ -458,7 +459,7 @@ namespace RAH2_NS
                 // Upon returning the merged results will be in one of the two buffers (indicated by the return result).
                 static ResultLocation merge_halves(
                     RandomAccessIterator first,
-                    Sentinel last,
+                    RandomAccessIterator last,
                     difference_type nMid,
                     T* pBuffer,
                     ResultLocation firstHalfLocation,
@@ -482,10 +483,10 @@ namespace RAH2_NS
                             RAH2_NS::ranges::copy(first, first + nMid, pBuffer);
                             RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                            RAH2_DEV_ASSERT(
-                                (RAH2_NS::ranges::is_sorted
-                                     .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                         first, last, compare)));
+                            RAH2_DEV_ASSERT((
+                                RAH2_NS::ranges::is_sorted.
+                                operator()<RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering>(
+                                    first, last, compare)));
                             return RL_SourceRange;
                         }
                     }
@@ -496,20 +497,20 @@ namespace RAH2_NS
                             RAH2_NS::ranges::copy(first + nMid, last, pBuffer + nMid);
                             RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                            RAH2_DEV_ASSERT(
-                                (RAH2_NS::ranges::is_sorted
-                                     .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                         first, last, compare)));
+                            RAH2_DEV_ASSERT((
+                                RAH2_NS::ranges::is_sorted.
+                                operator()<RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering>(
+                                    first, last, compare)));
                             return RL_SourceRange;
                         }
                         else
                         {
                             RAH2_NS::ranges::merge(
                                 pBuffer, pBuffer + nMid, pBuffer + nMid, pBuffer + nCount, first, compare);
-                            RAH2_DEV_ASSERT(
-                                (RAH2_NS::ranges::is_sorted
-                                     .operator()<RandomAccessIterator, Sentinel, StrictWeakOrdering>(
-                                         first, last, compare)));
+                            RAH2_DEV_ASSERT((
+                                RAH2_NS::ranges::is_sorted.
+                                operator()<RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering>(
+                                    first, last, compare)));
                             return RL_SourceRange;
                         }
                     }
@@ -544,7 +545,7 @@ namespace RAH2_NS
             /// an array (eg. vector, deque).
             ///
             template <typename RandomAccessIterator, typename Sentinel, typename Allocator, typename StrictWeakOrdering>
-            void merge_sort(
+            RandomAccessIterator merge_sort(
                 RandomAccessIterator first,
                 Sentinel last,
                 Allocator& allocator,
@@ -555,7 +556,7 @@ namespace RAH2_NS
                 using value_type =
                     typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
 
-                difference_type const nCount = last - first;
+                difference_type const nCount = RAH2_NS::ranges::distance(first, last);
 
                 if (nCount > 1)
                 {
@@ -579,15 +580,17 @@ namespace RAH2_NS
                     allocator.deallocate(pBuffer, static_cast<size_t>(nCount));
 #endif
                 }
+                return first + nCount;
             }
 
             template <typename RandomAccessIterator, typename Sentinel, typename Allocator>
-            void merge_sort(RandomAccessIterator first, Sentinel last, Allocator& allocator)
+            RandomAccessIterator
+            merge_sort(RandomAccessIterator first, Sentinel last, Allocator& allocator)
             {
                 using Less =
                     RAH2_STD::less<typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
 
-                merge_sort<RandomAccessIterator, Sentinel, Allocator, Less>(
+                return merge_sort<RandomAccessIterator, Sentinel, Allocator, Less>(
                     first, last, allocator, Less());
             }
         } // namespace details
@@ -1427,32 +1430,46 @@ namespace RAH2_NS
                 /// memory during execution. Try using merge_sort_buffer if you want
                 /// to avoid memory allocation.
                 ///
-                template <typename RandomAccessIterator, typename Sentinel, typename StrictWeakOrdering>
-                void operator()(RandomAccessIterator first, Sentinel last, StrictWeakOrdering compare) const
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename StrictWeakOrdering,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<random_access_iterator<RandomAccessIterator>>* = nullptr>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first,
+                    Sentinel last,
+                    StrictWeakOrdering compare,
+                    Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
 #ifdef RAH2_USE_EASTL
-                    RAH2_NS::ranges::details::
-                        merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType, StrictWeakOrdering>(
-                            first, last, *RAH2_STD::get_default_allocator(0), compare);
+                    return RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+                        first, last, *RAH2_STD::get_default_allocator(0), pred_proj);
 #else
                     using Allocator = RAH2_STD::allocator<
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
                     Allocator allocator;
-                    details::merge_sort<RandomAccessIterator, Sentinel, Allocator, StrictWeakOrdering>(
-                        first, last, allocator, compare);
+                    return details::merge_sort<RandomAccessIterator, Sentinel, Allocator>(
+                        first, last, allocator, pred_proj);
 #endif
                 }
 
                 template <
                     typename RandomAccessRange,
                     typename StrictWeakOrdering,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-                void operator()(RandomAccessRange&& range, StrictWeakOrdering compare) const
+                RAH2_NS::ranges::borrowed_iterator_t<RandomAccessRange>
+                operator()(RandomAccessRange&& range, StrictWeakOrdering compare, Proj proj = {}) const
                 {
-                    (*this)(
+                    return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
 
                 template <
@@ -1461,35 +1478,47 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         random_access_iterator<RandomAccessIterator>
                         && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
-                void operator()(RandomAccessIterator first, Sentinel last) const
+                RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
 #ifdef RAH2_USE_EASTL
-                    RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
+                    return RAH2_NS::ranges::details::merge_sort<RandomAccessIterator, Sentinel, EASTLAllocatorType>(
                         first, last, *RAH2_STD::get_default_allocator(0));
 #else
                     using Allocator = RAH2_STD::allocator<
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>;
                     Allocator allocator;
-                    details::merge_sort<RandomAccessIterator, Sentinel, Allocator>(
+                    return details::merge_sort<RandomAccessIterator, Sentinel, Allocator>(
                         first, last, allocator);
 #endif
                 }
 
                 template <typename RandomAccessRange>
-                void operator()(RandomAccessRange&& range) const
+                // RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<RandomAccessRange>
+                operator()(RandomAccessRange&& range) const
                 {
-                    (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
+                    return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
                 }
 
-                template <typename RandomAccessIterator, typename Sentinel, typename Allocator, typename StrictWeakOrdering>
-                void operator()(
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Allocator,
+                    typename StrictWeakOrdering,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<random_access_iterator<RandomAccessIterator>>* = nullptr>
+                RandomAccessIterator operator()(
                     RandomAccessIterator first,
                     Sentinel last,
                     Allocator& allocator,
-                    StrictWeakOrdering compare) const
+                    StrictWeakOrdering compare,
+                    Proj proj = {}) const
                 {
-                    details::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
-                        first, last, allocator, compare);
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
+                    return details::merge_sort<RandomAccessIterator, Allocator, StrictWeakOrdering>(
+                        first, last, allocator, pred_proj);
                 }
             };
         } // namespace niebloids

@@ -5484,7 +5484,7 @@ namespace RAH2_NS
 
                 template <typename R // no-throw-input-range
                           >
-                // requires RAH2_NS::destructible<RAH2_STD::ranges::range_value_t<R>>
+                // requires RAH2_NS::destructible<RAH2_NS::ranges::range_value_t<R>>
                 constexpr RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const noexcept
                 {
                     return operator()(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
