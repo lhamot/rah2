@@ -1052,21 +1052,29 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(range));
                 }
 
-                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity>
                 RandomAccessIterator operator()(
                     RandomAccessIterator first,
                     RandomAccessIterator nth,
                     Sentinel last,
-                    Compare compare) const
+                    Compare compare,
+                    Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     auto result = RAH2_NS::ranges::next(first, last);
                     auto lasti = result;
                     while ((lasti - first) > 5)
                     {
                         auto const midValue(RAH2_NS::ranges::median(
-                            *first, *(first + (lasti - first) / 2), *(lasti - 1), compare));
+                            *first, *(first + (lasti - first) / 2), *(lasti - 1), pred_proj));
                         RandomAccessIterator const midPos(
-                            RAH2_NS::ranges::get_partition(first, lasti, midValue, compare));
+                            RAH2_NS::ranges::get_partition(first, lasti, midValue, pred_proj));
 
                         if (midPos <= nth)
                             first = midPos;
@@ -1074,23 +1082,27 @@ namespace RAH2_NS
                             lasti = midPos;
                     }
 
-                    details::insertion_sort<RandomAccessIterator, Sentinel, Compare>(
-                        first, lasti, compare);
+                    details::insertion_sort(first, lasti, pred_proj);
                     return result;
                 }
 
                 template <
                     typename RandomAccessRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
                 iterator_t<RandomAccessRange> operator()(
-                    RandomAccessRange&& range, iterator_t<RandomAccessRange> nth, Compare compare) const
+                    RandomAccessRange&& range,
+                    iterator_t<RandomAccessRange> nth,
+                    Compare compare,
+                    Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_STD::move(nth),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
