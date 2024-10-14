@@ -2851,6 +2851,113 @@ void test_nth_element()
 
     foreach_range_combination<test_algo<test_nth_element_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_lower_bound_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in;
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto const iter = RAH2_NS::ranges::lower_bound(r1.begin(), r1.end(), Coord{3, 0});
+            CHECK(iter == r1.end());
+        }
+        {
+            testSuite.test_case("not_found");
+            RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {4, 0}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto const iter = RAH2_NS::ranges::lower_bound(r1.begin(), r1.end(), Coord{3, 0});
+            CHECK(iter == RAH2_NS::ranges::next(r1.begin(), 2)); // Point on {4, 0}
+        }
+        {
+            testSuite.test_case("found");
+            RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {3, 0}, {3, 0}, {4, 0}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto const iter = RAH2_NS::ranges::lower_bound(r1.begin(), r1.end(), Coord{3, 0});
+            CHECK(iter == RAH2_NS::ranges::next(r1.begin(), 2)); // Point on the first {3, 0}
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in;
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto const iter = RAH2_NS::ranges::lower_bound(r1, 3, comp_64, &Coord::x);
+            CHECK(iter == r1.end());
+        }
+        {
+            testSuite.test_case("not_found");
+            RAH2_STD::vector<Coord> in{{4, 0}, {2, 0}, {1, 0}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto const iter = RAH2_NS::ranges::lower_bound(r1, 3, comp_64, &Coord::x);
+            CHECK(iter == RAH2_NS::ranges::next(r1.begin(), 1)); // Point on {4, 0}
+        }
+        {
+            testSuite.test_case("found");
+            RAH2_STD::vector<Coord> in{{4, 0}, {3, 0}, {3, 0}, {3, 0}, {2, 0}, {1, 0}};
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto const iter = RAH2_NS::ranges::lower_bound(r1, 3, comp_64, &Coord::x);
+            CHECK(iter == RAH2_NS::ranges::next(r1.begin(), 1)); // Point on the first {3, 0}
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> in(1000000 * RELEASE_MULTIPLIER, Coord{1, 2});
+        in.push_back(Coord{3, 4});
+        in.push_back(Coord{3, 4});
+        in.push_back(Coord{3, 6});
+        auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+
+        RAH2_STD::vector<Coord> in2(1000000 * RELEASE_MULTIPLIER, Coord{3, 4});
+        in2.push_back(Coord{1, 4});
+        in2.push_back(Coord{1, 2});
+        in2.push_back(Coord{1, 3});
+        auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+        auto const RangeTypeMultiplier =
+            RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>? 100: 1;
+
+        auto const RangeSizedMultiplier = Sized? 10 : 1;
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "lower_bound_iter",
+            range_type,
+            [&]
+            {
+                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                {
+                    auto iter = STD::lower_bound(fwd(r1.begin()), r1.end(), Coord{3, 4});
+                    assert((*iter == Coord{3, 4}));
+                }
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "lower_bound_range_proj",
+            range_type,
+            [&]
+            {
+                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                {
+                    auto iter = STD::lower_bound(r2, 1, comp_64, &Coord::x);
+                    assert((*iter == Coord{1, 4}));
+                }
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_lower_bound()
 {
     testSuite.test_case("sample");
@@ -2860,6 +2967,8 @@ void test_lower_bound()
     auto const lower = RAH2_NS::ranges::lower_bound(data, 4);
     assert(lower == data.begin() + 6);
     /// [rah2::ranges::lower_bound]
+
+    foreach_range_combination<test_algo<test_lower_bound_>>();
 }
 void test_upper_bound()
 {
