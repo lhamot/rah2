@@ -2503,7 +2503,12 @@ namespace RAH2_NS
                 /// access iterators (e.g. contiguous array), as the code below will already
                 /// take advantage of them.
                 ///
-                template <typename ForwardIterator, typename Sentinel, typename T>
+                template <
+                    typename ForwardIterator,
+                    typename Sentinel,
+                    typename T,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
                 ForwardIterator operator()(ForwardIterator first, Sentinel last, T const& value) const
                 {
                     using DifferenceType =
@@ -2534,8 +2539,12 @@ namespace RAH2_NS
                     return first;
                 }
 
-                template <typename ForwardRange, typename T>
-                iterator_t<ForwardRange> operator()(ForwardRange&& range, T const& value) const
+                template <
+                    typename ForwardRange,
+                    typename T,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<ForwardRange>
+                operator()(ForwardRange&& range, T const& value) const
                 {
                     return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), value);
                 }
@@ -2560,10 +2569,25 @@ namespace RAH2_NS
                 /// access iterators (e.g. contiguous array), as the code below will already
                 /// take advantage of them.
                 ///
-                template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename T,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator>
+                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
                 ForwardIterator operator()(
-                    ForwardIterator first, ForwardSentinel last, T const& value, Compare compare) const
+                    ForwardIterator first,
+                    ForwardSentinel last,
+                    T const& value,
+                    Compare compare,
+                    Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj_value(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     using DifferenceType =
                         typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -2580,7 +2604,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::advance(
                             i, d2); // This will be efficient for a random access iterator such as an array.
 
-                        if (compare(*i, value))
+                        if (pred_proj(*i, value))
                         {
                             // Disabled because RAH2_STD::lower_bound doesn't specify (23.3.3.1, p3) this can be done: RAH2_VALIDATE_COMPARE(!compare(value, *i)); // Validate that the compare function is sane.
                             first = ++i;
@@ -2592,15 +2616,21 @@ namespace RAH2_NS
                     return first;
                 }
 
-                template <typename ForwardRange, typename T, typename Compare>
-                iterator_t<ForwardRange>
-                operator()(ForwardRange&& range, T const& value, Compare compare) const
+                template <
+                    typename ForwardRange,
+                    typename T,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<ForwardRange>
+                operator()(ForwardRange&& range, T const& value, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
                         value,
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids

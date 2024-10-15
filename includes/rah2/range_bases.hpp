@@ -1244,6 +1244,37 @@ namespace RAH2_NS
                     wrap_unary(RAH2_FWD(pred)), wrap_unary(RAH2_FWD(proj))};
             }
 
+            template <typename Pred, typename Proj>
+            struct wrap_pred_proj_value_fn
+            {
+                Pred pred;
+                Proj proj;
+                template <typename V>
+                auto operator()(V&& v) const
+                {
+                    return pred(proj(RAH2_FWD(v)));
+                }
+                template <typename V1, typename V2>
+                auto operator()(V1&& v1, V2&& v2) const
+                {
+                    return pred(proj(RAH2_FWD(v1)), RAH2_FWD(v2));
+                }
+
+                operator Pred() &&
+                {
+                    return RAH2_STD::move(pred);
+                }
+            };
+
+            template <typename Pred, typename Proj>
+            auto wrap_pred_proj_value(Pred&& pred, Proj&& proj)
+            {
+                return wrap_pred_proj_value_fn<
+                    decltype(wrap_unary(RAH2_FWD(pred))),
+                    decltype(wrap_unary(RAH2_FWD(proj)))>{
+                    wrap_unary(RAH2_FWD(pred)), wrap_unary(RAH2_FWD(proj))};
+            }
+
             template <typename Pred, typename Proj1, typename Proj2>
             struct wrap_pred_proj_fn_proj_fn
             {
