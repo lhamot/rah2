@@ -2707,10 +2707,25 @@ namespace RAH2_NS
                 ///
                 /// Complexity: At most 'log(last - first) + 1' comparisons.
                 ///
-                template <typename ForwardIterator, typename ForwardSentinel, typename T, typename Compare>
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename T,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator>
+                        && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
                 ForwardIterator operator()(
-                    ForwardIterator first, ForwardSentinel last, T const& value, Compare compare) const
+                    ForwardIterator first,
+                    ForwardSentinel last,
+                    T const& value,
+                    Compare compare,
+                    Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_value_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     using DifferenceType =
                         typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
@@ -2724,7 +2739,7 @@ namespace RAH2_NS
 
                         RAH2_NS::ranges::advance(i, len2);
 
-                        if (!compare(value, *i))
+                        if (!pred_proj(value, *i))
                         {
                             first = ++i;
                             len -= len2 + 1;
@@ -2738,15 +2753,21 @@ namespace RAH2_NS
                     return first;
                 }
 
-                template <typename ForwardRange, typename T, typename Compare>
+                template <
+                    typename ForwardRange,
+                    typename T,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
                 iterator_t<ForwardRange>
-                operator()(ForwardRange&& range, T const& value, Compare compare) const
+                operator()(ForwardRange&& range, T const& value, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
                         value,
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
