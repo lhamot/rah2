@@ -4065,26 +4065,30 @@ namespace RAH2_NS
                     typename Sentinel,
                     typename T,
                     typename Compare,
+                    class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-                bool operator()(ForwardIterator first, Sentinel last, T const& value, Compare compare) const
+                bool operator()(
+                    ForwardIterator first, Sentinel last, T const& value, Compare compare, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_value_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     // To do: This can be made slightly faster by not using lower_bound.
-                    ForwardIterator i(RAH2_NS::ranges::lower_bound(first, last, value, compare));
-                    return ((i != last) && !compare(value, *i));
+                    ForwardIterator i(RAH2_NS::ranges::lower_bound(first, last, value, compare, proj));
+                    return ((i != last) && !pred_proj(value, *i));
                 }
 
                 template <
                     typename Range,
                     typename T,
                     typename Compare,
+                    class Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<Range>>* = nullptr>
-                bool operator()(Range&& range, T const& value, Compare compare) const
+                bool operator()(Range&& range, T const& value, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        value,
-                        RAH2_STD::move(compare));
+                        RAH2_NS::ranges::end(range), value, RAH2_STD::move(compare), RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
