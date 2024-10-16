@@ -2797,6 +2797,7 @@ namespace RAH2_NS
                         typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
                     DifferenceType d = RAH2_NS::ranges::distance(first, last);
+                    auto lasti = RAH2_NS::ranges::next(first, d);
 
                     while (d > 0)
                     {
@@ -2816,7 +2817,7 @@ namespace RAH2_NS
                         {
                             RAH2_ASSERT(!(*i < value)); // Validate that the compare function is sane.
                             d = d2;
-                            last = i;
+                            lasti = i;
                         }
                         else
                         {
@@ -2824,7 +2825,7 @@ namespace RAH2_NS
 
                             return {
                                 RAH2_NS::ranges::lower_bound(first, i, value),
-                                RAH2_NS::ranges::upper_bound(++j, last, value)};
+                                RAH2_NS::ranges::upper_bound(++j, lasti, value)};
                         }
                     }
                     return {first, first};
@@ -2849,14 +2850,25 @@ namespace RAH2_NS
                     typename Sentinel,
                     typename T,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIterator>>* = nullptr>
-                subrange<ForwardIterator, ForwardIterator>
-                operator()(ForwardIterator first, Sentinel last, T const& value, Compare compare) const
+                subrange<ForwardIterator, ForwardIterator> operator()(
+                    ForwardIterator first,
+                    Sentinel last,
+                    T const& value,
+                    Compare compare,
+                    Proj proj = {}) const
                 {
+                    auto pred_proj_value =
+                        details::wrap_pred_proj_value(RAH2_STD::move(compare), RAH2_STD::move(proj));
+                    auto pred_value_proj =
+                        details::wrap_pred_value_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     using DifferenceType =
                         typename RAH2_STD::iterator_traits<ForwardIterator>::difference_type;
 
                     DifferenceType d = RAH2_NS::ranges::distance(first, last);
+                    auto lasti = RAH2_NS::ranges::next(first, d);
 
                     while (d > 0)
                     {
@@ -2866,41 +2878,44 @@ namespace RAH2_NS
 
                         RAH2_NS::ranges::advance(i, d2);
 
-                        if (compare(*i, value))
+                        if (pred_proj_value(*i, value))
                         {
-                            RAH2_ASSERT(
-                                !compare(value, *i)); // Validate that the compare function is sane.
+                            RAH2_ASSERT(!pred_value_proj(
+                                value, *i)); // Validate that the compare function is sane.
                             first = ++i;
                             d -= d2 + 1;
                         }
-                        else if (compare(value, *i))
+                        else if (pred_value_proj(value, *i))
                         {
-                            RAH2_ASSERT(
-                                !compare(*i, value)); // Validate that the compare function is sane.
+                            RAH2_ASSERT(!pred_proj_value(
+                                *i, value)); // Validate that the compare function is sane.
                             d = d2;
-                            last = i;
+                            lasti = i;
                         }
                         else
                         {
                             ForwardIterator j(i);
 
                             return {
-                                RAH2_NS::ranges::lower_bound(first, i, value, compare),
-                                RAH2_NS::ranges::upper_bound(++j, last, value, compare)};
+                                RAH2_NS::ranges::lower_bound(first, i, value, compare, proj),
+                                RAH2_NS::ranges::upper_bound(++j, lasti, value, compare, proj)};
                         }
                     }
                     return {first, first};
                 }
 
-                template <typename ForwardRange, typename T, typename Compare>
-                subrange<iterator_t<ForwardRange>, sentinel_t<ForwardRange>>
-                operator()(ForwardRange&& range, T const& value, Compare compare) const
+                template <
+                    typename ForwardRange,
+                    typename T,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
+                borrowed_subrange_t<ForwardRange>
+                operator()(ForwardRange&& range, T const& value, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        value,
-                        RAH2_STD::move(compare));
+                        RAH2_NS::ranges::end(range), value, RAH2_STD::move(compare), RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
