@@ -186,7 +186,7 @@ namespace RAH2_NS
                 {
                     auto pred_proj1_proj2 = details::wrap_pred_proj(
                         RAH2_STD::move(compare), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
-                    (void*)&pred_proj1_proj2;
+                    (void)&pred_proj1_proj2;
                     auto pred_proj2_proj1 = details::wrap_pred_proj(
                         RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
 
