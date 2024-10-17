@@ -3477,8 +3477,8 @@ struct test_merge_
         RAH2_STD::vector<Coord> in2;
         for (int i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
         {
-            in1.emplace_back(i, 0);
-            in2.emplace_back(i + 1, 0);
+            in1.push_back(Coord{i, 0});
+            in2.push_back(Coord{i + 1, 0});
         }
 
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
