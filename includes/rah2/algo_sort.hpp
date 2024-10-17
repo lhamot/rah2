@@ -186,12 +186,13 @@ namespace RAH2_NS
                 {
                     auto pred_proj1_proj2 = details::wrap_pred_proj(
                         RAH2_STD::move(compare), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
+                    (void*)&pred_proj1_proj2;
                     auto pred_proj2_proj1 = details::wrap_pred_proj(
                         RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
 
                     while ((first1 != last1) && (first2 != last2))
                     {
-                        if (pred_proj1_proj2(*first2, *first1))
+                        if (pred_proj2_proj1(*first2, *first1))
                         {
                             RAH2_VALIDATE_COMPARE(!pred_proj1_proj2(
                                 *first1, *first2)); // Validate that the compare function is sane.
