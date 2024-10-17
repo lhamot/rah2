@@ -171,20 +171,30 @@ namespace RAH2_NS
                     typename InputIterator2,
                     typename Sentinel2,
                     typename OutputIterator,
-                    typename Compare = RAH2_NS::ranges::less>
+                    typename Compare = RAH2_NS::ranges::less,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
                 merge_result<InputIterator1, InputIterator2, OutputIterator> operator()(
                     InputIterator1 first1,
                     Sentinel1 last1,
                     InputIterator2 first2,
                     Sentinel2 last2,
                     OutputIterator result,
-                    Compare compare = {}) const
+                    Compare compare = {},
+                    Proj1 proj1 = {},
+                    Proj1 proj2 = {}) const
                 {
+                    auto pred_proj1_proj2 = details::wrap_pred_proj(
+                        RAH2_STD::move(compare), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
+                    (void)&pred_proj1_proj2;
+                    auto pred_proj2_proj1 = details::wrap_pred_proj(
+                        RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
+
                     while ((first1 != last1) && (first2 != last2))
                     {
-                        if (compare(*first2, *first1))
+                        if (pred_proj2_proj1(*first2, *first1))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj1_proj2(
                                 *first1, *first2)); // Validate that the compare function is sane.
                             *result = *first2;
                             ++first2;
@@ -221,7 +231,9 @@ namespace RAH2_NS
                     typename InputRange1,
                     typename InputRange2,
                     typename OutputIterator,
-                    typename Compare = RAH2_NS::ranges::less>
+                    typename Compare = RAH2_NS::ranges::less,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
                 merge_result<
                     RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
                     RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
@@ -230,7 +242,9 @@ namespace RAH2_NS
                     InputRange1&& range1,
                     InputRange2&& range2,
                     OutputIterator result,
-                    Compare compare = {}) const
+                    Compare compare = {},
+                    Proj1 proj1 = {},
+                    Proj1 proj2 = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range1),
@@ -238,7 +252,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(range2),
                         RAH2_NS::ranges::end(range2),
                         RAH2_STD::move(result),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
