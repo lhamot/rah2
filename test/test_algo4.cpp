@@ -3537,6 +3537,97 @@ void test_merge()
 
     foreach_range_combination<test_algo<test_merge_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_inplace_merge_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in1;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto result = RAH2_NS::ranges::inplace_merge(i1.begin(), i1.begin(), i1.end());
+            CHECK(result == i1.end());
+        }
+        {
+            RAH2_STD::vector<int> in1{1, 3, 3, 5, 2, 3, 4, 6};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto const result = RAH2_NS::ranges::inplace_merge(
+                i1.begin(), RAH2_NS::ranges::next(i1.begin(), 4), i1.end());
+            CHECK(result == i1.end());
+            CHECK_EQUAL(in1, (RAH2_STD::vector<int>{1, 2, 3, 3, 3, 4, 5, 6}));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in1;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto const result = RAH2_NS::ranges::inplace_merge(
+                i1, i1.begin(), comp_64, &Coord::x);
+            CHECK(result == i1.end());
+        }
+        {
+            RAH2_STD::vector<Coord> in1{
+                {1, 0}, {3, 0}, {3, 0}, {5, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto const result = RAH2_NS::ranges::inplace_merge(
+                i1, RAH2_NS::ranges::next(i1.begin(), 4), comp_64, &Coord::x);
+            CHECK(result == i1.end());
+            CHECK_EQUAL(
+                i1,
+                (RAH2_STD::vector<Coord>{
+                    {1, 0}, {2, 0}, {3, 0}, {3, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<Coord> in1;
+        for (int i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in1.push_back(Coord{i, 0});
+        }
+        for (int i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in1.push_back(Coord{i + 1, 0});
+        }
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "inplace_merge_iter",
+            range_type,
+            ([in1, fwd]() mutable
+            {
+                auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+                auto middle = RAH2_NS::ranges::next(r1.begin(), 100000 * RELEASE_MULTIPLIER);
+                STD::inplace_merge(fwd(r1.begin()), middle, r1.end());
+                CHECK_EQUAL(in1[0], (Coord{0, 0}));
+            }));
+        COMPARE_DURATION_TO_STD_RANGES(
+            "inplace_merge_range_proj",
+            range_type,
+            ([in1]() mutable
+            {
+                auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+                auto middle = RAH2_NS::ranges::next(r1.begin(), 100000 * RELEASE_MULTIPLIER);
+                STD::inplace_merge(r1, middle, comp_64, &Coord::x);
+                CHECK_EQUAL(in1[0], (Coord{0, 0}));
+            }));
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_inplace_merge()
 {
     testSuite.test_case("sample");
@@ -3547,6 +3638,8 @@ void test_inplace_merge()
     assert(last == v.end());
     assert(RAH2_NS::ranges::is_sorted(v));
     /// [rah2::ranges::inplace_merge]
+
+    foreach_range_combination<test_algo<test_inplace_merge_>>();
 }
 void test_includes()
 {
