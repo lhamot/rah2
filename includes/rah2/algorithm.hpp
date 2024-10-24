@@ -1389,10 +1389,14 @@ namespace RAH2_NS
                     typename I, // RAH2_STD::bidirectional_iterator
                     typename S, // RAH2_STD::sentinel_for<I>
                     class Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<bidirectional_iterator<I> && sentinel_for<S, I>>* = nullptr>
                 // requires RAH2_STD::sortable<I, Comp, Proj>
-                constexpr I operator()(I first, I middle, S last, Comp comp = {}) const
+                constexpr I operator()(I first, I middle, S last, Comp comp = {}, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(comp), RAH2_STD::move(proj));
+
                     I last_it = RAH2_NS::ranges::next(middle, last);
                     inplace_merge_slow(
                         first,
@@ -1400,23 +1404,25 @@ namespace RAH2_NS
                         last_it,
                         RAH2_NS::ranges::distance(first, middle),
                         RAH2_NS::ranges::distance(middle, last_it),
-                        RAH2_STD::ref(comp));
+                        RAH2_STD::ref(pred_proj));
                     return last_it;
                 }
 
                 template <
                     typename R, // ranges::bidirectional_range
                     class Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<bidirectional_range<R>>* = nullptr>
                 // requires RAH2_STD::sortable<ranges::iterator_t<R>, Comp, Proj>
-                constexpr RAH2_NS::ranges::borrowed_iterator_t<R>
-                operator()(R&& r, RAH2_NS::ranges::iterator_t<R> middle, Comp comp = {}) const
+                constexpr RAH2_NS::ranges::borrowed_iterator_t<R> operator()(
+                    R&& r, RAH2_NS::ranges::iterator_t<R> middle, Comp comp = {}, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_STD::move(middle),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::move(comp));
+                        RAH2_STD::move(comp),
+                        RAH2_STD::move(proj));
                 }
 
             private:
