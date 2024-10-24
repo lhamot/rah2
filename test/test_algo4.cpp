@@ -3603,7 +3603,7 @@ struct test_inplace_merge_
         {
             in1.push_back(Coord{i + 1, 0});
         }
-
+#ifndef RAH2_USE_EASTL
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
             "inplace_merge_iter",
@@ -3615,6 +3615,7 @@ struct test_inplace_merge_
                 STD::inplace_merge(fwd(r1.begin()), middle, r1.end());
                 CHECK_EQUAL(in1[0], (Coord{0, 0}));
             }));
+#endif
         COMPARE_DURATION_TO_STD_RANGES(
             "inplace_merge_range_proj",
             range_type,
