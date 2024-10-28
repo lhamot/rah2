@@ -3643,6 +3643,164 @@ void test_inplace_merge()
 
     foreach_range_combination<test_algo<test_inplace_merge_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_includes_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return a > b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result =
+                RAH2_NS::ranges::includes(i1.begin(), i1.end(), i2.begin(), i2.end());
+            CHECK(result);
+        }
+        {
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result =
+                RAH2_NS::ranges::includes(i1.begin(), i1.end(), i2.begin(), i2.end());
+            CHECK(result);
+        }
+        {
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{4, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result =
+                RAH2_NS::ranges::includes(i1.begin(), i1.end(), i2.begin(), i2.end());
+            CHECK(result == false);
+        }
+        {
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 5, 6};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result =
+                RAH2_NS::ranges::includes(i1.begin(), i1.end(), i2.begin(), i2.end());
+            CHECK(result == false);
+        }
+        {
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result =
+                RAH2_NS::ranges::includes(i1.begin(), i1.end(), i2.begin(), i2.end());
+            CHECK(result);
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result = RAH2_NS::ranges::includes(i1, i2, comp_64, &Coord::x, &Coord::x);
+            CHECK(result);
+        }
+        {
+            RAH2_STD::vector<Coord> in1{{5, 0}, {3, 0}, {3, 0}, {1, 0}}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result = RAH2_NS::ranges::includes(i1, i2, comp_64, &Coord::x, &Coord::x);
+            CHECK(result);
+        }
+        {
+            RAH2_STD::vector<Coord> in1{{5, 0}, {3, 0}, {3, 0}, {1, 0}}, in2{{2, 0}, {1, 0}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result = RAH2_NS::ranges::includes(i1, i2, comp_64, &Coord::x, &Coord::x);
+            CHECK(result == false);
+        }
+        {
+            RAH2_STD::vector<Coord> in1{{5, 0}, {3, 0}, {3, 0}, {1, 0}};
+            RAH2_STD::vector<Coord> in2{{5, 0}, {3, 0}, {3, 0}, {1, 0}, {0, 0}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result = RAH2_NS::ranges::includes(i1, i2, comp_64, &Coord::x, &Coord::x);
+            CHECK(result == false);
+        }
+        {
+            RAH2_STD::vector<Coord> in1{{5, 0}, {3, 0}, {3, 0}, {2, 0}, {1, 0}, {-2, 0}};
+            RAH2_STD::vector<Coord> in2{{3, 0}, {1, 0}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto const result = RAH2_NS::ranges::includes(i1, i2, comp_64, &Coord::x, &Coord::x);
+            CHECK(result);
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{0, 0});
+            for (int i = 1; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in1.push_back(Coord{i, 0});
+                in2.push_back(Coord{i, 0});
+            }
+            in1.push_back(Coord{100000, 0});
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "includes_iter",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::includes(fwd(r1.begin()), r1.end(), r2.begin(), r2.end());
+                        CHECK(result);
+                    }
+                });
+        }
+
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{100000 * RELEASE_MULTIPLIER, 0});
+            for (int i = 1; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in1.push_back(Coord{100000 * RELEASE_MULTIPLIER - i, 0});
+                in2.push_back(Coord{100000 * RELEASE_MULTIPLIER - i, 0});
+            }
+            in1.push_back(Coord{100000 * RELEASE_MULTIPLIER - 100000, 0});
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "includes_range_proj",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::includes(r1, r2, comp_64, &Coord::x, &Coord::x);
+                        CHECK(result);
+                    }
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_includes()
 {
     testSuite.test_case("sample");
@@ -3666,6 +3824,8 @@ void test_includes()
     assert(not RAH2_NS::ranges::includes(z, e));
     assert(RAH2_NS::ranges::includes(z, f, ignore_case));
     /// [rah2::ranges::includes]
+
+    foreach_range_combination<test_algo<test_includes_>>();
 }
 void test_set_difference()
 {
