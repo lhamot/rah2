@@ -3799,7 +3799,7 @@ struct test_includes_
                 });
         }
     }
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::input_iterator_tag>;
 };
 void test_includes()
 {
@@ -3827,6 +3827,261 @@ void test_includes()
 
     foreach_range_combination<test_algo<test_includes_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_set_difference_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return a > b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+        {
+            // No commun elements : No element are removed
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{2, 4, 18};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0}));
+        }
+        {
+            // Intersection : Some element are removed
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{3, 4, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin() + 2);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 0, 0, 0}));
+        }
+        {
+            // R1 is empty : No element is removed
+            RAH2_STD::vector<int> in1{}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>{0, 0, 0, 0, 0}));
+        }
+        {
+            // R2 is empty : No element is removed
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0}));
+        }
+        {
+            // R1 and R2 are equal. All elements are removed.
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>{0, 0, 0, 0, 0}));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result =
+                RAH2_NS::ranges::set_difference(i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>{0, 0, 0, 0, 0}));
+        }
+        {
+            // All elements are remove
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 3, 5, 6};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o{0, 0, 0, 0, 0};
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(5)));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // No commun elements : No element are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{18}, {4}, {2}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {}}));
+        }
+        {
+            // Intersection : Some element are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {4}, {3}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin() + 2);
+            CHECK(o == (RAH2_STD::vector<Coord>{{3}, {1}, {}, {}, {}}));
+        }
+        {
+            // R1 is empty : No element is removed
+            RAH2_STD::vector<Coord> in1{}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // R2 is empty : No element is removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {0}}));
+        }
+        {
+            // R1 and R2 are equal. All elements are removed.
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // All elements are remove
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{6}, {5}, {3}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in == i1.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{0, 0});
+            for (int i = 1; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in1.push_back(Coord{i, 0});
+                if (i % 2 == 1)
+                    in2.push_back(Coord{i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size());
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "set_difference_iter",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::set_difference(
+                            fwd(r1.begin()), r1.end(), r2.begin(), r2.end(), out.begin());
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{100000 * RELEASE_MULTIPLIER, 0});
+            for (int i = 1; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in1.push_back(Coord{100000 * RELEASE_MULTIPLIER - i, 0});
+                if (i % 2 == 1)
+                    in2.push_back(Coord{100000 * RELEASE_MULTIPLIER - i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size());
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "set_difference_range_proj",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result =
+                            STD::set_difference(r1, r2, out.begin(), comp_64, &Coord::x, &Coord::x);
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::input_iterator_tag>;
+};
 void test_set_difference()
 {
     testSuite.test_case("sample");
@@ -3837,7 +4092,277 @@ void test_set_difference()
     RAH2_NS::ranges::set_difference(in1, in2, out.begin());
     assert(out == RAH2_STD::vector<int>({4, 0, 0, 0}));
     /// [rah2::ranges::set_difference]
+
+    foreach_range_combination<test_algo<test_set_difference_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_set_intersection_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return a > b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+        {
+            // No common elements : No elements are removed
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{2, 4, 18};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(5)));
+        }
+        {
+            // Intersection : Some elements are removed
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{3, 4, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 2);
+            CHECK(o == (RAH2_STD::vector<int>{3, 5, 0, 0, 0}));
+        }
+        {
+            // R1 is empty : No element is removed
+            RAH2_STD::vector<int> in1{}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(5)));
+        }
+        {
+            // R2 is empty : No element is kept
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(5)));
+        }
+        {
+            // R1 and R2 are equal. All elements are kept.
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0}));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(5)));
+        }
+        {
+            // All elements are kept
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 3, 5, 6};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0}));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // No common elements : All elements are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{18}, {4}, {2}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // Intersection : Some element are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {4}, {3}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 2);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {}, {}, {}}));
+        }
+        {
+            // R1 is empty : All elements are removed
+            RAH2_STD::vector<Coord> in1{}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // R2 is empty : All elements are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // R1 and R2 are equal. No elements are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {0}}));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(5)));
+        }
+        {
+            // R2 is biger but no R1 elements are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{6}, {5}, {3}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(5);
+            auto const result = RAH2_NS::ranges::set_intersection(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {0}}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{0, 0});
+            for (int i = 1; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in1.push_back(Coord{i, 0});
+                if (i % 2 == 1)
+                    in2.push_back(Coord{i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size());
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "set_intersection_iter",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::set_intersection(
+                            fwd(r1.begin()), r1.end(), r2.begin(), r2.end(), out.begin());
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{100000 * RELEASE_MULTIPLIER, 0});
+            for (int i = 1; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                in1.push_back(Coord{100000 * RELEASE_MULTIPLIER - i, 0});
+                if (i % 2 == 1)
+                    in2.push_back(Coord{100000 * RELEASE_MULTIPLIER - i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size());
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "set_intersection_range_proj",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::set_intersection(
+                            r1, r2, out.begin(), comp_64, &Coord::x, &Coord::x);
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::input_iterator_tag>;
+};
 void test_set_intersection()
 {
     testSuite.test_case("sample");
@@ -3848,7 +4373,288 @@ void test_set_intersection()
     RAH2_NS::ranges::set_intersection(in1, in2, out.begin());
     assert(out == RAH2_STD::vector<int>({1, 3, 0, 0}));
     /// [rah2::ranges::set_intersection]
+
+    foreach_range_combination<test_algo<test_set_intersection_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_set_symmetric_difference_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return a > b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+        {
+            // No common elements : Keep all
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{2, 4, 18};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 7);
+            CHECK(o == (RAH2_STD::vector<int>{1, 2, 3, 3, 4, 5, 18, 0, 0, 0}));
+        }
+        {
+            // Intersection : Some elements are removed
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{3, 4, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 3);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 4, 0, 0, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R1 is empty : Keep R2
+            RAH2_STD::vector<int> in1{}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R2 is empty : Keep R1
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R1 and R2 are equal. All elements are removed.
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(10)));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(10)));
+        }
+        {
+            // More elements in R2
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 3, 5, 6};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 2);
+            CHECK(o == (RAH2_STD::vector<int>{3, 6, 0, 0, 0, 0, 0, 0, 0, 0}));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // No common elements : Keep all
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{18}, {4}, {2}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 7);
+            CHECK(o == (RAH2_STD::vector<Coord>{{18}, {5}, {4}, {3}, {3}, {2}, {1}, {0}, {0}, {0}}));
+        }
+        {
+            // Intersection : Some elements are removed
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {4}, {3}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 3);
+            CHECK(o == (RAH2_STD::vector<Coord>{{4}, {3}, {1}, {}, {}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R1 is empty : Keep R2
+            RAH2_STD::vector<Coord> in1{}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R2 is empty : Keep R1
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R1 and R2 are equal. All elements are removed.
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(10)));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(10)));
+        }
+        {
+            // More elements in R2
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{6}, {5}, {3}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_symmetric_difference(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 2);
+            CHECK(o == (RAH2_STD::vector<Coord>{{6}, {3}, {}, {}, {}, {}, {}, {}, {}, {}}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            for (int i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                if (i % 3 == 0)
+                {
+                    in1.push_back(Coord{i, 0});
+                    in2.push_back(Coord{i, 0});
+                }
+                else if (i % 3 == 1)
+                    in1.push_back(Coord{i, 0});
+                else if (i % 3 == 2)
+                    in2.push_back(Coord{i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size());
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "set_symmetric_difference_iter",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::set_symmetric_difference(
+                            fwd(r1.begin()), r1.end(), r2.begin(), r2.end(), out.begin());
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{100000 * RELEASE_MULTIPLIER, 0});
+            for (int i = 100000 * RELEASE_MULTIPLIER; i > 0; --i)
+            {
+                if (i % 3 == 0)
+                {
+                    in1.push_back(Coord{i, 0});
+                    in2.push_back(Coord{i, 0});
+                }
+                else if (i % 3 == 1)
+                    in1.push_back(Coord{i, 0});
+                else if (i % 3 == 2)
+                    in2.push_back(Coord{i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size());
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "set_symmetric_difference_range_proj",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::set_symmetric_difference(
+                            r1, r2, out.begin(), comp_64, &Coord::x, &Coord::x);
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::input_iterator_tag>;
+};
 void test_set_symmetric_difference()
 {
     testSuite.test_case("sample");
@@ -3865,7 +4671,296 @@ void test_set_symmetric_difference()
     assert(res.in2 == in2.end());
     assert(res.out == out.begin() + 3);
     /// [rah2::ranges::set_symmetric_difference]
+
+    foreach_range_combination<test_algo<test_set_symmetric_difference_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_set_union_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return a > b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("noproj");
+        testSuite.test_case("iter");
+        {
+            // No common elements : Keep all
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{2, 4, 18};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 7);
+            CHECK(o == (RAH2_STD::vector<int>{1, 2, 3, 3, 4, 5, 18, 0, 0, 0}));
+        }
+        {
+            // Intersection : Keep all but only 2 "3", and one "5"
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{3, 4, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 5);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 4, 5, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R1 is empty : Keep R2
+            RAH2_STD::vector<int> in1{}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R2 is empty : Keep R1
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R1 and R2 are equal. Keep R1
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 5};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 5, 0, 0, 0, 0, 0, 0}));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<int>(10)));
+        }
+        {
+            // More elements in R2. Keep R2
+            RAH2_STD::vector<int> in1{1, 3, 3, 5}, in2{1, 3, 3, 3, 5, 6};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<int> o(10);
+            auto const result =
+                RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin());
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 6);
+            CHECK(o == (RAH2_STD::vector<int>{1, 3, 3, 3, 5, 6, 0, 0, 0, 0}));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // No common elements : Keep all
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{18}, {4}, {2}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 7);
+            CHECK(o == (RAH2_STD::vector<Coord>{{18}, {5}, {4}, {3}, {3}, {2}, {1}, {0}, {0}, {0}}));
+        }
+        {
+            // Intersection : Keep all but onlt 2 "3", and one "5"
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {4}, {3}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 5);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {4}, {3}, {3}, {1}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R1 is empty : Keep R2
+            RAH2_STD::vector<Coord> in1{}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R2 is empty : Keep R1
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R1 and R2 are equal. Keep R1
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{5}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 4);
+            CHECK(o == (RAH2_STD::vector<Coord>{{5}, {3}, {3}, {1}, {}, {}, {}, {}, {}, {}}));
+        }
+        {
+            // R1 and R2 are empty
+            testSuite.test_case("empty");
+            RAH2_STD::vector<Coord> in1, in2;
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin());
+            CHECK(o == (RAH2_STD::vector<Coord>(10)));
+        }
+        {
+            // More elements in R2. Keep R2
+            RAH2_STD::vector<Coord> in1{{5}, {3}, {3}, {1}}, in2{{6}, {5}, {3}, {3}, {3}, {1}};
+            auto i1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto i2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            RAH2_STD::vector<Coord> o(10);
+            auto const result = RAH2_NS::ranges::set_union(
+                i1.begin(), i1.end(), i2.begin(), i2.end(), o.begin(), &comp_64, &Coord::x, &Coord::x);
+            CHECK(result.in1 == i1.end());
+            CHECK(result.in2 == i2.end());
+            CHECK(result.out == o.begin() + 6);
+            CHECK(o == (RAH2_STD::vector<Coord>{{6}, {5}, {3}, {3}, {3}, {1}, {}, {}, {}, {}}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            for (int i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
+            {
+                if (i % 3 == 0)
+                {
+                    in1.push_back(Coord{i, 0});
+                    in2.push_back(Coord{i, 0});
+                }
+                else if (i % 3 == 1)
+                    in1.push_back(Coord{i, 0});
+                else if (i % 3 == 2)
+                    in2.push_back(Coord{i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size() + in2.size());
+
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "set_union_iter",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result = STD::set_union(
+                            fwd(r1.begin()), r1.end(), r2.begin(), r2.end(), out.begin());
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+
+        {
+            RAH2_STD::vector<Coord> in1;
+            RAH2_STD::vector<Coord> in2;
+            in1.push_back(Coord{100000 * RELEASE_MULTIPLIER, 0});
+            for (int i = 100000 * RELEASE_MULTIPLIER; i > 0; --i)
+            {
+                if (i % 3 == 0)
+                {
+                    in1.push_back(Coord{i, 0});
+                    in2.push_back(Coord{i, 0});
+                }
+                else if (i % 3 == 1)
+                    in1.push_back(Coord{i, 0});
+                else if (i % 3 == 2)
+                    in2.push_back(Coord{i, 0});
+            }
+
+            auto r1 = make_test_view_adapter<CS, Tag, Sized>(in1);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+
+            RAH2_STD::vector<Coord> out(in1.size() + in2.size());
+
+            COMPARE_DURATION_TO_STD_RANGES(
+                "set_union_range_proj",
+                range_type,
+                [&]
+                {
+                    for (auto i = 0; i < 1; ++i)
+                    {
+                        auto result =
+                            STD::set_union(
+                            r1, r2, out.begin(), comp_64, &Coord::x, &Coord::x);
+                        DONT_OPTIM(result);
+                    }
+                });
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::input_iterator_tag>;
+};
 void test_set_union()
 {
     testSuite.test_case("sample");
@@ -3889,7 +4984,129 @@ void test_set_union()
     assert(ret2.in1 == in1.end());
     assert(ret2.in2 == in2.end());
     /// [rah2::ranges::set_union]
+
+    foreach_range_combination<test_algo<test_set_union_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_is_heap_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            RAH2_STD::vector<int> max_heap_ = {9, 5, 6, 4, 3, 2, 1};
+            auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
+            CHECK(RAH2_NS::ranges::is_heap(max_heap.begin(), max_heap.end()));
+        }
+        {
+            RAH2_STD::vector<int> not_heap_ = {3, 9, 6, 4, 5, 2, 1};
+            auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
+            CHECK(!RAH2_NS::ranges::is_heap(not_heap.begin(), not_heap.end()));
+        }
+        {
+            RAH2_STD::vector<int> single_element_ = {10};
+            auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
+            CHECK(RAH2_NS::ranges::is_heap(single_element.begin(), single_element.end()));
+        }
+        {
+            RAH2_STD::vector<int> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::is_heap(empty.begin(), empty.end()));
+        }
+        {
+            RAH2_STD::vector<int> equal_elements_ = {5, 5, 5, 5, 5};
+            auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
+            CHECK(RAH2_NS::ranges::is_heap(equal_elements.begin(), equal_elements.end()));
+        }
+        {
+            RAH2_STD::vector<int> partial_heap_ = {9, 5, 6, 4, 3, 7, 1};
+            auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
+            CHECK(!RAH2_NS::ranges::is_heap(partial_heap.begin(), partial_heap.end()));
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<Coord> max_heap_ = {{1}, {2}, {3}, {4}, {6}, {5}, {9}};
+            auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
+            CHECK(RAH2_NS::ranges::is_heap(
+                max_heap.begin(), max_heap.end(), descending_64, &Coord::x));
+        }
+        {
+            RAH2_STD::vector<Coord> not_heap_ = {{1}, {2}, {5}, {4}, {6}, {9}, {3}};
+            auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
+            CHECK(!RAH2_NS::ranges::is_heap(
+                not_heap.begin(), not_heap.end(), descending_64, &Coord::x));
+        }
+        {
+            RAH2_STD::vector<Coord> single_element_ = {{10}};
+            auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
+            CHECK(RAH2_NS::ranges::is_heap(
+                single_element.begin(), single_element.end(), descending_64, &Coord::x));
+        }
+        {
+            RAH2_STD::vector<Coord> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::is_heap(empty.begin(), empty.end()));
+        }
+        {
+            RAH2_STD::vector<Coord> equal_elements_ = {{5}, {5}, {5}, {5}, {5}};
+            auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
+            CHECK(RAH2_NS::ranges::is_heap(
+                equal_elements.begin(), equal_elements.end(), descending_64, &Coord::x));
+        }
+        {
+            RAH2_STD::vector<Coord> partial_heap_ = {{1}, {7}, {3}, {4}, {6}, {5}, {9}};
+            auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
+            CHECK(!RAH2_NS::ranges::is_heap(
+                partial_heap.begin(), partial_heap.end(), descending_64, &Coord::x));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER, 1);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {1, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "is_heap",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_heap(fwd(perf_iter.begin()), perf_iter.end());
+                CHECK(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "is_heap_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_heap(perf, descending_64, &Coord::x);
+                CHECK(result);
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_is_heap()
 {
     testSuite.test_case("sample");
@@ -3900,6 +5117,8 @@ void test_is_heap()
     RAH2_STD::make_heap(v.begin(), v.end());
     assert(RAH2_NS::ranges::is_heap(v));
     /// [rah2::ranges::is_heap]
+
+    foreach_range_combination<test_algo<test_is_heap_>>();
 }
 void test_is_heap_until()
 {

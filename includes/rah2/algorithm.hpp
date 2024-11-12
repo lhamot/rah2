@@ -2,6 +2,7 @@
 
 #include "range_bases.hpp"
 #include "algo_sort.hpp"
+#include "algo_heap.hpp"
 
 #ifdef RAH2_USE_EASTL
 
@@ -1494,7 +1495,7 @@ namespace RAH2_NS
                     Proj2 proj2 = {}) const
                 {
                     auto pred_proj_1_2 = details::wrap_pred_proj(
-                        RAH2_STD::move(comp), RAH2_STD::move(proj1), RAH2_STD::move(proj2));
+                        RAH2_STD::move(comp), proj1, proj2);
                     auto pred_proj_2_1 = details::wrap_pred_proj(
                         RAH2_STD::move(comp), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
 

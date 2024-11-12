@@ -702,17 +702,19 @@ namespace RAH2_NS
                 template <typename RandomAccessIterator, typename Sentinel>
                 RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
+                    if (first == last)
+                        return first;
                     int counter = 0;
-
-                    for (RandomAccessIterator child = first + 1; child < last; ++child, counter ^= 1)
+                    RandomAccessIterator child = first + 1;
+                    for (; child != last; ++child, counter ^= 1)
                     {
-                        if (*first
-                            < *child) // We must use operator <, and are not allowed to use > or >= here.
+                        // We must use operator <, and are not allowed to use > or >= here.
+                        if (*first < *child)
                             return child;
                         first += counter; // counter switches between 0 and 1 every time through.
                     }
 
-                    return last;
+                    return child;
                 }
 
                 template <typename RandomAccessRange>
@@ -726,29 +728,41 @@ namespace RAH2_NS
                 /// The Compare function must work equivalently to the compare function used
                 /// to make and maintain the heap.
                 ///
-                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-                RandomAccessIterator
-                operator()(RandomAccessIterator first, Sentinel last, Compare compare) const
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first, Sentinel last, Compare compare, Proj proj = {}) const
                 {
+                    if (first == last)
+                        return first;
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     int counter = 0;
 
-                    for (RandomAccessIterator child = first + 1; child < last; ++child, counter ^= 1)
+                    RandomAccessIterator child = first + 1;
+                    for (; child != last; ++child, counter ^= 1)
                     {
-                        if (compare(*first, *child))
+                        if (pred_proj(*first, *child))
                             return child;
                         first += counter; // counter switches between 0 and 1 every time through.
                     }
 
-                    return last;
+                    return child;
                 }
 
-                template <typename RandomAccessRange, typename Compare>
-                iterator_t<RandomAccessRange> operator()(RandomAccessRange&& range, Compare compare) const
+                template <typename RandomAccessRange, typename Compare, typename Proj = RAH2_NS::details::identity>
+                iterator_t<RandomAccessRange>
+                operator()(RandomAccessRange&& range, Compare&& compare, Proj&& proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_FWD(compare),
+                        RAH2_FWD(proj));
                 }
             };
         } // namespace niebloids
@@ -789,22 +803,30 @@ namespace RAH2_NS
                 /// The Compare function must work equivalently to the compare function used
                 /// to make and maintain the heap.
                 ///
-                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-                bool operator()(RandomAccessIterator first, Sentinel last, Compare compare) const
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity>
+                bool operator()(RandomAccessIterator first, Sentinel last, Compare&& compare, Proj&& proj) const
                 {
-                    return (RAH2_NS::ranges::is_heap_until(first, last, compare) == last);
+                    return (
+                        RAH2_NS::ranges::is_heap_until(first, last, RAH2_FWD(compare), RAH2_FWD(proj))
+                        == last);
                 }
 
                 template <
                     typename RandomAccessRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
-                bool operator()(RandomAccessRange&& range, Compare compare) const
+                bool operator()(RandomAccessRange&& range, Compare&& compare, Proj&& proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_FWD(compare),
+                        RAH2_FWD(proj));
                 }
             };
         } // namespace niebloids
