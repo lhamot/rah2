@@ -1483,8 +1483,8 @@ namespace RAH2_NS
                     typename Proj2 = RAH2_NS::details::identity,
                     typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I1, Proj1>, RAH2_STD::projected<I2, Proj2>>
                     RAH2_STD::enable_if_t<
-                        RAH2_STD::input_iterator<I1> && RAH2_STD::sentinel_for<S1, I1>
-                        && RAH2_STD::input_iterator<I2> && RAH2_STD::sentinel_for<S2, I2>>* = nullptr>
+                        RAH2_NS::input_iterator<I1> && RAH2_NS::sentinel_for<S1, I1>
+                        && RAH2_NS::input_iterator<I2> && RAH2_NS::sentinel_for<S2, I2>>* = nullptr>
                 constexpr bool operator()(
                     I1 first1,
                     S1 last1,
