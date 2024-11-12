@@ -4076,7 +4076,7 @@ struct test_set_difference_
                     for (auto i = 0; i < 1; ++i)
                     {
                         auto result =
-                            STD::set_difference(r1, r2, out.begin(), comp_64, &Coord::x, &Coord::x);
+                            STD::set_difference(r1, r2, out.begin(), &comp_64, &Coord::x, &Coord::x);
                         DONT_OPTIM(result);
                     }
                 });
