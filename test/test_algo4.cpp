@@ -3744,6 +3744,7 @@ struct test_includes_
     template <bool = true>
     void test_perf(char const* range_type)
     {
+#ifndef RAH2_USE_EASTL
         {
             RAH2_STD::vector<Coord> in1;
             RAH2_STD::vector<Coord> in2;
@@ -3771,7 +3772,7 @@ struct test_includes_
                     }
                 });
         }
-
+#endif
         {
             RAH2_STD::vector<Coord> in1;
             RAH2_STD::vector<Coord> in2;
