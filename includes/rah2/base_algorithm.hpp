@@ -4476,28 +4476,39 @@ namespace RAH2_NS
                     typename InputIterator2,
                     typename Sentinel2,
                     typename OutputIterator,
-                    typename Compare>
-                OutputIterator operator()(
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<InputIterator1> && sentinel_for<Sentinel1, InputIterator1>
+                        && input_iterator<InputIterator2> && sentinel_for<Sentinel2, InputIterator2>>* = nullptr>
+                set_difference_result<InputIterator1, OutputIterator> operator()(
                     InputIterator1 first1,
                     Sentinel1 last1,
                     InputIterator2 first2,
                     Sentinel2 last2,
                     OutputIterator result,
-                    Compare compare) const
+                    Compare&& compare,
+                    Proj1&& proj1,
+                    Proj2&& proj2) const
                 {
+                    auto pred_proj1_proj2 = details::wrap_pred_proj(compare, proj1, proj2);
+                    auto pred_proj2_proj1 = details::wrap_pred_proj(
+                        RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
+
                     while ((first1 != last1) && (first2 != last2))
                     {
-                        if (compare(*first1, *first2))
+                        if (pred_proj1_proj2(*first1, *first2))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj2_proj1(
                                 *first2, *first1)); // Validate that the compare function is sane.
                             *result = *first1;
                             ++first1;
                             ++result;
                         }
-                        else if (compare(*first2, *first1))
+                        else if (pred_proj2_proj1(*first2, *first1))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj1_proj2(
                                 *first1, *first2)); // Validate that the compare function is sane.
                             ++first2;
                         }
@@ -4509,6 +4520,32 @@ namespace RAH2_NS
                     }
 
                     return RAH2_NS::ranges::copy(first1, last1, result);
+                }
+
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename OutputIterator,
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
+                set_difference_result<iterator_t<InputRange1>, OutputIterator> operator()(
+                    InputRange1&& range1,
+                    InputRange2&& range2,
+                    OutputIterator result,
+                    Compare&& compare,
+                    Proj1&& proj1,
+                    Proj2&& proj2) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result),
+                        RAH2_FWD(compare),
+                        RAH2_FWD(proj1),
+                        RAH2_FWD(proj2));
                 }
             };
         } // namespace niebloids
@@ -4596,7 +4633,9 @@ namespace RAH2_NS
                     typename InputIterator2,
                     typename Sentinel2,
                     typename OutputIterator,
-                    typename Compare>
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
                 set_symmetric_difference_result<InputIterator1, InputIterator2, OutputIterator>
                 operator()(
                     InputIterator1 first1,
@@ -4604,22 +4643,28 @@ namespace RAH2_NS
                     InputIterator2 first2,
                     Sentinel2 last2,
                     OutputIterator result,
-                    Compare compare) const
+                    Compare compare,
+                    Proj1 proj1,
+                    Proj2 proj2) const
                 {
+                    auto pred_proj1_proj2 = details::wrap_pred_proj(compare, proj1, proj2);
+                    auto pred_proj2_proj1 = details::wrap_pred_proj(
+                        RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
+
                     while ((first1 != last1) && (first2 != last2))
                     {
-                        if (compare(*first1, *first2))
+                        if (pred_proj1_proj2(*first1, *first2))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
-                                *first2, *first1)); // Validate that the compare function is sane.
+                            // Validate that the compare function is sane.
+                            RAH2_VALIDATE_COMPARE(!pred_proj2_proj1(*first2, *first1));
                             *result = *first1;
                             ++first1;
                             ++result;
                         }
-                        else if (compare(*first2, *first1))
+                        else if (pred_proj2_proj1(*first2, *first1))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
-                                *first1, *first2)); // Validate that the compare function is sane.
+                            // Validate that the compare function is sane.
+                            RAH2_VALIDATE_COMPARE(!pred_proj1_proj2(*first1, *first2));
                             *result = *first2;
                             ++first2;
                             ++result;
@@ -4639,7 +4684,13 @@ namespace RAH2_NS
                         RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
                 }
 
-                template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename OutputIterator,
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
                 set_symmetric_difference_result<
                     RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
                     RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
@@ -4648,7 +4699,9 @@ namespace RAH2_NS
                     InputRange1&& range1,
                     InputRange2&& range2,
                     OutputIterator result,
-                    Compare compare) const
+                    Compare&& compare,
+                    Proj1&& proj1,
+                    Proj2&& proj2) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range1),
@@ -4656,7 +4709,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(range2),
                         RAH2_NS::ranges::end(range2),
                         RAH2_STD::move(result),
-                        RAH2_STD::move(compare));
+                        RAH2_FWD(compare),
+                        RAH2_FWD(proj1),
+                        RAH2_FWD(proj2));
                 }
             };
         } // namespace niebloids
@@ -4709,7 +4764,8 @@ namespace RAH2_NS
                             ++result;
                         }
                     }
-
+                    first1 = RAH2_NS::ranges::next(first1, last1);
+                    first2 = RAH2_NS::ranges::next(first2, last2);
                     return {first1, first2, result};
                 }
 
@@ -4731,26 +4787,34 @@ namespace RAH2_NS
                     typename InputIterator2,
                     typename Sentinel2,
                     typename OutputIterator,
-                    typename Compare>
-                OutputIterator operator()(
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
+                set_intersection_result<InputIterator1, InputIterator2, OutputIterator> operator()(
                     InputIterator1 first1,
                     Sentinel1 last1,
                     InputIterator2 first2,
                     Sentinel2 last2,
                     OutputIterator result,
-                    Compare compare) const
+                    Compare compare,
+                    Proj1 proj1,
+                    Proj2 proj2) const
                 {
+                    auto pred_proj1_proj2 = details::wrap_pred_proj(compare, proj1, proj2);
+                    auto pred_proj2_proj1 = details::wrap_pred_proj(
+                        RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
+
                     while ((first1 != last1) && (first2 != last2))
                     {
-                        if (compare(*first1, *first2))
+                        if (pred_proj1_proj2(*first1, *first2))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj2_proj1(
                                 *first2, *first1)); // Validate that the compare function is sane.
                             ++first1;
                         }
-                        else if (compare(*first2, *first1))
+                        else if (pred_proj2_proj1(*first2, *first1))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj1_proj2(
                                 *first1, *first2)); // Validate that the compare function is sane.
                             ++first2;
                         }
@@ -4762,8 +4826,36 @@ namespace RAH2_NS
                             ++result;
                         }
                     }
+                    first1 = RAH2_NS::ranges::next(first1, last1);
+                    first2 = RAH2_NS::ranges::next(first2, last2);
+                    return {first1, first2, result};
+                }
 
-                    return result;
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename OutputIterator,
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
+                set_intersection_result<iterator_t<InputRange1>, iterator_t<InputRange2>, OutputIterator>
+                operator()(
+                    InputRange1&& range1,
+                    InputRange2&& range2,
+                    OutputIterator result,
+                    Compare&& compare,
+                    Proj1&& proj1,
+                    Proj2&& proj2) const
+                {
+                    return (*this)(
+                        RAH2_NS::ranges::begin(range1),
+                        RAH2_NS::ranges::end(range1),
+                        RAH2_NS::ranges::begin(range2),
+                        RAH2_NS::ranges::end(range2),
+                        RAH2_STD::move(result),
+                        RAH2_FWD(compare),
+                        RAH2_FWD(proj1),
+                        RAH2_FWD(proj2));
                 }
             };
         } // namespace niebloids
@@ -4852,27 +4944,35 @@ namespace RAH2_NS
                     typename InputIterator2,
                     typename Sentinel2,
                     typename OutputIterator,
-                    typename Compare>
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
                 set_union_result<InputIterator1, InputIterator2, OutputIterator> operator()(
                     InputIterator1 first1,
                     Sentinel1 last1,
                     InputIterator2 first2,
                     Sentinel2 last2,
                     OutputIterator result,
-                    Compare compare) const
+                    Compare compare,
+                    Proj1 proj1,
+                    Proj2 proj2) const
                 {
+                    auto pred_proj1_proj2 = details::wrap_pred_proj(compare, proj1, proj2);
+                    auto pred_proj2_proj1 = details::wrap_pred_proj(
+                        RAH2_STD::move(compare), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
+
                     while ((first1 != last1) && (first2 != last2))
                     {
-                        if (compare(*first1, *first2))
+                        if (pred_proj1_proj2(*first1, *first2))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj2_proj1(
                                 *first2, *first1)); // Validate that the compare function is sane.
                             *result = *first1;
                             ++first1;
                         }
-                        else if (compare(*first2, *first1))
+                        else if (pred_proj2_proj1(*first2, *first1))
                         {
-                            RAH2_VALIDATE_COMPARE(!compare(
+                            RAH2_VALIDATE_COMPARE(!pred_proj1_proj2(
                                 *first1, *first2)); // Validate that the compare function is sane.
                             *result = *first2;
                             ++first2;
@@ -4894,7 +4994,13 @@ namespace RAH2_NS
                         RAH2_STD::move(res1.in), RAH2_STD::move(res2.in), RAH2_STD::move(res2.out)};
                 }
 
-                template <typename InputRange1, typename InputRange2, typename OutputIterator, typename Compare>
+                template <
+                    typename InputRange1,
+                    typename InputRange2,
+                    typename OutputIterator,
+                    typename Compare,
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity>
                 set_union_result<
                     RAH2_NS::ranges::borrowed_iterator_t<InputRange1>,
                     RAH2_NS::ranges::borrowed_iterator_t<InputRange2>,
@@ -4903,7 +5009,9 @@ namespace RAH2_NS
                     InputRange1&& range1,
                     InputRange2&& range2,
                     OutputIterator result,
-                    Compare compare) const
+                    Compare&& compare,
+                    Proj1&& proj1,
+                    Proj2&& proj2) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range1),
@@ -4911,7 +5019,9 @@ namespace RAH2_NS
                         RAH2_NS::ranges::begin(range2),
                         RAH2_NS::ranges::end(range2),
                         RAH2_STD::move(result),
-                        RAH2_STD::move(compare));
+                        RAH2_FWD(compare),
+                        RAH2_FWD(proj1),
+                        RAH2_FWD(proj2));
                 }
             };
         } // namespace niebloids

@@ -2,6 +2,7 @@
 
 #include "range_bases.hpp"
 #include "algo_sort.hpp"
+#include "algo_heap.hpp"
 
 #ifdef RAH2_USE_EASTL
 
@@ -1478,15 +1479,30 @@ namespace RAH2_NS
                     typename S1, // RAH2_STD::sentinel_for<I1>
                     typename I2, // RAH2_STD::input_iterator
                     typename S2, // RAH2_STD::sentinel_for<I2>
-                    typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I1, Proj1>, RAH2_STD::projected<I2, Proj2>>
-                    >
-                constexpr bool operator()(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = {}) const
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<RAH2_STD::projected<I1, Proj1>, RAH2_STD::projected<I2, Proj2>>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<I1> && RAH2_NS::sentinel_for<S1, I1>
+                        && RAH2_NS::input_iterator<I2> && RAH2_NS::sentinel_for<S2, I2>>* = nullptr>
+                constexpr bool operator()(
+                    I1 first1,
+                    S1 last1,
+                    I2 first2,
+                    S2 last2,
+                    Comp comp = {},
+                    Proj1 proj1 = {},
+                    Proj2 proj2 = {}) const
                 {
+                    auto pred_proj_1_2 = details::wrap_pred_proj(RAH2_STD::move(comp), proj1, proj2);
+                    auto pred_proj_2_1 = details::wrap_pred_proj(
+                        RAH2_STD::move(comp), RAH2_STD::move(proj2), RAH2_STD::move(proj1));
+
                     for (; first2 != last2; ++first1)
                     {
-                        if (first1 == last1 || comp(*first2, *first1))
+                        if (first1 == last1 || pred_proj_2_1(*first2, *first1))
                             return false;
-                        if (!comp(*first1, *first2))
+                        if (!pred_proj_1_2(*first1, *first2))
                             ++first2;
                     }
                     return true;
@@ -1495,16 +1511,22 @@ namespace RAH2_NS
                 template <
                     typename R1, // ranges::input_range
                     typename R2, // ranges::input_range
-                    typename Comp = RAH2_NS::ranges::less // RAH2_STD::indirect_strict_weak_order<
-                    >
-                constexpr bool operator()(R1&& r1, R2&& r2, Comp comp = {}) const
+                    typename Comp = RAH2_NS::ranges::less, // RAH2_STD::indirect_strict_weak_order<
+                    typename Proj1 = RAH2_NS::details::identity,
+                    typename Proj2 = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::input_range<R1> && RAH2_NS::ranges::input_range<R2>>* = nullptr>
+                constexpr bool
+                operator()(R1&& r1, R2&& r2, Comp comp = {}, Proj1 proj1 = {}, Proj2 proj2 = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r1),
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2),
-                        RAH2_STD::move(comp));
+                        RAH2_STD::move(comp),
+                        RAH2_STD::move(proj1),
+                        RAH2_STD::move(proj2));
                 }
             };
         } // namespace niebloids
