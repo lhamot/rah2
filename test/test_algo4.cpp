@@ -5074,39 +5074,34 @@ struct test_is_heap_
             RAH2_STD::vector<Coord> max_heap_ = {
                 {1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}};
             auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
-            CHECK(RAH2_NS::ranges::is_heap(
-                max_heap.begin(), max_heap.end(), descending_64, &Coord::x));
+            CHECK(RAH2_NS::ranges::is_heap(max_heap, descending_64, &Coord::x));
         }
         {
             RAH2_STD::vector<Coord> not_heap_ = {
                 {1, 0}, {2, 0}, {5, 0}, {4, 0}, {6, 0}, {9, 0}, {3, 0}};
             auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
-            CHECK(!RAH2_NS::ranges::is_heap(
-                not_heap.begin(), not_heap.end(), descending_64, &Coord::x));
+            CHECK(!RAH2_NS::ranges::is_heap(not_heap, descending_64, &Coord::x));
         }
         {
             RAH2_STD::vector<Coord> single_element_ = {{10, 0}};
             auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
-            CHECK(RAH2_NS::ranges::is_heap(
-                single_element.begin(), single_element.end(), descending_64, &Coord::x));
+            CHECK(RAH2_NS::ranges::is_heap(single_element, descending_64, &Coord::x));
         }
         {
             RAH2_STD::vector<Coord> empty_;
             auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
-            CHECK(RAH2_NS::ranges::is_heap(empty.begin(), empty.end()));
+            CHECK(RAH2_NS::ranges::is_heap(empty, descending_64, &Coord::x));
         }
         {
             RAH2_STD::vector<Coord> equal_elements_ = {{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}};
             auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
-            CHECK(RAH2_NS::ranges::is_heap(
-                equal_elements.begin(), equal_elements.end(), descending_64, &Coord::x));
+            CHECK(RAH2_NS::ranges::is_heap(equal_elements, descending_64, &Coord::x));
         }
         {
             RAH2_STD::vector<Coord> partial_heap_ = {
                 {1, 0}, {7, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}};
             auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
-            CHECK(!RAH2_NS::ranges::is_heap(
-                partial_heap.begin(), partial_heap.end(), descending_64, &Coord::x));
+            CHECK(!RAH2_NS::ranges::is_heap(partial_heap, descending_64, &Coord::x));
         }
     }
     template <bool = true>
@@ -5151,6 +5146,146 @@ void test_is_heap()
 
     foreach_range_combination<test_algo<test_is_heap_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_is_heap_until_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            RAH2_STD::vector<int> max_heap_ = {9, 5, 6, 4, 3, 2, 1};
+            auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(max_heap.begin(), max_heap.end())
+                == RAH2_NS::ranges::next(max_heap.begin(), 7));
+        }
+        {
+            RAH2_STD::vector<int> not_heap_ = {3, 9, 6, 4, 5, 2, 1};
+            auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(not_heap.begin(), not_heap.end())
+                == RAH2_NS::ranges::next(not_heap.begin(), 1));
+        }
+        {
+            RAH2_STD::vector<int> single_element_ = {10};
+            auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(single_element.begin(), single_element.end())
+                == single_element.end());
+        }
+        {
+            RAH2_STD::vector<int> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::is_heap_until(empty.begin(), empty.end()) == empty.end());
+        }
+        {
+            RAH2_STD::vector<int> equal_elements_ = {5, 5, 5, 5, 5};
+            auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(equal_elements.begin(), equal_elements.end())
+                == equal_elements.end());
+        }
+        {
+            RAH2_STD::vector<int> partial_heap_ = {9, 5, 6, 4, 3, 7, 1};
+            auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(partial_heap.begin(), partial_heap.end())
+                == RAH2_NS::ranges::next(partial_heap.begin(), 5));
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<Coord> max_heap_ = {
+                {1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}};
+            auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(max_heap, descending_64, &Coord::x)
+                == max_heap.end());
+        }
+        {
+            RAH2_STD::vector<Coord> not_heap_ = {
+                {1, 0}, {2, 0}, {5, 0}, {4, 0}, {6, 0}, {9, 0}, {3, 0}};
+            auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(not_heap, descending_64, &Coord::x)
+                == RAH2_NS::ranges::next(not_heap.begin(), 6));
+        }
+        {
+            RAH2_STD::vector<Coord> single_element_ = {{10, 0}};
+            auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(single_element, descending_64, &Coord::x)
+                == single_element.end());
+        }
+        {
+            RAH2_STD::vector<Coord> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(empty, descending_64, &Coord::x)
+                == empty.end());
+        }
+        {
+            RAH2_STD::vector<Coord> equal_elements_ = {{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}};
+            auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(equal_elements, descending_64, &Coord::x)
+                == equal_elements.end());
+        }
+        {
+            RAH2_STD::vector<Coord> partial_heap_ = {
+                {1, 0}, {7, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}};
+            auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
+            CHECK(
+                RAH2_NS::ranges::is_heap_until(partial_heap, descending_64, &Coord::x)
+                == RAH2_NS::ranges::next(partial_heap.begin(), 3));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER, 1);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {1, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "is_heap_until",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_heap_until(fwd(perf_iter.begin()), perf_iter.end());
+                CHECK(result == perf_iter.end());
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "is_heap_until_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::is_heap_until(perf, descending_64, &Coord::x);
+                CHECK(result == perf.end());
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_is_heap_until()
 {
     testSuite.test_case("sample");
@@ -5167,7 +5302,185 @@ void test_is_heap_until()
     auto const heap_end = RAH2_NS::ranges::is_heap_until(v);
     assert(v.begin() + 6 == heap_end);
     /// [rah2::ranges::is_heap_until]
+
+    foreach_range_combination<test_algo<test_is_heap_until_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_make_heap_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    static bool is_max_heap(const std::vector<int>& vec)
+    {
+        auto n = vec.size();
+        for (size_t i = 0; i < n / 2; ++i)
+        {
+            auto left = 2 * i + 1;
+            auto right = 2 * i + 2;
+
+            if (left < n && vec[i] < vec[left])
+                return false;
+            if (right < n && vec[i] < vec[right])
+                return false;
+        }
+        return true;
+    }
+
+    static bool is_max_heap(const std::vector<Coord>& vec)
+    {
+        auto n = vec.size();
+        for (size_t i = 0; i < n / 2; ++i)
+        {
+            auto left = 2 * i + 1;
+            auto right = 2 * i + 2;
+
+            if (left < n && vec[i].x > vec[left].x)
+                return false;
+            if (right < n && vec[i].x > vec[right].x)
+                return false;
+        }
+        return true;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            RAH2_STD::vector<int> max_heap_ = {9, 5, 6, 4, 3, 2, 1};
+            auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
+            CHECK(RAH2_NS::ranges::make_heap(max_heap.begin(), max_heap.end()) == max_heap.end());
+            CHECK(is_max_heap(max_heap_));
+        }
+        {
+            RAH2_STD::vector<int> not_heap_ = {3, 9, 6, 4, 5, 2, 1};
+            auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
+            CHECK(RAH2_NS::ranges::make_heap(not_heap.begin(), not_heap.end()) == not_heap.end());
+            CHECK(is_max_heap(not_heap_));
+        }
+        {
+            RAH2_STD::vector<int> single_element_ = {10};
+            auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
+            CHECK(
+                RAH2_NS::ranges::make_heap(single_element.begin(), single_element.end())
+                == single_element.end());
+            CHECK(is_max_heap(single_element_));
+        }
+        {
+            RAH2_STD::vector<int> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::make_heap(empty.begin(), empty.end()) == empty.end());
+            CHECK(is_max_heap(empty_));
+        }
+        {
+            RAH2_STD::vector<int> equal_elements_ = {5, 5, 5, 5, 5};
+            auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
+            CHECK(
+                RAH2_NS::ranges::make_heap(equal_elements.begin(), equal_elements.end())
+                == equal_elements.end());
+            CHECK(is_max_heap(equal_elements_));
+        }
+        {
+            RAH2_STD::vector<int> partial_heap_ = {9, 5, 6, 4, 3, 7, 1};
+            auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
+            CHECK(
+                RAH2_NS::ranges::make_heap(partial_heap.begin(), partial_heap.end())
+                == partial_heap.end());
+            CHECK(is_max_heap(partial_heap_));
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<Coord> max_heap_ = {
+                {1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}};
+            auto max_heap = make_test_view_adapter<CS, Tag, Sized>(max_heap_);
+            CHECK(RAH2_NS::ranges::make_heap(max_heap, descending_64, &Coord::x) == max_heap.end());
+            CHECK(is_max_heap(max_heap_));
+        }
+        {
+            RAH2_STD::vector<Coord> not_heap_ = {
+                {1, 0}, {2, 0}, {5, 0}, {4, 0}, {6, 0}, {9, 0}, {3, 0}};
+            auto not_heap = make_test_view_adapter<CS, Tag, Sized>(not_heap_);
+            CHECK(RAH2_NS::ranges::make_heap(not_heap, descending_64, &Coord::x) == not_heap.end());
+            CHECK(is_max_heap(not_heap_));
+        }
+        {
+            RAH2_STD::vector<Coord> single_element_ = {{10, 0}};
+            auto single_element = make_test_view_adapter<CS, Tag, Sized>(single_element_);
+            CHECK(
+                RAH2_NS::ranges::make_heap(single_element, descending_64, &Coord::x)
+                == single_element.end());
+            CHECK(is_max_heap(single_element_));
+        }
+        {
+            RAH2_STD::vector<Coord> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::make_heap(empty, descending_64, &Coord::x) == empty.end());
+            CHECK(is_max_heap(empty_));
+        }
+        {
+            RAH2_STD::vector<Coord> equal_elements_ = {{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}};
+            auto equal_elements = make_test_view_adapter<CS, Tag, Sized>(equal_elements_);
+            CHECK(
+                RAH2_NS::ranges::make_heap(equal_elements, descending_64, &Coord::x)
+                == equal_elements.end());
+            CHECK(is_max_heap(equal_elements_));
+        }
+        {
+            RAH2_STD::vector<Coord> partial_heap_ = {
+                {1, 0}, {7, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}};
+            auto partial_heap = make_test_view_adapter<CS, Tag, Sized>(partial_heap_);
+            CHECK(
+                RAH2_NS::ranges::make_heap(partial_heap, descending_64, &Coord::x)
+                == partial_heap.end());
+            CHECK(is_max_heap(partial_heap_));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER, 1);
+        perf_iter_.push_back(2);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_.push_back({1, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "make_heap",
+            range_type,
+            [&]
+            {
+                STD::make_heap(fwd(perf_iter.begin()), perf_iter.end());
+                CHECK(*perf_iter.begin() == 2);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "make_heap_proj",
+            range_type,
+            [&]
+            {
+                STD::make_heap(perf, descending_64, &Coord::x);
+                CHECK(perf.begin()->x == 1);
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_make_heap()
 {
     testSuite.test_case("sample");
@@ -5184,6 +5497,8 @@ void test_make_heap()
     assert(last2 == h.end());
     assert(RAH2_STD::is_heap(h.begin(), h.end(), RAH2_NS::ranges::greater{}));
     /// [rah2::ranges::make_heap]
+
+    foreach_range_combination<test_algo<test_make_heap_>>();
 }
 void test_push_heap()
 {
