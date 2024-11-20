@@ -5306,7 +5306,7 @@ void test_is_heap_until()
     foreach_range_combination<test_algo<test_is_heap_until_>>();
 }
 
-static bool is_max_heap(const std::vector<int>& vec)
+static bool is_max_heap(const RAH2_STD::vector<int>& vec)
 {
     auto n = vec.size();
     for (size_t i = 0; i < n / 2; ++i)
@@ -5322,7 +5322,7 @@ static bool is_max_heap(const std::vector<int>& vec)
     return true;
 }
 
-static bool is_max_heap(const std::vector<Coord>& vec)
+static bool is_max_heap(const RAH2_STD::vector<Coord>& vec)
 {
     auto n = vec.size();
     for (size_t i = 0; i < n / 2; ++i)
