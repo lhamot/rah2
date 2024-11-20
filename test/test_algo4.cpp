@@ -5306,6 +5306,38 @@ void test_is_heap_until()
     foreach_range_combination<test_algo<test_is_heap_until_>>();
 }
 
+static bool is_max_heap(const std::vector<int>& vec)
+{
+    auto n = vec.size();
+    for (size_t i = 0; i < n / 2; ++i)
+    {
+        auto left = 2 * i + 1;
+        auto right = 2 * i + 2;
+
+        if (left < n && vec[i] < vec[left])
+            return false;
+        if (right < n && vec[i] < vec[right])
+            return false;
+    }
+    return true;
+}
+
+static bool is_max_heap(const std::vector<Coord>& vec)
+{
+    auto n = vec.size();
+    for (size_t i = 0; i < n / 2; ++i)
+    {
+        auto left = 2 * i + 1;
+        auto right = 2 * i + 2;
+
+        if (left < n && vec[i].x > vec[left].x)
+            return false;
+        if (right < n && vec[i].x > vec[right].x)
+            return false;
+    }
+    return true;
+}
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_make_heap_
 {
@@ -5322,38 +5354,6 @@ struct test_make_heap_
     static bool descending_coord(Coord a, Coord b)
     {
         return b.x < a.x;
-    }
-
-    static bool is_max_heap(const std::vector<int>& vec)
-    {
-        auto n = vec.size();
-        for (size_t i = 0; i < n / 2; ++i)
-        {
-            auto left = 2 * i + 1;
-            auto right = 2 * i + 2;
-
-            if (left < n && vec[i] < vec[left])
-                return false;
-            if (right < n && vec[i] < vec[right])
-                return false;
-        }
-        return true;
-    }
-
-    static bool is_max_heap(const std::vector<Coord>& vec)
-    {
-        auto n = vec.size();
-        for (size_t i = 0; i < n / 2; ++i)
-        {
-            auto left = 2 * i + 1;
-            auto right = 2 * i + 2;
-
-            if (left < n && vec[i].x > vec[left].x)
-                return false;
-            if (right < n && vec[i].x > vec[right].x)
-                return false;
-        }
-        return true;
     }
 
     template <bool = true>
@@ -5500,6 +5500,117 @@ void test_make_heap()
 
     foreach_range_combination<test_algo<test_make_heap_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_push_heap_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        // Empty,
+        // single => Greater, lower, equal
+        // many => Greater, lower, inside not equal, inside equal
+        // Many equal => Greater, lower, equal
+
+        testSuite.test_case("iter");
+        auto test = [](RAH2_STD::vector<int> range, int value) {
+            CHECK(is_max_heap(range));
+            range.push_back(value);
+            auto view = make_test_view_adapter<CS, Tag, Sized>(range);
+            auto last = RAH2_NS::ranges::push_heap(view.begin(), view.end());
+            CHECK(last == view.end());
+            CHECK(is_max_heap(range));
+        };
+        test({}, 5);
+        test({10}, 2);
+        test({10}, 10);
+        test({10}, 45);
+        test({9, 5, 6, 4, 3, 2, 1}, -2);
+        test({9, 5, 6, 4, 3, 2, 1}, 4);
+        test({9, 5, 6, 3, 2, 1}, 4);
+        test({9, 5, 6, 4, 4, 3, 2, 1}, 4);
+        test({5, 5, 5, 5, 5}, 2);
+        test({5, 5, 5, 5, 5}, 5);
+        test({5, 5, 5, 5, 5}, 15);
+
+        testSuite.test_case("range");
+        auto test_proj = [](RAH2_STD::vector<Coord> range, Coord value)
+        {
+            CHECK(is_max_heap(range));
+            range.push_back(value);
+            auto view = make_test_view_adapter<CS, Tag, Sized>(range);
+            auto last = RAH2_NS::ranges::push_heap(view, &descending_64, &Coord::x);
+            CHECK(last == view.end());
+            CHECK(is_max_heap(range));
+        };
+        test_proj({}, {5, 0});
+        test_proj({{10, 0}}, {2, 0});
+        test_proj({{10, 0}}, {10, 0});
+        test_proj({{10, 0}}, {45, 0});
+        test_proj({{1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}}, {-2, 0});
+        test_proj({{1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}}, {72, 0});
+        test_proj({{1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}}, {4, 0});
+        test_proj({{1, 0}, {2, 0}, {3, 0}, {4, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}}, {4, 0});
+        test_proj({{1, 0}, {2, 0}, {3, 0}, {6, 0}, {5, 0}, {9, 0}}, {4, 0});
+        test_proj({{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}}, {2, 0});
+        test_proj({{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}}, {5, 0});
+        test_proj({{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}}, {15, 0});
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER, 2);
+        perf_iter_.reserve(perf_iter_.size() * 2);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_.reserve(perf_.size() * 2);
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+        constexpr auto UnsizedMult = Sized ? 1000 : 1;
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "push_heap",
+            range_type,
+            [&]
+            {
+                for (int i = 0; i < 1 * UnsizedMult; ++i)
+                {
+                    perf_iter_.push_back(3);
+                    STD::push_heap(fwd(perf_iter.begin()), perf_iter.end());
+                    CHECK(*perf_iter.begin() == 3);
+                }
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "push_heap_proj",
+            range_type,
+            [&]
+            {
+                for (int i = 0; i < 1 * UnsizedMult; ++i)
+                {
+                    perf_.push_back(Coord{1, 0});
+                    STD::push_heap(perf, descending_64, &Coord::x);
+                    CHECK(perf.begin()->x == 1);
+                }
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_push_heap()
 {
     testSuite.test_case("sample");
@@ -5516,6 +5627,8 @@ void test_push_heap()
     assert(RAH2_STD::is_heap(v.begin(), v.end()));
     assert(RAH2_STD::count(v.begin(), v.end(), 9) != 0);
     /// [rah2::ranges::push_heap]
+
+    foreach_range_combination<test_algo<test_push_heap_>>();
 }
 void test_pop_heap()
 {
