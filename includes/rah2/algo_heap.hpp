@@ -378,10 +378,20 @@ namespace RAH2_NS
                 /// The Compare function must work equivalently to the compare function used
                 /// to make and maintain the heap.
                 ///
-                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-                RandomAccessIterator
-                operator()(RandomAccessIterator first, Sentinel last, Compare compare) const
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first, Sentinel last, Compare compare, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     using difference_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
                     using value_type =
@@ -389,26 +399,28 @@ namespace RAH2_NS
                     auto lasti = RAH2_NS::ranges::next(first, last);
                     value_type const tempBottom(*(lasti - 1));
 
-                    details::promote_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+                    details::promote_heap<RandomAccessIterator, difference_type, value_type, decltype(pred_proj)>(
                         first,
                         static_cast<difference_type>(0),
                         static_cast<difference_type>(lasti - first - 1),
                         tempBottom,
-                        compare);
+                        pred_proj);
                     return lasti;
                 }
 
                 template <
                     typename RandomAccessRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
                 borrowed_iterator_t<RandomAccessRange>
-                operator()(RandomAccessRange&& range, Compare compare) const
+                operator()(RandomAccessRange&& range, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -573,10 +585,19 @@ namespace RAH2_NS
                     return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
                 }
 
-                template <typename RandomAccessIterator, typename Sentinel, typename Compare>
-                RandomAccessIterator
-                operator()(RandomAccessIterator first, Sentinel last, Compare compare) const
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                RandomAccessIterator operator()(
+                    RandomAccessIterator first, Sentinel last, Compare compare, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
                     using difference_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
                     using value_type =
@@ -596,13 +617,13 @@ namespace RAH2_NS
                         {
                             --parentPosition;
                             value_type temp(RAH2_STD::forward<value_type>(*(first + parentPosition)));
-                            details::adjust_heap<RandomAccessIterator, difference_type, value_type, Compare>(
+                            details::adjust_heap<RandomAccessIterator, difference_type, value_type, decltype(pred_proj)>(
                                 first,
                                 parentPosition,
                                 heapSize,
                                 parentPosition,
                                 RAH2_STD::forward<value_type>(temp),
-                                compare);
+                                pred_proj);
                         } while (parentPosition != 0);
                     }
                     return lasti;
@@ -611,14 +632,16 @@ namespace RAH2_NS
                 template <
                     typename RandomAccessRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
                 borrowed_iterator_t<RandomAccessRange>
-                operator()(RandomAccessRange&& range, Compare compare) const
+                operator()(RandomAccessRange&& range, Compare compare, Proj proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::move(compare),
+                        RAH2_STD::move(proj));
                 }
             };
         } // namespace niebloids
@@ -699,7 +722,12 @@ namespace RAH2_NS
 
                 /// is_heap_until
                 ///
-                template <typename RandomAccessIterator, typename Sentinel>
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 RandomAccessIterator operator()(RandomAccessIterator first, Sentinel last) const
                 {
                     if (first == last)
@@ -717,7 +745,9 @@ namespace RAH2_NS
                     return child;
                 }
 
-                template <typename RandomAccessRange>
+                template <
+                    typename RandomAccessRange,
+                    RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
                 iterator_t<RandomAccessRange> operator()(RandomAccessRange&& range) const
                 {
                     return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
@@ -732,7 +762,10 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     typename Compare,
-                    typename Proj = RAH2_NS::details::identity>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 RandomAccessIterator operator()(
                     RandomAccessIterator first, Sentinel last, Compare compare, Proj proj = {}) const
                 {
@@ -754,7 +787,11 @@ namespace RAH2_NS
                     return child;
                 }
 
-                template <typename RandomAccessRange, typename Compare, typename Proj = RAH2_NS::details::identity>
+                template <
+                    typename RandomAccessRange,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<random_access_range<RandomAccessRange>>* = nullptr>
                 iterator_t<RandomAccessRange>
                 operator()(RandomAccessRange&& range, Compare&& compare, Proj&& proj = {}) const
                 {
@@ -807,9 +844,12 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     typename Compare,
-                    typename Proj = RAH2_NS::details::identity>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        random_access_iterator<RandomAccessIterator>
+                        && sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 bool operator()(
-                    RandomAccessIterator first, Sentinel last, Compare&& compare, Proj&& proj) const
+                    RandomAccessIterator first, Sentinel last, Compare&& compare, Proj&& proj = {}) const
                 {
                     return (
                         RAH2_NS::ranges::is_heap_until(first, last, RAH2_FWD(compare), RAH2_FWD(proj))
