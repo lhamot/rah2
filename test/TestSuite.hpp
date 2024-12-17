@@ -143,7 +143,7 @@ inline void assert_impl(char const* file, int line, char const* condition, bool 
 }
 
 template<typename T>
-static std::ostream& operator<<(std::ostream& os, std::vector<T> const& vec)
+static std::ostream& operator<<(std::ostream& os, RAH2_STD::vector<T> const& vec)
 {
     os << "[";
     for (size_t i = 0; i < vec.size(); ++i)
