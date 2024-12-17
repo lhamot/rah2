@@ -1,169 +1,11 @@
 #pragma once
 
+#include "TestSuite.hpp"
+
 #include <rah2/ranges.hpp>
 #include <rah2/algorithm.hpp>
-
-#include <iostream>
 #include <chrono>
-#include <functional>
-#include <set>
 
-#ifdef RAH2_USE_EASTL
-#include <EASTL/map.h>
-#include <EASTL/vector.h>
-#include <EASTL/string.h>
-#else
-#include <map>
-#include <vector>
-#include <string>
-#endif
-
-#ifndef TEST_LEVEL
-#define TEST_LEVEL 1 // medium
-#endif
-
-#define STATIC_ASSERT(PRED) static_assert(PRED, #PRED)
-
-struct TestSuite
-{
-    struct TestResult
-    {
-        bool success = true;
-        size_t testCount = 0;
-    };
-
-    RAH2_STD::map<RAH2_STD::string, std::function<void()>> testMap;
-    RAH2_STD::map<RAH2_STD::string, TestResult> testResult;
-    RAH2_STD::map<RAH2_STD::string, std::set<RAH2_STD::pair<RAH2_STD::string, RAH2_STD::string>>> testCases;
-
-    bool current_test_status = true;
-    size_t test_count = 0;
-    bool all_success = true;
-    volatile size_t avoid_optim = 1;
-
-    void addTest(RAH2_STD::string const& group, RAH2_STD::string const& name, std::function<void()> test)
-    {
-        testMap.emplace(group + " - " + name, std::move(test));
-    }
-
-    char const* currentTest = nullptr;
-    void test_case(char const* testcase, char const* extra = "")
-    {
-#if defined(TEST_DISPLAY_ALL)
-        std::cout << "case : " << testcase << "/" << extra << std::endl;
-#endif
-        testCases[currentTest].emplace(testcase, extra);
-    }
-
-    void report() const
-    {
-        for (auto const& name_test : testMap)
-        {
-            auto& name = name_test.first;
-            std::cout << name_test.first.c_str() << " : ";
-            auto iter = testResult.find(name);
-            if (iter != testResult.end())
-            {
-                auto& result = iter->second;
-                if (!result.success)
-                    std::cout << "FAILED" << std::endl;
-                else if (result.testCount == 0)
-                    std::cout << "NO TESTS" << std::endl;
-                else
-                    std::cout << "OK" << std::endl;
-            }
-            else
-                std::cout << "MISSING";
-
-            if (testCases.count(name) != 0u)
-            {
-                for (auto& caseName_extra : testCases.at(name))
-                {
-                    std::cout << " / " << caseName_extra.first.c_str();
-                }
-            }
-            std::cout << std::endl;
-        }
-        std::cout << (all_success ? "Tests passed" : "Tests failed") << std::endl;
-    }
-
-    void run()
-    {
-        for (auto const& name_test : testMap)
-        {
-            auto& name = name_test.first;
-            currentTest = name.c_str();
-            auto& test = name_test.second;
-            current_test_status = true;
-            test_count = 0;
-            try
-            {
-#if defined(TEST_DISPLAY_ALL)
-                std::cout << "Testing : " << currentTest << std::endl;
-#endif
-                test();
-            }
-            catch (...)
-            {
-                testResult[name].success = false;
-                return;
-            }
-            testResult[name].success = current_test_status;
-            testResult[name].testCount = test_count;
-            all_success = all_success && current_test_status;
-        }
-    }
-};
-
-// #define TEST_DISPLAY_ALL
-#define TEST_DISPLAY_FAILED
-// #define TEST_DISPLAY_NONE
-
-extern TestSuite testSuite;
-inline void assert_impl(char const* file, int line, char const* condition, bool value)
-{
-    ++testSuite.test_count;
-#if defined(TEST_DISPLAY_ALL)
-    std::cout << file << ":" << line << " assert : " << condition << std::endl;
-#endif
-    if (value)
-    {
-#if defined(TEST_DISPLAY_ALL)
-        std::cout << "OK" << std::endl;
-#endif
-    }
-    else
-    {
-#if defined(TEST_DISPLAY_FAILED) and not defined(TEST_DISPLAY_ALL)
-        std::cout << file << ":" << line << " assert : " << condition << std::endl;
-#endif
-#if defined(TEST_DISPLAY_FAILED)
-        std::cout << "NOT OK (" << file << ":" << line << ")" << std::endl;
-#endif
-        // abort();
-        testSuite.current_test_status = false;
-    }
-}
-
-#undef assert
-#define assert(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
-#define CHECK(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
-
-template <bool A, bool B>
-struct AssertEqual;
-
-template <bool X>
-struct AssertEqual<X, X>
-{
-};
-
-template <typename A, typename B>
-struct AssertSame;
-
-template <typename X>
-struct AssertSame<X, X>
-{
-};
 
 enum CommonOrSent
 {
@@ -310,6 +152,12 @@ public:
         friend bool operator<(iterator const& it1, iterator const& it2)
         {
             return it1.iter_ < it2.iter_;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, iterator const& it)
+        {
+            os << &(*it.iter_);
+            return os;
         }
     };
 
@@ -485,6 +333,12 @@ public:
         {
             return it1.iter_ < it2.iter_;
         }
+
+        friend std::ostream& operator<<(std::ostream& os, iterator const& it)
+        {
+            os << &(*it.iter_);
+            return os;
+        }
     };
 
     class const_iterator
@@ -596,6 +450,12 @@ public:
         {
             return it1.iter_ < it2.iter_;
         }
+
+        friend std::ostream& operator<<(std::ostream& os, const_iterator const& it)
+        {
+            os << &(*it.iter_);
+            return os;
+        }
     };
 
     test_view_adapter() = default;
@@ -706,6 +566,17 @@ public:
     {
         return RAH2_NS::ranges::data(base_);
     }
+
+    friend inline std::ostream& operator<<(std::ostream& os, test_view_adapter const& vec)
+    {
+        os << "[";
+        for (auto&& val : vec)
+        {
+            os << val << " ";
+        }
+        os << "]";
+        return os;
+    }
 };
 
 namespace RAH2_NS
@@ -728,7 +599,7 @@ auto make_test_view()
 template <CommonOrSent Sent, typename Cat, bool Sized, typename Range>
 auto make_test_view_adapter(Range&& r)
 {
-    return test_view_adapter<Sent, Cat, Sized, RAH2_NS::views::all_t<Range>>(RAH2_NS::views::all(r));
+    return test_view_adapter<Sent, Cat, Sized, RAH2_NS::views::all_t<Range>>(RAH2_NS::views::all(RAH2_STD::forward<Range>(r)));
 }
 
 // output
@@ -1499,8 +1370,6 @@ auto compare_duration(
 #define COMPUTE_DURATION(ALGO, CONCEPT, STEP, F)                                                   \
     compute_duration((F), ALGO, CONCEPT, STEP, __FILE__, __LINE__)
 
-#define CHECK_EQUAL(A, B) CHECK((A) == (B))
-
 #define INTERNAL_COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(IS_COMMON, ALGO, CONCEPT, ALGO_F, RANGE_F) \
     call_if_true<IS_COMMON>(                                                                          \
         [&](auto fwd)                                                                                 \
@@ -1691,6 +1560,12 @@ struct Coord
     {
         return !(a < b);
     }
+
+    friend std::ostream& operator<<(std::ostream& os, Coord const& c)
+    {
+        os << "(" << c.x << "," << c.y << ")";
+        return os;
+    }
 };
 
 struct Complex
@@ -1740,5 +1615,11 @@ struct Complex
     friend bool operator>=(Complex a, Complex b)
     {
         return !(a < b);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, Complex const& c)
+    {
+        os << "(" << c.x << "," << c.y << ")";
+        return os;
     }
 };
