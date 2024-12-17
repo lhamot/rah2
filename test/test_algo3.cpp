@@ -1166,7 +1166,7 @@ struct test_copy_n_
         auto const res2 = RAH2_NS::ranges::copy_n(in.begin(), 0, out.begin());
         assert(*(res2.in) == 'A');
         assert(*(res2.out) == '1');
-        CHECK_EQUAL(out, "123456789");
+        CHECK(out == "123456789");
     }
 
     template <bool = true>
@@ -1242,8 +1242,8 @@ struct test_copy_backward_
         out = "123456789";
         auto const res2 = RAH2_NS::ranges::copy_backward(in.begin(), in.begin(), out.end());
         CHECK_EQUAL(res2.in, in.begin());
-        CHECK_EQUAL(res2.out, out.end());
-        CHECK_EQUAL(out, "123456789");
+        CHECK(res2.out == out.end());
+        CHECK(out == "123456789");
     }
 
     template <bool = true>
@@ -1326,6 +1326,12 @@ struct NonCopyable
     bool operator==(NonCopyable const& np) const
     {
         return i_ == np.i_;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, NonCopyable const& nc)
+    {
+        os << "NonCopyable[" << nc.i_ << "]";
+        return os;
     }
 };
 
@@ -1480,7 +1486,7 @@ struct test_move_backward_
         out = makeNonCopyableVec({'1', '2', '3', '4', '5', '6', '7', '8', '9'});
         auto const res2 = RAH2_NS::ranges::move_backward(in.begin(), in.begin(), out.end());
         CHECK_EQUAL(res2.in, in.begin());
-        CHECK_EQUAL(res2.out, out.end());
+        CHECK(res2.out == out.end());
         CHECK_EQUAL(out, makeNonCopyableVec({'1', '2', '3', '4', '5', '6', '7', '8', '9'}));
     }
 

@@ -160,6 +160,17 @@ static std::ostream& operator<<(std::ostream& os, RAH2_STD::vector<T> const& vec
     return os;
 }
 
+#ifdef RAH2_USE_EASTL
+namespace eastl
+{
+    inline std::ostream& operator<<(std::ostream& os, eastl::string const& str)
+    {
+        os << str.c_str();
+        return os;
+    }
+} // namespace eastl
+#endif
+
 namespace RAH2_NS
 {
     inline std::ostream& operator<<(std::ostream& os, default_sentinel_t)
@@ -199,7 +210,7 @@ inline void check_equal_impl(char const* file, int line, bool value, A const& va
 #undef assert
 #define assert(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
 #define CHECK(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
-#define CHECK_EQUAL(A, B) CHECK((A) == (B))
+#define CHECK_EQUAL(A, B) check_equal_impl(__FILE__, __LINE__, (A) == (B), (A), (B))
 
 template <bool A, bool B>
 struct AssertEqual;

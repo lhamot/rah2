@@ -912,11 +912,25 @@ namespace RAH2_NS
             {
                 return range_.begin();
             }
+            template <typename Range = R const, std::enable_if_t<range<Range>>* = nullptr>
+            auto begin() const
+            {
+                return range_.begin();
+            }
             auto end()
             {
                 return range_.end();
             }
+            template <typename Range = R const, std::enable_if_t<range<Range>>* = nullptr>
+            auto end() const
+            {
+                return range_.end();
+            }
             bool empty()
+            {
+                return RAH2_NS::ranges::empty(range_);
+            }
+            bool empty() const
             {
                 return RAH2_NS::ranges::empty(range_);
             }
