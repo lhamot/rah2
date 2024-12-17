@@ -569,8 +569,11 @@ public:
     friend inline std::ostream& operator<<(std::ostream& os, test_view_adapter const& vec)
     {
         os << "[";
-        for (auto&& val : vec)
+        auto iter = vec.begin();
+        auto end = vec.end();
+        for (; iter != end; ++iter)
         {
+            auto&& val = *iter;
             os << val << " ";
         }
         os << "]";
