@@ -10,7 +10,9 @@
 #ifdef RAH2_USE_EASTL
 #include <EASTL/map.h>
 #include <EASTL/vector.h>
+#include <EASTL/string.h>
 #else
+#include <string>
 #include <map>
 #include <vector>
 #endif
