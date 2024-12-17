@@ -199,7 +199,7 @@ inline void check_equal_impl(char const* file, int line, bool value, A const& va
 #undef assert
 #define assert(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
 #define CHECK(CONDITION) assert_impl(__FILE__, __LINE__, #CONDITION, (CONDITION))
-#define CHECK_EQUAL(A, B) CHECK((A) == (B))
+#define CHECK_EQUAL(A, B) check_equal_impl(__FILE__, __LINE__, (A) == (B), (A), (B))
 
 template <bool A, bool B>
 struct AssertEqual;
