@@ -1166,7 +1166,7 @@ struct test_copy_n_
         auto const res2 = RAH2_NS::ranges::copy_n(in.begin(), 0, out.begin());
         assert(*(res2.in) == 'A');
         assert(*(res2.out) == '1');
-        CHECK_EQUAL(out, "123456789");
+        CHECK(out == "123456789");
     }
 
     template <bool = true>
@@ -1243,7 +1243,7 @@ struct test_copy_backward_
         auto const res2 = RAH2_NS::ranges::copy_backward(in.begin(), in.begin(), out.end());
         CHECK_EQUAL(res2.in, in.begin());
         CHECK(res2.out == out.end());
-        CHECK_EQUAL(out, "123456789");
+        CHECK(out == "123456789");
     }
 
     template <bool = true>
