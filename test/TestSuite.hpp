@@ -160,6 +160,17 @@ static std::ostream& operator<<(std::ostream& os, RAH2_STD::vector<T> const& vec
     return os;
 }
 
+#ifdef RAH2_USE_EASTL
+namespace eastl
+{
+    inline std::ostream& operator<<(std::ostream& os, eastl::string const& str)
+    {
+        os << str.c_str();
+        return os;
+    }
+}
+#endif
+
 namespace RAH2_NS
 {
     inline std::ostream& operator<<(std::ostream& os, default_sentinel_t)
