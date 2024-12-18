@@ -6380,7 +6380,8 @@ struct test_minmax_
             {
                 using ResultType = decltype(STD::minmax(perf_no));
                 auto result = STD::minmax(perf_no);
-                CHECK_EQUAL(result, (ResultType{Coord{1, 0}, Coord{3, 0}}));
+                CHECK_EQUAL(result.min, (Coord{1, 0}));
+                CHECK_EQUAL(result.max, (Coord{3, 0}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
             "minmax_proj",
@@ -6389,7 +6390,8 @@ struct test_minmax_
             {
                 using ResultType = decltype(STD::minmax(perf_no, comp_64, &Coord::x));
                 auto result = STD::minmax(perf_no, comp_64, &Coord::x);
-                CHECK_EQUAL(result, (ResultType{Coord{3, 0}, Coord{1, 0}}));
+                CHECK_EQUAL(result.min, (Coord{3, 0}));
+                CHECK_EQUAL(result.max, (Coord{1, 0}));
             });
     }
     static constexpr bool do_test = true;
