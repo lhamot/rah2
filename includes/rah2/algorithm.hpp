@@ -1556,25 +1556,31 @@ namespace RAH2_NS
                 template <
                     typename R,
                     typename Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-                constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
+                constexpr range_value_t<R> operator()(R&& r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
                     using V = range_value_t<R>;
-                    return static_cast<V>(*RAH2_NS::ranges::max_element(r, RAH2_STD::ref(comp)));
+                    return static_cast<V>(
+                        *RAH2_NS::ranges::max_element(r, RAH2_FWD(comp), RAH2_FWD(proj)));
                 }
                 template <
                     typename R,
                     typename Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
-                constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
+                constexpr range_value_t<R> operator()(R&& r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
-                    using V = range_value_t<R>;
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(comp), RAH2_FWD(proj));
                     auto i = RAH2_NS::ranges::begin(r);
                     auto s = RAH2_NS::ranges::end(r);
-                    V m(*i);
+                    decltype(auto) m(*i);
                     while (++i != s)
-                        if (RAH2_INVOKE_2(comp, m, *i))
-                            m = *i;
+                    {
+                        decltype(auto) val(*i);
+                        if (RAH2_INVOKE_2(pred_proj, m, val))
+                            m = val;
+                    }
                     return m;
                 }
             };
@@ -1584,40 +1590,49 @@ namespace RAH2_NS
         {
             struct min_fn
             {
-                template <class T, typename Comp = RAH2_NS::ranges::less>
-                constexpr T const& operator()(T const& a, T const& b, Comp comp = {}) const
+                template <class T, typename Comp = RAH2_NS::ranges::less, typename Proj = RAH2_NS::details::identity>
+                constexpr T const&
+                operator()(T const& a, T const& b, Comp&& comp = {}, Proj&& proj = {}) const
                 {
-                    return RAH2_INVOKE_2(comp, b, a) ? b : a;
+                    return RAH2_INVOKE_2(comp, proj(b), proj(a)) ? b : a;
                 }
 
-                template <typename T, typename Comp = RAH2_NS::ranges::less>
-                constexpr T operator()(std::initializer_list<T> r, Comp comp = {}) const
+                template <typename T, typename Comp = RAH2_NS::ranges::less, typename Proj = RAH2_NS::details::identity>
+                constexpr T operator()(std::initializer_list<T> r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
-                    return *RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp));
+                    return *RAH2_NS::ranges::min_element(r, RAH2_FWD(comp), RAH2_FWD(proj));
                 }
 
                 template <
                     typename R,
                     typename Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-                constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
+                constexpr range_value_t<R> operator()(R&& r, Comp comp = {}, Proj&& proj = {}) const
                 {
                     using V = range_value_t<R>;
-                    return static_cast<V>(*RAH2_NS::ranges::min_element(r, RAH2_STD::ref(comp)));
+                    return static_cast<V>(
+                        *RAH2_NS::ranges::min_element(r, RAH2_FWD(comp), RAH2_FWD(proj)));
                 }
                 template <
                     typename R,
                     typename Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<!forward_range<R>>* = nullptr>
-                constexpr range_value_t<R> operator()(R&& r, Comp comp = {}) const
+                constexpr range_value_t<R> operator()(R&& r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(comp), RAH2_FWD(proj));
                     using V = range_value_t<R>;
                     auto i = RAH2_NS::ranges::begin(r);
                     auto s = RAH2_NS::ranges::end(r);
                     V m(*i);
-                    while (++i != s)
-                        if (RAH2_INVOKE_2(comp, *i, m))
-                            m = *i;
+                    ++i;
+                    for (; i != s; ++i)
+                    {
+                        V m2(*i);
+                        if (RAH2_INVOKE_2(pred_proj, m2, m))
+                            m = m2;
+                    }
                     return m;
                 }
             };
@@ -1630,38 +1645,66 @@ namespace RAH2_NS
         {
             struct minmax_fn
             {
-                template <class T, typename Comp = RAH2_NS::ranges::less>
+                template <class T, typename Comp = RAH2_NS::ranges::less, typename Proj = RAH2_NS::details::identity>
                 constexpr RAH2_NS::ranges::minmax_result<T const&>
-                operator()(T const& a, T const& b, Comp comp = {}) const
+                operator()(T const& a, T const& b, Comp const& comp = {}, Proj const& proj = {}) const
                 {
-                    if (RAH2_INVOKE_2(comp, b, a))
+                    if (RAH2_INVOKE_2(comp, proj(b), proj(a)))
+                    {
                         return {b, a};
-
-                    return {a, b};
+                    }
+                    else
+                    {
+                        return {a, b};
+                    }
                 }
 
-                template <class T, typename Comp = RAH2_NS::ranges::less>
-                constexpr RAH2_NS::ranges::minmax_result<T const&>
-                operator()(T&& a, T&& b, Comp comp = {}) const = delete;
-
-                template <typename T, typename Comp = RAH2_NS::ranges::less>
+                template <typename T, typename Comp = RAH2_NS::ranges::less, typename Proj = RAH2_NS::details::identity>
                 constexpr RAH2_NS::ranges::minmax_result<T>
-                operator()(std::initializer_list<T> r, Comp comp = {}) const
+                operator()(std::initializer_list<T> r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
-                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::ref(comp));
+                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_FWD(comp), RAH2_FWD(proj));
                     return {*result.min, *result.max};
                 }
 
                 template <
                     typename R,
                     typename Comp = RAH2_NS::ranges::less,
-                    RAH2_STD::enable_if_t<forward_range<R>>* = nullptr>
-                // requires RAH2_STD::indirectly_copyable_storable<ranges::iterator_t<R>, ranges::range_value_t<R>*>
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
                 constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
-                operator()(R&& r, Comp comp = {}) const
+                operator()(R&& r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
-                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_STD::ref(comp));
-                    return {RAH2_STD::move(*result.min), RAH2_STD::move(*result.max)};
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(comp), RAH2_FWD(proj));
+
+                    auto first = RAH2_NS::ranges::begin(r);
+                    auto last = RAH2_NS::ranges::end(r);
+
+                    using V = range_value_t<R>;
+                    V const first_val(*first);
+                    RAH2_NS::ranges::minmax_result<V> result{first_val, first_val};
+                    ++first;
+                    for (; first != last; ++first)
+                    {
+                        V new_val(*first);
+                        if (pred_proj(new_val, result.min))
+                            result.min = std::move(new_val);
+                        else if (pred_proj(result.max, new_val))
+                            result.max = std::move(new_val);
+                    }
+                    return result;
+                }
+
+                template <
+                    typename R,
+                    typename Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<forward_range<R> && !input_range<R>>* = nullptr>
+                constexpr RAH2_NS::ranges::minmax_result<range_value_t<R>>
+                operator()(R&& r, Comp&& comp = {}, Proj&& proj = {}) const
+                {
+                    auto result = RAH2_NS::ranges::minmax_element(r, RAH2_FWD(comp), RAH2_FWD(proj));
+                    return {*result.min, *result.max};
                 }
             };
         } // namespace niebloids

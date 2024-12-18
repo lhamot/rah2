@@ -270,17 +270,25 @@ namespace RAH2_NS
                     return (*this)(RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range));
                 }
 
-                template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
-                ForwardIterator
-                operator()(ForwardIterator first, ForwardSentinel last, Compare compare) const
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* =
+                        nullptr>
+                ForwardIterator operator()(
+                    ForwardIterator first, ForwardSentinel last, Compare&& compare, Proj&& proj = {}) const
                 {
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(compare), RAH2_FWD(proj));
                     if (first != last)
                     {
                         ForwardIterator currentMin = first;
 
                         while (++first != last)
                         {
-                            if (compare(*first, *currentMin))
+                            if (pred_proj(*first, *currentMin))
                                 currentMin = first;
                         }
                         return currentMin;
@@ -291,13 +299,12 @@ namespace RAH2_NS
                 template <
                     typename ForwardRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-                auto operator()(ForwardRange&& range, Compare compare) const
+                auto operator()(ForwardRange&& range, Compare&& compare, Proj&& proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_FWD(compare), RAH2_FWD(proj));
                 }
             };
         } // namespace niebloids
@@ -378,17 +385,26 @@ namespace RAH2_NS
                 /// Complexity: Exactly 'max((last - first) - 1, 0)' applications of the
                 /// corresponding comparisons.
                 ///
-                template <typename ForwardIterator, typename ForwardSentinel, typename Compare>
-                ForwardIterator
-                operator()(ForwardIterator first, ForwardSentinel last, Compare compare) const
+                template <
+                    typename ForwardIterator,
+                    typename ForwardSentinel,
+                    typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        forward_iterator<ForwardIterator> && sentinel_for<ForwardSentinel, ForwardIterator>>* =
+                        nullptr>
+                ForwardIterator operator()(
+                    ForwardIterator first, ForwardSentinel last, Compare&& compare, Proj&& proj = {}) const
                 {
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(compare), RAH2_FWD(proj));
+
                     if (first != last)
                     {
                         ForwardIterator currentMax = first;
 
                         while (++first != last)
                         {
-                            if (compare(*currentMax, *first))
+                            if (pred_proj(*currentMax, *first))
                                 currentMax = first;
                         }
                         return currentMax;
@@ -399,13 +415,13 @@ namespace RAH2_NS
                 template <
                     typename ForwardRange,
                     typename Compare,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
-                iterator_t<ForwardRange> operator()(ForwardRange&& range, Compare compare) const
+                iterator_t<ForwardRange>
+                operator()(ForwardRange&& range, Compare&& compare, Proj&& proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_FWD(compare), RAH2_FWD(proj));
                 }
             };
         } // namespace niebloids
@@ -432,17 +448,20 @@ namespace RAH2_NS
                     typename ForwardIterator,
                     typename ForwardSentinel,
                     typename Compare = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
                         forward_iterator<ForwardIterator>
                         && sentinel_for<ForwardSentinel, ForwardIterator>>* = nullptr>
-                constexpr minmax_element_result<ForwardIterator>
-                operator()(ForwardIterator first, ForwardSentinel last, Compare compare = {}) const
+                constexpr minmax_element_result<ForwardIterator> operator()(
+                    ForwardIterator first, ForwardSentinel last, Compare&& compare = {}, Proj&& proj = {}) const
                 {
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(compare), RAH2_FWD(proj));
+
                     minmax_element_result<ForwardIterator> result{first, first};
 
                     if (!(first == last) && !(++first == last))
                     {
-                        if (compare(*first, *result.min))
+                        if (pred_proj(*first, *result.min))
                         {
                             result.max = result.min;
                             result.min = first;
@@ -456,28 +475,28 @@ namespace RAH2_NS
 
                             if (++first == last)
                             {
-                                if (compare(*i, *result.min))
+                                if (pred_proj(*i, *result.min))
                                     result.min = i;
-                                else if (!compare(*i, *result.max))
+                                else if (!pred_proj(*i, *result.max))
                                     result.max = i;
                                 break;
                             }
                             else
                             {
-                                if (compare(*first, *i))
+                                if (pred_proj(*first, *i))
                                 {
-                                    if (compare(*first, *result.min))
+                                    if (pred_proj(*first, *result.min))
                                         result.min = first;
 
-                                    if (!compare(*i, *result.max))
+                                    if (!pred_proj(*i, *result.max))
                                         result.max = i;
                                 }
                                 else
                                 {
-                                    if (compare(*i, *result.min))
+                                    if (pred_proj(*i, *result.min))
                                         result.min = i;
 
-                                    if (!compare(*first, *result.max))
+                                    if (!pred_proj(*first, *result.max))
                                         result.max = first;
                                 }
                             }
@@ -490,14 +509,13 @@ namespace RAH2_NS
                 template <
                     typename ForwardRange,
                     typename Compare = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<forward_range<ForwardRange>>* = nullptr>
                 constexpr minmax_element_result<borrowed_iterator_t<ForwardRange>>
-                operator()(ForwardRange&& range, Compare compare = {}) const
+                operator()(ForwardRange&& range, Compare compare = {}, Proj&& proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_FWD(compare), RAH2_FWD(proj));
                 }
             };
         } // namespace niebloids
