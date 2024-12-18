@@ -5661,6 +5661,7 @@ struct test_pop_heap_
             // range.push_back(value);
             auto view = make_test_view_adapter<CS, Tag, Sized>(range);
             auto last = RAH2_NS::ranges::pop_heap(view.begin(), view.end());
+            CHECK_EQUAL(last, view.end());
             CHECK(range.back() == expected);
             range.pop_back();
             CHECK(is_max_heap(range));
@@ -5678,6 +5679,7 @@ struct test_pop_heap_
             // range.push_back(value);
             auto view = make_test_view_adapter<CS, Tag, Sized>(range);
             auto last = RAH2_NS::ranges::pop_heap(view, &descending_64, &Coord::x);
+            CHECK_EQUAL(last, view.end());
             CHECK(range.back() == expected);
             range.pop_back();
             CHECK(is_max_heap(range));
