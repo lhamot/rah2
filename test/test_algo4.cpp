@@ -6301,8 +6301,7 @@ namespace RAH2_NS
             return A.min == B.min && A.max == B.max;
         }
         template <typename U>
-        RAH2_STD::ostream&
-        operator<<(RAH2_STD::ostream& os, min_max_result<U> const& A)
+        std::ostream& operator<<(std::ostream& os, min_max_result<U> const& A)
         {
             os << "(" << A.min << "," << A.max << ")";
             return os;
