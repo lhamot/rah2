@@ -6594,9 +6594,7 @@ struct test_is_permutation_
             // Different sizes
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 5, 6});
-            CHECK(
-                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end())
-                == false);
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()) == false);
         }
         {
             // Empty ranges
@@ -6608,23 +6606,20 @@ struct test_is_permutation_
             // One empty, one non-empty
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
-            CHECK(
-                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end())
-                == false);
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()) == false);
         }
         {
             // Single element ranges
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1});
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1});
-            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+            CHECK(
+                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
         }
         {
             // Single element mismatch
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1});
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{2});
-            CHECK(
-                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end())
-                == false);
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()) == false);
         }
     }
 
