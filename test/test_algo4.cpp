@@ -6426,6 +6426,107 @@ void test_minmax()
 
     foreach_range_combination<test_algo<test_minmax_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_minmax_element_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool comp(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            auto several_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 4, 4, 4});
+            auto result = RAH2_NS::ranges::minmax_element(several_max.begin(), several_max.end());
+            CHECK_EQUAL(*result.min, 4);
+            CHECK_EQUAL(*result.max, 4);
+            CHECK_EQUAL(result.min, several_max.begin());
+            CHECK_EQUAL(result.max, RAH2_NS::ranges::next(several_max.begin(), 3));
+
+            auto one_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 5, 3, 4});
+            auto result2 = RAH2_NS::ranges::minmax_element(one_max.begin(), one_max.end(), comp);
+            CHECK_EQUAL(*result2.min, 3);
+            CHECK_EQUAL(*result2.max, 5);
+            CHECK_EQUAL(result2.min, RAH2_NS::ranges::next(one_max.begin(), 2));
+            CHECK_EQUAL(result2.max, RAH2_NS::ranges::next(one_max.begin(), 1));
+
+            auto one_value = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4});
+            auto result3 = RAH2_NS::ranges::minmax_element(one_value.begin(), one_value.end());
+            CHECK_EQUAL(*result3.min, 4);
+            CHECK_EQUAL(*result3.max, 4);
+            CHECK_EQUAL(result3.min, RAH2_NS::ranges::next(one_value.begin(), 0));
+            CHECK_EQUAL(result3.max, RAH2_NS::ranges::next(one_value.begin(), 0));
+
+            auto empty_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
+            auto result4 = RAH2_NS::ranges::minmax_element(empty_max.begin(), empty_max.end());
+            CHECK_EQUAL(result4.min, empty_max.end());
+            CHECK_EQUAL(result4.max, empty_max.end());
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("pred");
+        testSuite.test_case("proj");
+        {
+            auto several_max = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{{4, 0}, {4, 0}, {4, 0}, {4, 0}});
+            auto result = RAH2_NS::ranges::minmax_element(several_max, comp_64, &Coord::x);
+            CHECK_EQUAL(result.min, several_max.begin());
+            CHECK_EQUAL(result.max, RAH2_NS::ranges::next(several_max.begin(), 3));
+
+            std::vector<Coord> one_max_ = {{4, 0}, {3, 0}, {5, 0}, {4, 0}};
+            auto one_max = make_test_view_adapter<CS, Tag, Sized>(one_max_);
+            auto result2 = RAH2_NS::ranges::minmax_element(one_max, comp_64, &Coord::x);
+            CHECK_EQUAL(result2.min, RAH2_NS::ranges::next(one_max.begin(), 2));
+            CHECK_EQUAL(result2.max, RAH2_NS::ranges::next(one_max.begin(), 1));
+
+            std::vector<Coord> one_value_{{4, 0}};
+            auto one_value = make_test_view_adapter<CS, Tag, Sized>(one_value_);
+            auto result3 = RAH2_NS::ranges::minmax_element(one_value, comp_64, &Coord::x);
+            CHECK_EQUAL(result3.min, RAH2_NS::ranges::next(one_value.begin(), 0));
+            CHECK_EQUAL(result3.max, RAH2_NS::ranges::next(one_value.begin(), 0));
+
+            auto empty_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{});
+            auto result4 = RAH2_NS::ranges::minmax_element(empty_max, comp_64, &Coord::x);
+            CHECK_EQUAL(result4.min, empty_max.end());
+            CHECK_EQUAL(result4.max, empty_max.end());
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_no_vec.back() = Coord{1, 0};
+        perf_no_vec[perf_no_vec.size() - 2] = Coord{3, 0};
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == CommonOrSent::Common,
+            "minmax_element",
+            range_type,
+            [&]
+            {
+                auto result = STD::minmax_element(fwd(perf_no.begin()), perf_no.end());
+                DONT_OPTIM(result);
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "minmax_element_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::minmax_element(perf_no, comp_64, &Coord::x);
+                DONT_OPTIM(result);
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_minmax_element()
 {
     testSuite.test_case("sample");
@@ -6438,6 +6539,8 @@ void test_minmax_element()
     assert(*res6.min == 7);
     assert(*res6.max == 1);
     /// [rah2::ranges::minmax_element]
+
+    foreach_range_combination<test_algo<test_minmax_element_>>();
 }
 void test_clamp()
 {
@@ -6457,6 +6560,121 @@ void test_clamp()
     assert(RAH2_NS::ranges::clamp(8, 8, 4, RAH2_STD::greater<>()) == 8);
     assert(RAH2_NS::ranges::clamp(10, 8, 4, RAH2_STD::greater<>()) == 8);
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_is_permutation_
+{
+    static bool equal_64(intptr_t a, intptr_t b)
+    {
+        return a == b;
+    }
+
+    static bool equal(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // Identical ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+        }
+        {
+            // Permuted ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{3, 1, 2});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+        }
+        {
+            // Different sizes
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 5, 6});
+            CHECK(
+                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end())
+                == false);
+        }
+        {
+            // Empty ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+        }
+        {
+            // One empty, one non-empty
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1, 2, 3});
+            CHECK(
+                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end())
+                == false);
+        }
+        {
+            // Single element ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+        }
+        {
+            // Single element mismatch
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{1});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{2});
+            CHECK(
+                RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end())
+                == false);
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> vec1;
+        std::vector<Coord> vec2;
+        constexpr auto VecSize = 1000;
+        for (intptr_t i = 0; i < VecSize; ++i)
+        {
+            vec1.push_back(Coord{i, 0});
+            vec2.push_back(Coord{(VecSize - 1) - i, 0});
+        }
+        auto rng1 = make_test_view_adapter<CS, Tag, Sized>(vec1);
+        auto rng2 = make_test_view_adapter<CS, Tag, Sized>(vec2);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "is_permutation",
+                range_type,
+                [&]
+                {
+                    bool const result = RAH2_NS::ranges::is_permutation(
+                        fwd(rng1.begin()), rng1.end(), rng2.begin(), rng2.end());
+                    CHECK(result);
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "is_permutation_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        bool const result = RAH2_NS::ranges::is_permutation(
+                            rng1.begin(),
+                            rng1.end(),
+                            rng2.begin(),
+                            rng2.end(),
+                            equal_64,
+                            &Coord::x,
+                            &Coord::x);
+                        CHECK(result);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_is_permutation()
 {
     testSuite.test_case("sample");
@@ -6468,6 +6686,8 @@ void test_is_permutation()
     assert(RAH2_NS::ranges::is_permutation(r2, r1));
     assert(RAH2_NS::ranges::is_permutation(r1.begin(), r1.end(), r2.begin(), r2.end()));
     /// [rah2::ranges::is_permutation]
+
+    foreach_range_combination<test_algo<test_is_permutation_>>();
 }
 
 size_t factorial(size_t n)

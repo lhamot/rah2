@@ -5083,32 +5083,33 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
+                    auto ref_pred = RAH2_STD::ref(pred);
+                    auto ref_proj1 = RAH2_STD::ref(proj1);
+                    auto ref_proj2 = RAH2_STD::ref(proj2);
                     // skip common prefix
                     auto ret = RAH2_NS::ranges::mismatch(
-                        first1,
-                        last1,
-                        first2,
-                        last2,
-                        RAH2_STD::ref(pred),
-                        RAH2_STD::ref(proj1),
-                        RAH2_STD::ref(proj2));
+                        first1, last1, first2, last2, ref_pred, ref_proj1, ref_proj2);
                     first1 = ret.in1, first2 = ret.in2;
+                    if (first1 == last1)
+                    {
+                        return first2 == last2;
+                    }
 
                     // iterate over the rest, counting how many times each element
                     // from [first1, last1) appears in [first2, last2)
                     for (auto i{first1}; i != last1; ++i)
                     {
-                        auto const i_proj{proj1(*i)};
+                        auto const i_proj{ref_proj1(*i)};
                         auto i_cmp = [&](auto&& t)
                         {
-                            return pred(i_proj, RAH2_STD::forward<decltype(t)>(t));
+                            return ref_pred(i_proj, RAH2_STD::forward<decltype(t)>(t));
                         };
 
-                        if (i != RAH2_NS::ranges::find_if(first1, i, i_cmp, proj1))
+                        if (i != RAH2_NS::ranges::find_if(first1, i, i_cmp, ref_proj1))
                             continue; // this *i has been checked
 
-                        auto const m{RAH2_NS::ranges::count_if(first2, last2, i_cmp, proj2)};
-                        if (m == 0 or m != RAH2_NS::ranges::count_if(i, last1, i_cmp, proj1))
+                        auto const m{RAH2_NS::ranges::count_if(first2, last2, i_cmp, ref_proj2)};
+                        if (m == 0 or m != RAH2_NS::ranges::count_if(i, last1, i_cmp, ref_proj1))
                             return false;
                     }
                     return true;
