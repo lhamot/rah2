@@ -6378,7 +6378,6 @@ struct test_minmax_
             range_type,
             [&]
             {
-                using ResultType = decltype(STD::minmax(perf_no));
                 auto result = STD::minmax(perf_no);
                 CHECK_EQUAL(result.min, (Coord{1, 0}));
                 CHECK_EQUAL(result.max, (Coord{3, 0}));
@@ -6388,7 +6387,6 @@ struct test_minmax_
             range_type,
             [&]
             {
-                using ResultType = decltype(STD::minmax(perf_no, comp_64, &Coord::x));
                 auto result = STD::minmax(perf_no, comp_64, &Coord::x);
                 CHECK_EQUAL(result.min, (Coord{3, 0}));
                 CHECK_EQUAL(result.max, (Coord{1, 0}));
