@@ -5627,6 +5627,109 @@ void test_push_heap()
 
     foreach_range_combination<test_algo<test_push_heap_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_pop_heap_
+{
+    static bool descending(int a, int b)
+    {
+        return b < a;
+    }
+
+    static bool descending_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool descending_coord(Coord a, Coord b)
+    {
+        return b.x < a.x;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        // Empty,
+        // single => Greater, lower, equal
+        // many => Greater, lower, inside not equal, inside equal
+        // Many equal => Greater, lower, equal
+
+        testSuite.test_case("iter");
+        auto test = [](RAH2_STD::vector<int> range, int expected)
+        {
+            CHECK(is_max_heap(range));
+            // range.push_back(value);
+            auto view = make_test_view_adapter<CS, Tag, Sized>(range);
+            auto last = RAH2_NS::ranges::pop_heap(view.begin(), view.end());
+            CHECK_EQUAL(last, view.end());
+            CHECK(range.back() == expected);
+            range.pop_back();
+            CHECK(is_max_heap(range));
+        };
+        // test({}, 5);
+        test({10}, 10);
+        test({9, 5, 6, 4, 3, 2, 1}, 9);
+        test({9, 9, 5, 6, 4, 3, 2, 1}, 9);
+        test({5, 5, 5, 5, 5}, 5);
+
+        testSuite.test_case("range");
+        auto test_proj = [](RAH2_STD::vector<Coord> range, Coord expected)
+        {
+            CHECK(is_max_heap(range));
+            // range.push_back(value);
+            auto view = make_test_view_adapter<CS, Tag, Sized>(range);
+            auto last = RAH2_NS::ranges::pop_heap(view, &descending_64, &Coord::x);
+            CHECK_EQUAL(last, view.end());
+            CHECK(range.back() == expected);
+            range.pop_back();
+            CHECK(is_max_heap(range));
+        };
+        // test_proj({}, {5, 0});
+        test_proj({{10, 0}}, {10, 0});
+        test_proj({{1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}}, {1, 0});
+        test_proj({{1, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {6, 0}, {5, 0}, {9, 0}}, {1, 0});
+        test_proj({{5, 0}, {5, 0}, {5, 0}, {5, 0}, {5, 0}}, {5, 0});
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        RAH2_STD::vector<int> perf_iter_(1000000 * RELEASE_MULTIPLIER, 2);
+        auto perf_iter = make_test_view_adapter<CS, Tag, Sized>(perf_iter_);
+
+        RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
+        constexpr auto UnsizedMult = Sized ? 1000 : 1;
+
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == Common,
+            "pop_heap",
+            range_type,
+            [&]
+            {
+                for (int i = 0; i < 1 * UnsizedMult; ++i)
+                {
+                    perf_iter_.front() = 3;
+                    perf_iter_.back() = 2;
+                    STD::pop_heap(fwd(perf_iter.begin()), perf_iter.end());
+                    CHECK(perf_iter_.back() == 3);
+                }
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "pop_heap_proj",
+            range_type,
+            [&]
+            {
+                for (int i = 0; i < 1 * UnsizedMult; ++i)
+                {
+                    perf_.front() = (Coord{1, 0});
+                    perf_.back() = (Coord{2, 0});
+                    STD::pop_heap(perf, descending_64, &Coord::x);
+                    CHECK_EQUAL(perf_.back().x, 1);
+                }
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_pop_heap()
 {
     testSuite.test_case("sample");
@@ -5646,7 +5749,135 @@ void test_pop_heap()
     v.pop_back();
     assert(RAH2_STD::is_heap(v.begin(), v.end()));
     /// [rah2::ranges::pop_heap]
+
+    foreach_range_combination<test_algo<test_pop_heap_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_sort_heap_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // empty
+            RAH2_STD::vector<int> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out));
+            auto result = RAH2_NS::ranges::sort_heap(out.begin(), out.end());
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<int>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<int> out_{2};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out));
+            auto result = RAH2_NS::ranges::sort_heap(out.begin(), out.end());
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<int>{2}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<int> out_{8, 6, 2, 4};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out));
+            auto result = RAH2_NS::ranges::sort_heap(out.begin(), out.end());
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<int>{2, 4, 6, 8}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<int> out_{7, 3, 5, 1};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out));
+            auto result = RAH2_NS::ranges::sort_heap(out.begin(), out.end());
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<int>{1, 3, 5, 7}));
+        }
+
+        testSuite.test_case("range");
+        {
+            // empty
+            RAH2_STD::vector<Coord> out_;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out, comp_64, &Coord::x));
+            auto result = RAH2_NS::ranges::sort_heap(out, comp_64, &Coord::x);
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<Coord>{}));
+        }
+        {
+            // single
+            RAH2_STD::vector<Coord> out_{Coord{2, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out, comp_64, &Coord::x));
+            auto result = RAH2_NS::ranges::sort_heap(out, comp_64, &Coord::x);
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<Coord>{Coord{2, 0}}));
+        }
+        {
+            // sorted
+            RAH2_STD::vector<Coord> out_{Coord{2, 0}, Coord{4, 0}, Coord{8, 0}, Coord{6, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out, comp_64, &Coord::x));
+            auto result = RAH2_NS::ranges::sort_heap(out, comp_64, &Coord::x);
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<Coord>{{8, 0}, {6, 0}, {4, 0}, {2, 0}}));
+        }
+        {
+            // unsorted
+            RAH2_STD::vector<Coord> out_{Coord{1, 0}, Coord{3, 0}, Coord{5, 0}, Coord{7, 0}};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            CHECK(RAH2_NS::ranges::is_heap(out, comp_64, &Coord::x));
+            auto result = RAH2_NS::ranges::sort_heap(out, comp_64, &Coord::x);
+            CHECK_EQUAL(result, out.end());
+            CHECK_EQUAL(out_, (RAH2_STD::vector<Coord>{{7, 0}, {5, 0}, {3, 0}, {1, 0}}));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == CommonOrSent::Common,
+                "sort_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        RAH2_STD::vector<int> out_(200000 * RELEASE_MULTIPLIER);
+                        out_.front() = 1;
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        STD::sort_heap(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out));
+                        CHECK(out.front() == 0);
+                    }));
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "sort_ranges",
+                range_type,
+                ((
+                    [&]
+                    {
+                        RAH2_STD::vector<Coord> out_(20000 * RELEASE_MULTIPLIER, Coord{2, 0});
+                        out_.front() = Coord{1, 0};
+                        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                        STD::sort_heap(out, comp_64, &Coord::x);
+                        CHECK((out.front() == Coord{2, 0}));
+                    })));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>;
+};
 void test_sort_heap()
 {
     testSuite.test_case("sample");
@@ -5656,7 +5887,84 @@ void test_sort_heap()
     RAH2_NS::ranges::sort_heap(v);
     assert(RAH2_STD::is_sorted(v.begin(), v.end()));
     /// [rah2::ranges::sort_heap]
+
+    foreach_range_combination<test_algo<test_sort_heap_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_max_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool comp(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        // std::ranges::max only works on ranges (not on iterators)
+        testSuite.test_case("range");
+        {
+            std::vector<int> several_max = {4, 4, 4, 4};
+            CHECK_EQUAL(RAH2_NS::ranges::max(make_test_view_adapter<CS, Tag, Sized>(several_max)), 4);
+            std::vector<int> one_max = {4, 4, 5, 4};
+            CHECK_EQUAL(
+                RAH2_NS::ranges::max(make_test_view_adapter<CS, Tag, Sized>(one_max), comp), 5);
+            std::vector<int> one_value = {4};
+            CHECK_EQUAL(RAH2_NS::ranges::max(make_test_view_adapter<CS, Tag, Sized>(one_value)), 4);
+        }
+
+        testSuite.test_case("pred");
+        testSuite.test_case("proj");
+        {
+            std::vector<Coord> several_max{Coord{4, 0}, Coord{4, 0}, Coord{4, 0}, Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::max(
+                    make_test_view_adapter<CS, Tag, Sized>(several_max), comp_64, &Coord::x)),
+                (Coord{4, 0}));
+            std::vector<Coord> one_max{Coord{4, 0}, Coord{4, 0}, Coord{3, 0}, Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::max(
+                    make_test_view_adapter<CS, Tag, Sized>(one_max), comp_64, &Coord::x)),
+                (Coord{3, 0}));
+            std::vector<Coord> one_value{Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::max(
+                    make_test_view_adapter<CS, Tag, Sized>(one_value), comp_64, &Coord::x)),
+                (Coord{4, 0}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_no_vec.back() = Coord{3, 0};
+        perf_no_vec[perf_no_vec.size() - 2] = Coord{1, 0};
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        COMPARE_DURATION_TO_STD_RANGES(
+            "max",
+            range_type,
+            [&]
+            {
+                auto result = STD::max(perf_no);
+                CHECK_EQUAL(result, (Coord{3, 0}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "max_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::max(perf_no, comp_64, &Coord::x);
+                CHECK_EQUAL(result, (Coord{1, 0}));
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_max()
 {
     testSuite.test_case("sample");
@@ -5672,7 +5980,92 @@ void test_max()
     assert(RAH2_NS::ranges::max(v) == 7);
     assert(RAH2_NS::ranges::max(v, RAH2_NS::ranges::greater{}) == 1);
     /// [rah2::ranges::max]
+
+    foreach_range_combination<test_algo<test_max_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_max_element_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool comp(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            auto several_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 4, 4, 4});
+            auto iter = RAH2_NS::ranges::max_element(several_max.begin(), several_max.end());
+            CHECK_EQUAL(iter, several_max.begin());
+            std::vector<int> one_max_ = {4, 4, 5, 4};
+            auto one_max = make_test_view_adapter<CS, Tag, Sized>(one_max_);
+            auto iter2 = RAH2_NS::ranges::max_element(one_max.begin(), one_max.end(), comp);
+            CHECK_EQUAL(iter2, RAH2_NS::ranges::next(one_max.begin(), 2));
+            std::vector<int> one_value_ = {4};
+            auto one_value = make_test_view_adapter<CS, Tag, Sized>(one_value_);
+            auto iter3 = RAH2_NS::ranges::max_element(one_value.begin(), one_value.end());
+            CHECK_EQUAL(iter3, one_value.begin());
+            auto empty_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
+            auto iter4 = RAH2_NS::ranges::max_element(empty_max.begin(), empty_max.end());
+            CHECK_EQUAL(iter4, empty_max.end());
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("pred");
+        testSuite.test_case("proj");
+        {
+            auto several_max = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{{4, 0}, {4, 0}, {4, 0}, {4, 0}});
+            auto iter = RAH2_NS::ranges::max_element(several_max, comp_64, &Coord::x);
+            CHECK_EQUAL(iter, several_max.begin());
+            std::vector<Coord> one_max_ = {{4, 0}, {4, 0}, {3, 0}, {4, 0}};
+            auto one_max = make_test_view_adapter<CS, Tag, Sized>(one_max_);
+            auto iter2 = RAH2_NS::ranges::max_element(one_max, comp_64, &Coord::x);
+            CHECK_EQUAL(iter2, RAH2_NS::ranges::next(one_max.begin(), 2));
+            std::vector<Coord> one_value_{{4, 0}};
+            auto one_value = make_test_view_adapter<CS, Tag, Sized>(one_value_);
+            auto iter3 = RAH2_NS::ranges::max_element(one_value, comp_64, &Coord::x);
+            CHECK_EQUAL(iter3, one_value.begin());
+            auto empty_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{});
+            auto iter4 = RAH2_NS::ranges::max_element(empty_max, comp_64, &Coord::x);
+            CHECK_EQUAL(iter4, empty_max.end());
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_no_vec.back() = Coord{3, 0};
+        perf_no_vec[perf_no_vec.size() - 2] = Coord{1, 0};
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == CommonOrSent::Common,
+            "max_element",
+            range_type,
+            [&]
+            {
+                auto result = STD::max_element(fwd(perf_no.begin()), perf_no.end());
+                CHECK_EQUAL(*result, (Coord{3, 0}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "max_element_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::max_element(perf_no, comp_64, &Coord::x);
+                CHECK_EQUAL(*result, (Coord{1, 0}));
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_max_element()
 {
     testSuite.test_case("sample");
@@ -5691,7 +6084,83 @@ void test_max_element()
         assert(*iter == (RAH2_STD::pair<int, int>{0, 5}));
         /// [rah2::ranges::max_element_pred]
     }
+    foreach_range_combination<test_algo<test_max_element_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_min_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool comp(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        // std::ranges::max only works on ranges (not on iterators)
+        testSuite.test_case("range");
+        {
+            std::vector<int> several_max = {4, 4, 4, 4};
+            CHECK_EQUAL(RAH2_NS::ranges::min(make_test_view_adapter<CS, Tag, Sized>(several_max)), 4);
+            std::vector<int> one_max = {4, 4, 3, 4};
+            CHECK_EQUAL(
+                RAH2_NS::ranges::min(make_test_view_adapter<CS, Tag, Sized>(one_max), comp), 3);
+            std::vector<int> one_value = {4};
+            CHECK_EQUAL(RAH2_NS::ranges::min(make_test_view_adapter<CS, Tag, Sized>(one_value)), 4);
+        }
+
+        testSuite.test_case("pred");
+        testSuite.test_case("proj");
+        {
+            std::vector<Coord> several_max{Coord{4, 0}, Coord{4, 0}, Coord{4, 0}, Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::min(
+                    make_test_view_adapter<CS, Tag, Sized>(several_max), comp_64, &Coord::x)),
+                (Coord{4, 0}));
+            std::vector<Coord> one_max{Coord{4, 0}, Coord{4, 0}, Coord{5, 0}, Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::min(
+                    make_test_view_adapter<CS, Tag, Sized>(one_max), comp_64, &Coord::x)),
+                (Coord{5, 0}));
+            std::vector<Coord> one_value{Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::min(
+                    make_test_view_adapter<CS, Tag, Sized>(one_value), comp_64, &Coord::x)),
+                (Coord{4, 0}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_no_vec.back() = Coord{1, 0};
+        perf_no_vec[perf_no_vec.size() - 2] = Coord{3, 0};
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        COMPARE_DURATION_TO_STD_RANGES(
+            "min",
+            range_type,
+            [&]
+            {
+                auto result = STD::min(perf_no);
+                CHECK_EQUAL(result, (Coord{1, 0}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "min_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::min(perf_no, comp_64, &Coord::x);
+                CHECK_EQUAL(result, (Coord{3, 0}));
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_min()
 {
     testSuite.test_case("sample");
@@ -5707,7 +6176,90 @@ void test_min()
     assert(RAH2_NS::ranges::min(v) == 1);
     assert(RAH2_NS::ranges::min(v, RAH2_NS::ranges::greater{}) == 7);
     /// [rah2::ranges::min]
+
+    foreach_range_combination<test_algo<test_min_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_min_element_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool comp(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            auto several_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 4, 4, 4});
+            auto iter = RAH2_NS::ranges::min_element(several_max.begin(), several_max.end());
+            CHECK_EQUAL(iter, several_max.begin());
+            auto one_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4, 4, 3, 4});
+            auto iter2 = RAH2_NS::ranges::min_element(one_max.begin(), one_max.end(), comp);
+            CHECK_EQUAL(iter2, RAH2_NS::ranges::next(one_max.begin(), 2));
+            auto one_value = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{4});
+            auto iter3 = RAH2_NS::ranges::min_element(one_value.begin(), one_value.end());
+            CHECK_EQUAL(iter3, one_value.begin());
+            auto empty_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{});
+            auto iter4 = RAH2_NS::ranges::min_element(empty_max.begin(), empty_max.end());
+            CHECK_EQUAL(iter4, empty_max.end());
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("pred");
+        testSuite.test_case("proj");
+        {
+            auto several_max = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{{4, 0}, {4, 0}, {4, 0}, {4, 0}});
+            auto iter = RAH2_NS::ranges::min_element(several_max, comp_64, &Coord::x);
+            CHECK_EQUAL(iter, several_max.begin());
+            std::vector<Coord> one_max_ = {{4, 0}, {4, 0}, {5, 0}, {4, 0}};
+            auto one_max = make_test_view_adapter<CS, Tag, Sized>(one_max_);
+            auto iter2 = RAH2_NS::ranges::min_element(one_max, comp_64, &Coord::x);
+            CHECK_EQUAL(iter2, RAH2_NS::ranges::next(one_max.begin(), 2));
+            std::vector<Coord> one_value_{{4, 0}};
+            auto one_value = make_test_view_adapter<CS, Tag, Sized>(one_value_);
+            auto iter3 = RAH2_NS::ranges::min_element(one_value, comp_64, &Coord::x);
+            CHECK_EQUAL(iter3, one_value.begin());
+            auto empty_max = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{});
+            auto iter4 = RAH2_NS::ranges::min_element(empty_max, comp_64, &Coord::x);
+            CHECK_EQUAL(iter4, empty_max.end());
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_no_vec.back() = Coord{1, 0};
+        perf_no_vec[perf_no_vec.size() - 2] = Coord{3, 0};
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+        COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            CS == CommonOrSent::Common,
+            "min_element",
+            range_type,
+            [&]
+            {
+                auto result = STD::min_element(fwd(perf_no.begin()), perf_no.end());
+                CHECK_EQUAL(*result, (Coord{1, 0}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "min_element_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::min_element(perf_no, comp_64, &Coord::x);
+                CHECK_EQUAL(*result, (Coord{3, 0}));
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_min_element()
 {
     testSuite.test_case("sample");
@@ -5734,7 +6286,114 @@ void test_min_element()
         assert(*iter == (RAH2_STD::pair<int, int>{0, -5}));
         /// [rah2::ranges::min_element_pred]
     }
+
+    foreach_range_combination<test_algo<test_min_element_>>();
 }
+
+namespace RAH2_NS
+{
+    namespace ranges
+    {
+        template <typename U, typename V>
+        bool operator==(min_max_result<U> const& A, min_max_result<V> const& B)
+        {
+            return A.min == B.min && A.max == B.max;
+        }
+        template <typename U>
+        std::ostream& operator<<(std::ostream& os, min_max_result<U> const& A)
+        {
+            os << "(" << A.min << "," << A.max << ")";
+            return os;
+        }
+    } // namespace ranges
+} // namespace RAH2_NS
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_minmax_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    static bool comp(int a, int b)
+    {
+        return a < b;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        // std::ranges::max only works on ranges (not on iterators)
+        testSuite.test_case("range");
+        {
+            std::vector<int> several_max = {4, 4, 4, 4};
+            using ResultType = decltype(RAH2_NS::ranges::minmax(
+                make_test_view_adapter<CS, Tag, Sized>(several_max)));
+            CHECK_EQUAL(
+                RAH2_NS::ranges::minmax(make_test_view_adapter<CS, Tag, Sized>(several_max)),
+                (ResultType{4, 4}));
+            std::vector<int> one_max = {4, 5, 3, 4};
+            CHECK_EQUAL(
+                RAH2_NS::ranges::minmax(make_test_view_adapter<CS, Tag, Sized>(one_max), comp),
+                (ResultType{3, 5}));
+            std::vector<int> one_value = {4};
+            CHECK_EQUAL(
+                RAH2_NS::ranges::minmax(make_test_view_adapter<CS, Tag, Sized>(one_value)),
+                (ResultType{4, 4}));
+        }
+
+        testSuite.test_case("pred");
+        testSuite.test_case("proj");
+        {
+            std::vector<Coord> several_max{Coord{4, 0}, Coord{4, 0}, Coord{4, 0}, Coord{4, 0}};
+            using ResultType = decltype(RAH2_NS::ranges::minmax(
+                make_test_view_adapter<CS, Tag, Sized>(several_max), comp_64, &Coord::x));
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::minmax(
+                    make_test_view_adapter<CS, Tag, Sized>(several_max), comp_64, &Coord::x)),
+                (ResultType{Coord{4, 0}, Coord{4, 0}}));
+            std::vector<Coord> one_max{Coord{4, 0}, Coord{3, 0}, Coord{5, 0}, Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::minmax(
+                    make_test_view_adapter<CS, Tag, Sized>(one_max), comp_64, &Coord::x)),
+                (ResultType{Coord{5, 0}, Coord{3, 0}}));
+            std::vector<Coord> one_value{Coord{4, 0}};
+            CHECK_EQUAL(
+                (RAH2_NS::ranges::minmax(
+                    make_test_view_adapter<CS, Tag, Sized>(one_value), comp_64, &Coord::x)),
+                (ResultType{Coord{4, 0}, Coord{4, 0}}));
+        }
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> perf_no_vec(1000000 * RELEASE_MULTIPLIER, {2, 0});
+        perf_no_vec.back() = Coord{1, 0};
+        perf_no_vec[perf_no_vec.size() - 2] = Coord{3, 0};
+        auto perf_no = make_test_view_adapter<CS, Tag, Sized>(perf_no_vec);
+
+        COMPARE_DURATION_TO_STD_RANGES(
+            "minmax",
+            range_type,
+            [&]
+            {
+                auto result = STD::minmax(perf_no);
+                CHECK_EQUAL(result.min, (Coord{1, 0}));
+                CHECK_EQUAL(result.max, (Coord{3, 0}));
+            });
+        COMPARE_DURATION_TO_STD_RANGES(
+            "minmax_proj",
+            range_type,
+            [&]
+            {
+                auto result = STD::minmax(perf_no, comp_64, &Coord::x);
+                CHECK_EQUAL(result.min, (Coord{3, 0}));
+                CHECK_EQUAL(result.max, (Coord{1, 0}));
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_minmax()
 {
     testSuite.test_case("sample");
@@ -5764,6 +6423,8 @@ void test_minmax()
     assert(res6.min == 7);
     assert(res6.max == 1);
     /// [rah2::ranges::minmax]
+
+    foreach_range_combination<test_algo<test_minmax_>>();
 }
 void test_minmax_element()
 {

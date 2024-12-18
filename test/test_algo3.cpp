@@ -1243,7 +1243,7 @@ struct test_copy_backward_
         auto const res2 = RAH2_NS::ranges::copy_backward(in.begin(), in.begin(), out.end());
         CHECK_EQUAL(res2.in, in.begin());
         CHECK(res2.out == out.end());
-        CHECK(out == "123456789");
+        CHECK_EQUAL(out, "123456789");
     }
 
     template <bool = true>
