@@ -1725,10 +1725,9 @@ namespace RAH2_NS
                         RAH2_NS::bidirectional_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
                 // requires RAH2_STD::sortable<I, Comp, Proj>
                 constexpr RAH2_NS::ranges::prev_permutation_result<I>
-                operator()(I first, S last, Comp comp = {}, Proj proj = {}) const
+                operator()(I first, S last, Comp&& comp = {}, Proj&& proj = {}) const
                 {
-                    auto pred_proj =
-                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+                    auto pred_proj = details::wrap_pred_proj(RAH2_FWD(comp), RAH2_FWD(proj));
 
                     // check that the sequence has at least two elements
                     if (first == last)
@@ -1745,10 +1744,10 @@ namespace RAH2_NS
                     {
                         auto i1{i};
                         --i;
-                        if (RAH2_INVOKE_2(comp, *i1, *i))
+                        if (RAH2_INVOKE_2(pred_proj, *i1, *i))
                         {
                             auto j{i_last};
-                            while (!RAH2_INVOKE_2(comp, *--j, *i))
+                            while (!RAH2_INVOKE_2(pred_proj, *--j, *i))
                                 ;
                             RAH2_NS::ranges::iter_swap(i, j);
                             RAH2_NS::ranges::reverse(i1, last);
