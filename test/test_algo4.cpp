@@ -6954,21 +6954,21 @@ struct test_prev_permutation_
         testSuite.test_case("iter");
         {
             // Ascending order permutation
-            std::vector<int> vec = {1, 2, 3};
+            std::vector<int> vec = {1, 3, 2};
             auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 3, 2}));
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3}));
         }
         {
             // Ascending order permutation
-            std::vector<int> vec = {3, 2, 1};
+            std::vector<int> vec = {1, 2, 3};
             auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3}));
+            CHECK_EQUAL(rng, (std::vector<int>{3, 2, 1}));
         }
         {
             // Single element vector
@@ -6990,12 +6990,12 @@ struct test_prev_permutation_
         }
         {
             // Duplicate values
-            std::vector<int> vec = {1, 1, 2, 2};
+            std::vector<int> vec = {1, 2, 1, 2};
             auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == true);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 1, 2}));
+            CHECK_EQUAL(rng, (std::vector<int>{1, 1, 2, 2}));
         }
         {
             // All elements identical
@@ -7008,12 +7008,12 @@ struct test_prev_permutation_
         }
         {
             // Large vector
-            std::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8};
+            std::vector<int> vec = {1, 2, 3, 4, 5, 6, 8, 7};
             auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3, 4, 5, 6, 8, 7}));
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8}));
         }
 
         testSuite.test_case("range");
@@ -7027,8 +7027,8 @@ struct test_prev_permutation_
                 Coord{5, 0},
                 Coord{4, 0},
                 Coord{3, 0},
-                Coord{2, 0},
-                Coord{1, 0}};
+                Coord{1, 0},
+                Coord{2, 0}};
             auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
             auto result = RAH2_NS::ranges::prev_permutation(rng, comp_64, &Coord::x);
             CHECK_EQUAL(result.in, rng.end());
@@ -7042,8 +7042,8 @@ struct test_prev_permutation_
                     Coord{5, 0},
                     Coord{4, 0},
                     Coord{3, 0},
-                    Coord{1, 0},
-                    Coord{2, 0}}));
+                    Coord{2, 0},
+                    Coord{1, 0}}));
         }
     }
 
