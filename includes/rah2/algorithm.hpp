@@ -1720,12 +1720,16 @@ namespace RAH2_NS
                     typename I,
                     typename S,
                     class Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::bidirectional_iterator<I> && RAH2_NS::sentinel_for<S, I>>* = nullptr>
                 // requires RAH2_STD::sortable<I, Comp, Proj>
                 constexpr RAH2_NS::ranges::prev_permutation_result<I>
-                operator()(I first, S last, Comp comp = {}) const
+                operator()(I first, S last, Comp comp = {}, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     // check that the sequence has at least two elements
                     if (first == last)
                         return {RAH2_STD::move(first), false};
@@ -1762,13 +1766,17 @@ namespace RAH2_NS
                 template <
                     typename R, // RAH2_NS::bidirectional_range
                     class Comp = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<bidirectional_range<R>>* = nullptr>
                 // requires RAH2_STD::sortable<RAH2_NS::ranges::iterator_t<R>, Comp, Proj>
                 constexpr RAH2_NS::ranges::prev_permutation_result<RAH2_NS::ranges::borrowed_iterator_t<R>>
-                operator()(R&& r, Comp comp = {}) const
+                operator()(R&& r, Comp&& comp = {}, Proj&& proj = {}) const
                 {
                     return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(comp));
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        RAH2_FWD(comp),
+                        RAH2_FWD(proj));
                 }
             };
         } // namespace niebloids

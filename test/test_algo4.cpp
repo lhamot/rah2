@@ -6621,6 +6621,62 @@ struct test_is_permutation_
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<int>{2});
             CHECK(RAH2_NS::ranges::is_permutation(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()) == false);
         }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // Identical ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{1, 0}, Coord{2, 0}, Coord{3, 0}});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{1, 0}, Coord{2, 0}, Coord{3, 0}});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x));
+        }
+        {
+            // Permuted ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{1, 0}, Coord{2, 0}, Coord{3, 0}});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{3, 0}, Coord{1, 0}, Coord{2, 0}});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x));
+        }
+        {
+            // Different sizes
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{1, 0}, Coord{2, 0}, Coord{3, 0}});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{4, 0}, Coord{5, 0}, Coord{6, 0}});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x)
+                == false);
+        }
+        {
+            // Empty ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x));
+        }
+        {
+            // One empty, one non-empty
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(
+                std::vector<Coord>{Coord{1, 0}, Coord{2, 0}, Coord{3, 0}});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x)
+                == false);
+        }
+        {
+            // Single element ranges
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{Coord{1, 0}});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{Coord{1, 0}});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x));
+        }
+        {
+            // Single element mismatch
+            auto rng1 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{Coord{1, 0}});
+            auto rng2 = make_test_view_adapter<CS, Tag, Sized>(std::vector<Coord>{Coord{2, 0}});
+            CHECK(RAH2_NS::ranges::is_permutation(rng1, rng2, equal_64, &Coord::x, &Coord::x)
+                == false);
+        }
+
     }
 
     template <bool = true>
@@ -6657,10 +6713,8 @@ struct test_is_permutation_
                     [&]
                     {
                         bool const result = RAH2_NS::ranges::is_permutation(
-                            rng1.begin(),
-                            rng1.end(),
-                            rng2.begin(),
-                            rng2.end(),
+                            rng1,
+                            rng2,
                             equal_64,
                             &Coord::x,
                             &Coord::x);
@@ -6693,6 +6747,154 @@ size_t factorial(size_t n)
     return f;
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_next_permutation_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // Ascending order permutation
+            std::vector<int> vec = {1, 2, 3};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 3, 2}));
+        }
+        {
+            // Ascending order permutation
+            std::vector<int> vec = {3, 2, 1};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3}));
+        }
+        {
+            // Single element vector
+            std::vector<int> vec = {1};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{1}));
+        }
+        {
+            // Empty vector
+            std::vector<int> vec = {};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{}));
+        }
+        {
+            // Duplicate values
+            std::vector<int> vec = {1, 1, 2, 2};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == true);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 1, 2}));
+        }
+        {
+            // All elements identical
+            std::vector<int> vec = {1, 1, 1};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 1, 1}));
+        }
+        {
+            // Large vector
+            std::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3, 4, 5, 6, 8, 7}));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // range/proj
+            std::vector<Coord> vec = {
+                Coord{8, 0},
+                Coord{7, 0},
+                Coord{6, 0},
+                Coord{5, 0},
+                Coord{4, 0},
+                Coord{3, 0},
+                Coord{2, 0},
+                Coord{1, 0}};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::next_permutation(rng, comp_64, &Coord::x);
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found);
+            CHECK_EQUAL(
+                rng,
+                (std::vector<Coord>{
+                    Coord{8, 0},
+                    Coord{7, 0},
+                    Coord{6, 0},
+                    Coord{5, 0},
+                    Coord{4, 0},
+                    Coord{3, 0},
+                    Coord{1, 0},
+                    Coord{2, 0}}));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> vec1;
+        constexpr auto VecSize = 1000000;
+        for (intptr_t i = 0; i < VecSize; ++i)
+        {
+            vec1.push_back(Coord{i, 0});
+        }
+        RAH2_STD::swap(vec1[500000], vec1[1000000 - 1]);
+        auto rng1 = make_test_view_adapter<CS, Tag, Sized>(vec1);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "next_permutation",
+                range_type,
+                [&]
+                {
+                    auto const result = RAH2_NS::ranges::next_permutation(
+                        fwd(rng1.begin()), rng1.end());
+                    DONT_OPTIM(result);
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "next_permutation_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto const result = RAH2_NS::ranges::next_permutation(
+                            rng1,
+                            comp_64,
+                            &Coord::x);
+                        CHECK(result.found);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_next_permutation()
 {
     testSuite.test_case("sample");
@@ -6734,7 +6936,156 @@ void test_next_permutation()
     } while (RAH2_NS::ranges::next_permutation(z, RAH2_NS::ranges::greater{}).found);
     assert(allPermutation3.size() == factorial(s.size()));
     /// [rah2::ranges::next_permutation]
+
+    foreach_range_combination<test_algo<test_next_permutation_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_prev_permutation_
+{
+    static bool comp_64(intptr_t a, intptr_t b)
+    {
+        return b < a;
+    }
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            // Ascending order permutation
+            std::vector<int> vec = {1, 2, 3};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 3, 2}));
+        }
+        {
+            // Ascending order permutation
+            std::vector<int> vec = {3, 2, 1};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3}));
+        }
+        {
+            // Single element vector
+            std::vector<int> vec = {1};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{1}));
+        }
+        {
+            // Empty vector
+            std::vector<int> vec = {};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{}));
+        }
+        {
+            // Duplicate values
+            std::vector<int> vec = {1, 1, 2, 2};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == true);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 1, 2}));
+        }
+        {
+            // All elements identical
+            std::vector<int> vec = {1, 1, 1};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found == false);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 1, 1}));
+        }
+        {
+            // Large vector
+            std::vector<int> vec = {1, 2, 3, 4, 5, 6, 7, 8};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found);
+            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3, 4, 5, 6, 8, 7}));
+        }
+
+        testSuite.test_case("range");
+        testSuite.test_case("proj");
+        {
+            // range/proj
+            std::vector<Coord> vec = {
+                Coord{8, 0},
+                Coord{7, 0},
+                Coord{6, 0},
+                Coord{5, 0},
+                Coord{4, 0},
+                Coord{3, 0},
+                Coord{2, 0},
+                Coord{1, 0}};
+            auto rng = make_test_view_adapter<CS, Tag, Sized>(vec);
+            auto result = RAH2_NS::ranges::prev_permutation(rng, comp_64, &Coord::x);
+            CHECK_EQUAL(result.in, rng.end());
+            CHECK(result.found);
+            CHECK_EQUAL(
+                rng,
+                (std::vector<Coord>{
+                    Coord{8, 0},
+                    Coord{7, 0},
+                    Coord{6, 0},
+                    Coord{5, 0},
+                    Coord{4, 0},
+                    Coord{3, 0},
+                    Coord{1, 0},
+                    Coord{2, 0}}));
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        std::vector<Coord> vec1;
+        constexpr auto VecSize = 1000000;
+        for (intptr_t i = 0; i < VecSize; ++i)
+        {
+            vec1.push_back(Coord{i, 0});
+        }
+        RAH2_STD::swap(vec1[500000], vec1[1000000 - 1]);
+        auto rng1 = make_test_view_adapter<CS, Tag, Sized>(vec1);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "prev_permutation",
+                range_type,
+                [&]
+                {
+                    auto const result =
+                        RAH2_NS::ranges::prev_permutation(fwd(rng1.begin()), rng1.end());
+                    DONT_OPTIM(result);
+                });
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "prev_permutation_proj",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto const result =
+                            RAH2_NS::ranges::prev_permutation(rng1, comp_64, &Coord::x);
+                        CHECK(result.found);
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_prev_permutation()
 {
     testSuite.test_case("sample");
@@ -6775,6 +7126,8 @@ void test_prev_permutation()
     } while (RAH2_NS::ranges::prev_permutation(z, RAH2_NS::ranges::greater{}).found);
     assert(allPermutation3.size() == factorial(s.size()));
     /// [rah2::ranges::prev_permutation]
+
+    foreach_range_combination<test_algo<test_prev_permutation_>>();
 }
 void test_iota()
 {
