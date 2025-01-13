@@ -5175,12 +5175,16 @@ namespace RAH2_NS
                     typename BidirectionalIterator,
                     typename Sentinel,
                     typename Compare = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<
                         bidirectional_iterator<BidirectionalIterator>
                         && sentinel_for<Sentinel, BidirectionalIterator>>* = nullptr>
-                next_permutation_result<BidirectionalIterator>
-                operator()(BidirectionalIterator first, Sentinel last, Compare compare = {}) const
+                next_permutation_result<BidirectionalIterator> operator()(
+                    BidirectionalIterator first, Sentinel last, Compare compare = {}, Proj proj = {}) const
                 {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(compare), RAH2_STD::move(proj));
+
                     if (first != last) // If there is anything in the range...
                     {
                         auto i = RAH2_NS::ranges::next(first, last);
@@ -5191,11 +5195,11 @@ namespace RAH2_NS
                             {
                                 BidirectionalIterator ii(i), j;
 
-                                if (compare(*--i, *ii)) // Find two consecutive values where the first is less than the second.
+                                if (pred_proj(*--i, *ii)) // Find two consecutive values where the first is less than the second.
                                 {
-                                    j = last;
-                                    while (!compare(
-                                        *i, *--j)) // Find the final value that's greater than the first (it may be equal to the second).
+                                    j = lasti;
+                                    // Find the final value that's greater than the first (it may be equal to the second).
+                                    while (!pred_proj(*i, *--j))
                                     {
                                     }
                                     RAH2_NS::ranges::iter_swap(i, j); // Swap the first and the final.
@@ -5207,26 +5211,34 @@ namespace RAH2_NS
                                 if (i == first) // There are no two consecutive values where the first is less than the second, meaning the range is in reverse order. The reverse ordered range is always the last permutation.
                                 {
                                     RAH2_NS::ranges::reverse(first, last);
-                                    break; // We are done.
+                                    return {RAH2_STD::move(lasti), false}; // We are done.
                                 }
                             }
                         }
+                        else
+                        {
+                            return {RAH2_STD::move(lasti), false};
+                        }
                     }
-
-                    return {RAH2_STD::move(first), false};
+                    else
+                    {
+                        return {RAH2_STD::move(first), false};
+                    }
                 }
 
                 template <
                     typename BidirectionalRange,
                     typename Compare = RAH2_NS::ranges::less,
+                    typename Proj = RAH2_NS::details::identity,
                     RAH2_STD::enable_if_t<bidirectional_range<BidirectionalRange>>* = nullptr>
                 constexpr next_permutation_result<borrowed_iterator_t<BidirectionalRange>>
-                operator()(BidirectionalRange&& range, Compare compare = {}) const
+                operator()(BidirectionalRange&& range, Compare&& compare = {}, Proj&& proj = {}) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(range),
                         RAH2_NS::ranges::end(range),
-                        RAH2_STD::move(compare));
+                        RAH2_STD::forward<Compare>(compare),
+                        RAH2_STD::forward<Proj>(proj));
                 }
             };
         } // namespace niebloids
