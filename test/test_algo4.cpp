@@ -5578,7 +5578,7 @@ struct test_push_heap_
         RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {2, 0});
         perf_.reserve(perf_.size() * 2);
         auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
-        constexpr auto UnsizedMult = Sized ? 1000 : 1;
+        static constexpr auto UnsizedMult = Sized ? 1000 : 1;
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -5698,7 +5698,7 @@ struct test_pop_heap_
 
         RAH2_STD::vector<Coord> perf_(1000000 * RELEASE_MULTIPLIER, {2, 0});
         auto perf = make_test_view_adapter<CS, Tag, Sized>(perf_);
-        constexpr auto UnsizedMult = Sized ? 1000 : 1;
+        static constexpr auto UnsizedMult = Sized ? 1000 : 1;
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -6766,7 +6766,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 3, 2}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 3, 2}));
         }
         {
             // Ascending order permutation
@@ -6775,7 +6775,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 2, 3}));
         }
         {
             // Single element vector
@@ -6784,7 +6784,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{1}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1}));
         }
         {
             // Empty vector
@@ -6793,7 +6793,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{}));
         }
         {
             // Duplicate values
@@ -6802,7 +6802,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == true);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 1, 2}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 2, 1, 2}));
         }
         {
             // All elements identical
@@ -6811,7 +6811,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 1, 1}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 1, 1}));
         }
         {
             // Large vector
@@ -6820,7 +6820,7 @@ struct test_next_permutation_
             auto result = RAH2_NS::ranges::next_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3, 4, 5, 6, 8, 7}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 8, 7}));
         }
 
         testSuite.test_case("range");
@@ -6959,7 +6959,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 2, 3}));
         }
         {
             // Ascending order permutation
@@ -6968,7 +6968,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{3, 2, 1}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{3, 2, 1}));
         }
         {
             // Single element vector
@@ -6977,7 +6977,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{1}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1}));
         }
         {
             // Empty vector
@@ -6986,7 +6986,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{}));
         }
         {
             // Duplicate values
@@ -6995,7 +6995,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == true);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 1, 2, 2}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 1, 2, 2}));
         }
         {
             // All elements identical
@@ -7004,7 +7004,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found == false);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 1, 1}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 1, 1}));
         }
         {
             // Large vector
@@ -7013,7 +7013,7 @@ struct test_prev_permutation_
             auto result = RAH2_NS::ranges::prev_permutation(rng.begin(), rng.end());
             CHECK_EQUAL(result.in, rng.end());
             CHECK(result.found);
-            CHECK_EQUAL(rng, (std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8}));
+            CHECK_EQUAL(rng, (RAH2_STD::vector<int>{1, 2, 3, 4, 5, 6, 7, 8}));
         }
 
         testSuite.test_case("range");
