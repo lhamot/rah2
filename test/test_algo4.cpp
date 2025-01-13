@@ -6842,7 +6842,7 @@ struct test_next_permutation_
             CHECK(result.found);
             CHECK_EQUAL(
                 rng,
-                (std::vector<Coord>{
+                (RAH2_STD::vector<Coord>{
                     Coord{8, 0},
                     Coord{7, 0},
                     Coord{6, 0},
