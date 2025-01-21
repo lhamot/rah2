@@ -7124,6 +7124,75 @@ void test_prev_permutation()
 
     foreach_range_combination<test_algo<test_prev_permutation_>>();
 }
+
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_iota_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<int> out_{0, 0, 0, 4, 5};
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+        testSuite.test_case("iter");
+        auto result = RAH2_NS::ranges::iota(out.begin(), out.end(), 12);
+        CHECK(result.out == out.end());
+        CHECK(out == (RAH2_STD::vector<int>{12, 13, 14, 15, 16}));
+
+        testSuite.test_case("range");
+        auto result2 = RAH2_NS::ranges::iota(out, 72);
+        CHECK(result2.out == out.end());
+        CHECK(out == (RAH2_STD::vector<int>{72, 73, 74, 75, 76}));
+
+        testSuite.test_case("empty");
+        {
+            RAH2_STD::vector<int> empty_out_;
+            auto empty_out = make_test_view_adapter<CS, Tag, Sized>(empty_out_);
+
+            auto result3 = RAH2_NS::ranges::iota(empty_out.begin(), empty_out.end(), 169);
+            CHECK(result3.out == empty_out.end());
+            CHECK(empty_out.empty());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        out_.emplace_back();
+        out_.emplace_back();
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_11_AND_RANGES_23(
+                CS == Common,
+                "copy_iter",
+                range_type,
+                (
+                    [&]
+                {
+                    STD::iota(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out), 16);
+                    DONT_OPTIM(*out.begin());
+                }));
+        }
+
+        {
+            COMPARE_DURATION_TO_STD_RANGES_23(
+                "copy_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::iota(out, 27);
+                        CHECK(result2.out == out.end());
+                    }));
+        }
+    }
+    // Only use an output iterator, so no need to test several input iterator types
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
+};
 void test_iota()
 {
     testSuite.test_case("sample");
@@ -7134,6 +7203,8 @@ void test_iota()
     RAH2_NS::ranges::iota(list, 0);
     assert(list == (RAH2_STD::list<int>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::ranges::iota]
+
+    foreach_range_combination<test_algo<test_iota_>>();
 }
 void test_fold_left()
 {
