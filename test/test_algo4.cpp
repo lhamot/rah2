@@ -7215,15 +7215,17 @@ struct test_fold_left_
         testSuite.test_case("range");
         RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
         auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
-        CHECK_EQUAL(RAH2_NS::ranges::fold_left(intsRange, 3, std::plus<int>()), 18);
+        CHECK_EQUAL(RAH2_NS::ranges::fold_left(intsRange, 3, RAH2_STD::plus<int>()), 18);
 
-        RAH2_STD::vector<std::string> stringRange_({"b", "c", "d"});
+        RAH2_STD::vector<RAH2_STD::string> stringRange_({"b", "c", "d"});
         auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
-        CHECK_EQUAL(RAH2_NS::ranges::fold_left(stringRange, "a", std::plus<std::string>()), "abcd");
+        CHECK_EQUAL(
+            RAH2_NS::ranges::fold_left(stringRange, "a", RAH2_STD::plus<RAH2_STD::string>()), "abcd");
 
         testSuite.test_case("iter");
         CHECK_EQUAL(
-            RAH2_NS::ranges::fold_left(intsRange.begin(), intsRange.end(), 3, std::plus<int>()), 18);
+            RAH2_NS::ranges::fold_left(intsRange.begin(), intsRange.end(), 3, RAH2_STD::plus<int>()),
+            18);
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -7239,10 +7241,10 @@ struct test_fold_left_
             {
                 for (size_t i = 0; i < 1000 * RELEASE_MULTIPLIER; ++i)
                 {
-                    const auto result =
-                        STD::fold_left(fwd(intsRange.begin()), intsRange.end(), 2, std::plus<int>());
+                    const auto result = STD::fold_left(
+                        fwd(intsRange.begin()), intsRange.end(), 2, RAH2_STD::plus<int>());
                     assert(result == vecSize + 2);
-                    const auto result2 = STD::fold_left(intsRange, 2, std::plus<int>());
+                    const auto result2 = STD::fold_left(intsRange, 2, RAH2_STD::plus<int>());
                     assert(result2 == vecSize + 2);
                 }
             });
@@ -7269,24 +7271,27 @@ struct test_fold_left_first_
         testSuite.test_case("range");
         RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
         auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
-        CHECK_EQUAL(*RAH2_NS::ranges::fold_left_first(intsRange, std::plus<int>()), 15);
+        CHECK_EQUAL(*RAH2_NS::ranges::fold_left_first(intsRange, RAH2_STD::plus<int>()), 15);
 
-        RAH2_STD::vector<std::string> stringRange_({"a", "b", "c", "d"});
+        RAH2_STD::vector<RAH2_STD::string> stringRange_({"a", "b", "c", "d"});
         auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
-        auto result = *RAH2_NS::ranges::fold_left_first(stringRange, std::plus<std::string>());
+        auto result =
+            *RAH2_NS::ranges::fold_left_first(stringRange, RAH2_STD::plus<RAH2_STD::string>());
         CHECK_EQUAL(result, "abcd");
-        auto result2 = *RAH2_NS::ranges::fold_left_first(stringRange, std::plus<std::string>());
+        auto result2 =
+            *RAH2_NS::ranges::fold_left_first(stringRange, RAH2_STD::plus<RAH2_STD::string>());
         CHECK_EQUAL(result2, "abcd");
 
         testSuite.test_case("iter");
         CHECK_EQUAL(
-            *RAH2_NS::ranges::fold_left_first(intsRange.begin(), intsRange.end(), std::plus<int>()),
+            *RAH2_NS::ranges::fold_left_first(
+                intsRange.begin(), intsRange.end(), RAH2_STD::plus<int>()),
             15);
 
         testSuite.test_case("empty");
         RAH2_STD::vector<int> emptyVec;
         auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(emptyVec);
-        CHECK(RAH2_NS::ranges::fold_left_first(emptyRange, std::plus<int>()) == nullptr);
+        CHECK(RAH2_NS::ranges::fold_left_first(emptyRange, RAH2_STD::plus<int>()) == nullptr);
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -7304,9 +7309,9 @@ struct test_fold_left_first_
                 {
 
                     const auto result = *STD::fold_left_first(
-                        fwd(intsRange.begin()), intsRange.end(), std::plus<int>());
+                        fwd(intsRange.begin()), intsRange.end(), RAH2_STD::plus<int>());
                     assert(result == vecSize);
-                    const auto result2 = *STD::fold_left_first(intsRange, std::plus<int>());
+                    const auto result2 = *STD::fold_left_first(intsRange, RAH2_STD::plus<int>());
                     assert(result2 == vecSize);
                 }
             });
