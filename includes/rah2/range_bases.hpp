@@ -2526,11 +2526,11 @@ namespace RAH2_NS
                 reset();
             }
 
-            friend bool operator==(movable_box const& box, nullptr_t)
+            friend bool operator==(movable_box const& box, RAH2_STD::nullptr_t)
             {
                 return !box.is_allocated_;
             }
-            friend bool operator==(nullptr_t, movable_box const& box)
+            friend bool operator==(nullptr_t, RAH2_STD::movable_box const& box)
             {
                 return !box.is_allocated_;
             }
