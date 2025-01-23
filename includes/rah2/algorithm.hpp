@@ -65,7 +65,7 @@ namespace RAH2_NS
                         RAH2_STD::move(first), last, RAH2_NS::iter_value_t<I>(*first), f));
                     if (first == last)
                         return RAH2_NS::details::movable_box<U>();
-                    RAH2_NS::details::movable_box<U> init(RAH2_STD::move(*first));
+                    RAH2_NS::details::movable_box<U> init(*first);
                     for (++first; first != last; ++first)
                         *init = RAH2_INVOKE_2(f, RAH2_STD::move(*init), *first);
                     return init;

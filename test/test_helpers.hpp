@@ -992,8 +992,7 @@ template <
     CommonOrSent Sentinel,
     typename Cat,
     bool Sized,
-    template <CommonOrSent, typename, bool>
-    class MakeR,
+    template <CommonOrSent, typename, bool> class MakeR,
     typename Check>
 struct call_on_range_if_true
 {

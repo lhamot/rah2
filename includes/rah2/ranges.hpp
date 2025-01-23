@@ -1179,7 +1179,8 @@ namespace RAH2_NS
                     auto operator()(P&& pred) const
                     {
                         return make_pipeable(
-                            [this, pred = RAH2_STD::forward<P>(pred)](auto&& range) {
+                            [this, pred = RAH2_STD::forward<P>(pred)](auto&& range)
+                            {
                                 return (*this)(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
                             });
@@ -1343,7 +1344,8 @@ namespace RAH2_NS
                     constexpr auto operator()(F&& func) const
                     {
                         return make_pipeable(
-                            [this, func = RAH2_STD::forward<F>(func)](auto&& range) {
+                            [this, func = RAH2_STD::forward<F>(func)](auto&& range)
+                            {
                                 return (*this)(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
                             });
@@ -1670,7 +1672,8 @@ namespace RAH2_NS
                     auto operator()(P&& predicate) const
                     {
                         return make_pipeable(
-                            [this, pred = RAH2_STD::forward<P>(predicate)](auto&& range) {
+                            [this, pred = RAH2_STD::forward<P>(predicate)](auto&& range)
+                            {
                                 return (*this)(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(pred));
                             });
@@ -1966,7 +1969,8 @@ namespace RAH2_NS
                     auto operator()(P&& pattern) const
                     {
                         return make_pipeable(
-                            [p = RAH2_STD::forward<P>(pattern)](auto&& range) {
+                            [p = RAH2_STD::forward<P>(pattern)](auto&& range)
+                            {
                                 return split(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(p));
                             });
@@ -3170,7 +3174,8 @@ namespace RAH2_NS
                 auto const min_size = details::apply(details::compute_min_size(), sizes);
                 return iterator(details::transform_each(
                     bases_,
-                    [min_size](auto&& r) {
+                    [min_size](auto&& r)
+                    {
                         return RAH2_NS::ranges::begin(r)
                                + static_cast<range_difference_t<decltype(r)>>(min_size);
                     }));
@@ -3370,7 +3375,8 @@ namespace RAH2_NS
                     this,
                     details::transform_each(
                         bases_,
-                        [min_size](auto&& r) {
+                        [min_size](auto&& r)
+                        {
                             return RAH2_NS::ranges::begin(r)
                                    + static_cast<range_difference_t<decltype(r)>>(min_size);
                         }));
@@ -3808,7 +3814,8 @@ namespace RAH2_NS
                     auto operator()(F&& func) const
                     {
                         return make_pipeable(
-                            [this, func = RAH2_STD::forward<F>(func)](auto&& range) {
+                            [this, func = RAH2_STD::forward<F>(func)](auto&& range)
+                            {
                                 return (*this)(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
                             });
@@ -4931,7 +4938,8 @@ namespace RAH2_NS
                     auto operator()(R2&& range2) const
                     {
                         return make_pipeable(
-                            [this, r2 = all(range2)](auto&& range) {
+                            [this, r2 = all(range2)](auto&& range)
+                            {
                                 return (*this)(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(r2));
                             });
@@ -4958,7 +4966,8 @@ namespace RAH2_NS
                     auto operator()(F&& func) const
                     {
                         return make_pipeable(
-                            [this, func = RAH2_STD::forward<F>(func)](auto&& range) {
+                            [this, func = RAH2_STD::forward<F>(func)](auto&& range)
+                            {
                                 return (*this)(
                                     RAH2_STD::forward<decltype(range)>(range), RAH2_STD::move(func));
                             });
