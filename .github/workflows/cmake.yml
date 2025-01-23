@@ -15,8 +15,8 @@ jobs:
         compiler: [ 
             {os: windows-latest, cpp: msvc, c: msvc }, 
             {os: macos-latest, cpp: clang++, c: clang} ,
-            {os: ubuntu-22.04, cpp: clang++-18, c: clang-18},
-            {os: ubuntu-22.04, cpp: g++, c: gcc} 
+            {os: ubuntu-24.04, cpp: clang++-19, c: clang-19},
+            {os: ubuntu-24.04, cpp: g++, c: gcc} 
         ]
         
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
@@ -32,7 +32,7 @@ jobs:
       run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 18 all
+          sudo ./llvm.sh 19 all
           rm llvm.sh
 
     - name: Configure CMake
