@@ -2526,6 +2526,15 @@ namespace RAH2_NS
                 reset();
             }
 
+            friend bool operator==(movable_box const& box, nullptr_t)
+            {
+                return !box.is_allocated_;
+            }
+            friend bool operator==(nullptr_t, movable_box const& box)
+            {
+                return !box.is_allocated_;
+            }
+
             bool has_value() const
             {
                 return is_allocated_;
