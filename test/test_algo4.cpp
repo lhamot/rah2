@@ -7209,6 +7209,15 @@ void test_iota()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_fold_left_
 {
+    struct divide
+    {
+        template <typename T, typename U>
+        constexpr auto operator()(T const& _Left, U const& _Right) const
+        {
+            return _Left / _Right;
+        }
+    };
+
     template <bool = true>
     void test()
     {
@@ -7216,6 +7225,10 @@ struct test_fold_left_
         RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
         auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
         CHECK_EQUAL(RAH2_NS::ranges::fold_left(intsRange, 3, RAH2_STD::plus<int>()), 18);
+
+        RAH2_STD::vector<int> intsVec2({2, 2, 2});
+        auto intsRange2 = make_test_view_adapter<CS, Tag, Sized>(intsVec2);
+        CHECK_EQUAL(RAH2_NS::ranges::fold_left(intsRange2, 16, divide()), 2);
 
         RAH2_STD::vector<RAH2_STD::string> stringRange_({"b", "c", "d"});
         auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
@@ -7265,6 +7278,15 @@ void test_fold_left()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_fold_left_first_
 {
+    struct divide
+    {
+        template <typename T, typename U>
+        constexpr auto operator()(T const& _Left, U const& _Right) const
+        {
+            return _Left / _Right;
+        }
+    };
+
     template <bool = true>
     void test()
     {
@@ -7272,6 +7294,10 @@ struct test_fold_left_first_
         RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
         auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
         CHECK_EQUAL(*RAH2_NS::ranges::fold_left_first(intsRange, RAH2_STD::plus<int>()), 15);
+
+        RAH2_STD::vector<int> intsVec2({16, 2, 2, 2});
+        auto intsRange2 = make_test_view_adapter<CS, Tag, Sized>(intsVec2);
+        CHECK_EQUAL(*RAH2_NS::ranges::fold_left_first(intsRange2, divide()), 2);
 
         RAH2_STD::vector<RAH2_STD::string> stringRange_({"a", "b", "c", "d"});
         auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
@@ -7343,6 +7369,66 @@ void test_fold_left_first()
 
     foreach_range_combination<test_algo<test_fold_left_first_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_fold_right_
+{
+    struct divide
+    {
+        template <typename T, typename U>
+        constexpr auto operator()(T const& _Left, U const& _Right) const
+        {
+            return _Left / _Right;
+        }
+    };
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("range");
+        RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        CHECK_EQUAL(RAH2_NS::ranges::fold_right(intsRange, 3, RAH2_STD::plus<int>()), 18);
+
+        RAH2_STD::vector<int> intsVec2({4, 4, 4, 4, 4});
+        auto intsRange2 = make_test_view_adapter<CS, Tag, Sized>(intsVec2);
+        CHECK_EQUAL(RAH2_NS::ranges::fold_right(intsRange2, 2, divide()), 2);
+
+        RAH2_STD::vector<RAH2_STD::string> stringRange_({"b", "c", "d"});
+        auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
+        CHECK_EQUAL(
+            RAH2_NS::ranges::fold_right(stringRange, "e", RAH2_STD::plus<RAH2_STD::string>()),
+            "bcde");
+
+        testSuite.test_case("iter");
+        CHECK_EQUAL(
+            RAH2_NS::ranges::fold_right(intsRange.begin(), intsRange.end(), 3, RAH2_STD::plus<int>()),
+            18);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        constexpr auto vecSize = 1000000;
+        RAH2_STD::vector<int> intsVec(1, vecSize);
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        testSuite.test_case("perf");
+        COMPARE_DURATION_TO_STD_RANGES_23(
+            "fold_right",
+            range_type,
+            [&]
+            {
+                for (size_t i = 0; i < 1000 * RELEASE_MULTIPLIER; ++i)
+                {
+                    const auto result = STD::fold_right(
+                        fwd(intsRange.begin()), intsRange.end(), 2, RAH2_STD::plus<int>());
+                    assert(result == vecSize + 2);
+                    const auto result2 = STD::fold_right(intsRange, 2, RAH2_STD::plus<int>());
+                    assert(result2 == vecSize + 2);
+                }
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_fold_right()
 {
     testSuite.test_case("sample");
@@ -7368,7 +7454,70 @@ void test_fold_right()
         data | RAH2_NS::ranges::views::values, 2.0f, RAH2_STD::multiplies<>());
     assert(r4 == 42);
     /// [rah2::ranges::fold_right]
+
+    foreach_range_combination<test_algo<test_fold_right_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_fold_right_last_
+{
+    struct divide
+    {
+        template <typename T, typename U>
+        constexpr auto operator()(T const& _Left, U const& _Right) const
+        {
+            return _Left / _Right;
+        }
+    };
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("range");
+        RAH2_STD::vector<int> intsVec({4, 4, 4, 3, 3});
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        CHECK_EQUAL(*RAH2_NS::ranges::fold_right_last(intsRange, RAH2_STD::plus<int>()), 18);
+
+        RAH2_STD::vector<int> intsVec2({4, 4, 4, 4, 4, 2});
+        auto intsRange2 = make_test_view_adapter<CS, Tag, Sized>(intsVec2);
+        CHECK_EQUAL(*RAH2_NS::ranges::fold_right_last(intsRange2, divide()), 2);
+
+        RAH2_STD::vector<RAH2_STD::string> stringRange_({"b", "c", "d", "e"});
+        auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
+        CHECK_EQUAL(
+            *RAH2_NS::ranges::fold_right_last(stringRange, RAH2_STD::plus<RAH2_STD::string>()),
+            "bcde");
+
+        testSuite.test_case("iter");
+        CHECK_EQUAL(
+            *RAH2_NS::ranges::fold_right_last(
+                intsRange.begin(), intsRange.end(), RAH2_STD::plus<int>()),
+            18);
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        constexpr auto vecSize = 1000000;
+        RAH2_STD::vector<int> intsVec(1, vecSize);
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        testSuite.test_case("perf");
+        COMPARE_DURATION_TO_STD_RANGES_23(
+            "fold_right_last",
+            range_type,
+            [&]
+            {
+                for (size_t i = 0; i < 1000 * RELEASE_MULTIPLIER; ++i)
+                {
+                    const auto result = *STD::fold_right_last(
+                        fwd(intsRange.begin()), intsRange.end(), RAH2_STD::plus<int>());
+                    assert(result == vecSize);
+                    const auto result2 = *STD::fold_right_last(intsRange, RAH2_STD::plus<int>());
+                    assert(result2 == vecSize);
+                }
+            });
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::bidirectional_iterator_tag>;
+};
 void test_fold_right_last()
 {
     testSuite.test_case("sample");
@@ -7393,7 +7542,76 @@ void test_fold_right_last()
         data | RAH2_NS::ranges::views::values, RAH2_STD::multiplies<>());
     assert(*r4 == 42);
     /// [rah2::ranges::fold_right_last]
+
+    foreach_range_combination<test_algo<test_fold_right_last_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_fold_left_with_iter_
+{
+    struct divide
+    {
+        template <typename T, typename U>
+        constexpr auto operator()(T const& _Left, U const& _Right) const
+        {
+            return _Left / _Right;
+        }
+    };
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("range");
+        RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        auto result = RAH2_NS::ranges::fold_left_with_iter(intsRange, 3, RAH2_STD::plus<int>());
+        CHECK_EQUAL(result.value, 18);
+        CHECK_EQUAL(result.in, intsRange.end());
+
+        RAH2_STD::vector<int> intsVec2({2, 2, 2});
+        auto intsRange2 = make_test_view_adapter<CS, Tag, Sized>(intsVec2);
+        auto result2 = RAH2_NS::ranges::fold_left_with_iter(intsRange2, 16, divide());
+        CHECK_EQUAL(result2.value, 2);
+        CHECK_EQUAL(result2.in, intsRange2.end());
+
+        RAH2_STD::vector<RAH2_STD::string> stringRange_({"b", "c", "d"});
+        auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
+        auto result3 = RAH2_NS::ranges::fold_left_with_iter(
+            stringRange, "a", RAH2_STD::plus<RAH2_STD::string>());
+        CHECK_EQUAL(result3.value, "abcd");
+        CHECK_EQUAL(result3.in, stringRange.end());
+
+        testSuite.test_case("iter");
+        auto result4 = RAH2_NS::ranges::fold_left_with_iter(
+            intsRange.begin(), intsRange.end(), 3, RAH2_STD::plus<int>());
+        CHECK_EQUAL(result4.value, 18);
+        CHECK_EQUAL(result4.in, intsRange.end());
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        constexpr auto vecSize = 1000000;
+        RAH2_STD::vector<int> intsVec(1, vecSize);
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        testSuite.test_case("perf");
+        COMPARE_DURATION_TO_STD_RANGES_23(
+            "fold_left_with_iter",
+            range_type,
+            [&]
+            {
+                for (size_t i = 0; i < 1000 * RELEASE_MULTIPLIER; ++i)
+                {
+                    const auto result = STD::fold_left_with_iter(
+                        fwd(intsRange.begin()), intsRange.end(), 2, RAH2_STD::plus<int>());
+                    assert(result.value == vecSize + 2);
+                    const auto result2 =
+                        STD::fold_left_with_iter(intsRange, 2, RAH2_STD::plus<int>());
+                    assert(result2.value == vecSize + 2);
+                }
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_fold_left_with_iter()
 {
     testSuite.test_case("sample");
@@ -7424,7 +7642,88 @@ void test_fold_left_with_iter()
     assert(val.value == 42);
     assert(val.in == v.end());
     /// [rah2::ranges::fold_left_with_iter]
+
+    foreach_range_combination<test_algo<test_fold_left_with_iter_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_fold_left_first_with_iter_
+{
+    struct divide
+    {
+        template <typename T, typename U>
+        constexpr auto operator()(T const& _Left, U const& _Right) const
+        {
+            return _Left / _Right;
+        }
+    };
+
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("range");
+        RAH2_STD::vector<int> intsVec({4, 4, 4, 3});
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        auto result = RAH2_NS::ranges::fold_left_first_with_iter(intsRange, RAH2_STD::plus<int>());
+        CHECK_EQUAL(*result.value, 15);
+        CHECK_EQUAL(result.in, intsRange.end());
+
+        RAH2_STD::vector<int> intsVec2({16, 2, 2, 2});
+        auto intsRange2 = make_test_view_adapter<CS, Tag, Sized>(intsVec2);
+        auto result2 = RAH2_NS::ranges::fold_left_first_with_iter(intsRange2, divide());
+        CHECK_EQUAL(*result2.value, 2);
+        CHECK_EQUAL(result2.in, intsRange2.end());
+
+        RAH2_STD::vector<RAH2_STD::string> stringRange_({"a", "b", "c", "d"});
+        auto stringRange = make_test_view_adapter<CS, Tag, Sized>(stringRange_);
+        auto result3 = RAH2_NS::ranges::fold_left_first_with_iter(
+            stringRange, RAH2_STD::plus<RAH2_STD::string>());
+        CHECK_EQUAL(*result3.value, "abcd");
+        CHECK_EQUAL(result3.in, stringRange.end());
+        auto result4 = RAH2_NS::ranges::fold_left_first_with_iter(
+            stringRange, RAH2_STD::plus<RAH2_STD::string>());
+        CHECK_EQUAL(*result4.value, "abcd");
+        CHECK_EQUAL(result4.in, stringRange.end());
+
+        testSuite.test_case("iter");
+        auto result5 = RAH2_NS::ranges::fold_left_first_with_iter(
+            intsRange.begin(), intsRange.end(), RAH2_STD::plus<int>());
+        CHECK_EQUAL(*result5.value, 15);
+        CHECK_EQUAL(result5.in, intsRange.end());
+
+        testSuite.test_case("empty");
+        RAH2_STD::vector<int> emptyVec;
+        auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(emptyVec);
+        auto result6 = RAH2_NS::ranges::fold_left_first_with_iter(emptyRange, RAH2_STD::plus<int>());
+        CHECK(result6.value == nullptr);
+        CHECK_EQUAL(result6.in, emptyRange.end());
+    }
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        constexpr auto vecSize = 1000000;
+        RAH2_STD::vector<int> intsVec(1, vecSize);
+        auto intsRange = make_test_view_adapter<CS, Tag, Sized>(intsVec);
+        testSuite.test_case("perf");
+        COMPARE_DURATION_TO_STD_RANGES_23(
+            "fold_left_first_with_iter",
+            range_type,
+            [&]
+            {
+                for (size_t i = 0; i < 1000 * RELEASE_MULTIPLIER; ++i)
+                {
+
+                    const auto result = STD::fold_left_first_with_iter(
+                        fwd(intsRange.begin()), intsRange.end(), RAH2_STD::plus<int>());
+                    CHECK_EQUAL(*result.value, vecSize);
+                    const auto result2 =
+                        STD::fold_left_first_with_iter(intsRange, RAH2_STD::plus<int>());
+                    CHECK_EQUAL(*result2.value, vecSize);
+                }
+            });
+    }
+    static constexpr bool do_test = true;
+};
 void test_fold_left_first_with_iter()
 {
     testSuite.test_case("sample");
@@ -7457,6 +7756,8 @@ void test_fold_left_first_with_iter()
     assert(val.in == v.end());
 
     /// [rah2::ranges::fold_left_first_with_iter]
+
+    foreach_range_combination<test_algo<test_fold_left_first_with_iter_>>();
 }
 void test_uninitialized_copy()
 {
