@@ -1872,8 +1872,8 @@ namespace RAH2_NS
                         not(RAH2_NS::sized_sentinel_for<I, S1>
                         and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_STD::iter_value_t<I>>::value
-                        and RAH2_STD::is_same_v<RAH2_STD::iter_value_t<I>, RAH2_STD::iter_value_t<O>>)>* = nullptr
+                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_STD::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr
                     >
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
@@ -1903,8 +1903,8 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_STD::iter_value_t<I>>::value
-                        and RAH2_STD::is_same_v<RAH2_STD::iter_value_t<I>, RAH2_STD::iter_value_t<O>>>* = nullptr
+                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_STD::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr
                     >
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
@@ -1912,7 +1912,7 @@ namespace RAH2_NS
                 {
                     auto const len = RAH2_STD::min(
                         RAH2_STD::distance(ifirst, ilast), RAH2_STD::distance(ofirst, olast));
-                    memcpy(&(*ofirst), &(*ifirst), len * sizeof(RAH2_STD::iter_value_t<I>));
+                    memcpy(&(*ofirst), &(*ifirst), len * sizeof(RAH2_NS::iter_value_t<I>));
                     return {ifirst + len, ofirst + len};
                 }
 
