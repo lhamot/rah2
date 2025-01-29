@@ -1878,7 +1878,7 @@ namespace RAH2_NS
                     }
                     catch (...) // rollback: destroy constructed elements
                     {
-                        for (size_t i = 0; i != construct_count; ++ofirst)
+                        for (size_t i = 0; i != construct_count; ++ofirst, ++i)
                             RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*ofirst));
                         throw;
                     }
