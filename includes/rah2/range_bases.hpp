@@ -1845,8 +1845,8 @@ namespace RAH2_NS
         template <typename I, typename S = I>
         class subrange : public view_interface<subrange<I, S>>
         {
-            I iterator_;
-            S sentinel_;
+            I iterator_{};
+            S sentinel_{};
             using iter_cat = RAH2_NS::details::iterator_concept<I>;
 
         public:
