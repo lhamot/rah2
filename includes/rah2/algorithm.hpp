@@ -1850,18 +1850,6 @@ namespace RAH2_NS
                     }
                 }
 
-                template <
-                    typename I, // RAH2_STD::input_iterator
-                    typename O // no-throw-forward-iterator
-                >
-                // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
-                RAH2_NS::ranges::uninitialized_copy_result<I, O>
-                impl_contiguous_sized(I ifirst, size_t isize, O ofirst, size_t osize) const
-                {
-                    memcpy(&(*ofirst), &(*ifirst), ifirst + isize);
-                }
-
-
                 // TODO : improve efficiency when the copied type is a TrivialType
                 template <
                     typename I, // RAH2_STD::input_iterator
