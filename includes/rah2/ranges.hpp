@@ -863,9 +863,8 @@ namespace RAH2_NS
             }
 
             template <
-                typename U = R
-                // , typename Result = decltype(RAH2_NS::ranges::data(RAH_STD::declval<U>()))
-                , RAH2_STD::enable_if_t<RAH2_NS::ranges::contiguous_range<U>>* = nullptr
+                typename U = R,
+                typename Result = decltype(RAH2_NS::ranges::data(RAH2_STD::declval<U>()))
                 >
             auto data() const
             {

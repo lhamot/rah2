@@ -1868,7 +1868,7 @@ namespace RAH2_NS
             template <
                 typename Cat = iter_cat,
                 RAH2_STD::enable_if_t<RAH2_NS::derived_from<Cat, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
-            auto data()
+            auto data() const
             {
                 return &(*iterator_);
             }
