@@ -7763,7 +7763,7 @@ template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_uninitialized_copy_
 {
     using OutputTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_STD::forward_iterator_tag>;
-    using RawString = std::byte[sizeof(RAH2_STD::string)];
+    using RawString = uint8_t[sizeof(RAH2_STD::string)];
 
     template <bool = true>
     void test()
@@ -7771,7 +7771,7 @@ struct test_uninitialized_copy_
         RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         {
-            alignas(RAH2_STD::string) std::byte out_[sizeof(RAH2_STD::string)  * 5];
+            alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string)  * 5];
             auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
@@ -7794,7 +7794,7 @@ struct test_uninitialized_copy_
 
         testSuite.test_case("range");
         {
-            alignas(RAH2_STD::string) std::byte out_[sizeof(RAH2_STD::string) * 5];
+            alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string) * 5];
             auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
@@ -7811,7 +7811,7 @@ struct test_uninitialized_copy_
 
         testSuite.test_case("empty");
         {
-            alignas(RAH2_STD::string) std::byte out_[sizeof(RAH2_STD::string) * 5];
+            alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string) * 5];
             auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
