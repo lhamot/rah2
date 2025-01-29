@@ -1873,7 +1873,7 @@ namespace RAH2_NS
                         and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
                         and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
-                        and RAH2_STD::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr
+                        and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr
                     >
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
@@ -1904,7 +1904,7 @@ namespace RAH2_NS
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
                         and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
-                        and RAH2_STD::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr
+                        and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr
                     >
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
@@ -1923,7 +1923,7 @@ namespace RAH2_NS
                             not (RAH2_NS::ranges::sized_range<IR> and RAH2_NS::ranges::sized_range<OR>
                             and RAH2_NS::ranges::contiguous_range<IR> and RAH2_NS::ranges::contiguous_range<OR>
                             and RAH2_STD::is_trivially_copyable<RAH2_NS::ranges::range_value_t<IR>>::value
-                            and RAH2_STD::is_same_v<
+                        and RAH2_NS::is_same_v<
                                 RAH2_NS::ranges::range_value_t<IR>,
                                 RAH2_NS::ranges::range_value_t<OR>>)>* = nullptr
 
@@ -1948,7 +1948,7 @@ namespace RAH2_NS
                         RAH2_NS::ranges::sized_range<IR> and RAH2_NS::ranges::sized_range<OR>
                         and RAH2_NS::ranges::contiguous_range<IR> and RAH2_NS::ranges::contiguous_range<OR>
                         and RAH2_STD::is_trivially_copyable<RAH2_NS::ranges::range_value_t<IR>>::value
-                        and RAH2_STD::is_same_v<
+                        and RAH2_NS::is_same_v<
                             RAH2_NS::ranges::range_value_t<IR>,
                             RAH2_NS::ranges::range_value_t<OR>>>* = nullptr
                         >
