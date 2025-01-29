@@ -7772,7 +7772,7 @@ struct test_uninitialized_copy_
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         {
             alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string)  * 5];
-            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
+            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::make_subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
 
@@ -7795,7 +7795,7 @@ struct test_uninitialized_copy_
         testSuite.test_case("range");
         {
             alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
+            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::make_subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
             auto result2 = RAH2_NS::ranges::uninitialized_copy(in, out);
@@ -7812,7 +7812,7 @@ struct test_uninitialized_copy_
         testSuite.test_case("empty");
         {
             alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
+            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::make_subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
             RAH2_STD::vector<RAH2_STD::string> empty_in_;
