@@ -7759,6 +7759,127 @@ void test_fold_left_first_with_iter()
 
     foreach_range_combination<test_algo<test_fold_left_first_with_iter_>>();
 }
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_copy_
+{
+    using OutputTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_STD::forward_iterator_tag>;
+    using RawString = std::byte[sizeof(RAH2_STD::string)];
+
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        {
+            alignas(RAH2_STD::string) std::byte out_[sizeof(RAH2_STD::string)  * 5];
+            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
+
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::uninitialized_copy(
+                RAH2_NS::ranges::begin(in),
+                RAH2_NS::ranges::end(in),
+                out.begin(),
+                out.end());
+            CHECK(&(*result.out) == &(*out.begin()) + in_.size());
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                auto const strptr = (&(*out.begin())) + i;
+                CHECK_EQUAL(*strptr, in_[i]);
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("range");
+        {
+            alignas(RAH2_STD::string) std::byte out_[sizeof(RAH2_STD::string) * 5];
+            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
+            auto result2 = RAH2_NS::ranges::uninitialized_copy(in, out);
+            CHECK(&(*result2.out) == &(*out.begin()) + in_.size());
+            CHECK(result2.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                auto const strptr = (&(*out.begin())) + i;
+                CHECK_EQUAL(*strptr, in_[i]);
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(RAH2_STD::string) std::byte out_[sizeof(RAH2_STD::string) * 5];
+            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::subrange(
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
+            RAH2_STD::vector<RAH2_STD::string> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            auto result3 = RAH2_NS::ranges::uninitialized_copy(empty_in, out);
+            CHECK(&(*result3.out) == &(*out.begin()) + empty_in_.size());
+            CHECK(result3.in == empty_in.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        RAH2_STD::vector<int> out;
+        out.resize(1000000 * RELEASE_MULTIPLIER);
+
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(
+                CS == Common,
+                "uninitialized_copy_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 = STD::uninitialized_copy(fwd(in.begin()), in.end(), out.begin());
+                            CHECK(result2 == out.end());
+                        }
+                    }),
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 = STD::uninitialized_copy(
+                                fwd(in.begin()), in.end(), out.begin(), out.end());
+                            CHECK(result2.out == out.begin() + in_.size());
+                            CHECK(result2.in == in.end());
+                        }
+                    }));
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "uninitialized_copy_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 = STD::uninitialized_copy(in, out);
+                            CHECK(result2.out == out.begin() + in_.size());
+                            CHECK(result2.in == in.end());
+                        }
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_uninitialized_copy()
 {
     testSuite.test_case("sample");
@@ -7784,6 +7905,8 @@ void test_uninitialized_copy()
     RAH2_NS::ranges::destroy(first, last); // NOLINT(cppcoreguidelines-no-malloc)
 
     /// [rah2::ranges::uninitialized_copy]
+
+    foreach_range_combination<test_algo<test_uninitialized_copy_>>();
 }
 void test_uninitialized_copy_n()
 {
