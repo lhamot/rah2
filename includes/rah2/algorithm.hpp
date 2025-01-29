@@ -1868,15 +1868,17 @@ namespace RAH2_NS
                 operator()(I ifirst, S1 ilast, O ofirst, S2 olast) const
                 {
                     O current{ofirst};
+                    size_t construct_count = 0;
                     try
                     {
-                        for (; !(ifirst == ilast or current == olast); ++ifirst, ++current)
+                        for (; !(ifirst == ilast or current == olast);
+                             ++ifirst, ++current, ++construct_count)
                             RAH2_NS::ranges::construct_at(RAH2_STD::addressof(*current), *ifirst);
                         return {RAH2_STD::move(ifirst), RAH2_STD::move(current)};
                     }
                     catch (...) // rollback: destroy constructed elements
                     {
-                        for (; ofirst != current; ++ofirst)
+                        for (size_t i = 0; i != construct_count; ++ofirst)
                             RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*ofirst));
                         throw;
                     }

@@ -7762,9 +7762,6 @@ void test_fold_left_first_with_iter()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_uninitialized_copy_
 {
-    using OutputTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_STD::forward_iterator_tag>;
-    using RawString = uint8_t[sizeof(RAH2_STD::string)];
-
     template <bool = true>
     void test()
     {
@@ -7772,9 +7769,13 @@ struct test_uninitialized_copy_
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         {
             alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string)  * 5];
-            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::make_subrange(
+            auto sub = RAH2_NS::ranges::make_subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
-                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5);
+            STATIC_ASSERT(RAH2_NS::ranges::contiguous_range<decltype(sub)>);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::move(sub));
+            using Cat = RAH2_NS::ranges::details::range_iter_categ_t<decltype(out)>;
+            AssertSame<Tag, Cat>();
 
             testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::uninitialized_copy(
@@ -7795,9 +7796,13 @@ struct test_uninitialized_copy_
         testSuite.test_case("range");
         {
             alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::make_subrange(
+            auto sub = RAH2_NS::ranges::make_subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
-                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5);
+            STATIC_ASSERT(RAH2_NS::ranges::contiguous_range<decltype(sub)>);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::move(sub));
+            using Cat2 = RAH2_NS::ranges::details::range_iter_categ_t<decltype(out)>;
+            AssertSame<Tag, Cat2>();
             auto result2 = RAH2_NS::ranges::uninitialized_copy(in, out);
             CHECK(&(*result2.out) == &(*out.begin()) + in_.size());
             CHECK(result2.in == in.end());
@@ -7812,9 +7817,13 @@ struct test_uninitialized_copy_
         testSuite.test_case("empty");
         {
             alignas(RAH2_STD::string) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, OutputTag, Sized>(RAH2_NS::ranges::make_subrange(
+            auto sub = RAH2_NS::ranges::make_subrange(
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
-                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
+                reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5);
+            STATIC_ASSERT(RAH2_NS::ranges::contiguous_range<decltype(sub)>);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::move(sub));
+            using Cat = RAH2_NS::ranges::details::range_iter_categ_t<decltype(out)>;
+            AssertSame<Tag, Cat>();
             RAH2_STD::vector<RAH2_STD::string> empty_in_;
             auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
             auto result3 = RAH2_NS::ranges::uninitialized_copy(empty_in, out);
