@@ -44,20 +44,17 @@ struct test_uninitialized_copy_
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         {
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
-                reinterpret_cast<RAH2_STD::string*>(out_),
-                reinterpret_cast<RAH2_STD::string*>(out_) + 5));
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
             testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::uninitialized_copy(
-                RAH2_NS::ranges::begin(in),
-                RAH2_NS::ranges::end(in),
-                out.begin(),
-                out.end());
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
             CHECK(result.out == RAH2_NS::ranges::next(out.begin(), in_.size()));
             CHECK(result.in == in.end());
             for (size_t i = 0; i < in_.size(); ++i)
             {
-                auto const strptr = (&(*out.begin())) + i;
+                auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, in_[i]);
                 strptr->~basic_string();
             }
@@ -66,15 +63,15 @@ struct test_uninitialized_copy_
         testSuite.test_case("range");
         {
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
-                reinterpret_cast<RAH2_STD::string*>(out_),
-                reinterpret_cast<RAH2_STD::string*>(out_) + 5));
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
             auto result2 = RAH2_NS::ranges::uninitialized_copy(in, out);
             CHECK(result2.out == RAH2_NS::ranges::next(out.begin(), in_.size()));
             CHECK(result2.in == in.end());
             for (size_t i = 0; i < in_.size(); ++i)
             {
-                auto const strptr = (&(*out.begin())) + i;
+                auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, in_[i]);
                 strptr->~basic_string();
             }
@@ -83,9 +80,9 @@ struct test_uninitialized_copy_
         testSuite.test_case("empty");
         {
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
-            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
-                reinterpret_cast<RAH2_STD::string*>(out_),
-                reinterpret_cast<RAH2_STD::string*>(out_) + 5));
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
             RAH2_STD::vector<RAH2_STD::string> empty_in_;
             auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
             auto result3 = RAH2_NS::ranges::uninitialized_copy(empty_in, out);

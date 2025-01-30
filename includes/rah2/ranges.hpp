@@ -983,7 +983,7 @@ namespace RAH2_NS
                 struct all_raco : closure_object_facade<all_raco>
                 {
                     template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
-                    auto operator()(R&& range) const -> decltype(RAH2_STD::forward<R>(range))
+                    auto operator()(R&& range) const
                     {
                         return RAH2_STD::forward<R>(range);
                     }
