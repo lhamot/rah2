@@ -862,8 +862,10 @@ namespace RAH2_NS
                 return RAH2_NS::ranges::size(*ref_);
             }
 
-            template <typename U = R, RAH2_STD::enable_if_t<RAH2_NS::ranges::contiguous_range<U>>* = nullptr>
-            auto data()
+            template <
+                typename U = R,
+                typename Result = decltype(RAH2_NS::ranges::data(RAH2_STD::declval<U>()))>
+            auto data() const
             {
                 assert(ref_ != nullptr);
                 return RAH2_NS::ranges::data(*ref_);
@@ -980,7 +982,7 @@ namespace RAH2_NS
                 struct all_raco : closure_object_facade<all_raco>
                 {
                     template <typename R, RAH2_STD::enable_if_t<view<RAH2_STD::remove_reference_t<R>>>* = nullptr>
-                    auto operator()(R&& range) const -> decltype(RAH2_STD::forward<R>(range))
+                    auto operator()(R&& range) const
                     {
                         return RAH2_STD::forward<R>(range);
                     }

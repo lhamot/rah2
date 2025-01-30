@@ -873,20 +873,20 @@ namespace RAH2_NS
         };
     } // namespace details
 
-    template <class Out, class T>
+    template <typename Out, typename T>
     constexpr bool indirectly_writable = details::indirectly_writable_impl<Out, T>::value;
 
     template <typename T>
     constexpr bool indirectly_readable = details::indirectly_readable_impl<remove_cvref_t<T>>::value;
 
-    template <class In, class Out>
+    template <typename In, typename Out>
     constexpr bool indirectly_movable = details::indirectly_movable_impl<In, Out>::value;
 
-    template <class In, class Out>
+    template <typename In, typename Out>
     constexpr bool indirectly_movable_storable =
         details::indirectly_movable_storable_impl<In, Out>::value;
 
-    template <class I1, class I2 = I1>
+    template <typename I1, typename I2 = I1>
     constexpr bool indirectly_swappable = details::indirectly_swappable_impl<I1, I2>::value;
 
     template <typename T>
@@ -898,24 +898,24 @@ namespace RAH2_NS
     template <typename T>
     constexpr bool input_or_output_iterator = details::input_or_output_iterator_impl<T>::value;
 
-    template <class I, class T>
+    template <typename I, typename T>
     constexpr bool output_iterator = details::output_iterator_impl<I, T>::value;
 
     template <typename T>
     constexpr bool input_iterator = details::input_iterator_impl<T>::value;
 
-    template <class S, class I>
+    template <typename S, typename I>
     constexpr bool sentinel_for = details::sentinel_for_impl<S, I>::value;
 
     template <typename I>
     constexpr bool forward_iterator = details::forward_iterator_impl<I>::value;
 
-    template <class I>
+    template <typename I>
     constexpr bool permutable =
         RAH2_NS::forward_iterator<I> && RAH2_NS::indirectly_movable_storable<I, I>
         && RAH2_NS::indirectly_swappable<I, I>;
 
-    template <class S, class I>
+    template <typename S, typename I>
     static constexpr bool sized_sentinel_for = details::sized_sentinel_for_impl<S, I>::value;
 
     template <typename I>
@@ -1845,8 +1845,8 @@ namespace RAH2_NS
         template <typename I, typename S = I>
         class subrange : public view_interface<subrange<I, S>>
         {
-            I iterator_;
-            S sentinel_;
+            I iterator_{};
+            S sentinel_{};
             using iter_cat = RAH2_NS::details::iterator_concept<I>;
 
         public:
@@ -1868,18 +1868,12 @@ namespace RAH2_NS
             template <
                 typename Cat = iter_cat,
                 RAH2_STD::enable_if_t<RAH2_NS::derived_from<Cat, RAH2_NS::contiguous_iterator_tag>>* = nullptr>
-            auto data()
+            auto data() const
             {
                 return &(*iterator_);
             }
 
             template <typename U = I, RAH2_STD::enable_if_t<sized_sentinel_for<S, U>>* = nullptr>
-            auto size()
-            {
-                return sentinel_ - iterator_;
-            }
-
-            template <typename U = I, RAH2_STD::enable_if_t<sized_sentinel_for<S const, U const>>* = nullptr>
             auto size() const
             {
                 return sentinel_ - iterator_;
