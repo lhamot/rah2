@@ -53,7 +53,7 @@ struct test_uninitialized_copy_
                 RAH2_NS::ranges::end(in),
                 out.begin(),
                 out.end());
-            CHECK(&(*result.out) == &(*out.begin()) + in_.size());
+            CHECK(result.out == RAH2_STD::ranges::next(out.begin(), in_.size()));
             CHECK(result.in == in.end());
             for (size_t i = 0; i < in_.size(); ++i)
             {
@@ -70,7 +70,7 @@ struct test_uninitialized_copy_
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])),
                 reinterpret_cast<RAH2_STD::string*>(&(out_[0])) + 5));
             auto result2 = RAH2_NS::ranges::uninitialized_copy(in, out);
-            CHECK(&(*result2.out) == &(*out.begin()) + in_.size());
+            CHECK(result2.out == RAH2_STD::ranges::next(out.begin(), in_.size()));
             CHECK(result2.in == in.end());
             for (size_t i = 0; i < in_.size(); ++i)
             {
@@ -89,7 +89,7 @@ struct test_uninitialized_copy_
             RAH2_STD::vector<RAH2_STD::string> empty_in_;
             auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
             auto result3 = RAH2_NS::ranges::uninitialized_copy(empty_in, out);
-            CHECK(&(*result3.out) == &(*out.begin()) + empty_in_.size());
+            CHECK(result3.out == RAH2_STD::ranges::next(out.begin(), empty_in_.size()));
             CHECK(result3.in == empty_in.end());
         }
     }
