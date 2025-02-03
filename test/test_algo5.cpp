@@ -570,7 +570,7 @@ struct test_uninitialized_move_
         using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
         auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
                 CS == Common,
                 "uninitialized_move_iter",
                 range_type,
@@ -692,7 +692,7 @@ struct test_uninitialized_move_n_
         using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
         auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES_2(
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
                 CS == Common,
                 "uninitialized_move_n",
                 range_type,
