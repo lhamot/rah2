@@ -808,7 +808,7 @@ struct test_uninitialized_default_construct_
         testSuite.test_case("perf");
         RAH2_STD::vector<int> out_;
         out_.resize(1000000 * RELEASE_MULTIPLIER);
-        constexpr auto PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 500 : 5;
+        constexpr size_t PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 500 : 5;
         auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
         {
             COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
@@ -818,7 +818,7 @@ struct test_uninitialized_default_construct_
                 (
                     [&]
                     {
-                        for (size_t i = 0; i < PerfMultiplier; ++i)
+                        for (size_t i = 0; i != PerfMultiplier; ++i)
                         {
                             STD::uninitialized_default_construct(fwd(out.begin()), out.end());
                             CHECK(*out.begin() == 0);
