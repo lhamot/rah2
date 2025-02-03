@@ -693,6 +693,7 @@ struct test_uninitialized_move_n_
         out_.resize(1000000 * RELEASE_MULTIPLIER);
         using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
         auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
+        (void)out;
         {
             COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
                 CS == Common,
