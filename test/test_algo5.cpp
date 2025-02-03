@@ -407,6 +407,69 @@ void test_uninitialized_fill()
 
     foreach_range_combination<test_algo<test_uninitialized_fill_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_fill_n_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            testSuite.test_case("iter");
+            auto result =
+                RAH2_NS::ranges::uninitialized_fill_n(out.begin(), 5, RAH2_STD::string("Abc"));
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string("Abc"));
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result3 =
+                RAH2_NS::ranges::uninitialized_fill_n(out.begin(), 0, RAH2_STD::string("Abc"));
+            CHECK(result3 == out.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "uninitialized_fill_n",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            STD::uninitialized_fill_n(fwd(out.begin()), out_.size(), 42);
+                            CHECK(*out.begin() == 42);
+                        }
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_uninitialized_fill_n()
 {
     testSuite.test_case("sample");
@@ -424,7 +487,132 @@ void test_uninitialized_fill_n()
     RAH2_NS::ranges::destroy(first, last);
 
     /// [rah2::ranges::uninitialized_fill_n]
+
+    foreach_range_combination<test_algo<test_uninitialized_fill_n_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_move_
+{
+    template <bool = true>
+    void test()
+    {
+        {
+            RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+            RAH2_STD::vector<RAH2_STD::string> in_prev = in_;
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::uninitialized_move(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, in_prev[i]);
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("range");
+        {
+            RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+            RAH2_STD::vector<RAH2_STD::string> in_prev = in_;
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_move(in, out);
+            CHECK(&(*result2.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result2.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, in_prev[i]);
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            RAH2_STD::vector<RAH2_STD::string> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            auto result3 = RAH2_NS::ranges::uninitialized_move(empty_in, out);
+            CHECK(&(*result3.out) == RAH2_NS::ranges::next(&(*out.begin()), empty_in_.size()));
+            CHECK(result3.in == empty_in.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        (void)in;
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
+        auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
+        {
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
+                CS == Common,
+                "uninitialized_move_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 =
+                                STD::uninitialized_move(fwd(in.begin()), in.end(), out.begin());
+                            CHECK(result2 == out.end());
+                        }
+                    }),
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 = STD::uninitialized_move(
+                                fwd(in.begin()), in.end(), out.begin(), out.end());
+                            CHECK(result2.in == in.end());
+                        }
+                    }));
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "uninitialized_move_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 = STD::uninitialized_move(in, out);
+                            CHECK(result2.in == in.end());
+                        }
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_uninitialized_move()
 {
     testSuite.test_case("sample");
@@ -442,7 +630,100 @@ void test_uninitialized_move()
     assert(*RAH2_NS::ranges::next(first) == "World");
     RAH2_NS::ranges::destroy(first, last);
     /// [rah2::ranges::uninitialized_move]
+
+    foreach_range_combination<test_algo<test_uninitialized_move_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_move_n_
+{
+    template <bool = true>
+    void test()
+    {
+        RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+        RAH2_STD::vector<RAH2_STD::string> in_prev = in_;
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::uninitialized_move_n(
+                RAH2_NS::ranges::begin(in), in_.size(), out.begin(), out.end());
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, in_prev[i]);
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            RAH2_STD::vector<RAH2_STD::string> empty_in_;
+            auto empty_in = make_test_view_adapter<CS, Tag, Sized>(empty_in_);
+            auto result3 = RAH2_NS::ranges::uninitialized_move_n(
+                empty_in.begin(), empty_in_.size(), out.begin(), out.end());
+            CHECK(&(*result3.out) == RAH2_NS::ranges::next(&(*out.begin()), empty_in_.size()));
+            CHECK(result3.in == empty_in.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> in_;
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in_.push_back(i % 15);
+        }
+        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        (void)in;
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
+        auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
+        (void)out;
+        {
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES_2(
+                CS == Common,
+                "uninitialized_move_n",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 =
+                                STD::uninitialized_move_n(fwd(in.begin()), in_.size(), out.begin());
+                            CHECK(result2.second == out.end());
+                        }
+                    }),
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < 5; ++i)
+                        {
+                            auto result2 = STD::uninitialized_move_n(
+                                fwd(in.begin()), in_.size(), out.begin(), out.end());
+                            // CHECK(result2.out == out.begin() + in_.size());
+                            CHECK(result2.in == in.end());
+                        }
+                    }));
+        }
+    }
+    static constexpr bool do_test = true;
+};
 void test_uninitialized_move_n()
 {
     testSuite.test_case("sample");
@@ -463,7 +744,102 @@ void test_uninitialized_move_n()
     RAH2_NS::ranges::destroy(first, last);
 
     /// [rah2::ranges::uninitialized_move_n]
+
+    foreach_range_combination<test_algo<test_uninitialized_move_n_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_default_construct_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::uninitialized_default_construct(out.begin(), out.end());
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string());
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("range");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_default_construct(out);
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string());
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result3 = RAH2_NS::ranges::uninitialized_default_construct(out);
+            CHECK(result3 == out.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        constexpr size_t PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 500 : 5;
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+        {
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                CS == Common,
+                "uninitialized_default_construct_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i != PerfMultiplier; ++i)
+                        {
+                            STD::uninitialized_default_construct(fwd(out.begin()), out.end());
+                            CHECK(*out.begin() == 0);
+                        }
+                    }));
+        }
+        {
+            COMPARE_DURATION_TO_STD_RANGES(
+                "uninitialized_default_construct_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < PerfMultiplier; ++i)
+                        {
+                            auto result2 = STD::uninitialized_default_construct(out);
+                            CHECK(result2 == out.end());
+                        }
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_uninitialized_default_construct()
 {
     testSuite.test_case("sample");
@@ -495,6 +871,8 @@ void test_uninitialized_default_construct()
     assert(std::memcmp(v, etalon, sizeof(v)) == 0);
 
     /// [rah2::ranges::uninitialized_default_construct]
+
+    foreach_range_combination<test_algo<test_uninitialized_default_construct_>>();
 }
 void test_uninitialized_default_construct_n()
 {

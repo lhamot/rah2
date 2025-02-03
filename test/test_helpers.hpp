@@ -1272,8 +1272,9 @@ std::chrono::nanoseconds compute_duration(
 #ifdef PERF_TEST
     if ((end - start) < std::chrono::microseconds(100))
     {
-        std::cerr << "Too short function (" << ((end - start) / count).count() << ") at " << file
-                  << "(" << line << ")" << std::endl;
+        std::cerr << "Too short function (" << algo << "/" << range_type << "/" << step << ") - ("
+                  << ((end - start) / count).count() << ") at " << file << "(" << line << ")"
+                  << std::endl;
     }
     if ((end - start) > perf_test_duration)
     {
