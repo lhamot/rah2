@@ -1964,25 +1964,46 @@ namespace RAH2_NS
                 template <
                     typename I, // RAH2_STD::input_iterator
                     typename O, // no-throw-input-iterator
-                    typename S // no-throw-sentinel-for<O>
-                    >
+                    typename S, // no-throw-sentinel-for<O>
+                    RAH2_STD::enable_if_t<not(
+                        RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
+                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr>
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_n_result<I, O>
                 operator()(I ifirst, RAH2_NS::iter_difference_t<I> count, O ofirst, S olast) const
                 {
                     O current{ofirst};
+                    size_t copy_count = 0;
                     try
                     {
-                        for (; count > 0 && current != olast; ++ifirst, ++current, --count)
+                        for (; count > 0 && current != olast;
+                             ++ifirst, ++current, --count, ++copy_count)
                             RAH2_NS::ranges::construct_at(RAH2_STD::addressof(*current), *ifirst);
                         return {RAH2_STD::move(ifirst), RAH2_STD::move(current)};
                     }
                     catch (...) // rollback: destroy constructed elements
                     {
-                        for (; ofirst != current; ++ofirst)
+                        for (size_t i = 0; i != copy_count; ++ofirst, ++i)
                             RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*ofirst));
                         throw;
                     }
+                }
+
+                template <
+                    typename I, // RAH2_STD::input_iterator
+                    typename O, // no-throw-input-iterator
+                    typename S, // no-throw-sentinel-for<O>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
+                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr>
+                RAH2_NS::ranges::uninitialized_copy_n_result<I, O>
+                operator()(I ifirst, RAH2_NS::iter_difference_t<I> count, O ofirst, S olast) const
+                {
+                    auto len = RAH2_STD::min(count, ranges::distance(ofirst, olast));
+                    memcpy(&(*ofirst), &(*ifirst), len * sizeof(RAH2_NS::iter_value_t<I>));
+                    return {ifirst + count, ofirst + count};
                 }
             };
         } // namespace niebloids
@@ -1999,16 +2020,17 @@ namespace RAH2_NS
                 I operator()(I first, S last, T const& x) const
                 {
                     I rollback{first};
+                    size_t construct_count = 0;
                     try
                     {
-                        for (; !(first == last); ++first)
+                        for (; !(first == last); ++first, ++construct_count)
                             RAH2_NS::ranges::construct_at(RAH2_STD::addressof(*first), x);
                         return first;
                     }
                     catch (...)
                     {
                         // rollback: destroy constructed elements
-                        for (; rollback != first; ++rollback)
+                        for (size_t i = 0; i != construct_count; ++rollback, ++i)
                             RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*rollback));
                         throw;
                     }
