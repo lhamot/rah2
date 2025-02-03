@@ -565,6 +565,7 @@ struct test_uninitialized_move_
             in_.push_back(i % 15);
         }
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        (void)in;
         RAH2_STD::vector<int> out_;
         out_.resize(1000000 * RELEASE_MULTIPLIER);
         using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
@@ -687,6 +688,7 @@ struct test_uninitialized_move_n_
             in_.push_back(i % 15);
         }
         auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        (void)in;
         RAH2_STD::vector<int> out_;
         out_.resize(1000000 * RELEASE_MULTIPLIER);
         using OutTag = RAH2_NS::ranges::details::max_iterator_tag<Tag, RAH2_NS::forward_iterator_tag>;
