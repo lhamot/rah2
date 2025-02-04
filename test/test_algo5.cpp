@@ -1361,14 +1361,15 @@ struct test_destroy_
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            for (DeleteTracker& s : out)
+            auto const end = out.end();
+            for (auto iter = out.begin(); iter != end; ++iter)
             {
-                new (&s) DeleteTracker();
+                new (&(*iter)) DeleteTracker();
             }
             auto result = RAH2_NS::ranges::destroy(out.begin(), out.end());
-            for (DeleteTracker& s : out)
+            for (auto iter = out.begin(); iter != end; ++iter)
             {
-                CHECK_EQUAL(s.value, 42);
+                CHECK_EQUAL(iter->value, 42);
             }
             CHECK(result == out.end());
         }
@@ -1380,14 +1381,15 @@ struct test_destroy_
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            for (DeleteTracker& s : out)
+            auto const end = out.end();
+            for (auto iter = out.begin(); iter != end; ++iter)
             {
-                new (&s) DeleteTracker();
+                new (&(*iter)) DeleteTracker();
             }
             auto result = RAH2_NS::ranges::destroy(out);
-            for (DeleteTracker& s : out)
+            for (auto iter = out.begin(); iter != end; ++iter)
             {
-                CHECK_EQUAL(s.value, 42);
+                CHECK_EQUAL(iter->value, 42);
             }
             CHECK(result == out.end());
         }
@@ -1502,14 +1504,15 @@ struct test_destroy_n_
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            for (DeleteTracker& s : out)
+            auto const end = out.end();
+            for (auto iter = out.begin(); iter != end; ++iter)
             {
-                new (&s) DeleteTracker();
+                new (&(*iter)) DeleteTracker();
             }
             auto result = RAH2_NS::ranges::destroy_n(out.begin(), 5);
-            for (DeleteTracker& s : out)
+            for (auto iter = out.begin(); iter != end; ++iter)
             {
-                CHECK_EQUAL(s.value, 42);
+                CHECK_EQUAL(iter->value, 42);
             }
             CHECK(result == out.end());
         }
