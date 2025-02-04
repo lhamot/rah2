@@ -980,7 +980,7 @@ struct test_uninitialized_default_construct_n_
                 1;
         auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
         {
-            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
                 "uninitialized_default_construct_n",
                 range_type,
@@ -1262,7 +1262,7 @@ struct test_uninitialized_value_construct_n_
         {
             constexpr size_t PerfMultiplier = 1;
             {
-                COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                     CS == Common,
                     "uninitialized_value_construct_n_pod",
                     range_type,
@@ -1282,7 +1282,7 @@ struct test_uninitialized_value_construct_n_
                         }));
             }
             {
-                COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                     CS == Common,
                     "uninitialized_value_construct_n_nonpod",
                     range_type,
