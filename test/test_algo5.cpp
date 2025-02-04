@@ -748,6 +748,16 @@ void test_uninitialized_move_n()
     foreach_range_combination<test_algo<test_uninitialized_move_n_>>();
 }
 
+struct NonTrivialDefaultConstuctible
+{
+    int value;
+
+    NonTrivialDefaultConstuctible()
+        : value(42)
+    {
+    }
+};
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_uninitialized_default_construct_
 {
@@ -804,38 +814,88 @@ struct test_uninitialized_default_construct_
     void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out_;
-        out_.resize(1000000 * RELEASE_MULTIPLIER);
-        constexpr size_t PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 500 : 5;
-        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
         {
-            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
-                CS == Common,
-                "uninitialized_default_construct_iter",
-                range_type,
-                (
-                    [&]
-                    {
-                        for (size_t i = 0; i != PerfMultiplier; ++i)
+            RAH2_STD::vector<int> out_(1000000 * RELEASE_MULTIPLIER, 3);
+            constexpr size_t PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 500 : 5;
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            {
+                COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                    CS == Common,
+                    "uninitialized_default_construct_iter_pod",
+                    range_type,
+                    (
+                        [&]
                         {
-                            STD::uninitialized_default_construct(fwd(out.begin()), out.end());
-                            CHECK(*out.begin() == 0);
-                        }
-                    }));
+                            for (size_t i = 0; i != PerfMultiplier; ++i)
+                            {
+                                STD::uninitialized_default_construct(fwd(out.begin()), out.end());
+                                CHECK(*out.begin() == 3); // NOT default constructed
+                            }
+                        }));
+            }
+            {
+                COMPARE_DURATION_TO_STD_RANGES(
+                    "uninitialized_default_construct_ranges_pod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            for (size_t i = 0; i < PerfMultiplier; ++i)
+                            {
+                                auto result2 = STD::uninitialized_default_construct(out);
+                                CHECK(result2 == out.end());
+                                CHECK(*out.begin() == 3); // NOT default constructed
+                            }
+                        }));
+            }
         }
         {
-            COMPARE_DURATION_TO_STD_RANGES(
-                "uninitialized_default_construct_ranges",
-                range_type,
-                (
-                    [&]
-                    {
-                        for (size_t i = 0; i < PerfMultiplier; ++i)
+            {
+                constexpr size_t PerfMultiplier = 1;
+                COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                    CS == Common,
+                    "uninitialized_default_construct_iter_nonpod",
+                    range_type,
+                    (
+                        [&]
                         {
-                            auto result2 = STD::uninitialized_default_construct(out);
-                            CHECK(result2 == out.end());
-                        }
-                    }));
+                            auto* out_ =
+                                new uint8_t[sizeof(NonTrivialDefaultConstuctible) * 1000000 * RELEASE_MULTIPLIER];
+                            auto out_b = reinterpret_cast<NonTrivialDefaultConstuctible*>(out_);
+                            auto out =
+                                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
+                                    out_b, out_b + 1000000 * RELEASE_MULTIPLIER));
+                            for (size_t i = 0; i != PerfMultiplier; ++i)
+                            {
+                                STD::uninitialized_default_construct(fwd(out.begin()), out.end());
+                                CHECK(out.begin()->value == 42); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+            {
+                constexpr size_t PerfMultiplier = 1; //(CS == CommonOrSent::Common or Sized) ? 500 : 5;
+                COMPARE_DURATION_TO_STD_RANGES(
+                    "uninitialized_default_construct_ranges_nonpod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ =
+                                new uint8_t[sizeof(NonTrivialDefaultConstuctible) * 1000000 * RELEASE_MULTIPLIER];
+                            auto out_b = reinterpret_cast<NonTrivialDefaultConstuctible*>(out_);
+                            auto out =
+                                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
+                                    out_b, out_b + 1000000 * RELEASE_MULTIPLIER));
+                            for (size_t i = 0; i < PerfMultiplier; ++i)
+                            {
+                                auto result2 = STD::uninitialized_default_construct(out);
+                                CHECK(result2 == out.end());
+                                CHECK(out.begin()->value == 42); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
         }
     }
     static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
@@ -874,6 +934,69 @@ void test_uninitialized_default_construct()
 
     foreach_range_combination<test_algo<test_uninitialized_default_construct_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_default_construct_n_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_default_construct_n(out.begin(), 5);
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string());
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result3 = RAH2_NS::ranges::uninitialized_default_construct_n(out.begin(), 0);
+            CHECK(result3 == out.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        RAH2_STD::vector<int> out_(1000000 * RELEASE_MULTIPLIER, 3);
+        constexpr size_t PerfMultiplier =
+            RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> 
+                ?5000 :
+                1;
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+        {
+            COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                CS == Common,
+                "uninitialized_default_construct_n",
+                range_type,
+                (
+                    [&]
+                    {
+                        for (size_t i = 0; i < PerfMultiplier; ++i)
+                        {
+                            STD::uninitialized_default_construct_n(fwd(out.begin()), out_.size());
+                            CHECK(*out.begin() == 3); // NOT default constructed
+                        }
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_uninitialized_default_construct_n()
 {
     testSuite.test_case("sample");
@@ -901,7 +1024,172 @@ void test_uninitialized_default_construct_n()
         RAH2_STD::begin(v), static_cast<intptr_t>(RAH2_NS::ranges::size(v)));
     assert(std::memcmp(v, etalon, sizeof(v)) == 0);
     /// [rah2::ranges::uninitialized_default_construct_n]
+
+    foreach_range_combination<test_algo<test_uninitialized_default_construct_n_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_value_construct_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            testSuite.test_case("iter");
+            auto result = RAH2_NS::ranges::uninitialized_value_construct(out.begin(), out.end());
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string());
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("range");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_value_construct(out);
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string());
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result3 = RAH2_NS::ranges::uninitialized_value_construct(out);
+            CHECK(result3 == out.end());
+        }
+    }
+
+    struct NonTrivialDefaultConstuctible
+    {
+        int value;
+
+        NonTrivialDefaultConstuctible()
+            : value(42)
+        {
+        }
+    };
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            {
+                constexpr size_t PerfMultiplier = 1;
+                COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                    CS == Common,
+                    "uninitialized_value_construct_iter_pod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ = new int[1000000];
+                            auto out = make_test_view_adapter<CS, Tag, Sized>(
+                                RAH2_NS::ranges::make_subrange(out_, out_ + 1000000));
+                            for (size_t i = 0; i != PerfMultiplier; ++i)
+                            {
+                                STD::uninitialized_value_construct(fwd(out.begin()), out.end());
+                                CHECK(*out.begin() == 0); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+            {
+                RAH2_STD::vector<int> out_(1000000 * RELEASE_MULTIPLIER, 3);
+                constexpr size_t PerfMultiplier = 1;
+                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+                COMPARE_DURATION_TO_STD_RANGES(
+                    "uninitialized_value_construct_ranges_pod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ = new int[1000000];
+                            auto out = make_test_view_adapter<CS, Tag, Sized>(
+                                RAH2_NS::ranges::make_subrange(out_, out_ + 1000000));
+                            for (size_t i = 0; i < PerfMultiplier; ++i)
+                            {
+                                auto result2 = STD::uninitialized_value_construct(out);
+                                CHECK(result2 == out.end());
+                                CHECK(*out.begin() == 0); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+        }
+        {
+            {
+                constexpr size_t PerfMultiplier = 1;
+                COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                    CS == Common,
+                    "uninitialized_value_construct_iter_nonpod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ =
+                                new uint8_t[sizeof(NonTrivialDefaultConstuctible) * 1000000 * RELEASE_MULTIPLIER];
+                            auto out_b = reinterpret_cast<NonTrivialDefaultConstuctible*>(out_);
+                            auto out =
+                                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
+                                    out_b, out_b + 1000000 * RELEASE_MULTIPLIER));
+                            for (size_t i = 0; i != PerfMultiplier; ++i)
+                            {
+                                STD::uninitialized_value_construct(fwd(out.begin()), out.end());
+                                CHECK(out.begin()->value == 42); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+            {
+                constexpr size_t PerfMultiplier = 1;
+                COMPARE_DURATION_TO_STD_RANGES(
+                    "uninitialized_value_construct_ranges_nonpod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ =
+                                new uint8_t[sizeof(NonTrivialDefaultConstuctible) * 1000000 * RELEASE_MULTIPLIER];
+                            auto out_b = reinterpret_cast<NonTrivialDefaultConstuctible*>(out_);
+                            auto out =
+                                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
+                                    out_b, out_b + 1000000 * RELEASE_MULTIPLIER));
+
+                            for (size_t i = 0; i < PerfMultiplier; ++i)
+                            {
+                                auto result2 = STD::uninitialized_value_construct(out);
+                                CHECK(result2 == out.end());
+                                CHECK(out.begin()->value == 42); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_uninitialized_value_construct()
 {
     testSuite.test_case("sample");
@@ -929,7 +1217,97 @@ void test_uninitialized_value_construct()
     RAH2_NS::ranges::uninitialized_value_construct(RAH2_STD::begin(v), RAH2_STD::end(v));
     assert(RAH2_NS::ranges::all_of(v, [](int i) { return i == 0; }));
     /// [rah2::ranges::uninitialized_value_construct]
+
+    foreach_range_combination<test_algo<test_uninitialized_value_construct_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_uninitialized_value_construct_n_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_value_construct_n(out.begin(), 5);
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(*strptr, RAH2_STD::string());
+                strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
+            auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result3 = RAH2_NS::ranges::uninitialized_value_construct_n(out.begin(), 0);
+            CHECK(result3 == out.end());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            constexpr size_t PerfMultiplier = 1;
+            {
+                COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                    CS == Common,
+                    "uninitialized_value_construct_n_pod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ = new int[1000000];
+                            out_[0] = 18;
+                            auto out = make_test_view_adapter<CS, Tag, Sized>(
+                                RAH2_NS::ranges::make_subrange(out_, out_ + 1000000));
+                            for (size_t i = 0; i < PerfMultiplier; ++i)
+                            {
+                                STD::uninitialized_value_construct_n(fwd(out.begin()), 1000000);
+                                CHECK(*out.begin() == 0); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+            {
+                COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
+                    CS == Common,
+                    "uninitialized_value_construct_n_nonpod",
+                    range_type,
+                    (
+                        [&]
+                        {
+                            auto* out_ =
+                                new uint8_t[sizeof(NonTrivialDefaultConstuctible) * 1000000 * RELEASE_MULTIPLIER];
+                            auto out_b = reinterpret_cast<NonTrivialDefaultConstuctible*>(out_);
+                            auto out =
+                                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(
+                                    out_b, out_b + 1000000 * RELEASE_MULTIPLIER));
+                            for (size_t i = 0; i < PerfMultiplier; ++i)
+                            {
+                                STD::uninitialized_value_construct_n(
+                                    fwd(out.begin()), 1000000 * RELEASE_MULTIPLIER);
+                                CHECK(out.begin()->value == 42); // default constructed
+                            }
+                            delete[] out_;
+                        }));
+            }
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_uninitialized_value_construct_n()
 {
     testSuite.test_case("sample");
@@ -958,6 +1336,8 @@ void test_uninitialized_value_construct_n()
     assert(RAH2_NS::ranges::all_of(v, [](int i) { return i == 0; }));
 
     /// [rah2::ranges::uninitialized_value_construct_n]
+
+    foreach_range_combination<test_algo<test_uninitialized_value_construct_n_>>();
 }
 void test_destroy()
 {

@@ -1278,7 +1278,8 @@ std::chrono::nanoseconds compute_duration(
     }
     if ((end - start) > perf_test_duration)
     {
-        std::cerr << "Too long function at " << file << "(" << line << ")" << std::endl;
+        std::cerr << "Too long function (" << algo << "/" << range_type << "/" << step << ") at "
+                  << file << "(" << line << ")" << std::endl;
     }
 
     while ((end - start) < perf_test_duration)
