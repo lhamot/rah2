@@ -1116,9 +1116,7 @@ struct test_uninitialized_value_construct_
                         }));
             }
             {
-                RAH2_STD::vector<int> out_(1000000 * RELEASE_MULTIPLIER, 3);
                 constexpr size_t PerfMultiplier = 1;
-                auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                 COMPARE_DURATION_TO_STD_RANGES(
                     "uninitialized_value_construct_ranges_pod",
                     range_type,
