@@ -1339,6 +1339,124 @@ void test_uninitialized_value_construct_n()
 
     foreach_range_combination<test_algo<test_uninitialized_value_construct_n_>>();
 }
+
+struct DeleteTracker
+{
+    int value = 9;
+
+    ~DeleteTracker()
+    {
+        value = 42;
+    }
+};
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_destroy_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(DeleteTracker)) uint8_t out_[sizeof(DeleteTracker) * 5];
+            auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            for (DeleteTracker& s : out)
+            {
+                new (&s) DeleteTracker();
+            }
+            auto result = RAH2_NS::ranges::destroy(out.begin(), out.end());
+            for (DeleteTracker& s : out)
+            {
+                CHECK_EQUAL(s.value, 42);
+            }
+            CHECK(result == out.end());
+        }
+
+        testSuite.test_case("range");
+        {
+            alignas(alignof(DeleteTracker)) uint8_t out_[sizeof(DeleteTracker) * 5];
+            auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            for (DeleteTracker& s : out)
+            {
+                new (&s) DeleteTracker();
+            }
+            auto result = RAH2_NS::ranges::destroy(out);
+            for (DeleteTracker& s : out)
+            {
+                CHECK_EQUAL(s.value, 42);
+            }
+            CHECK(result == out.end());
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(DeleteTracker)) uint8_t out_[sizeof(DeleteTracker) * 5];
+            auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result = RAH2_NS::ranges::destroy(out);
+            CHECK(result == out.begin());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        {
+            constexpr size_t PerfMultiplier = 1;
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                CS == Common,
+                "destroy_iter",
+                range_type,
+                (
+                    [&]
+                    {
+                        constexpr auto ArraySize = 1000000 * RELEASE_MULTIPLIER;
+                        auto* out_ = new uint8_t[sizeof(DeleteTracker) * ArraySize];
+                        auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+                        auto out =
+                            make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b + ArraySize));
+                        for (size_t i = 0; i != PerfMultiplier; ++i)
+                        {
+                            STD::destroy(fwd(out.begin()), out.end());
+                            CHECK(out.begin()->value == 42);
+                        }
+                        delete[] out_;
+                    }));
+        }
+        {
+            constexpr size_t PerfMultiplier = 1;
+            COMPARE_DURATION_TO_STD_RANGES(
+                "destroy_ranges",
+                range_type,
+                (
+                    [&]
+                    {
+                        constexpr auto ArraySize = 1000000 * RELEASE_MULTIPLIER;
+                        auto* out_ = new uint8_t[sizeof(DeleteTracker) * ArraySize];
+                        auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+                        auto out =
+                            make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b + ArraySize));
+
+                        for (size_t i = 0; i < PerfMultiplier; ++i)
+                        {
+                            auto result2 = STD::destroy(out);
+                            CHECK(result2 == out.end());
+                            CHECK(out.begin()->value == 42);
+                        }
+                        delete[] out_;
+                    }));
+        }
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_destroy()
 {
     testSuite.test_case("sample");
@@ -1369,7 +1487,73 @@ void test_destroy()
     RAH2_EXT_WARNING_POP
 #endif
     /// [rah2::ranges::destroy]
+
+    foreach_range_combination<test_algo<test_destroy_>>();
 }
+
+template <CommonOrSent CS, typename Tag, bool Sized>
+struct test_destroy_n_
+{
+    template <bool = true>
+    void test()
+    {
+        testSuite.test_case("iter");
+        {
+            alignas(alignof(DeleteTracker)) uint8_t out_[sizeof(DeleteTracker) * 5];
+            auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            for (DeleteTracker& s : out)
+            {
+                new (&s) DeleteTracker();
+            }
+            auto result = RAH2_NS::ranges::destroy_n(out.begin(), 5);
+            for (DeleteTracker& s : out)
+            {
+                CHECK_EQUAL(s.value, 42);
+            }
+            CHECK(result == out.end());
+        }
+
+        testSuite.test_case("empty");
+        {
+            alignas(alignof(DeleteTracker)) uint8_t out_[sizeof(DeleteTracker) * 5];
+            auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
+            auto result = RAH2_NS::ranges::destroy_n(out.begin(), 0);
+            CHECK(result == out.begin());
+        }
+    }
+
+    template <bool = true>
+    void test_perf(char const* range_type)
+    {
+        testSuite.test_case("perf");
+        constexpr size_t PerfMultiplier = 1;
+        COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+            CS == Common,
+            "destroy_n",
+            range_type,
+            (
+                [&]
+                {
+                    constexpr auto ArraySize = 1000000 * RELEASE_MULTIPLIER;
+                    auto* out_ = new uint8_t[sizeof(DeleteTracker) * ArraySize];
+                    auto out_b = reinterpret_cast<DeleteTracker*>(out_);
+                    auto out = make_test_view_adapter<CS, Tag, Sized>(
+                        RAH2_NS::ranges::make_subrange(out_b, out_b + ArraySize));
+                    for (size_t i = 0; i != PerfMultiplier; ++i)
+                    {
+                        STD::destroy_n(fwd(out.begin()), ArraySize);
+                        CHECK(out.begin()->value == 42);
+                    }
+                    delete[] out_;
+                }));
+    }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
+};
 void test_destroy_n()
 {
     testSuite.test_case("sample");
@@ -1401,6 +1585,8 @@ void test_destroy_n()
     RAH2_EXT_WARNING_POP
 #endif
     /// [rah2::ranges::destroy_n]
+
+    foreach_range_combination<test_algo<test_destroy_n_>>();
 }
 void test_destroy_at()
 {
