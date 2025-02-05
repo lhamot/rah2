@@ -36,8 +36,10 @@ jobs:
           sudo apt install -y lcov
           sudo apt install -y gcovr
           sudo apt install -y llvm-19
-          LLVM_PATH="/usr/lib/llvm-19/bin"
+          echo "Adding $LLVM_PATH to PATH"
           echo "LLVM_COV=$LLVM_PATH/llvm-cov" >> $GITHUB_ENV
+          echo "$LLVM_PATH" >> $GITHUB_PATH
+          
 
     - name: Install clang
       if: ${{ startsWith(matrix.compiler.os, 'ubuntu') && startsWith(matrix.compiler.cpp, 'clang') }}
@@ -63,7 +65,7 @@ jobs:
       run: ctest --verbose -C ${{matrix.BUILD_TYPE}}
       
     - name: Collect Coverage (Clang)
-      run: gcovr -r . --exclude "tests/*" --gcov-executable "$LLVM_PATH/llvm-cov gcov" --xml -o coverage.xml --html --html-details -o coverage.html
+      run: gcovr -r . --exclude "tests/*" --gcov-executable "$LLVM_COV gcov" --xml -o coverage.xml --html --html-details -o coverage.html
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
