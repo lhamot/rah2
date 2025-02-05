@@ -1,0 +1,84 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        BUILD_TYPE: [Debug]
+        compiler: [ 
+            # {os: windows-latest, cpp: msvc, c: msvc, cppstd: 14 }, 
+            # {os: macos-latest, cpp: clang++, c: clang, cppstd: 14} ,
+            # {os: ubuntu-24.04, cpp: clang++-19, c: clang-19, cppstd: 14},
+            # {os: ubuntu-24.04, cpp: g++, c: gcc, cppstd: 14},
+            # {os: windows-latest, cpp: msvc, c: msvc, cppstd: 23 }, 
+            # {os: macos-latest, cpp: clang++, c: clang, cppstd: 23} ,
+            {os: ubuntu-24.04, cpp: clang++-19, c: clang-19, cppstd: 20},
+            # {os: ubuntu-24.04, cpp: g++, c: gcc, cppstd: 23} 
+        ]
+        
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ${{ matrix.compiler.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+          sudo apt-get update
+          sudo apt install -y lcov
+          sudo apt install -y gcovr
+          sudo apt install -y llvm-19
+          echo "Adding $LLVM_PATH to PATH"
+          LLVM_PATH="/usr/lib/llvm-19/bin"
+          echo "LLVM_COV=$LLVM_PATH/llvm-cov" >> $GITHUB_ENV
+          echo "$LLVM_PATH" >> $GITHUB_PATH
+          
+
+    - name: Install clang
+      if: ${{ startsWith(matrix.compiler.os, 'ubuntu') && startsWith(matrix.compiler.cpp, 'clang') }}
+      run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19 all
+          rm llvm.sh
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.compiler.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}} -DCMAKE_CXX_FLAGS="--coverage"
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest --verbose -C ${{matrix.BUILD_TYPE}}
+      
+    - name: Collect Coverage (Clang)
+      run: |
+          mkdir gcovr_out
+          gcovr -r . --exclude "test/*" --exclude "build/*" --gcov-executable "$LLVM_COV gcov" --xml=gcovr_out/coverage.xml --html=gcovr_out/coverage.html --html-details
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: Coverage-${{ matrix.compiler }}
+        path: ${{github.workspace}}/gcovr_out/
+
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{secrets.CODECOV_TOKEN}}
+        file: ${{github.workspace}}/gcovr_out/coverage.xml
+        fail_ci_if_error: true
