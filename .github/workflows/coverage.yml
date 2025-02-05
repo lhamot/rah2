@@ -66,7 +66,7 @@ jobs:
       run: ctest --verbose -C ${{matrix.BUILD_TYPE}}
       
     - name: Collect Coverage (Clang)
-      run: gcovr -r . --exclude "tests/*" --gcov-executable "$LLVM_COV gcov" --xml -o ${{github.workspace}}/build/coverage.xml --html --html-details -o ${{github.workspace}}/build/coverage.html
+      run: gcovr -r . --exclude "tests/*" --gcov-executable "$LLVM_COV gcov" --xml=${{github.workspace}}/build/coverage.xml --html=${{github.workspace}}/build/coverage.html --html-details
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
