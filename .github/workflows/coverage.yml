@@ -39,7 +39,9 @@ jobs:
           rm llvm.sh
 
     - name: Install dependencies
-      run: sudo apt install -y lcov
+      run: |
+          apt-get update    
+          sudo apt install -y lcov
           sudo apt install -y gcovr
 
     - name: Configure CMake
