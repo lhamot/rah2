@@ -37,6 +37,7 @@ jobs:
           sudo apt install -y gcovr
           sudo apt install -y llvm-19
           LLVM_PATH="/usr/lib/llvm-19/bin"
+          echo "LLVM_COV=$LLVM_PATH/llvm-cov" >> $GITHUB_ENV
 
     - name: Install clang
       if: ${{ startsWith(matrix.compiler.os, 'ubuntu') && startsWith(matrix.compiler.cpp, 'clang') }}
