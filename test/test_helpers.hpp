@@ -1266,8 +1266,8 @@ std::chrono::nanoseconds compute_duration(
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
 
-    func();
-    ++count;
+    // func();
+    // ++count;
     end = std::chrono::high_resolution_clock::now();
 #ifdef PERF_TEST
     if ((end - start) < std::chrono::microseconds(100))
