@@ -43,7 +43,9 @@ jobs:
           sudo apt-get update
           sudo apt install -y lcov
           sudo apt install -y gcovr
-          sudo apt install -y clang llvm llvm-dev llvm-tools
+          sudo apt install -y llvm-19
+          which llvm-cov || echo "llvm-cov not found!"
+          llvm-cov --version || echo "llvm-cov is not working!"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
