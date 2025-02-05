@@ -40,8 +40,16 @@ jobs:
           echo "Adding $LLVM_PATH to PATH"
           echo "LLVM_COV=$LLVM_PATH/llvm-cov" >> $GITHUB_ENV
           echo "$LLVM_PATH" >> $GITHUB_PATH
-          which llvm-cov || echo "llvm-cov not found!"
-          llvm-cov --version || echo "llvm-cov is not working!"
+          which $LLVM_COV || echo "llvm-cov not found!"
+          $LLVM_COV --version || echo "llvm-cov is not working!"
+
+    - name: Install clang
+      if: ${{ startsWith(matrix.compiler.os, 'ubuntu') && startsWith(matrix.compiler.cpp, 'clang') }}
+      run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19 all
+          rm llvm.sh
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
