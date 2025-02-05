@@ -1340,7 +1340,7 @@ void test_uninitialized_value_construct_n()
 
 struct DeleteTracker
 {
-    int value = 9;
+    volatile int value = 9;
 
     ~DeleteTracker()
     {
@@ -1511,6 +1511,10 @@ struct test_destroy_n_
             for (auto iter = out.begin(); iter != end; ++iter)
             {
                 new (&(*iter)) DeleteTracker();
+            }
+            for (auto iter = out.begin(); iter != end; ++iter)
+            {
+                CHECK_EQUAL(iter->value, 9);
             }
             auto result = RAH2_NS::ranges::destroy_n(out.begin(), 5);
             for (auto iter = out.begin(); iter != end; ++iter)
