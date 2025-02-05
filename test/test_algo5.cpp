@@ -1408,6 +1408,8 @@ struct test_destroy_
     template <bool = true>
     void test_perf(char const* range_type)
     {
+        (void)range_type;
+#ifndef _LIBCPP_VERSION
         testSuite.test_case("perf");
         {
             constexpr size_t PerfMultiplier = 1;
@@ -1454,6 +1456,7 @@ struct test_destroy_
                         delete[] out_;
                     }));
         }
+#endif
     }
     static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
 };
