@@ -30,14 +30,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Install clang
-      if: ${{ startsWith(matrix.compiler.os, 'ubuntu') && startsWith(matrix.compiler.cpp, 'clang') }}
-      run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 19 all
-          rm llvm.sh
-
     - name: Install dependencies
       run: |
           sudo apt-get update
