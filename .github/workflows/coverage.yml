@@ -66,17 +66,17 @@ jobs:
       run: ctest --verbose -C ${{matrix.BUILD_TYPE}}
       
     - name: Collect Coverage (Clang)
-      run: gcovr -r . --exclude "tests/*" --gcov-executable "$LLVM_COV gcov" --xml -o coverage.xml --html --html-details -o coverage.html
+      run: gcovr -r . --exclude "tests/*" --gcov-executable "$LLVM_COV gcov" --xml -o ${{github.workspace}}/build/coverage.xml --html --html-details -o ${{github.workspace}}/build/coverage.html
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
       with:
         name: Coverage-${{ matrix.compiler }}
-        path: coverage.html
+        path: ${{github.workspace}}/build/coverage.html
 
     - name: Upload to Codecov
       uses: codecov/codecov-action@v4
       with:
         token: ${{secrets.CODECOV_TOKEN}}
-        file: coverage.xml
+        file: ${{github.workspace}}/build/coverage.xml
         fail_ci_if_error: true
