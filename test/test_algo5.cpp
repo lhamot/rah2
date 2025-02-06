@@ -35,7 +35,7 @@
 
 struct ThrowOnCopy
 {
-    bool constructed = false;
+    volatile bool constructed = false;
     bool do_throw = false;
     ThrowOnCopy()
         : constructed(true)
@@ -81,7 +81,7 @@ struct ThrowOnCopy
 
 struct ThrowOnMove
 {
-    bool constructed = false;
+    volatile bool constructed = false;
     bool do_throw = false;
     ThrowOnMove()
         : constructed(true)
@@ -550,7 +550,7 @@ struct test_uninitialized_fill_
 
         struct CanThrowOnCopy
         {
-            bool constructed = true;
+            volatile bool constructed = true;
             CanThrowOnCopy() = default;
             CanThrowOnCopy(CanThrowOnCopy const&)
             {
@@ -698,7 +698,7 @@ struct test_uninitialized_fill_n_
 
         struct CanThrowOnCopy
         {
-            bool constructed = true;
+            volatile bool constructed = true;
             CanThrowOnCopy() = default;
             CanThrowOnCopy(CanThrowOnCopy const&)
             {
@@ -1269,7 +1269,7 @@ struct test_uninitialized_default_construct_
 
         struct CanThrowOnCtor
         {
-            bool constructed = true;
+            volatile bool constructed = true;
             CanThrowOnCtor()
             {
                 if (throw_countdown == 0)
@@ -1462,7 +1462,7 @@ struct test_uninitialized_default_construct_n_
 
         struct CanThrowOnCtor
         {
-            bool constructed = true;
+            volatile bool constructed = true;
             CanThrowOnCtor()
             {
                 if (throw_countdown == 0)
