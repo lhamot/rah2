@@ -62,6 +62,7 @@ struct ThrowOnCopy
         {
             throw std::exception();
         }
+        return *this;
     }
     ThrowOnCopy& operator=(ThrowOnCopy&& other) = delete;
     ~ThrowOnCopy()
@@ -560,6 +561,7 @@ struct test_uninitialized_fill_
                     throw std::exception();
                 }
                 --throw_countdown;
+                return *this;
             }
             ~CanThrowOnCopy()
             {
@@ -707,6 +709,7 @@ struct test_uninitialized_fill_n_
                     throw std::exception();
                 }
                 --throw_countdown;
+                return *this;
             }
             ~CanThrowOnCopy()
             {
