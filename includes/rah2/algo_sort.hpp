@@ -1043,10 +1043,10 @@ namespace RAH2_NS
                     auto lasti = result;
                     while ((lasti - first) > 5)
                     {
-                        auto const midValue(RAH2_NS::ranges::median(
+                        auto&& midValue(RAH2_NS::ranges::median(
                             *first, *(first + (lasti - first) / 2), *(lasti - 1)));
                         RandomAccessIterator const midPos(
-                            RAH2_NS::ranges::get_partition(first, lasti, midValue));
+                            RAH2_NS::ranges::get_partition(first, lasti, RAH2_STD::move(midValue)));
 
                         if (midPos <= nth)
                             first = midPos;

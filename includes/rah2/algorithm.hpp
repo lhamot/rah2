@@ -1829,32 +1829,6 @@ namespace RAH2_NS
                     typename I, // RAH2_STD::input_iterator
                     typename S1, // RAH2_STD::sentinel_for<I>
                     typename O, // no-throw-forward-iterator
-                    typename S2 // no-throw-sentinel-for<O>
-                    >
-                // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
-                RAH2_NS::ranges::uninitialized_copy_result<I, O>
-                impl(I ifirst, S1 ilast, O ofirst, S2 olast) const
-                {
-                    O current{ofirst};
-                    try
-                    {
-                        for (; !(ifirst == ilast or current == olast); ++ifirst, ++current)
-                            RAH2_NS::ranges::construct_at(RAH2_STD::addressof(*current), *ifirst);
-                        return {RAH2_STD::move(ifirst), RAH2_STD::move(current)};
-                    }
-                    catch (...) // rollback: destroy constructed elements
-                    {
-                        for (; ofirst != current; ++ofirst)
-                            RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*ofirst));
-                        throw;
-                    }
-                }
-
-                // TODO : improve efficiency when the copied type is a TrivialType
-                template <
-                    typename I, // RAH2_STD::input_iterator
-                    typename S1, // RAH2_STD::sentinel_for<I>
-                    typename O, // no-throw-forward-iterator
                     typename S2, // no-throw-sentinel-for<O>
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>

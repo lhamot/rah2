@@ -1075,16 +1075,16 @@ struct test_algo
     {
         template <CommonOrSent Sentinel, typename Cat, bool Sized, template <CommonOrSent, typename, bool> class MakeR>
         void call(char const*
-                      // #if defined(PERF_TEST)
+#if defined(PERF_TEST) || defined(CHECK_PERF_TEST)
                       range_type
-                  // #endif
+#endif
         ) const
         {
             auto t1 = MakeR<Sentinel, Cat, Sized>();
             t1.template test<>();
-            // #if defined(PERF_TEST)
+#if defined(PERF_TEST) || defined(CHECK_PERF_TEST)
             t1.template test_perf<>(range_type);
-            // #endif
+#endif
         }
     };
     template <CommonOrSent Sentinel, typename Cat, bool Sized>
@@ -1266,8 +1266,10 @@ std::chrono::nanoseconds compute_duration(
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
 
+#if defined(CHECK_PERF_TEST)
     func();
     ++count;
+#endif
     end = std::chrono::high_resolution_clock::now();
 #ifdef PERF_TEST
     if ((end - start) < std::chrono::microseconds(100))

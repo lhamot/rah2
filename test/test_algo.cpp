@@ -408,6 +408,12 @@ struct test_count_
         testSuite.test_case("iter");
         assert(
             RAH2_NS::ranges::count(coords.begin(), coords.end(), 1, RAH2_STD::mem_fn(&Coord::x)) == 2);
+
+        testSuite.test_case("empty");
+        RAH2_STD::vector<int> emptyVec;
+        auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(emptyVec);
+        assert(RAH2_NS::ranges::count(emptyRange, 3) == 0);
+
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -490,6 +496,12 @@ struct test_count_if_
             RAH2_NS::ranges::count_if(
                 coordsRange.begin(), coordsRange.end(), [](auto a) { return a == 4; }, &Coord::x)
             == 3);
+
+        testSuite.test_case("empty");
+        RAH2_STD::vector<int> emptyVec;
+        auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(emptyVec);
+        assert(RAH2_NS::ranges::count_if(emptyRange, [](auto a) { return a == 4; }) == 0);
+
     }
     template <bool = true>
     void test_perf(char const* range_type)

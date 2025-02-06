@@ -2136,7 +2136,7 @@ namespace RAH2_NS
                         if (!(*first1 == *first2)) // Note that we always express value comparisons in terms of < or ==.
                             return false;
                     }
-                    return first2 == last2;
+                    return first1 == last1 && first2 == last2;
                 }
 
                 template <
@@ -2177,12 +2177,12 @@ namespace RAH2_NS
                     Proj1 proj1 = {},
                     Proj2 proj2 = {}) const
                 {
-                    for (; first1 != last1; ++first1, ++first2)
+                    for (; first1 != last1 && first2 != last2; ++first1, ++first2)
                     {
                         if (!predicate(proj1(*first1), proj2(*first2)))
                             return false;
                     }
-                    return first2 == last2;
+                    return first1 == last1 && first2 == last2;
                 }
 
                 template <

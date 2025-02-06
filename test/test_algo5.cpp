@@ -33,15 +33,88 @@
 
 #include "test_helpers.hpp"
 
+struct ThrowOnCopy
+{
+    bool constructed = false;
+    bool do_throw = false;
+    ThrowOnCopy()
+        : constructed(true)
+    {
+    }
+    ThrowOnCopy(bool do_th)
+        : constructed(true)
+        , do_throw(do_th)
+    {
+    }
+    ThrowOnCopy(ThrowOnCopy const& other)
+        : constructed(true)
+    {
+        if (other.do_throw)
+        {
+            constructed = false;
+            throw std::exception();
+        }
+    }
+    ThrowOnCopy(ThrowOnCopy&&) = delete;
+    ThrowOnCopy& operator=(ThrowOnCopy const& other)
+    {
+        if (other.do_throw)
+        {
+            throw std::exception();
+        }
+    }
+    ThrowOnCopy& operator=(ThrowOnCopy&& other) = delete;
+    ~ThrowOnCopy()
+    {
+        CHECK(constructed);
+        constructed = false;
+    }
+};
+
+struct ThrowOnMove
+{
+    bool constructed = false;
+    bool do_throw = false;
+    ThrowOnMove()
+        : constructed(true)
+    {
+    }
+    ThrowOnMove(bool do_th)
+        : constructed(true)
+        , do_throw(do_th)
+    {
+    }
+    ThrowOnMove(ThrowOnMove&& other)
+        : constructed(true)
+    {
+        if (other.do_throw)
+        {
+            constructed = false;
+            throw std::exception();
+        }
+    }
+    ThrowOnMove(ThrowOnMove const&)
+        : constructed(true)
+    {
+    }
+    ThrowOnMove& operator=(ThrowOnMove&& other) = delete;
+    ThrowOnMove& operator=(ThrowOnMove const& other) = delete;
+    ~ThrowOnMove()
+    {
+        CHECK(constructed);
+        constructed = false;
+    }
+};
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_uninitialized_copy_
 {
     template <bool = true>
     void test()
     {
-        RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
         {
+            RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
             auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
             auto out_e = out_b + 5;
@@ -62,6 +135,8 @@ struct test_uninitialized_copy_
 
         testSuite.test_case("range");
         {
+            RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
             auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
             auto out_e = out_b + 5;
@@ -75,6 +150,65 @@ struct test_uninitialized_copy_
                 auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, in_[i]);
                 strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("POD");
+        {
+            RAH2_STD::vector<int> in_{11, 22, 33};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_copy(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                CHECK_EQUAL(out_[i], in_[i]);
+            }
+        }
+        {
+            RAH2_STD::vector<int> in_{11, 22, 33};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_copy(in, out);
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                CHECK_EQUAL(out_[i], in_[i]);
+            }
+        }
+
+        testSuite.test_case("throw");
+        {
+            RAH2_STD::vector<ThrowOnCopy> in2_{false, false, false, false, false};
+            in2_[3].do_throw = true;
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+            alignas(alignof(ThrowOnCopy)) uint8_t out_[sizeof(ThrowOnCopy) * 5];
+            auto out_b = reinterpret_cast<ThrowOnCopy*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            try
+            {
+                RAH2_NS::ranges::uninitialized_copy(in2, out);
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(strptr->constructed, false);
             }
         }
 
@@ -188,15 +322,15 @@ struct test_uninitialized_copy_n_
     template <bool = true>
     void test()
     {
-        RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        testSuite.test_case("iter");
         {
+            RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
             auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::uninitialized_copy_n(
                 RAH2_NS::ranges::begin(in), in_.size(), out.begin(), out.end());
             CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
@@ -206,6 +340,50 @@ struct test_uninitialized_copy_n_
                 auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, in_[i]);
                 strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("POD");
+        {
+            RAH2_STD::vector<int> in_{11, 22, 33};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_copy_n(
+                RAH2_NS::ranges::begin(in), in_.size(), out.begin(), out.end());
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                CHECK_EQUAL(out_[i], in_[i]);
+            }
+        }
+
+        testSuite.test_case("throw");
+        {
+            RAH2_STD::vector<ThrowOnCopy> in2_{false, false, false, false, false};
+            in2_[3].do_throw = true;
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+            alignas(alignof(ThrowOnCopy)) uint8_t out_[sizeof(ThrowOnCopy) * 5];
+            auto out_b = reinterpret_cast<ThrowOnCopy*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            try
+            {
+                RAH2_NS::ranges::uninitialized_copy_n(in2.begin(), 5, out.begin(), out.end());
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(strptr->constructed, false);
             }
         }
 
@@ -307,7 +485,6 @@ struct test_uninitialized_fill_
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            testSuite.test_case("iter");
             auto result =
                 RAH2_NS::ranges::uninitialized_fill(out.begin(), out.end(), RAH2_STD::string("Abc"));
             CHECK(result == out.end());
@@ -333,6 +510,82 @@ struct test_uninitialized_fill_
                 auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, RAH2_STD::string("Abc"));
                 strptr->~basic_string();
+            }
+        }
+        testSuite.test_case("POD");
+        {
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_fill(out.begin(), out.end(), 3);
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 3);
+            }
+        }
+        {
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_fill(out, 3);
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 3);
+            }
+        }
+
+        static int throw_countdown = 3;
+
+        struct CanThrowOnCopy
+        {
+            bool constructed = true;
+            CanThrowOnCopy() = default;
+            CanThrowOnCopy(CanThrowOnCopy const&)
+            {
+                if (throw_countdown == 0)
+                {
+                    constructed = false;
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            CanThrowOnCopy& operator=(CanThrowOnCopy const&)
+            {
+                if (throw_countdown == 0)
+                {
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            ~CanThrowOnCopy()
+            {
+                constructed = false;
+            }
+        };
+
+        testSuite.test_case("throw");
+        {
+            uint8_t out_[sizeof(CanThrowOnCopy) * 5];
+            auto out_b = reinterpret_cast<CanThrowOnCopy*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            throw_countdown = 3;
+            try
+            {
+                RAH2_NS::ranges::uninitialized_fill(out, CanThrowOnCopy());
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                CHECK(not out_b[i].constructed);
             }
         }
 
@@ -421,7 +674,6 @@ struct test_uninitialized_fill_n_
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            testSuite.test_case("iter");
             auto result =
                 RAH2_NS::ranges::uninitialized_fill_n(out.begin(), 5, RAH2_STD::string("Abc"));
             CHECK(result == out.end());
@@ -430,6 +682,71 @@ struct test_uninitialized_fill_n_
                 auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, RAH2_STD::string("Abc"));
                 strptr->~basic_string();
+            }
+        }
+
+        static int throw_countdown = 3;
+
+        struct CanThrowOnCopy
+        {
+            bool constructed = true;
+            CanThrowOnCopy() = default;
+            CanThrowOnCopy(CanThrowOnCopy const&)
+            {
+                if (throw_countdown == 0)
+                {
+                    constructed = false;
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            CanThrowOnCopy& operator=(CanThrowOnCopy const&)
+            {
+                if (throw_countdown == 0)
+                {
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            ~CanThrowOnCopy()
+            {
+                constructed = false;
+            }
+        };
+
+        testSuite.test_case("throw");
+        {
+            uint8_t out_[sizeof(CanThrowOnCopy) * 5];
+            auto out_b = reinterpret_cast<CanThrowOnCopy*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            throw_countdown = 3;
+            try
+            {
+                RAH2_NS::ranges::uninitialized_fill_n(out.begin(), 5, CanThrowOnCopy());
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                CHECK(not out_b[i].constructed);
+            }
+        }
+
+        testSuite.test_case("POD");
+        {
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_fill_n(out.begin(), 5, 3);
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 3);
             }
         }
 
@@ -540,6 +857,65 @@ struct test_uninitialized_move_
             }
         }
 
+        testSuite.test_case("POD");
+        {
+            RAH2_STD::vector<int> in_{11, 22, 33};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_move(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                CHECK_EQUAL(out_[i], in_[i]);
+            }
+        }
+        {
+            RAH2_STD::vector<int> in_{11, 22, 33};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_move(in, out);
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                CHECK_EQUAL(out_[i], in_[i]);
+            }
+        }
+
+        testSuite.test_case("throw");
+        {
+            RAH2_STD::vector<ThrowOnMove> in2_{false, false, false, false, false};
+            in2_[3].do_throw = true;
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+            alignas(alignof(ThrowOnMove)) uint8_t out_[sizeof(ThrowOnMove) * 5];
+            auto out_b = reinterpret_cast<ThrowOnMove*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            try
+            {
+                RAH2_NS::ranges::uninitialized_move(in2, out);
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(strptr->constructed, false);
+            }
+        }
+
         testSuite.test_case("empty");
         {
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
@@ -640,16 +1016,16 @@ struct test_uninitialized_move_n_
     template <bool = true>
     void test()
     {
-        RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
-        RAH2_STD::vector<RAH2_STD::string> in_prev = in_;
-        auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+        testSuite.test_case("iter");
         {
+            RAH2_STD::vector<RAH2_STD::string> in_{"11", "22", "33"};
+            RAH2_STD::vector<RAH2_STD::string> in_prev = in_;
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
             alignas(alignof(RAH2_STD::string)) uint8_t out_[sizeof(RAH2_STD::string) * 5];
             auto out_b = reinterpret_cast<RAH2_STD::string*>(out_);
             auto out_e = out_b + 5;
             auto out =
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
-            testSuite.test_case("iter");
             auto result = RAH2_NS::ranges::uninitialized_move_n(
                 RAH2_NS::ranges::begin(in), in_.size(), out.begin(), out.end());
             CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
@@ -659,6 +1035,50 @@ struct test_uninitialized_move_n_
                 auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, in_prev[i]);
                 strptr->~basic_string();
+            }
+        }
+
+        testSuite.test_case("POD");
+        {
+            RAH2_STD::vector<int> in_{11, 22, 33};
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            int out_[5];
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_move_n(
+                RAH2_NS::ranges::begin(in), in_.size(), out.begin(), out.end());
+            CHECK(&(*result.out) == RAH2_NS::ranges::next(&(*out.begin()), in_.size()));
+            CHECK(result.in == in.end());
+            for (size_t i = 0; i < in_.size(); ++i)
+            {
+                CHECK_EQUAL(out_[i], in_[i]);
+            }
+        }
+
+        testSuite.test_case("throw");
+        {
+            RAH2_STD::vector<ThrowOnMove> in2_{false, false, false, false, false};
+            in2_[3].do_throw = true;
+            auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
+
+            alignas(alignof(ThrowOnMove)) uint8_t out_[sizeof(ThrowOnMove) * 5];
+            auto out_b = reinterpret_cast<ThrowOnMove*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            try
+            {
+                RAH2_NS::ranges::uninitialized_move_n(in2.begin(), 5, out.begin(), out.end());
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                auto const strptr = out_b + i;
+                CHECK_EQUAL(strptr->constructed, false);
             }
         }
 
@@ -808,6 +1228,76 @@ struct test_uninitialized_default_construct_
             auto result3 = RAH2_NS::ranges::uninitialized_default_construct(out);
             CHECK(result3 == out.end());
         }
+
+        testSuite.test_case("POD");
+        {
+            int out_[5] = {3, 3, 3, 3, 3};
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_default_construct(out.begin(), out.end());
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 3); // default initialization doesn't affect primitive types
+            }
+        }
+        {
+            int out_[5] = {3, 3, 3, 3, 3};
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_default_construct(out);
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 3); // default initialization doesn't affect primitive types
+            }
+        }
+
+        static int throw_countdown = 3;
+
+        struct CanThrowOnCtor
+        {
+            bool constructed = true;
+            CanThrowOnCtor()
+            {
+                if (throw_countdown == 0)
+                {
+                    constructed = false;
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            CanThrowOnCtor(CanThrowOnCtor const&) = delete;
+            CanThrowOnCtor& operator=(CanThrowOnCtor const&) = delete;
+            ~CanThrowOnCtor()
+            {
+                constructed = false;
+            }
+        };
+
+        testSuite.test_case("throw");
+        {
+            uint8_t out_[sizeof(CanThrowOnCtor) * 5];
+            auto out_b = reinterpret_cast<CanThrowOnCtor*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            throw_countdown = 3;
+            try
+            {
+                RAH2_NS::ranges::uninitialized_default_construct(out);
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                CHECK(not out_b[i].constructed);
+            }
+        }
     }
 
     template <bool = true>
@@ -955,6 +1445,64 @@ struct test_uninitialized_default_construct_n_
                 auto const strptr = out_b + i;
                 CHECK_EQUAL(*strptr, RAH2_STD::string());
                 strptr->~basic_string();
+            }
+        }
+
+        static int throw_countdown = 3;
+
+        struct CanThrowOnCtor
+        {
+            bool constructed = true;
+            CanThrowOnCtor()
+            {
+                if (throw_countdown == 0)
+                {
+                    constructed = false;
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            CanThrowOnCtor(CanThrowOnCtor const&) = delete;
+            CanThrowOnCtor& operator=(CanThrowOnCtor const&) = delete;
+            ~CanThrowOnCtor()
+            {
+                constructed = false;
+            }
+        };
+
+        testSuite.test_case("throw");
+        {
+            uint8_t out_[sizeof(CanThrowOnCtor) * 5];
+            auto out_b = reinterpret_cast<CanThrowOnCtor*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            throw_countdown = 3;
+            try
+            {
+                RAH2_NS::ranges::uninitialized_default_construct_n(out.begin(), 5);
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                CHECK(not out_b[i].constructed);
+            }
+        }
+
+        testSuite.test_case("POD");
+        {
+            int out_[5] = {3, 3, 3, 3, 3};
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_default_construct_n(out.begin(), 5);
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 3);
             }
         }
 
