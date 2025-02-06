@@ -55,7 +55,14 @@ struct ThrowOnCopy
             throw std::exception();
         }
     }
-    ThrowOnCopy(ThrowOnCopy&&) = delete;
+    ThrowOnCopy(ThrowOnCopy&& other)
+    {
+        if (other.do_throw)
+        {
+            constructed = false;
+            throw std::exception();
+        }
+    }
     ThrowOnCopy& operator=(ThrowOnCopy const& other)
     {
         if (other.do_throw)
