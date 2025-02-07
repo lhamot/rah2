@@ -76,8 +76,9 @@ rah2 is licensed under the [Boost Software License](http://www.boost.org/LICENSE
 - On macos
     - clang++ 14 (-std=c++14, -std=c++17 and -std=c++20)
 ## Continuous integration
-- Using `std` ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
-- Using `eastl` ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake_eastl.yml/badge.svg)
+- Using `std` : ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake.yml/badge.svg)
+- Using `eastl` : ![CI badge](https://github.com/lhamot/rah2/actions/workflows/cmake_eastl.yml/badge.svg)
+- Code coverage : [![codecov](https://codecov.io/gh/lhamot/rah2/graph/badge.svg?token=TW3BFDZOK8)](https://codecov.io/gh/lhamot/rah2)
 ## How to use?
 - Doc is WIP but cppreference is great
 - Views are in **rah2::views** namespace. [Ranges library](https://en.cppreference.com/w/cpp/ranges)
