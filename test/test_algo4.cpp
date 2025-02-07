@@ -59,6 +59,25 @@ struct test_rotate_
             CHECK(RAH2_NS::end(result) == RAH2_NS::end(out));
             CHECK(out_ == (RAH2_STD::vector<int>{3, 4, 5, 6, 1, 2}));
         }
+        testSuite.test_case("non_pod");
+        {
+            RAH2_STD::vector<std::string> out_{"1", "2", "3", "4", "5"};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto middle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::rotate(out.begin(), middle, out.end());
+            CHECK(RAH2_NS::ranges::begin(result) == RAH2_NS::ranges::next(out.begin(), 3));
+            CHECK(RAH2_NS::ranges::end(result) == RAH2_NS::end(out));
+            CHECK(out_ == (RAH2_STD::vector<std::string>{"3", "4", "5", "1", "2"}));
+        }
+        {
+            RAH2_STD::vector<std::string> out_{"1", "2", "3", "4", "5", "6"};
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto middle = RAH2_NS::ranges::next(out.begin(), 2);
+            auto result = RAH2_NS::ranges::rotate(out, middle);
+            CHECK(RAH2_NS::begin(result) == RAH2_NS::ranges::next(out.begin(), 4));
+            CHECK(RAH2_NS::end(result) == RAH2_NS::end(out));
+            CHECK(out_ == (RAH2_STD::vector<std::string>{"3", "4", "5", "6", "1", "2"}));
+        }
 
         {
             testSuite.test_case("empty");
@@ -990,6 +1009,12 @@ struct test_is_partitioned_
             RAH2_STD::vector<Coord> partitioned_ = {{2, 0}, {4, 0}, {6, 0}, {1, 0}, {3, 0}, {5, 0}};
             auto partitioned = make_test_view_adapter<CS, Tag, Sized>(partitioned_);
             CHECK(RAH2_NS::ranges::is_partitioned(partitioned, is_even_64, &Coord::x));
+        }
+
+        {
+            RAH2_STD::vector<Coord> empty_;
+            auto empty = make_test_view_adapter<CS, Tag, Sized>(empty_);
+            CHECK(RAH2_NS::ranges::is_partitioned(empty, is_even_64, &Coord::x));
         }
     }
     template <bool = true>
@@ -1996,6 +2021,7 @@ struct test_sort_
             {
                 out_.push_back(int(49) - int(i));
             }
+            out_[10] = 10;
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             auto result = RAH2_NS::ranges::sort(out.begin(), out.end());
             CHECK(result == out.end());
@@ -2042,6 +2068,7 @@ struct test_sort_
             {
                 out_.push_back(Coord{int(49) - int(i), 0});
             }
+            out_[10] = Coord{10, 0};
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             auto result = RAH2_NS::ranges::sort(out, comp_64, &Coord::x);
             CHECK(result == out.end());
@@ -2572,10 +2599,11 @@ struct test_stable_sort_
         {
             // longer than kQuickSortLimit
             RAH2_STD::vector<int> out_;
-            for (size_t i = 0; i < 50; ++i)
+            for (size_t i = 0; i < 260; ++i)
             {
-                out_.push_back(int(49) - int(i));
+                out_.push_back(int(259) - int(i));
             }
+            out_[10] = 10;
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             auto result = RAH2_NS::ranges::stable_sort(out.begin(), out.end());
             CHECK(result == out.end());
@@ -7321,6 +7349,12 @@ struct test_fold_left_
         CHECK_EQUAL(
             RAH2_NS::ranges::fold_left(intsRange.begin(), intsRange.end(), 3, RAH2_STD::plus<int>()),
             18);
+
+        testSuite.test_case("empty");
+        {
+            auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<int>());
+            CHECK_EQUAL(RAH2_NS::ranges::fold_left(emptyRange, 3, RAH2_STD::plus<int>()), 3);
+        }
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -7486,6 +7520,10 @@ struct test_fold_right_
         CHECK_EQUAL(
             RAH2_NS::ranges::fold_right(intsRange.begin(), intsRange.end(), 3, RAH2_STD::plus<int>()),
             18);
+
+        testSuite.test_case("empty");
+        auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<int>());
+        CHECK_EQUAL(RAH2_NS::ranges::fold_right(emptyRange, 3, RAH2_STD::plus<int>()), 3);
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -7575,6 +7613,11 @@ struct test_fold_right_last_
             *RAH2_NS::ranges::fold_right_last(
                 intsRange.begin(), intsRange.end(), RAH2_STD::plus<int>()),
             18);
+
+        testSuite.test_case("range");
+        RAH2_STD::vector<int> emptyVec({3});
+        auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(emptyVec);
+        CHECK_EQUAL(*RAH2_NS::ranges::fold_right_last(emptyRange, RAH2_STD::plus<int>()), 3);
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -7668,6 +7711,12 @@ struct test_fold_left_with_iter_
             intsRange.begin(), intsRange.end(), 3, RAH2_STD::plus<int>());
         CHECK_EQUAL(result4.value, 18);
         CHECK_EQUAL(result4.in, intsRange.end());
+
+        testSuite.test_case("empty");
+        auto emptyRange = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<int>());
+        auto result5 = RAH2_NS::ranges::fold_left_with_iter(emptyRange, 3, RAH2_STD::plus<int>());
+        CHECK_EQUAL(result5.value, 3);
+        CHECK_EQUAL(result5.in, emptyRange.end());
     }
     template <bool = true>
     void test_perf(char const* range_type)

@@ -56,6 +56,14 @@ struct test_adjacent_find_
             auto const it = RAH2_NS::ranges::adjacent_find(v, RAH2_NS::ranges::greater(), &Coord::x);
             assert(RAH2_NS::ranges::distance(v.begin(), it) == 7);
         }
+
+        {
+            std::vector<Coord> const vec2;
+            auto v2 = make_test_view_adapter<CS, Tag, Sized>(vec2);
+            testSuite.test_case("empty");
+            auto const it = RAH2_NS::ranges::adjacent_find(v2, RAH2_NS::ranges::greater(), &Coord::x);
+            CHECK(it == v2.end());
+        }
     }
 
     template <bool = true>
@@ -143,6 +151,9 @@ struct test_search_
         auto const found3 = RAH2_NS::ranges::search(haystack, none);
         assert(RAH2_STD::distance(haystack.begin(), found3.begin()) == 0);
         assert(RAH2_STD::distance(haystack.begin(), found3.end()) == 0);
+        auto const found6 = RAH2_NS::ranges::search(none, haystack);
+        assert(none.end() == found6.begin());
+        assert(none.end() == found6.end());
 
         // 'needle' will not be found:
         RAH2_STD::string awl_{"efg"};
@@ -1873,6 +1884,11 @@ struct test_generate_
         RAH2_STD::array<int, 8> u = {};
         RAH2_NS::ranges::generate(u.begin(), u.end(), [n = 1]() mutable { return n++; });
         assert(u == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+
+        testSuite.test_case("empty");
+        RAH2_STD::array<int, 3> e = {};
+        RAH2_NS::ranges::generate(e.begin(), e.begin(), [n = 1]() mutable { return n++; });
+        assert(e == (RAH2_STD::array<int, 3>{0, 0, 0}));
     }
 
     void test_perf()
@@ -1931,6 +1947,11 @@ struct test_generate_n_
         RAH2_STD::array<int, 8> u = {};
         RAH2_NS::ranges::generate_n(u.begin(), 8, [n = 1]() mutable { return n++; });
         assert(u == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+
+        testSuite.test_case("empty");
+        RAH2_STD::array<int, 3> e = {};
+        RAH2_NS::ranges::generate_n(e.begin(), 0, [n = 1]() mutable { return n++; });
+        assert(e == (RAH2_STD::array<int, 3>{0, 0, 0}));
     }
 
     void test_perf()
@@ -1990,6 +2011,13 @@ struct test_remove_
             auto const removed2 = RAH2_NS::ranges::remove(in2.begin(), in2.end(), 1);
             assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
             assert(RAH2_STD::distance(removed2.begin(), removed2.end()) == 3);
+
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in3_;
+            auto in3 = make_test_view_adapter<CS, Tag, Sized>(in3_);
+            auto const removed3 = RAH2_NS::ranges::remove(in3.begin(), in3.end(), 1);
+            assert(RAH2_STD::distance(in3.begin(), removed3.begin()) == 0);
+            assert(RAH2_STD::distance(removed3.begin(), removed3.end()) == 0);
         }
 
         testSuite.test_case("proj");
@@ -2083,6 +2111,14 @@ struct test_remove_if_
                 RAH2_NS::ranges::remove_if(in2.begin(), in2.end(), [](auto v) { return v == 1; });
             assert(RAH2_STD::distance(in2.begin(), removed2.begin()) == 2);
             assert(RAH2_STD::distance(removed2.begin(), removed2.end()) == 3);
+
+            testSuite.test_case("empty");
+            RAH2_STD::vector<int> in3_;
+            auto in3 = make_test_view_adapter<CS, Tag, Sized>(in3_);
+            auto const removed3 =
+                RAH2_NS::ranges::remove_if(in3.begin(), in3.end(), [](auto v) { return v == 1; });
+            assert(RAH2_STD::distance(in3.begin(), removed3.begin()) == 0);
+            assert(RAH2_STD::distance(removed3.begin(), removed3.end()) == 0);
         }
 
         testSuite.test_case("proj");
@@ -2166,7 +2202,7 @@ struct test_remove_copy_
     void test()
     {
         {
-            RAH2_STD::vector<int> in_{1, 2, 1, 3, 1};
+            RAH2_STD::vector<int> const in_{1, 2, 1, 3, 1};
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
 
             {
@@ -2175,7 +2211,6 @@ struct test_remove_copy_
                 auto const removed = RAH2_NS::ranges::remove_copy(in, out.begin(), 1);
                 CHECK(removed.in == in.end());
                 CHECK(RAH2_NS::ranges::distance(out.begin(), removed.out) == 2);
-                CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
                 CHECK(out == (RAH2_STD::vector<int>{2, 3, 42}));
             }
 
@@ -2186,9 +2221,19 @@ struct test_remove_copy_
                     RAH2_NS::ranges::remove_copy(in.begin(), in.end(), out2.begin(), 1);
                 CHECK(removed2.in == in.end());
                 CHECK(RAH2_NS::ranges::distance(out2.begin(), removed2.out) == 2);
-                CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
                 CHECK(out2 == (RAH2_STD::vector<int>{2, 3, 42}));
             }
+            {
+                testSuite.test_case("empty");
+                auto empty = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<int>());
+                RAH2_STD::vector<int> out2(3, 42);
+                auto const removed2 =
+                    RAH2_NS::ranges::remove_copy(empty.begin(), empty.end(), out2.begin(), 1);
+                CHECK(removed2.in == empty.end());
+                CHECK(RAH2_NS::ranges::distance(out2.begin(), removed2.out) == 0);
+                CHECK(out2 == (RAH2_STD::vector<int>{42, 42, 42}));
+            }
+            CHECK(in_ == (RAH2_STD::vector<int>{1, 2, 1, 3, 1}));
         }
         testSuite.test_case("proj");
         {
