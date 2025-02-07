@@ -58,12 +58,23 @@ struct test_mismatch_
             testSuite.test_case("iter");
             RAH2_STD::vector<int> in1 = {1, 2, 3, 4};
             RAH2_STD::vector<int> in2 = {1, 2, 42, 43};
+            RAH2_STD::vector<int> in3 = {};
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
+            auto rng3 = make_test_view_adapter<CS, Tag, Sized>(in3);
             auto r1_r2 =
                 RAH2_NS::ranges::mismatch(rng1.begin(), rng1.end(), rng2.begin(), rng2.end());
             assert(*r1_r2.in1 == 3);
             assert(*r1_r2.in2 == 42);
+            testSuite.test_case("empty");
+            auto r1_r3 =
+                RAH2_NS::ranges::mismatch(rng1.begin(), rng1.end(), rng3.begin(), rng3.end());
+            assert(*r1_r3.in1 == 1);
+            assert(r1_r3.in2 == rng3.end());
+            auto r3_r2 =
+                RAH2_NS::ranges::mismatch(rng3.begin(), rng3.end(), rng2.begin(), rng2.end());
+            assert(r3_r2.in1 == rng3.end());
+            assert(*r3_r2.in2 == 1);
         }
         {
             testSuite.test_case("range");
@@ -163,10 +174,16 @@ struct test_equal_
             testSuite.test_case("iter");
             RAH2_STD::vector<int> in1 = {1, 2, 3, 4};
             RAH2_STD::vector<int> in2 = {1, 2, 42, 43};
+            RAH2_STD::vector<int> in3;
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
-            assert(not RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
-            assert(RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng1.begin(), rng1.end()));
+            auto rng3 = make_test_view_adapter<CS, Tag, Sized>(in3);
+            CHECK(not RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng2.begin(), rng2.end()));
+            CHECK(RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng1.begin(), rng1.end()));
+
+            testSuite.test_case("empty");
+            CHECK(not RAH2_NS::ranges::equal(rng1.begin(), rng1.end(), rng3.begin(), rng3.end()));
+            CHECK(not RAH2_NS::ranges::equal(rng3.begin(), rng3.end(), rng1.begin(), rng1.end()));
         }
         {
             testSuite.test_case("range");
@@ -174,9 +191,15 @@ struct test_equal_
             testSuite.test_case("pred");
             RAH2_STD::vector<Coord> in1 = {{1, 0}, {2, 0}, {3, 5}, {4, 2}};
             RAH2_STD::vector<Coord> in2 = {{6, 1}, {2, 2}, {2, 3}, {3, 4}};
+            RAH2_STD::vector<Coord> in3;
             auto rng1 = make_test_view_adapter<CS, Tag, Sized>(in1);
             auto rng2 = make_test_view_adapter<CS, Tag, Sized>(in2);
-            assert(RAH2_NS::ranges::equal(rng1, rng2, [](auto a, auto b) { return a.x == b.y; }));
+            auto rng3 = make_test_view_adapter<CS, Tag, Sized>(in3);
+            CHECK(RAH2_NS::ranges::equal(rng1, rng2, [](auto a, auto b) { return a.x == b.y; }));
+
+            testSuite.test_case("empty");
+            CHECK(not RAH2_NS::ranges::equal(rng1, rng3, [](auto a, auto b) { return a.x == b.y; }));
+            CHECK(not RAH2_NS::ranges::equal(rng3, rng2, [](auto a, auto b) { return a.x == b.y; }));
         }
     }
     template <bool = true>
@@ -248,22 +271,31 @@ struct test_lexicographical_compare_
             testSuite.test_case("noproj");
             RAH2_STD::vector<char> v1{'a', 'b', 'c', 'd'};
             RAH2_STD::vector<char> v2{'a', 'x', 'y', 'z'};
+            RAH2_STD::vector<char> v3;
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(v1);
             auto r2 = make_test_view_adapter<CS, Tag, Sized>(v2);
-            assert(RAH2_NS::ranges::lexicographical_compare(r1, r1) == false);
-            assert(RAH2_NS::ranges::lexicographical_compare(r1, r2) == true);
-            assert(RAH2_NS::ranges::lexicographical_compare(r2, r1) == false);
+            auto r3 = make_test_view_adapter<CS, Tag, Sized>(v3);
+            CHECK(RAH2_NS::ranges::lexicographical_compare(r1, r1) == false);
+            CHECK(RAH2_NS::ranges::lexicographical_compare(r1, r2) == true);
+            testSuite.test_case("empty");
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(r2, r3));
+            CHECK(RAH2_NS::ranges::lexicographical_compare(r3, r1));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(r3, r3));
 
             testSuite.test_case("iter");
-            assert(
-                RAH2_NS::ranges::lexicographical_compare(r1.begin(), r1.end(), r1.begin(), r1.end())
-                == false);
-            assert(
-                RAH2_NS::ranges::lexicographical_compare(r1.begin(), r1.end(), r2.begin(), r2.end())
-                == true);
-            assert(
-                RAH2_NS::ranges::lexicographical_compare(r2.begin(), r2.end(), r1.begin(), r1.end())
-                == false);
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r1.begin(), r1.end(), r1.begin(), r1.end()));
+            CHECK(RAH2_NS::ranges::lexicographical_compare(
+                r1.begin(), r1.end(), r2.begin(), r2.end()));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r2.begin(), r2.end(), r1.begin(), r1.end()));
+            testSuite.test_case("empty");
+            CHECK(RAH2_NS::ranges::lexicographical_compare(
+                r3.begin(), r3.end(), r1.begin(), r1.end()));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r2.begin(), r2.end(), r3.begin(), r3.end()));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r3.begin(), r3.end(), r3.begin(), r3.end()));
         }
         {
             testSuite.test_case("range");
@@ -271,20 +303,23 @@ struct test_lexicographical_compare_
             testSuite.test_case("proj");
             RAH2_STD::vector<Coord> v1{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
             RAH2_STD::vector<Coord> v2{{0, 1}, {0, 3}, {0, 4}, {0, 5}};
+            RAH2_STD::vector<Coord> v3;
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(v1);
             auto r2 = make_test_view_adapter<CS, Tag, Sized>(v2);
-            assert(
-                RAH2_NS::ranges::lexicographical_compare(
-                    r1, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
-                == true);
-            assert(
-                RAH2_NS::ranges::lexicographical_compare(
-                    r1, r2, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
-                == false);
-            assert(
-                RAH2_NS::ranges::lexicographical_compare(
-                    r2, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y)
-                == false);
+            auto r3 = make_test_view_adapter<CS, Tag, Sized>(v3);
+            CHECK(RAH2_NS::ranges::lexicographical_compare(
+                r1, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r1, r2, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r2, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            testSuite.test_case("empty");
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r2, r3, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            CHECK(RAH2_NS::ranges::lexicographical_compare(
+                r3, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            CHECK(not RAH2_NS::ranges::lexicographical_compare(
+                r3, r3, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
         }
     }
     template <bool = true>
@@ -353,14 +388,25 @@ struct test_find_
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            RAH2_STD::vector<Coord> in2;
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
             testSuite.test_case("range");
             testSuite.test_case("noproj");
             auto const iter = RAH2_NS::ranges::find(r1, Coord{3, 0});
+            assert((*iter == Coord{3, 0}));
+
+            testSuite.test_case("empty");
+            auto const iter3 = RAH2_NS::ranges::find(r2, Coord{3, 0});
+            assert((iter3 == r2.end()));
+
             testSuite.test_case("iter");
             testSuite.test_case("proj");
-            assert((*iter == Coord{3, 0}));
             auto const iter2 = RAH2_NS::ranges::find(r1.begin(), r1.end(), 3, &Coord::x);
             assert((*iter2 == Coord{3, 0}));
+
+            testSuite.test_case("empty");
+            auto const iter4 = RAH2_NS::ranges::find(r2.begin(), r2.end(), 3, &Coord::x);
+            assert((iter4 == r2.end()));
         }
     }
     template <bool = true>
@@ -412,15 +458,23 @@ struct test_find_if_
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<Coord>());
             testSuite.test_case("range");
             testSuite.test_case("noproj");
             auto const iter = RAH2_NS::ranges::find_if(r1, [](auto c) { return c == Coord{3, 0}; });
+            assert((*iter == Coord{3, 0}));
+            testSuite.test_case("empty");
+            auto const iter3 = RAH2_NS::ranges::find_if(r2, [](auto c) { return c == Coord{3, 0}; });
+            assert(iter3 == r2.end());
             testSuite.test_case("iter");
             testSuite.test_case("proj");
-            assert((*iter == Coord{3, 0}));
             auto const iter2 = RAH2_NS::ranges::find_if(
                 r1.begin(), r1.end(), [](auto c) { return c == 3; }, &Coord::x);
             assert((*iter2 == Coord{3, 0}));
+            testSuite.test_case("empty");
+            auto const iter4 = RAH2_NS::ranges::find_if(
+                r2.begin(), r2.end(), [](auto c) { return c == 3; }, &Coord::x);
+            assert(iter4 == r2.end());
         }
     }
     template <bool = true>
@@ -475,16 +529,25 @@ struct test_find_if_not_
         {
             RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}};
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+            auto r2 = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<Coord>());
             testSuite.test_case("range");
             testSuite.test_case("noproj");
             auto const iter =
                 RAH2_NS::ranges::find_if_not(r1, [](auto c) { return c != Coord{3, 0}; });
+            CHECK((*iter == Coord{3, 0}));
+            testSuite.test_case("empty");
+            auto const iter3 =
+                RAH2_NS::ranges::find_if_not(r2, [](auto c) { return c != Coord{3, 0}; });
+            CHECK(iter3 == r2.end());
             testSuite.test_case("iter");
             testSuite.test_case("proj");
-            assert((*iter == Coord{3, 0}));
             auto const iter2 = RAH2_NS::ranges::find_if_not(
                 r1.begin(), r1.end(), [](auto c) { return c != 3; }, &Coord::x);
-            assert((*iter2 == Coord{3, 0}));
+            CHECK((*iter2 == Coord{3, 0}));
+            testSuite.test_case("empty");
+            auto const iter4 = RAH2_NS::ranges::find_if_not(
+                r2.begin(), r2.end(), [](auto c) { return c != 3; }, &Coord::x);
+            CHECK(iter4 == r2.end());
         }
     }
     template <bool = true>
@@ -538,18 +601,28 @@ struct test_find_last_
     {
         RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}, {3, 0}, {2, 0}};
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        auto r2 = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<Coord>());
         testSuite.test_case("range");
         testSuite.test_case("noproj");
         auto const iter = RAH2_NS::ranges::find_last(r1, Coord{3, 0});
+        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 0}));
+        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+        testSuite.test_case("empty");
+        auto const iter4 = RAH2_NS::ranges::find_last(r2, Coord{3, 0});
+        CHECK(RAH2_NS::ranges::begin(iter4) == r2.end());
+        CHECK(RAH2_NS::ranges::end(iter4) == r2.end());
+
         testSuite.test_case("iter");
         testSuite.test_case("proj");
-        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 0}));
-        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
         auto const iter2 = RAH2_NS::ranges::find_last(r1.begin(), r1.end(), 3, &Coord::x);
-        assert((*RAH2_NS::ranges::begin(iter2) == Coord{3, 0}));
-        assert((RAH2_NS::ranges::distance(iter2.begin(), iter2.end()) == 2));
+        CHECK((*RAH2_NS::ranges::begin(iter2) == Coord{3, 0}));
+        CHECK((RAH2_NS::ranges::distance(iter2.begin(), iter2.end()) == 2));
         auto const iter3 = RAH2_NS::ranges::find_last(r1.begin(), r1.end(), 45, &Coord::x);
-        assert(RAH2_NS::ranges::empty(iter3));
+        CHECK(RAH2_NS::ranges::empty(iter3));
+        testSuite.test_case("empty");
+        auto const iter5 = RAH2_NS::ranges::find_last(r2.begin(), r2.end(), 45, &Coord::x);
+        CHECK(RAH2_NS::ranges::begin(iter5) == r2.end());
+        CHECK(RAH2_NS::ranges::end(iter5) == r2.end());
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -615,21 +688,33 @@ struct test_find_last_if_
     {
         RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}, {3, 0}, {2, 0}};
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        auto r2 = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<Coord>());
         testSuite.test_case("range");
         testSuite.test_case("noproj");
         auto const iter =
             RAH2_NS::ranges::find_last_if(r1, [](Coord const& c) { return c == Coord{3, 0}; });
+        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 0}));
+        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+        testSuite.test_case("empty");
+        auto const iter4 =
+            RAH2_NS::ranges::find_last_if(r2, [](Coord const& c) { return c == Coord{3, 0}; });
+        CHECK(RAH2_NS::ranges::begin(iter4) == r2.end());
+        CHECK(RAH2_NS::ranges::end(iter4) == r2.end());
+
         testSuite.test_case("iter");
         testSuite.test_case("proj");
-        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 0}));
-        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
         auto const iter2 = RAH2_NS::ranges::find_last_if(
             r1.begin(), r1.end(), [](intptr_t c) { return c == 3; }, &Coord::x);
-        assert((*RAH2_NS::ranges::begin(iter2) == Coord{3, 0}));
-        assert((RAH2_NS::ranges::distance(iter2.begin(), iter2.end()) == 2));
+        CHECK((*RAH2_NS::ranges::begin(iter2) == Coord{3, 0}));
+        CHECK((RAH2_NS::ranges::distance(iter2.begin(), iter2.end()) == 2));
         auto const iter3 = RAH2_NS::ranges::find_last_if(
             r1.begin(), r1.end(), [](intptr_t c) { return c == 45; }, &Coord::x);
-        assert(RAH2_NS::ranges::empty(iter3));
+        CHECK(RAH2_NS::ranges::empty(iter3));
+        testSuite.test_case("empty");
+        auto const iter5 = RAH2_NS::ranges::find_last_if(
+            r2.begin(), r2.end(), [](intptr_t c) { return c == 45; }, &Coord::x);
+        CHECK(RAH2_NS::ranges::begin(iter5) == r2.end());
+        CHECK(RAH2_NS::ranges::end(iter5) == r2.end());
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -709,21 +794,33 @@ struct test_find_last_if_not_
     {
         RAH2_STD::vector<Coord> in{{1, 0}, {2, 0}, {3, 0}, {4, 0}, {3, 0}, {2, 0}};
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
+        auto r2 = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::vector<Coord>());
         testSuite.test_case("range");
         testSuite.test_case("noproj");
         auto const iter =
             RAH2_NS::ranges::find_last_if_not(r1, [](Coord const& c) { return c != Coord{3, 0}; });
+        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 0}));
+        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+        testSuite.test_case("empty");
+        auto const iter4 =
+            RAH2_NS::ranges::find_last_if_not(r2, [](Coord const& c) { return c != Coord{3, 0}; });
+        CHECK(RAH2_NS::ranges::begin(iter4) == r2.end());
+        CHECK(RAH2_NS::ranges::end(iter4) == r2.end());
+
         testSuite.test_case("iter");
         testSuite.test_case("proj");
-        assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 0}));
-        assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
         auto const iter2 = RAH2_NS::ranges::find_last_if_not(
             r1.begin(), r1.end(), [](intptr_t c) { return c != 3; }, &Coord::x);
-        assert((*RAH2_NS::ranges::begin(iter2) == Coord{3, 0}));
-        assert((RAH2_NS::ranges::distance(iter2.begin(), iter2.end()) == 2));
+        CHECK((*RAH2_NS::ranges::begin(iter2) == Coord{3, 0}));
+        CHECK((RAH2_NS::ranges::distance(iter2.begin(), iter2.end()) == 2));
         auto const iter3 = RAH2_NS::ranges::find_last_if_not(
             r1.begin(), r1.end(), [](intptr_t c) { return c != 45; }, &Coord::x);
-        assert(RAH2_NS::ranges::empty(iter3));
+        CHECK(RAH2_NS::ranges::empty(iter3));
+        testSuite.test_case("empty");
+        auto const iter5 = RAH2_NS::ranges::find_last_if_not(
+            r2.begin(), r2.end(), [](intptr_t c) { return c != 45; }, &Coord::x);
+        CHECK(RAH2_NS::ranges::begin(iter5) == r2.end());
+        CHECK(RAH2_NS::ranges::end(iter5) == r2.end());
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -811,10 +908,10 @@ struct test_find_end_
         testSuite.test_case("noproj");
         auto const found1 =
             RAH2_NS::ranges::find_end(secret.begin(), secret.end(), wanted.begin(), wanted.end());
-        assert(
+        CHECK(
             found1.begin()
             == RAH2_NS::ranges::next(secret.begin(), static_cast<intptr_t>(strlen("password "))));
-        assert(
+        CHECK(
             found1.end()
             == RAH2_NS::ranges::next(
                 secret.begin(), static_cast<intptr_t>(strlen("password password"))));
@@ -823,11 +920,11 @@ struct test_find_end_
         auto word_str = RAH2_STD::string("word");
         auto word = make_test_view_adapter<CS, Tag, Sized>(word_str);
         auto const found2 = RAH2_NS::ranges::find_end(secret, word);
-        assert(
+        CHECK(
             found2.begin()
             == RAH2_NS::ranges::next(
                 secret.begin(), static_cast<intptr_t>(strlen("password password "))));
-        assert(
+        CHECK(
             found2.end()
             == RAH2_NS::ranges::next(
                 secret.begin(), static_cast<intptr_t>(strlen("password password word"))));
@@ -838,11 +935,11 @@ struct test_find_end_
             secret, ord, [](char const x, char const y) { // uses a binary predicate
                 return std::tolower(x) == std::tolower(y);
             });
-        assert(
+        CHECK(
             found3.begin()
             == RAH2_NS::ranges::next(
                 secret.begin(), static_cast<intptr_t>(strlen("password password w"))));
-        assert(
+        CHECK(
             found3.end()
             == RAH2_NS::ranges::next(
                 secret.begin(), static_cast<intptr_t>(strlen("password password word"))));
@@ -852,10 +949,10 @@ struct test_find_end_
         auto sword = make_test_view_adapter<CS, Tag, Sized>(sword_str);
         auto const found4 = RAH2_NS::ranges::find_end(
             secret, sword, {}, {}, [](char c) { return std::tolower(c); }); // projects the 2nd range
-        assert(
+        CHECK(
             found4.begin()
             == RAH2_NS::ranges::next(secret.begin(), static_cast<intptr_t>(strlen("password pas"))));
-        assert(
+        CHECK(
             found4.end()
             == RAH2_NS::ranges::next(
                 secret.begin(), static_cast<intptr_t>(strlen("password password"))));
@@ -863,7 +960,11 @@ struct test_find_end_
         testSuite.test_case("empty");
         auto pass_str = RAH2_STD::string("PASS");
         auto pass = make_test_view_adapter<CS, Tag, Sized>(pass_str);
-        assert(RAH2_NS::ranges::find_end(secret, pass).empty()); // => not found
+        CHECK(RAH2_NS::ranges::find_end(secret, pass).empty()); // => not found
+
+        auto empty = make_test_view_adapter<CS, Tag, Sized>(RAH2_STD::string());
+        CHECK(RAH2_NS::ranges::find_end(empty, pass).empty());
+        CHECK(RAH2_NS::ranges::find_end(pass, empty).empty());
     }
 
     template <bool = true>
@@ -963,6 +1064,7 @@ struct test_find_first_of_
             auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
             auto t1 = make_test_view_adapter<CS, Tag2, Sized>(v2);
             auto t2 = make_test_view_adapter<CS, Tag2, Sized>(v3);
+            auto t3 = make_test_view_adapter<CS, Tag2, Sized>(std::vector<int>());
 
             testSuite.test_case("iter");
             testSuite.test_case("noproj");
@@ -973,6 +1075,14 @@ struct test_find_first_of_
             auto const found2 =
                 RAH2_NS::ranges::find_first_of(r.begin(), r.end(), t2.begin(), t2.end());
             assert(found2 == r.end());
+
+            testSuite.test_case("empty");
+            auto const found3 =
+                RAH2_NS::ranges::find_first_of(t3.begin(), t3.end(), t1.begin(), t1.end());
+            assert(found3 == t3.end());
+            auto const found4 =
+                RAH2_NS::ranges::find_first_of(r.begin(), r.end(), t3.begin(), t3.end());
+            assert(found4 == r.end());
         }
 
         {
@@ -980,6 +1090,7 @@ struct test_find_first_of_
             std::vector<Coord> v2 = {{1, 19}, {1, 10}, {1, 3}, {1, 4}};
             auto r = make_test_view_adapter<CS, Tag, Sized>(v1);
             auto t1 = make_test_view_adapter<CS, Tag2, Sized>(v2);
+            auto t2 = make_test_view_adapter<CS, Tag2, Sized>(std::vector<Coord>());
 
             testSuite.test_case("range");
             testSuite.test_case("proj");
@@ -990,6 +1101,14 @@ struct test_find_first_of_
             auto const found2 = RAH2_NS::ranges::find_first_of(
                 r, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::x);
             assert(found2 == r.end());
+
+            testSuite.test_case("empty");
+            auto const found3 = RAH2_NS::ranges::find_first_of(
+                t2, t1, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::y);
+            assert(found3 == t2.end());
+            auto const found4 = RAH2_NS::ranges::find_first_of(
+                r, t2, [](auto a, auto b) { return a == b; }, &Coord::x, &Coord::x);
+            assert(found4 == r.end());
         }
     }
 

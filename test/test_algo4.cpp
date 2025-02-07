@@ -823,7 +823,7 @@ struct test_unique_copy_
             CHECK(
                 (out
                  == RAH2_STD::vector<Coord>{
-                     {2, 0}, {3, 0}, {1, 0}, {5, 0}, {13, 0}, {4, 0}, {0, 0}, {0, 0}}));
+                     {2, 0}, {3, 0}, {1, 0}, {5, 0}, {13, 0}, {4, 0}, {0, 0}, {0, 0}, {0, 0}}));
         }
 
         {
@@ -834,7 +834,7 @@ struct test_unique_copy_
             auto result = RAH2_NS::ranges::unique_copy(empty_in, out.begin());
             CHECK(result.in == empty_in.end());
             CHECK(result.out == out.begin());
-            CHECK((out == RAH2_STD::vector<int>{}));
+            CHECK((out == RAH2_STD::vector<int>{0, 0}));
         }
     }
 
@@ -1989,6 +1989,18 @@ struct test_sort_
             CHECK(result == out.end());
             CHECK(out_ == (RAH2_STD::vector<int>{1, 3, 5, 7}));
         }
+        {
+            // longer than kQuickSortLimit
+            RAH2_STD::vector<int> out_;
+            for (size_t i = 0; i < 50; ++i)
+            {
+                out_.push_back(int(49) - int(i));
+            }
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::sort(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(RAH2_NS::ranges::is_sorted(out_));
+        }
 
         testSuite.test_case("range");
         {
@@ -2022,6 +2034,18 @@ struct test_sort_
             auto result = RAH2_NS::ranges::sort(out, comp_64, &Coord::x);
             CHECK(result == out.end());
             CHECK(out_ == (RAH2_STD::vector<Coord>{{7, 0}, {5, 0}, {3, 0}, {1, 0}}));
+        }
+        {
+            // longer than kQuickSortLimit
+            RAH2_STD::vector<Coord> out_;
+            for (size_t i = 0; i < 50; ++i)
+            {
+                out_.push_back(Coord{int(49) - int(i), 0});
+            }
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::sort(out, comp_64, &Coord::x);
+            CHECK(result == out.end());
+            CHECK(RAH2_NS::ranges::is_sorted(out_, comp_64, &Coord::x));
         }
     }
 
@@ -2545,6 +2569,18 @@ struct test_stable_sort_
             CHECK(result == out.end());
             CHECK(out_ == (RAH2_STD::vector<int>{1, 3, 5, 7}));
         }
+        {
+            // longer than kQuickSortLimit
+            RAH2_STD::vector<int> out_;
+            for (size_t i = 0; i < 50; ++i)
+            {
+                out_.push_back(int(49) - int(i));
+            }
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto result = RAH2_NS::ranges::stable_sort(out.begin(), out.end());
+            CHECK(result == out.end());
+            CHECK(RAH2_NS::ranges::is_sorted(out_));
+        }
 
         testSuite.test_case("range");
         {
@@ -2669,6 +2705,30 @@ void test_stable_sort()
     foreach_range_combination<test_algo<test_stable_sort_>>();
 }
 
+struct NotCopyable
+{
+    int i = 9;
+    NotCopyable() = default;
+    NotCopyable(int u)
+        : i(u)
+    {
+    }
+    NotCopyable(NotCopyable const&) = delete;
+    NotCopyable(NotCopyable&&) = default;
+    NotCopyable& operator=(NotCopyable const&) = delete;
+    NotCopyable& operator=(NotCopyable&&) = default;
+    ~NotCopyable() = default;
+
+    friend bool operator<(NotCopyable const& a, NotCopyable const& b)
+    {
+        return a.i < b.i;
+    }
+    friend bool operator>(NotCopyable const& a, NotCopyable const& b)
+    {
+        return a.i > b.i;
+    }
+};
+
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_nth_element_
 {
@@ -2721,6 +2781,28 @@ struct test_nth_element_
             ++after_middle;
             CHECK(RAH2_NS::ranges::all_of(after_middle, out.end(), [](auto v) { return v > 5; }));
             CHECK(*midle == 5);
+        }
+        {
+            // Not-copyable
+            RAH2_STD::vector<NotCopyable> out_;
+            out_.emplace_back(7);
+            out_.emplace_back(3);
+            out_.emplace_back(5);
+            out_.emplace_back(1);
+            out_.emplace_back(4);
+            out_.emplace_back(18);
+            out_.emplace_back(1);
+            out_.emplace_back(6);
+            auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
+            auto midle = RAH2_NS::ranges::next(out.begin(), 4);
+            auto result = RAH2_NS::ranges::nth_element(out.begin(), midle, out.end());
+            CHECK(result == out.end());
+            CHECK(RAH2_NS::ranges::all_of(out.begin(), midle, [](auto const& v) { return v < 5; }));
+            auto after_middle = midle;
+            ++after_middle;
+            CHECK(RAH2_NS::ranges::all_of(
+                after_middle, out.end(), [](auto const& v) { return v > 5; }));
+            CHECK_EQUAL(midle->i, 5);
         }
 
         testSuite.test_case("range");

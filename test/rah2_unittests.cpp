@@ -356,6 +356,7 @@ void test_concepts()
 void test_range_traits()
 {
     testSuite.test_case("on non-range");
+    CHECK(true);
     STATIC_ASSERT(!RAH2_NS::ranges::range<int>);
     STATIC_ASSERT(!RAH2_NS::ranges::borrowed_range<int>);
     STATIC_ASSERT(!RAH2_NS::ranges::sized_range<int>);
