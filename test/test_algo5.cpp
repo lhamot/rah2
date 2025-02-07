@@ -1634,6 +1634,76 @@ struct test_uninitialized_value_construct_
             auto result3 = RAH2_NS::ranges::uninitialized_value_construct(out);
             CHECK(result3 == out.end());
         }
+
+        testSuite.test_case("POD");
+        {
+            int out_[5] = {3, 3, 3, 3, 3};
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_value_construct(out.begin(), out.end());
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 0); // value initialization affect primitive types
+            }
+        }
+        {
+            int out_[5] = {3, 3, 3, 3, 3};
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result2 = RAH2_NS::ranges::uninitialized_value_construct(out);
+            CHECK(result2 == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 0); // default initialization doesn't affect primitive types
+            }
+        }
+
+        static int throw_countdown = 3;
+
+        struct CanThrowOnCtor
+        {
+            volatile bool constructed = true;
+            CanThrowOnCtor()
+            {
+                if (throw_countdown == 0)
+                {
+                    constructed = false;
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            CanThrowOnCtor(CanThrowOnCtor const&) = delete;
+            CanThrowOnCtor& operator=(CanThrowOnCtor const&) = delete;
+            ~CanThrowOnCtor()
+            {
+                constructed = false;
+            }
+        };
+
+        testSuite.test_case("throw");
+        {
+            uint8_t out_[sizeof(CanThrowOnCtor) * 5];
+            auto out_b = reinterpret_cast<CanThrowOnCtor*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            throw_countdown = 3;
+            try
+            {
+                RAH2_NS::ranges::uninitialized_value_construct(out);
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                CHECK(not out_b[i].constructed);
+            }
+        }
     }
 
     struct NonTrivialDefaultConstuctible
@@ -1806,6 +1876,64 @@ struct test_uninitialized_value_construct_n_
                 make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_b));
             auto result3 = RAH2_NS::ranges::uninitialized_value_construct_n(out.begin(), 0);
             CHECK(result3 == out.end());
+        }
+
+        static int throw_countdown = 3;
+
+        struct CanThrowOnCtor
+        {
+            volatile bool constructed = true;
+            CanThrowOnCtor()
+            {
+                if (throw_countdown == 0)
+                {
+                    constructed = false;
+                    throw std::exception();
+                }
+                --throw_countdown;
+            }
+            CanThrowOnCtor(CanThrowOnCtor const&) = delete;
+            CanThrowOnCtor& operator=(CanThrowOnCtor const&) = delete;
+            ~CanThrowOnCtor()
+            {
+                constructed = false;
+            }
+        };
+
+        testSuite.test_case("throw");
+        {
+            uint8_t out_[sizeof(CanThrowOnCtor) * 5];
+            auto out_b = reinterpret_cast<CanThrowOnCtor*>(out_);
+            auto out_e = out_b + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_b, out_e));
+            throw_countdown = 3;
+            try
+            {
+                RAH2_NS::ranges::uninitialized_value_construct_n(out.begin(), 5);
+                CHECK(false);
+            }
+            catch (...)
+            {
+            }
+            for (size_t i = 0; i < 4; ++i)
+            {
+                CHECK(not out_b[i].constructed);
+            }
+        }
+
+        testSuite.test_case("POD");
+        {
+            int out_[5] = {3, 3, 3, 3, 3};
+            auto out_e = out_ + 5;
+            auto out =
+                make_test_view_adapter<CS, Tag, Sized>(RAH2_NS::ranges::make_subrange(out_, out_e));
+            auto result = RAH2_NS::ranges::uninitialized_value_construct_n(out.begin(), 5);
+            CHECK(result == out.end());
+            for (size_t i = 0; i < 5; ++i)
+            {
+                CHECK_EQUAL(out_[i], 0);
+            }
         }
     }
 
