@@ -640,9 +640,12 @@ struct test_find_last_
                 range_type,
                 [&]
                 {
-                    auto iter = STD::find_last(r1.begin(), r1.end(), Coord{3, 4});
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    for (int i = 0; i < 10; ++i)
+                    {
+                        auto iter = STD::find_last(r1.begin(), r1.end(), Coord{3, 4});
+                        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    }
                 });
         }
         {
@@ -651,9 +654,12 @@ struct test_find_last_
                 range_type,
                 [&]
                 {
-                    auto iter = STD::find_last(r1.begin(), r1.end(), 3, &Coord::x);
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        auto iter = STD::find_last(r1.begin(), r1.end(), 3, &Coord::x);
+                        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    }
                 });
         }
     }
@@ -732,10 +738,13 @@ struct test_find_last_if_
                 range_type,
                 [&]
                 {
-                    auto iter = STD::find_last_if(
-                        r1.begin(), r1.end(), [](Coord const& c) { return c == Coord{3, 4}; });
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    for (int i = 0; i < 10; ++i)
+                    {
+                        auto iter = STD::find_last_if(
+                            r1.begin(), r1.end(), [](Coord const& c) { return c == Coord{3, 4}; });
+                        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    }
                 });
         }
         {
@@ -744,10 +753,13 @@ struct test_find_last_if_
                 range_type,
                 [&]
                 {
-                    auto iter = STD::find_last_if(
-                        r1.begin(), r1.end(), [](intptr_t c) { return c == 3; }, &Coord::x);
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    for (int i = 0; i < 50; ++i)
+                    {
+                        auto iter = STD::find_last_if(
+                            r1.begin(), r1.end(), [](intptr_t c) { return c == 3; }, &Coord::x);
+                        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    }
                 });
         }
     }
@@ -838,10 +850,14 @@ struct test_find_last_if_not_
                 range_type,
                 [&]
                 {
-                    auto iter = STD::find_last_if_not(
-                        r1.begin(), r1.end(), [](Coord const& c) { return c != Coord{3, 4}; });
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    for (int i = 0; i < 10; ++i)
+                    {
+
+                        auto iter = STD::find_last_if_not(
+                            r1.begin(), r1.end(), [](Coord const& c) { return c != Coord{3, 4}; });
+                        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    }
                 });
         }
         {
@@ -850,10 +866,13 @@ struct test_find_last_if_not_
                 range_type,
                 [&]
                 {
-                    auto iter = STD::find_last_if_not(
-                        r1.begin(), r1.end(), [](intptr_t c) { return c != 3; }, &Coord::x);
-                    assert((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                    assert((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        auto iter = STD::find_last_if_not(
+                            r1.begin(), r1.end(), [](intptr_t c) { return c != 3; }, &Coord::x);
+                        CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
+                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
+                    }
                 });
         }
     }

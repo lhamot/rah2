@@ -1930,7 +1930,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         !RAH2_NS::sized_sentinel_for<S, I>
                         && RAH2_NS::details::weakly_equality_comparable_with<S, I>>* = nullptr>
-                RAH2_NS::iter_difference_t<I> operator()(I first, S last) const
+                constexpr RAH2_NS::iter_difference_t<I> operator()(I first, S last) const
                 {
                     iter_difference_t<I> len = 0;
                     for (; first != last; ++first, ++len)
@@ -1940,12 +1940,12 @@ namespace RAH2_NS
                 }
 
                 template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
-                auto operator()(I first, S last) const
+                constexpr auto operator()(I first, S last) const
                 {
                     return last - first;
                 }
                 template <typename R>
-                auto operator()(R&& r) const
+                constexpr auto operator()(R&& r) const
                 {
                     return (*this)(begin(r), end(r));
                 }

@@ -1263,16 +1263,14 @@ std::chrono::nanoseconds compute_duration(
     int line)
 {
     size_t count = 0;
+
+#if defined(CHECK_PERF_TEST) || defined(PERF_TEST)
     const auto start = std::chrono::high_resolution_clock::now();
     auto end = start;
-
-#if defined(CHECK_PERF_TEST)
     func();
     ++count;
-#endif
     end = std::chrono::high_resolution_clock::now();
-#ifdef PERF_TEST
-    if ((end - start) < std::chrono::microseconds(100))
+    if ((end - start) < std::chrono::microseconds(10))
     {
         std::cerr << "Too short function (" << algo << "/" << range_type << "/" << step << ") - ("
                   << ((end - start) / count).count() << ") at " << file << "(" << line << ")"
@@ -1283,7 +1281,8 @@ std::chrono::nanoseconds compute_duration(
         std::cerr << "Too long function (" << algo << "/" << range_type << "/" << step << ") at "
                   << file << "(" << line << ")" << std::endl;
     }
-
+#endif
+#ifdef PERF_TEST
     while ((end - start) < perf_test_duration)
     {
         func();
@@ -1294,6 +1293,10 @@ std::chrono::nanoseconds compute_duration(
               << ((end - start) / count).count() << std::endl;
     return (end - start) / count;
 #else
+#if defined(CHECK_PERF_TEST)
+    std::cout << algo << "/" << range_type << "/" << step << " : "
+              << ((end - start) / count).count() << std::endl;
+#endif
     (void)count;
     (void)algo;
     (void)range_type;
