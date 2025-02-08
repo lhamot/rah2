@@ -1316,7 +1316,7 @@ struct test_uninitialized_default_construct_
         testSuite.test_case("perf");
         {
             RAH2_STD::vector<int> out_(1000000 * RELEASE_MULTIPLIER, 3);
-            constexpr size_t PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 500 : 5;
+            constexpr size_t PerfMultiplier = (CS == CommonOrSent::Common or Sized) ? 100 : 5;
             auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
             {
                 COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(

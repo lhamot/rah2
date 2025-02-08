@@ -3267,18 +3267,29 @@ struct test_binary_search_
         in.push_back(Coord{3, 4});
         in.push_back(Coord{3, 4});
         in.push_back(Coord{3, 6});
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in.push_back(Coord{10, 10});
+        }
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
         RAH2_STD::vector<Coord> in2(1000000 * RELEASE_MULTIPLIER, Coord{3, 4});
         in2.push_back(Coord{1, 4});
         in2.push_back(Coord{1, 2});
         in2.push_back(Coord{1, 3});
+        for (size_t i = 0; i < 1000000 * RELEASE_MULTIPLIER; ++i)
+        {
+            in2.push_back(Coord{10, 10});
+        }
         auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
 
-        auto const RangeTypeMultiplier =
-            RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ? 100 : 1;
+        auto const RangeMultiplier = Sized ? 50 * RELEASE_MULTIPLIER : 1;
 
-        auto const RangeSizedMultiplier = Sized ? 10 : 1;
+        auto const IterMultiplier =
+            (Sized
+             and (CS == CommonOrSent::Sentinel or RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)) ?
+                50 * (RELEASE_MULTIPLIER > 1 ? 10 : 1) :
+                1;
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -3286,7 +3297,7 @@ struct test_binary_search_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                for (auto i = 0; i < IterMultiplier; ++i)
                 {
                     auto found = STD::binary_search(fwd(r1.begin()), r1.end(), Coord{3, 4});
                     CHECK(found);
@@ -3297,7 +3308,7 @@ struct test_binary_search_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                for (auto i = 0; i < RangeMultiplier; ++i)
                 {
                     auto found = STD::binary_search(r2, 1, comp_64, &Coord::x);
                     CHECK(found);
@@ -6980,9 +6991,12 @@ struct test_next_permutation_
                 range_type,
                 [&]
                 {
-                    auto const result =
-                        RAH2_NS::ranges::next_permutation(fwd(rng1.begin()), rng1.end());
-                    DONT_OPTIM(result);
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        auto const result =
+                            RAH2_NS::ranges::next_permutation(fwd(rng1.begin()), rng1.end());
+                        DONT_OPTIM(result);
+                    }
                 });
         }
         {
@@ -6992,9 +7006,12 @@ struct test_next_permutation_
                 (
                     [&]
                     {
-                        auto const result =
-                            RAH2_NS::ranges::next_permutation(rng1, comp_64, &Coord::x);
-                        CHECK(result.found);
+                        for (int i = 0; i < 100; ++i)
+                        {
+                            auto const result =
+                                RAH2_NS::ranges::next_permutation(rng1, comp_64, &Coord::x);
+                            CHECK(result.found);
+                        }
                     }));
         }
     }
@@ -7171,9 +7188,13 @@ struct test_prev_permutation_
                 range_type,
                 [&]
                 {
-                    auto const result =
-                        RAH2_NS::ranges::prev_permutation(fwd(rng1.begin()), rng1.end());
-                    DONT_OPTIM(result);
+                    for (int i = 0; i < 100; ++i)
+                    {
+
+                        auto const result =
+                            RAH2_NS::ranges::prev_permutation(fwd(rng1.begin()), rng1.end());
+                        DONT_OPTIM(result);
+                    }
                 });
         }
         {
@@ -7183,9 +7204,13 @@ struct test_prev_permutation_
                 (
                     [&]
                     {
-                        auto const result =
-                            RAH2_NS::ranges::prev_permutation(rng1, comp_64, &Coord::x);
-                        CHECK(result.found);
+                        for (int i = 0; i < 100; ++i)
+                        {
+
+                            auto const result =
+                                RAH2_NS::ranges::prev_permutation(rng1, comp_64, &Coord::x);
+                            CHECK(result.found);
+                        }
                     }));
         }
     }
