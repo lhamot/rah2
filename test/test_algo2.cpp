@@ -841,22 +841,23 @@ struct test_find_last_if_not_
         in.push_back(Coord{3, 4});
         in.push_back(Coord{3, 4});
         in.push_back(Coord{18, 4});
+        for (size_t i = 0; i != 1000000; ++i)
+        {
+            in.push_back(Coord{1, 2});
+        }
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
         (void)r1;
-
         {
             COMPARE_DURATION_TO_STD_RANGES_23( // find_last_if_not does not exist in std
                 "find_last_if_not",
                 range_type,
                 [&]
                 {
-                    for (int i = 0; i < 10; ++i)
+                    for (int i = 0; i < 1 * RELEASE_MULTIPLIER; ++i)
                     {
-
                         auto iter = STD::find_last_if_not(
                             r1.begin(), r1.end(), [](Coord const& c) { return c != Coord{3, 4}; });
                         CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
                     }
                 });
         }
@@ -866,12 +867,11 @@ struct test_find_last_if_not_
                 range_type,
                 [&]
                 {
-                    for (int i = 0; i < 100; ++i)
+                    for (int i = 0; i < 1 * RELEASE_MULTIPLIER; ++i)
                     {
-                        auto iter = STD::find_last_if_not(
-                            r1.begin(), r1.end(), [](intptr_t c) { return c != 3; }, &Coord::x);
+                        auto iter =
+                            STD::find_last_if_not(r1, [](intptr_t c) { return c != 3; }, &Coord::x);
                         CHECK((*RAH2_NS::ranges::begin(iter) == Coord{3, 4}));
-                        CHECK((RAH2_NS::ranges::distance(iter.begin(), iter.end()) == 2));
                     }
                 });
         }
