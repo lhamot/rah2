@@ -1552,7 +1552,7 @@ void test_move_backward()
     assert(a == (Vec{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}));
 
     RAH2_NS::ranges::move_backward(a.begin(), a.begin() + 3, a.end());
-    assert(a == (Vec{"", "", "", "▄", "▅", "▁", "▂", "▃"}));
+    CHECK_EQUAL(a, (Vec{"", "", "", "▄", "▅", "▁", "▂", "▃"}));
     /// [rah2::ranges::move_backward]
 
     foreach_range_combination<test_algo<test_move_backward_>>();
