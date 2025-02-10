@@ -1512,7 +1512,7 @@ struct test_move_backward_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_backward",
+                "move_backward",
                 range_type,
                 (
                     [&]
@@ -1524,7 +1524,7 @@ struct test_move_backward_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_backward",
+                "move_backward",
                 range_type,
                 [&]
                 {
