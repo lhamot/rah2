@@ -5720,12 +5720,24 @@ namespace RAH2_NS
                     class O,
                     class S,
                     RAH2_STD::enable_if_t<output_iterator<O, T> && sentinel_for<S, O>>* = nullptr>
-                constexpr O operator()(O first, S last, T const& value) const
+                constexpr O impl(O first, S last, T const& value) const
                 {
                     while (first != last)
                         *first++ = value;
 
                     return first;
+                }
+
+                template <
+                    class T,
+                    class O,
+                    class S,
+                    RAH2_STD::enable_if_t<output_iterator<O, T> && sentinel_for<S, O>>* = nullptr>
+                constexpr O operator()(O first, S last, T const& value) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto res = impl(first_last.iterator, first_last.sentinel, value);
+                    return first_last.wrap_iterator(res);
                 }
 
                 template <class T, class R, RAH2_STD::enable_if_t<output_range<R, T>>* = nullptr>
