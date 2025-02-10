@@ -814,7 +814,7 @@ namespace RAH2_NS
             {
                 template <typename I, typename S, RAH2_STD::enable_if_t<permutable<I> && sentinel_for<S, I>>* = nullptr>
                 constexpr RAH2_NS::ranges::subrange<I>
-                operator()(I first, S last, iter_difference_t<I> n) const
+                impl(I first, S last, iter_difference_t<I> n) const
                 {
                     if (n <= 0)
                     {
@@ -829,6 +829,17 @@ namespace RAH2_NS
                     }
                     auto result = RAH2_NS::ranges::move(first, last, mid);
                     return {RAH2_STD::move(mid), RAH2_STD::move(result.out)};
+                }
+
+                template <typename I, typename S, RAH2_STD::enable_if_t<permutable<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::ranges::subrange<I>
+                operator()(I first, S last, iter_difference_t<I> n) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto ret = impl(first_last.iterator, first_last.sentinel, n);
+                    return {
+                        first_last.wrap_iterator(ret.begin()), first_last.wrap_iterator(ret.end())};
+
                 }
 
                 template <
