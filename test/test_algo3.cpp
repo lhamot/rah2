@@ -1512,7 +1512,7 @@ struct test_move_backward_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_backward",
+                "move_backward",
                 range_type,
                 (
                     [&]
@@ -1524,7 +1524,7 @@ struct test_move_backward_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_backward",
+                "move_backward",
                 range_type,
                 [&]
                 {
@@ -1552,6 +1552,7 @@ void test_move_backward()
     assert(a == (Vec{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}));
 
     RAH2_NS::ranges::move_backward(a.begin(), a.begin() + 3, a.end());
+    a[0] = a[1] = a[2] = ""; // can sometimes swap in place of move
     assert(a == (Vec{"", "", "", "▄", "▅", "▁", "▂", "▃"}));
     /// [rah2::ranges::move_backward]
 

@@ -778,11 +778,35 @@ namespace RAH2_NS
                         input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
                         && sentinel_for<S2, I2> && indirectly_swappable<I1, I2>>* = nullptr>
                 constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
-                operator()(I1 first1, S1 last1, I2 first2, S2 last2) const
+                impl(I1 first1, S1 last1, I2 first2, S2 last2) const
                 {
                     for (; !(first1 == last1 or first2 == last2); ++first1, ++first2)
                         RAH2_NS::ranges::iter_swap(first1, first2);
                     return {RAH2_STD::move(first1), RAH2_STD::move(first2)};
+                }
+
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
+                        && sentinel_for<S2, I2> && indirectly_swappable<I1, I2>>* = nullptr>
+                constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
+                operator()(I1 first1, S1 last1, I2 first2, S2 last2) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first_last.sentinel),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::move(first2_last2.sentinel));
+                    return {
+                        first_last.wrap_iterator(RAH2_STD::move(result.in1)),
+                        first2_last2.wrap_iterator(RAH2_STD::move(result.in2))};
                 }
 
                 template <
@@ -813,8 +837,7 @@ namespace RAH2_NS
             struct shift_left_fn
             {
                 template <typename I, typename S, RAH2_STD::enable_if_t<permutable<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr RAH2_NS::ranges::subrange<I>
-                operator()(I first, S last, iter_difference_t<I> n) const
+                constexpr RAH2_NS::ranges::subrange<I> impl(I first, S last, iter_difference_t<I> n) const
                 {
                     if (n <= 0)
                     {
@@ -829,6 +852,16 @@ namespace RAH2_NS
                     }
                     auto result = RAH2_NS::ranges::move(first, last, mid);
                     return {RAH2_STD::move(mid), RAH2_STD::move(result.out)};
+                }
+
+                template <typename I, typename S, RAH2_STD::enable_if_t<permutable<I> && sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::ranges::subrange<I>
+                operator()(I first, S last, iter_difference_t<I> n) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto ret = impl(first_last.iterator, first_last.sentinel, n);
+                    return {
+                        first_last.wrap_iterator(ret.begin()), first_last.wrap_iterator(ret.end())};
                 }
 
                 template <
