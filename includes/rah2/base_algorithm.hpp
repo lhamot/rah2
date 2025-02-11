@@ -1135,7 +1135,7 @@ namespace RAH2_NS
                         return {RAH2_STD::move(first), RAH2_STD::move(result)};
                     }
                     auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
-                    auto unwraped_out = details::unwrap_single(result);
+                    auto unwraped_out = details::unwrap_end(result);
                     auto ret = impl(first_last.iterator, first_last.sentinel, unwraped_out.iterator);
                     return {
                         first_last.wrap_iterator(RAH2_STD::move(ret.in)),
@@ -1236,7 +1236,7 @@ namespace RAH2_NS
                         return {RAH2_STD::move(first), RAH2_STD::move(result)};
                     }
                     auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
-                    auto unwraped_out = details::unwrap_single(result);
+                    auto unwraped_out = details::unwrap_end(result);
                     auto ret = impl(first_last.iterator, first_last.sentinel, unwraped_out.iterator);
                     return {
                         first_last.wrap_iterator(RAH2_STD::move(ret.in)),
@@ -3780,7 +3780,7 @@ namespace RAH2_NS
                 ///
                 template <typename BidirectionalIterator, typename Sentinel, typename OutputIterator>
                 reverse_copy_result<BidirectionalIterator, OutputIterator>
-                operator()(BidirectionalIterator first, Sentinel last, OutputIterator result) const
+                impl(BidirectionalIterator first, Sentinel last, OutputIterator result) const
                 {
                     auto last2 = RAH2_NS::ranges::next(first, last);
                     auto ret = last2;
@@ -3788,6 +3788,25 @@ namespace RAH2_NS
                         *result = *--last2;
                     return {RAH2_STD::move(ret), RAH2_STD::move(result)};
                 }
+
+                template <typename BidirectionalIterator, typename Sentinel, typename OutputIterator>
+                reverse_copy_result<BidirectionalIterator, OutputIterator>
+                operator()(BidirectionalIterator first, Sentinel last, OutputIterator result) const
+                {
+                    if (first == last)
+                    {
+                        return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                    }
+
+                    auto first_last =
+                        details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto out_iter = details::unwrap_begin(RAH2_STD::move(result));
+                    auto res = impl(first_last.iterator, first_last.sentinel, out_iter.iterator);
+                    return {
+                        first_last.wrap_iterator(RAH2_STD::move(res.in)),
+                        out_iter.wrap_iterator(RAH2_STD::move(res.out))};
+                }
+
 
                 template <typename BidirectionalRange, typename OutputIterator>
                 reverse_copy_result<RAH2_NS::ranges::borrowed_iterator_t<BidirectionalRange>, OutputIterator>
