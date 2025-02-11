@@ -1144,15 +1144,36 @@ namespace RAH2_NS
             unwraped_pointer<
                 RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*,
                 RAH2_STD::remove_reference_t<I>>
-            unwrap_single(I&& it)
+            unwrap_begin(I&& it)
+            {
+                auto begin_it = &(*(++it));
+                return {--begin_it, RAH2_STD::forward<I>(--it)};
+            }
+
+            template <
+                typename I,
+                RAH2_STD::enable_if_t<not(contiguous_iterator<RAH2_STD::remove_reference_t<I>>)>* = nullptr>
+            unwraped_iterator<RAH2_STD::remove_reference_t<I>> unwrap_begin(I&& it)
+            {
+                return {RAH2_STD::forward<I>(it)};
+            }
+
+            template <
+                typename I,
+                RAH2_STD::enable_if_t<contiguous_iterator<RAH2_STD::remove_reference_t<I>>>* = nullptr>
+            unwraped_pointer<
+                RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>*,
+                RAH2_STD::remove_reference_t<I>>
+            unwrap_end(I&& it)
             {
                 auto begin_it = &(*(--it));
                 return {++begin_it, RAH2_STD::forward<I>(++it)};
             }
+
             template <
                 typename I,
                 RAH2_STD::enable_if_t<not(contiguous_iterator<RAH2_STD::remove_reference_t<I>>)>* = nullptr>
-            unwraped_iterator<RAH2_STD::remove_reference_t<I>> unwrap_single(I&& it)
+            unwraped_iterator<RAH2_STD::remove_reference_t<I>> unwrap_end(I&& it)
             {
                 return {RAH2_STD::forward<I>(it)};
             }
