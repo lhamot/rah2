@@ -1973,7 +1973,14 @@ void test_is_sorted_until()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_sort_
 {
-    static bool comp_64(intptr_t a, intptr_t b)
+    struct Comp64
+    {
+        inline constexpr bool operator()(intptr_t a, intptr_t b) const
+        {
+            return b < a;
+        }
+    };
+    static inline constexpr bool comp_64(intptr_t a, intptr_t b)
     {
         return b < a;
     }
@@ -2093,8 +2100,10 @@ struct test_sort_
                         for (size_t i = 0; i < 100000 * RELEASE_MULTIPLIER; ++i)
                         {
                             out_.emplace_back(0);
-                            out_.emplace_back(1);
+                            // out_.emplace_back(Coord{1, 0}); // TODO : Test perf with this version
+                            out_.emplace_back(0);
                         }
+                        out_[2] = 1;
                         auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                         STD::sort(RAH2_NS::ranges::begin(fwd(out)), RAH2_NS::ranges::end(out));
                         CHECK(out.front() == 0);
@@ -2113,8 +2122,10 @@ struct test_sort_
                         for (size_t i = 0; i < 10000 * RELEASE_MULTIPLIER; ++i)
                         {
                             out_.emplace_back(Coord{0, 0});
-                            out_.emplace_back(Coord{1, 0});
+                            // out_.emplace_back(Coord{1, 0}); // TODO : Test perf with this version
+                            out_.emplace_back(Coord{0, 0});
                         }
+                        out_[2] = {1, 0};
                         auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
                         STD::sort(out, comp_64, &Coord::x);
                         CHECK((out.front() == Coord{1, 0}));

@@ -538,7 +538,7 @@ namespace RAH2_NS
             struct median
             {
                 template <typename T>
-                T&& median_impl(T&& a, T&& b, T&& c) const
+                constexpr T&& median_impl(T&& a, T&& b, T&& c) const
                 {
                     if (RAH2_STD::less<T>()(a, b))
                     {
@@ -557,7 +557,7 @@ namespace RAH2_NS
                 }
 
                 template <typename T, typename Compare>
-                T&& median_impl(T&& a, T&& b, T&& c, Compare compare) const
+                constexpr T&& median_impl(T&& a, T&& b, T&& c, Compare compare) const
                 {
                     if (compare(a, b))
                     {
@@ -584,7 +584,7 @@ namespace RAH2_NS
                 /// on the values.
                 ///
                 template <typename T>
-                T const& operator()(T const& a, T const& b, T const& c) const
+                constexpr T const& operator()(T const& a, T const& b, T const& c) const
                 {
                     return median_impl(a, b, c);
                 }
@@ -598,7 +598,7 @@ namespace RAH2_NS
                 /// on the values.
                 ///
                 template <typename T>
-                T&& operator()(T&& a, T&& b, T&& c) const
+                constexpr T&& operator()(T&& a, T&& b, T&& c) const
                 {
                     return RAH2_STD::forward<T>(median_impl(
                         RAH2_STD::forward<T>(a), RAH2_STD::forward<T>(b), RAH2_STD::forward<T>(c)));
@@ -613,7 +613,7 @@ namespace RAH2_NS
                 /// on the values.
                 ///
                 template <typename T, typename Compare>
-                T const& operator()(T const& a, T const& b, T const& c, Compare compare) const
+                constexpr T const& operator()(T const& a, T const& b, T const& c, Compare compare) const
                 {
                     return median_impl<T const&, Compare>(a, b, c, compare);
                 }
@@ -627,7 +627,7 @@ namespace RAH2_NS
                 /// on the values.
                 ///
                 template <typename T, typename Compare>
-                T&& operator()(T&& a, T&& b, T&& c, Compare compare) const
+                constexpr T&& operator()(T&& a, T&& b, T&& c, Compare compare) const
                 {
                     return RAH2_STD::forward<T>(median_impl<T&&, Compare>(
                         RAH2_STD::forward<T>(a),
