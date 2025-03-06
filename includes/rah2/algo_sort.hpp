@@ -914,7 +914,7 @@ namespace RAH2_NS
                 }
             };
         } // namespace niebloids
-        inline constexpr niebloids::get_partition get_partition;
+        constexpr niebloids::get_partition get_partition;
 
         namespace niebloids
         {
