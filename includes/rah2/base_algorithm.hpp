@@ -1060,7 +1060,7 @@ namespace RAH2_NS
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
-                    auto const first_u = details::unwrap_begin(RAH2_MOV(first));
+                    auto first_u = details::unwrap_begin(RAH2_MOV(first));
                     auto result_u = details::unwrap_begin(RAH2_MOV(result));
                     auto first2 = first_u.iterator;
                     auto result2 = RAH2_MOV(result_u.iterator);
@@ -1971,20 +1971,41 @@ namespace RAH2_NS
         {
             struct generate_fn
             {
-                template <typename O, typename S, typename F>
-                constexpr O operator()(O first, S last, F gen) const
+                template <
+                    typename O,
+                    typename S,
+                    typename F,
+                    std::enable_if_t<RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
+                constexpr O operator()(O first, S last, F&& gen) const
                 {
-                    for (; first != last; *first = RAH2_INVOKE_0(gen), ++first)
+                    return generate_n(first, RAH2_NS::ranges::distance(first, last), RAH2_FWD(gen));
+                }
+
+                template <
+                    typename O,
+                    typename S,
+                    typename F,
+                    std::enable_if_t<not RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
+                constexpr O operator()(O first, S last, F&& gen) const
+                {
+                    for (; first != last; ++first)
                     {
+                        *first = RAH2_INVOKE_0(gen);
                     }
                     return first;
                 }
 
-                template <typename R, typename F>
-                constexpr borrowed_iterator_t<R> operator()(R&& r, F gen) const
+                template <typename R, typename F, std::enable_if_t<not RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                constexpr borrowed_iterator_t<R> operator()(R&& r, F&& gen) const
                 {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(gen));
+                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_FWD(gen));
+                }
+
+                template <typename R, typename F, std::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                constexpr borrowed_iterator_t<R> operator()(R&& r, F&& gen) const
+                {
+                    return generate_n(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r), RAH2_FWD(gen));
                 }
             };
         } // namespace niebloids
