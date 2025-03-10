@@ -16,10 +16,30 @@
 
 #endif
 
+#define RAH2_FOR_N(COUNT, CODE)                                                                    \
+    do                                                                                             \
+    {                                                                                              \
+        for (auto i = COUNT / 4; i != 0; --i)                                                      \
+        {                                                                                          \
+            CODE CODE CODE CODE                                                                    \
+        }                                                                                          \
+        for (auto i = COUNT % 4; i != 0; --i)                                                      \
+        {                                                                                          \
+            CODE                                                                                   \
+        }                                                                                          \
+    } while (false)
+
 namespace RAH2_NS
 {
     namespace ranges
     {
+        namespace details
+        {
+            template <typename I>
+            constexpr static bool CanUseMemcpy =
+                RAH2_NS::contiguous_iterator<I>
+                && RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value;
+        }
         // ************************************** algorithm results ***********************************
 
         // TODO : Move into algorithm.hpp
@@ -131,17 +151,13 @@ namespace RAH2_NS
         {
             struct copy_fn
             {
-                template <typename I>
-                constexpr static bool CanUseMemcpy =
-                    RAH2_NS::contiguous_iterator<I>
-                    && RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value;
-
                 template <
                     typename I,
                     typename S,
                     typename O,
-                    RAH2_STD::enable_if_t<!(
-                        CanUseMemcpy<I> && CanUseMemcpy<O> && RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        !(details::CanUseMemcpy<I> && details::CanUseMemcpy<O>
+                          && RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
                 static constexpr RAH2_NS::ranges::copy_result<I, O> impl(I first, S last, O result)
                 {
                     for (; first != last; ++first, (void)++result)
@@ -154,7 +170,8 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        CanUseMemcpy<I> && CanUseMemcpy<O> && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                        details::CanUseMemcpy<I> && details::CanUseMemcpy<O>
+                        && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
                 static constexpr RAH2_NS::ranges::copy_result<I, O> impl(I first, S last, O result)
                 {
                     auto last2 = RAH2_NS::ranges::next(first, last);
@@ -1039,23 +1056,51 @@ namespace RAH2_NS
                 template <
                     typename I,
                     typename O,
-                    RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && !RAH2_NS::random_access_iterator<I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                    RAH2_STD::enable_if_t<not(details::CanUseMemcpy<I> && details::CanUseMemcpy<O>)>* = nullptr>
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
-                    for (RAH2_NS::iter_difference_t<I> i{}; i != n; ++i, ++first, ++result)
-                        *result = *first;
-                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                    auto const first_u = details::unwrap_begin(RAH2_MOV(first));
+                    auto result_u = details::unwrap_begin(RAH2_MOV(result));
+                    auto first2 = first_u.iterator;
+                    auto result2 = RAH2_MOV(result_u.iterator);
+                    // RAH2_FOR_N(n, *result2 = *first2; ++first2; ++result2;);
+                    for (size_t i = n / 4; i != 0; --i)
+                    {
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                    }
+                    for (size_t i = n % 4; i != 0; --i)
+                    {
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                    }
+                    //for (auto i = n; i != 0; --i)
+                    //{
+                    //    *result2 = *first2;
+                    //    ++first2;
+                    //    ++result2;
+                    //}
+                    return {
+                        first_u.wrap_iterator(RAH2_MOV(first2)),
+                        result_u.wrap_iterator(RAH2_MOV(result2))};
                 }
 
                 template <
                     typename I,
                     typename O,
-                    RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && RAH2_NS::random_access_iterator<I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                    RAH2_STD::enable_if_t<details::CanUseMemcpy<I> && details::CanUseMemcpy<O>>* = nullptr>
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
