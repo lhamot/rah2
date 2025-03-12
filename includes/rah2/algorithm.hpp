@@ -1009,44 +1009,79 @@ namespace RAH2_NS
         {
             struct sample_fn
             {
-                template <
-                    typename I,
-                    typename S,
-                    typename O,
-                    class Gen,
-                    RAH2_STD::enable_if_t<!RAH2_NS::forward_iterator<I>>* = nullptr>
-                O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                template <typename DistibType, typename I, typename S, typename O, class Gen>
+                inline constexpr O sample_sized_impl(
+                    I first,
+                    S last,
+                    RAH2_NS::iter_difference_t<I> input_size,
+                    O out,
+                    RAH2_NS::iter_difference_t<I> n,
+                    Gen&& gen) const
                 {
-#ifdef RAH2_USE_EASTL
-                    using difference_type = int32_t;
-#else
-                    using difference_type = typename RAH2_STD::iterator_traits<I>::difference_type;
-#endif
-                    using unsigned_difference_type =
-                        typename RAH2_STD::make_unsigned<difference_type>::type;
+                    if (n == 0 or input_size == 0)
+                    {
+                        return out;
+                    }
 
-                    using uniform_int_distrib =
-                        RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                    using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
+                    using uniform_int_distribution_param_type =
+                        typename uniform_int_distrib::param_type;
+
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto first2 = first_last.iterator;
+                    auto out_iter = details::unwrap_begin(RAH2_STD::move(out));
+                    auto out2 = out_iter.iterator;
+
+                    n = std::min(n, input_size);
+                    for (; input_size > 0; ++first2, (void)--input_size)
+                    {
+                        uniform_int_distrib distrib(
+                            DistibType(), static_cast<DistibType>(input_size - 1));
+                        if (distrib(gen) < DistibType(n))
+                        {
+                            --n;
+                            *out2 = *first2;
+                            ++out2;
+                        }
+                    }
+
+                    return out_iter.wrap_iterator(RAH2_STD::move(out2));
+                }
+
+                template <typename DistibType, typename I, typename S, typename O, class Gen>
+                inline constexpr O sample_unsized_impl(
+                    I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                {
+                    if (n == 0 or first == last)
+                    {
+                        return out;
+                    }
+
+                    using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
                     using uniform_int_distribution_param_type =
                         typename uniform_int_distrib::param_type;
 
                     uniform_int_distrib uid;
 
-                    // O is a random_access_iterator
-                    difference_type sample_size{};
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto first2 = first_last.iterator;
+                    auto last2 = first_last.sentinel;
+                    auto out_iter = details::unwrap_begin(RAH2_STD::move(out));
+                    auto out2 = out_iter.iterator;
+
+                    DistibType sample_size{};
                     // copy [first, first + M) elements to "random access" output
-                    for (; first != last && sample_size != n; ++first)
-                        out[sample_size++] = *first;
-                    // overwrite some of the copied elements with randomly selected ones
-                    for (auto pop_size{sample_size}; first != last; ++first, ++pop_size)
+                    for (; first2 != last2 && sample_size != DistibType(n); ++first2, ++sample_size)
                     {
-                        auto const i{
-                            uid(gen,
-                                uniform_int_distribution_param_type{
-                                    static_cast<unsigned_difference_type>(0),
-                                    static_cast<unsigned_difference_type>(pop_size)})};
-                        if (i < unsigned_difference_type(n))
-                            out[i] = *first;
+                        out2[sample_size] = *first2;
+                    }
+                    // overwrite some of the copied elements with randomly selected ones
+                    for (auto pop_size{sample_size}; first2 != last2; ++first2, ++pop_size)
+                    {
+                        uniform_int_distrib distrib(DistibType(), static_cast<DistibType>(pop_size));
+                        auto const i = distrib(gen);
+                        if (i < DistibType(n))
+                            out2[i] = *first2;
                     }
                     return out + sample_size;
                 }
@@ -1056,50 +1091,89 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     class Gen,
-                    RAH2_STD::enable_if_t<RAH2_NS::forward_iterator<I>>* = nullptr>
-                O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                    RAH2_STD::enable_if_t<!(
+                        RAH2_NS::forward_iterator<I> || RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
+                inline constexpr O
+                operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
-#ifdef RAH2_USE_EASTL
-                    using difference_type = int32_t;
-#else
-                    using difference_type = typename RAH2_STD::iterator_traits<I>::difference_type;
-#endif
-                    using unsigned_difference_type =
-                        typename RAH2_STD::make_unsigned<difference_type>::type;
-
-                    using uniform_int_distrib =
-                        RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
-                    using uniform_int_distribution_param_type =
-                        typename uniform_int_distrib::param_type;
-
-                    uniform_int_distrib uid;
-
-                    // this branch preserves "stability" of the sample elements
-                    auto rest{RAH2_NS::ranges::distance(first, last)};
-                    for (n = RAH2_NS::details::min(n, rest); n != 0; ++first)
+                    if (n >= RAH2_STD::numeric_limits<uint32_t>::max())
                     {
-                        if (uid(gen,
-                                uniform_int_distribution_param_type(
-                                    unsigned_difference_type(0),
-                                    static_cast<unsigned_difference_type>(--rest)))
-                            < unsigned_difference_type(n))
-                        {
-                            *out++ = *first;
-                            --n;
-                        }
+                        return this->sample_unsized_impl<uint64_t>(
+                            RAH2_MOV(first), RAH2_MOV(last), RAH2_MOV(out), n, RAH2_MOV(gen));
                     }
-                    return out;
+                    else
+                    {
+                        return this->sample_unsized_impl<uint32_t>(
+                            RAH2_MOV(first), RAH2_MOV(last), RAH2_MOV(out), n, RAH2_MOV(gen));
+                    }
                 }
 
-                template <typename R, typename O, class Gen>
-                O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    class Gen,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::forward_iterator<I> || RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                inline constexpr O
+                operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                {
+                    auto input_size = RAH2_NS::ranges::distance(first, last);
+                    if (input_size >= RAH2_STD::numeric_limits<uint32_t>::max())
+                    {
+                        return this->sample_sized_impl<uint64_t>(
+                            RAH2_MOV(first), RAH2_MOV(last), input_size, RAH2_MOV(out), n, RAH2_MOV(gen));
+                    }
+                    else
+                    {
+                        return this->sample_sized_impl<uint32_t>(
+                            RAH2_MOV(first), RAH2_MOV(last), input_size, RAH2_MOV(out), n, RAH2_MOV(gen));
+                    }
+                }
+
+                template <
+                    typename R,
+                    typename O,
+                    class Gen,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                inline constexpr O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
+                {
+                    auto input_size = RAH2_NS::ranges::size(r);
+                    if (input_size >= RAH2_STD::numeric_limits<uint32_t>::max())
+                    {
+                        return this->sample_sized_impl<uint64_t>(
+                            RAH2_NS::ranges::begin(r),
+                            RAH2_NS::ranges::end(r),
+                            input_size,
+                            RAH2_MOV(out),
+                            n,
+                            RAH2_MOV(gen));
+                    }
+                    else
+                    {
+                        return this->sample_sized_impl<uint32_t>(
+                            RAH2_NS::ranges::begin(r),
+                            RAH2_NS::ranges::end(r),
+                            input_size,
+                            RAH2_MOV(out),
+                            n,
+                            RAH2_MOV(gen));
+                    }
+                }
+
+                template <
+                    typename R,
+                    typename O,
+                    class Gen,
+                    RAH2_STD::enable_if_t<!RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                inline constexpr O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::move(out),
+                        RAH2_MOV(out),
                         n,
-                        RAH2_STD::forward<Gen>(gen));
+                        RAH2_MOV(gen));
                 }
             };
         } // namespace niebloids
