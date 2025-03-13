@@ -2494,57 +2494,7 @@ namespace RAH2_NS
             };
         } // namespace niebloids
         constexpr niebloids::uninitialized_default_construct_n_fn uninitialized_default_construct_n{};
-        namespace niebloids
-        {
-            struct uninitialized_value_construct_fn
-            {
-                template <
-                    typename I, // no-throw-forward-iterator
-                    typename S, // no-throw-sentinel-for<I>
-                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
-                    RAH2_STD::enable_if_t<
-                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value>* = nullptr>
-                // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
-                I operator()(I first, S last) const
-                {
-                    return RAH2_NS::ranges::fill(first, last, T());
-                }
 
-                template <
-                    typename I, // no-throw-forward-iterator
-                    typename S, // no-throw-sentinel-for<I>
-                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
-                    RAH2_STD::enable_if_t<!(
-                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value)>* = nullptr>
-                // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
-                I operator()(I first, S last) const
-                {
-                    I rollback{first};
-                    try
-                    {
-                        for (; !(first == last); ++first)
-                            ::new (const_cast<void*>(
-                                static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) T();
-                        return first;
-                    }
-                    catch (...) // rollback: destroy constructed elements
-                    {
-                        for (; rollback != first; ++rollback)
-                            RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*rollback));
-                        throw;
-                    }
-                }
-
-                template <typename R // no-throw-forward-range
-                          >
-                // requires RAH2_STD::default_initializable<ranges::range_value_t<R>>
-                RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const
-                {
-                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
-                }
-            };
-        } // namespace niebloids
-        constexpr niebloids::uninitialized_value_construct_fn uninitialized_value_construct{};
         namespace niebloids
         {
             struct uninitialized_value_construct_n_fn
@@ -2584,6 +2534,74 @@ namespace RAH2_NS
             };
         } // namespace niebloids
         constexpr niebloids::uninitialized_value_construct_n_fn uninitialized_value_construct_n{};
+
+        namespace niebloids
+        {
+            struct uninitialized_value_construct_fn
+            {
+                template <
+                    typename I,
+                    typename S,
+                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
+                    RAH2_STD::enable_if_t<
+                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value>* = nullptr>
+                I impl(I first, S last) const
+                {
+                    return RAH2_NS::ranges::fill(first, last, T());
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
+                    RAH2_STD::enable_if_t<!(
+                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value)>* = nullptr>
+                I impl(I first, S last) const
+                {
+                    I rollback{first};
+                    try
+                    {
+                        for (; !(first == last); ++first)
+                            ::new (const_cast<void*>(
+                                static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) T();
+                        return first;
+                    }
+                    catch (...) // rollback: destroy constructed elements
+                    {
+                        for (; rollback != first; ++rollback)
+                            RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*rollback));
+                        throw;
+                    }
+                }
+
+                template <typename I, typename S, RAH2_STD::enable_if_t<!RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                I operator()(I first, S last) const
+                {
+                    return impl(RAH2_MOV(first), RAH2_MOV(last));
+                }
+
+                template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                I operator()(I first, S last) const
+                {
+                    return uninitialized_value_construct_n(
+                        RAH2_MOV(first), RAH2_NS::ranges::distance(first, last));
+                }
+
+                template <typename R, RAH2_STD::enable_if_t<!RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
+                }
+
+                template <typename R, RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const
+                {
+                    return uninitialized_value_construct_n(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::uninitialized_value_construct_fn uninitialized_value_construct{};
 
         namespace niebloids
         {

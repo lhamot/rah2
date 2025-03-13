@@ -5840,15 +5840,22 @@ namespace RAH2_NS
             {
                 // TODO use the eastl version when possible
 
-                template <
-                    class T,
-                    class O,
-                    class S,
-                    RAH2_STD::enable_if_t<output_iterator<O, T> && sentinel_for<S, O>>* = nullptr>
+                template <class T, class O, class S, RAH2_STD::enable_if_t<sized_sentinel_for<S, O>>* = nullptr>
+                constexpr O impl(O first, S last, T const& value) const
+                {
+                    auto const size = RAH2_NS::ranges::distance(first, last);
+                    RAH2_FOR_N(size, *first++ = value;);
+                    return first;
+                }
+
+                template <class T, class O, class S, RAH2_STD::enable_if_t<!sized_sentinel_for<S, O>>* = nullptr>
                 constexpr O impl(O first, S last, T const& value) const
                 {
                     while (first != last)
-                        *first++ = value;
+                    {
+                        *first = value;
+                        ++first;
+                    }
 
                     return first;
                 }
