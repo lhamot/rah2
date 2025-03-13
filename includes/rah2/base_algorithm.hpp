@@ -19,11 +19,12 @@
 #define RAH2_FOR_N(COUNT, CODE)                                                                    \
     do                                                                                             \
     {                                                                                              \
-        for (auto i = COUNT / 4; i != 0; --i)                                                      \
+        auto const times = COUNT;                                                                  \
+        for (auto i = times / 4; i != 0; --i)                                                      \
         {                                                                                          \
             CODE CODE CODE CODE                                                                    \
         }                                                                                          \
-        for (auto i = COUNT % 4; i != 0; --i)                                                      \
+        for (auto i = times % 4; i != 0; --i)                                                      \
         {                                                                                          \
             CODE                                                                                   \
         }                                                                                          \
@@ -2029,12 +2030,16 @@ namespace RAH2_NS
                     typename F,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_or_output_iterator<O> && RAH2_NS::copy_constructible<F>>* = nullptr>
-                constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, F gen) const
+                inline constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, F gen) const
                 {
-                    for (; n-- > 0; *first = gen(), ++first)
+                    auto first_handle = details::unwrap_begin(RAH2_STD::move(first));
+                    auto first2 = first_handle.iterator;
+
+                    for (; n != 0; (void)++first2, (void)--n)
                     {
+                        *first2 = gen();
                     }
-                    return first;
+                    return first_handle.wrap_iterator(RAH2_MOV(first2));
                 }
             };
         } // namespace niebloids

@@ -773,8 +773,9 @@ void test_starts_with()
     assert(RAH2_NS::ranges::starts_with("constexpr", RAH2_STD::string("const")));
     assert(!RAH2_NS::ranges::starts_with("volatile", RAH2_STD::string("const")));
 
-    assert(RAH2_NS::ranges::starts_with(
-        "Constantinopolis", RAH2_STD::string("constant"), {}, ascii_upper, ascii_upper));
+    assert(
+        RAH2_NS::ranges::starts_with(
+            "Constantinopolis", RAH2_STD::string("constant"), {}, ascii_upper, ascii_upper));
     assert(not RAH2_NS::ranges::starts_with(
         "Istanbul", RAH2_STD::string("constant"), {}, ascii_upper, ascii_upper));
     assert(RAH2_NS::ranges::starts_with("Metropolis", RAH2_STD::string("metro"), cmp_ignore_case));
@@ -785,10 +786,11 @@ void test_starts_with()
     {
         return x % 2;
     };
-    assert(RAH2_NS::ranges::starts_with(
-        v,
-        RAH2_NS::ranges::views::iota(1) | RAH2_NS::ranges::views::filter(odd)
-            | RAH2_NS::ranges::views::take(3)));
+    assert(
+        RAH2_NS::ranges::starts_with(
+            v,
+            RAH2_NS::ranges::views::iota(1) | RAH2_NS::ranges::views::filter(odd)
+                | RAH2_NS::ranges::views::take(3)));
     /// [rah2::ranges::starts_with]
 
     testSuite.test_case("iter");
@@ -1033,9 +1035,10 @@ void test_copy()
     /// [rah2::ranges::copy]
     RAH2_STD::vector<int> in{1, 2, 3};
     RAH2_STD::vector<int> out{0, 0, 0, 4, 5};
-    assert(RAH2_NS::ranges::equal(
-        RAH2_NS::ranges::make_subrange(RAH2_NS::ranges::copy(in, out.begin()).out, end(out)),
-        std::initializer_list<int>({4, 5})));
+    assert(
+        RAH2_NS::ranges::equal(
+            RAH2_NS::ranges::make_subrange(RAH2_NS::ranges::copy(in, out.begin()).out, end(out)),
+            std::initializer_list<int>({4, 5})));
     assert(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
     /// [rah2::ranges::copy]
 
@@ -1145,10 +1148,12 @@ void test_copy_if()
     /// [rah2::ranges::copy_if]
     RAH2_STD::vector<int> in{1, 2, 3, 4};
     RAH2_STD::vector<int> out{0, 0, 5, 6};
-    assert(RAH2_NS::ranges::equal(
-        RAH2_NS::ranges::make_subrange(
-            RAH2_NS::ranges::copy_if(in, out.begin(), [](int i) { return i % 2 == 0; }).out, end(out)),
-        std::initializer_list<int>({5, 6})));
+    assert(
+        RAH2_NS::ranges::equal(
+            RAH2_NS::ranges::make_subrange(
+                RAH2_NS::ranges::copy_if(in, out.begin(), [](int i) { return i % 2 == 0; }).out,
+                end(out)),
+            std::initializer_list<int>({5, 6})));
     assert(out == (RAH2_STD::vector<int>{2, 4, 5, 6}));
     /// [rah2::ranges::copy_if]
 
@@ -1940,27 +1945,32 @@ void test_generate()
 #endif
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_generate_n_
 {
+    template <bool = true>
     void test()
     {
         testSuite.test_case("iter");
-        RAH2_STD::array<int, 8> u = {};
+        RAH2_STD::array<int, 8> u_ = {};
+        auto u = make_test_view_adapter<CS, Tag, Sized>(u_);
         RAH2_NS::ranges::generate_n(u.begin(), 8, [n = 1]() mutable { return n++; });
-        assert(u == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+        assert(u_ == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
 
         testSuite.test_case("empty");
-        RAH2_STD::array<int, 3> e = {};
+        RAH2_STD::array<int, 3> e_ = {};
+        auto e = make_test_view_adapter<CS, Tag, Sized>(e_);
         RAH2_NS::ranges::generate_n(e.begin(), 0, [n = 1]() mutable { return n++; });
-        assert(e == (RAH2_STD::array<int, 3>{0, 0, 0}));
+        assert(e_ == (RAH2_STD::array<int, 3>{0, 0, 0}));
     }
 
-    void test_perf()
+    template <bool = true>
+    void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out;
-        out.resize(1000000 * RELEASE_MULTIPLIER);
-        char const* range_type = "no";
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
@@ -1974,6 +1984,7 @@ struct test_generate_n_
                 });
         }
     }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
 };
 void test_generate_n()
 {
@@ -1985,11 +1996,7 @@ void test_generate_n()
     assert(v == (RAH2_STD::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::ranges::generate_n]
 
-    test_generate_n_ test_generate;
-    test_generate.test();
-#if defined(PERF_TEST)
-    test_generate.test_perf();
-#endif
+    foreach_range_combination<test_algo<test_generate_n_>>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
