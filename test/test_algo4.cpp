@@ -579,8 +579,8 @@ struct test_sample_
             auto result = RAH2_NS::ranges::sample(
                 RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), 3, g);
             CHECK(result == out.begin() + 3);
-            CHECK(RAH2_NS::ranges::none_of(
-                out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
+            CHECK(
+                RAH2_NS::ranges::none_of(out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
         }
 
         {
@@ -588,8 +588,8 @@ struct test_sample_
             RAH2_STD::vector<int> out{0, 0, 0, 0, 0, 0, 4, 5};
             auto result = RAH2_NS::ranges::sample(in, out.begin(), 3, g);
             CHECK(result == out.begin() + 3);
-            CHECK(RAH2_NS::ranges::none_of(
-                out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
+            CHECK(
+                RAH2_NS::ranges::none_of(out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
         }
 
         testSuite.test_case("empty");
@@ -2839,8 +2839,8 @@ struct test_nth_element_
             CHECK(RAH2_NS::ranges::all_of(out.begin(), midle, [](auto const& v) { return v < 5; }));
             auto after_middle = midle;
             ++after_middle;
-            CHECK(RAH2_NS::ranges::all_of(
-                after_middle, out.end(), [](auto const& v) { return v > 5; }));
+            CHECK(
+                RAH2_NS::ranges::all_of(after_middle, out.end(), [](auto const& v) { return v > 5; }));
             CHECK_EQUAL(midle->i, 5);
         }
 
@@ -2880,12 +2880,12 @@ struct test_nth_element_
             auto midle = RAH2_NS::ranges::next(out.begin(), 2);
             auto result = RAH2_NS::ranges::nth_element(out, midle, comp_64, &Coord::x);
             CHECK(result == out.end());
-            CHECK(RAH2_NS::ranges::all_of(
-                out.begin(), midle, [](auto v) { return v > 3; }, &Coord::x));
+            CHECK(RAH2_NS::ranges::all_of(out.begin(), midle, [](auto v) { return v > 3; }, &Coord::x));
             auto after_middle = midle;
             ++after_middle;
-            CHECK(RAH2_NS::ranges::all_of(
-                after_middle, out.end(), [](auto v) { return v < 3; }, &Coord::x));
+            CHECK(
+                RAH2_NS::ranges::all_of(
+                    after_middle, out.end(), [](auto v) { return v < 3; }, &Coord::x));
             CHECK(midle->x == 3);
         }
     }

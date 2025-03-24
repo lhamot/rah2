@@ -2626,45 +2626,123 @@ namespace RAH2_NS
                 ///
                 // See the C++11 Standard, 26.5.1.3, Uniform random number generator requirements.
                 // Also http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
-                template <typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
-                void operator()(
-                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                template <typename DistibType, typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
+                void
+                impl(RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
                 {
                     if (first != last)
                     {
-#ifdef RAH2_USE_EASTL
-                        using unsigned_difference_type = uint32_t;
-#else
-                        using difference_type =
-                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-                        using unsigned_difference_type =
-                            typename RAH2_STD::make_unsigned<difference_type>::type;
-#endif
-                        using uniform_int_distrib =
-                            RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                        using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
                         using uniform_int_distribution_param_type =
                             typename uniform_int_distrib::param_type;
 
                         uniform_int_distrib uid;
 
                         for (RandomAccessIterator i = first + 1; i != last; ++i)
-                            RAH2_NS::ranges::iter_swap(
-                                i,
-                                first
-                                    + static_cast<iter_difference_t<RandomAccessIterator>>(
-                                        uid(urng,
-                                            uniform_int_distribution_param_type(
-                                                0u, unsigned_difference_type(i - first)))));
+                        {
+                            auto const random_index =
+                                static_cast<iter_difference_t<RandomAccessIterator>>(uid(
+                                    urng,
+                                    uniform_int_distribution_param_type(0u, DistibType(i - first))));
+                            RAH2_NS::ranges::iter_swap(i, first + random_index);
+                        }
                     }
                 }
 
-                template <typename RandomRange, typename UniformRandomNumberGenerator>
+                template <typename D, typename RandomAccessIterator, typename N, typename UniformRandomNumberGenerator>
+                void impl_n(RandomAccessIterator first, N len, UniformRandomNumberGenerator&& urng) const
+                {
+                    if (len != 0)
+                    {
+                        using distrib = RAH2_STD::uniform_int_distribution<D>;
+                        RandomAccessIterator i = first + 1;
+                        --len;
+                        for (auto u = len / 4; u != 0; --u)
+                        {
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                        }
+                        for (auto u = len % 4; u != 0; --u)
+                        {
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                        }
+                    }
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
+                void dispatch(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    impl<uint32_t>(
+                        RAH2_MOV(first_last.iterator), RAH2_MOV(first_last.sentinel), RAH2_FWD(urng));
+                }
+
+                template <typename RandomAccessIterator, typename N, typename UniformRandomNumberGenerator>
+                void dispatch_n(
+                    RandomAccessIterator first, N input_size, UniformRandomNumberGenerator&& urng) const
+                {
+                    auto first_last = details::unwrap_begin(RAH2_STD::move(first));
+                    if (input_size >= RAH2_STD::numeric_limits<uint32_t>::max())
+                    {
+                        impl_n<uint64_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
+                    }
+                    else if (input_size >= RAH2_STD::numeric_limits<uint16_t>::max())
+                    {
+                        impl_n<uint32_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
+                    }
+                    else
+                    {
+                        impl_n<uint16_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
+                    }
+                }
+
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<not RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    dispatch(RAH2_MOV(first), RAH2_MOV(last), RAH2_FWD(urng));
+                }
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    dispatch_n(
+                        RAH2_MOV(first), RAH2_NS::ranges::distance(first, last), RAH2_FWD(urng));
+                }
+
+                template <
+                    typename RandomRange,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
+                void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
+                {
+                    dispatch_n(
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::size(range), RAH2_FWD(urng));
+                }
+                template <
+                    typename RandomRange,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<not RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
                 void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
                 {
                     (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::forward<UniformRandomNumberGenerator>(urng));
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_FWD(urng));
                 }
             };
         } // namespace niebloids
