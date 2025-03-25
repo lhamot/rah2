@@ -232,9 +232,6 @@ struct test_for_each_
     template <bool = true>
     void test()
     {
-#if defined(TEST_DISPLAY_ALL)
-        std::cout << "range_type : " << range_type << std::endl;
-#endif
         size_t sum = 0;
         std::vector<int> vec(1000000 * RELEASE_MULTIPLIER, 1);
         auto func = [&sum](auto v)

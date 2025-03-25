@@ -16,10 +16,31 @@
 
 #endif
 
+#define RAH2_FOR_N(COUNT, CODE)                                                                    \
+    do                                                                                             \
+    {                                                                                              \
+        auto const times = COUNT;                                                                  \
+        for (auto i_ = times / 4; i_ != 0; --i_)                                                   \
+        {                                                                                          \
+            CODE CODE CODE CODE                                                                    \
+        }                                                                                          \
+        for (auto i_ = times % 4; i_ != 0; --i_)                                                   \
+        {                                                                                          \
+            CODE                                                                                   \
+        }                                                                                          \
+    } while (false)
+
 namespace RAH2_NS
 {
     namespace ranges
     {
+        namespace details
+        {
+            template <typename I>
+            constexpr static bool CanUseMemcpy =
+                RAH2_NS::contiguous_iterator<I>
+                && RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value;
+        }
         // ************************************** algorithm results ***********************************
 
         // TODO : Move into algorithm.hpp
@@ -103,22 +124,90 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
                         && RAH2_NS::weakly_incrementable<O>>* = nullptr>
-                constexpr RAH2_NS::ranges::move_result<I, O> operator()(I first, S last, O result) const
+                constexpr RAH2_NS::ranges::move_result<I, O> impl(I first, S last, O result) const
                 {
                     for (; first != last; ++first, ++result)
                         *result = RAH2_NS::ranges::iter_move(first);
                     return {RAH2_STD::move(first), RAH2_STD::move(result)};
                 }
                 template <
+                    typename I,
+                    typename N,
+                    typename O,
+                    RAH2_STD::enable_if_t<not(
+                        RAH2_NS::contiguous_iterator<I> && RAH2_NS::contiguous_iterator<O>
+                        && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>
+                        and std::is_trivially_move_assignable<RAH2_NS::iter_value_t<I>>::value)>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
+                {
+                    RAH2_FOR_N(len, {
+                        *result = RAH2_NS::ranges::iter_move(first);
+                        ++first;
+                        ++result;
+                    });
+                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                }
+                template <
+                    typename I,
+                    typename N,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::contiguous_iterator<I> && RAH2_NS::contiguous_iterator<O>
+                        && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>
+                        and std::is_trivially_move_assignable<RAH2_NS::iter_value_t<I>>::value>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
+                {
+                    memcpy(&(*result), &(*first), len * sizeof(RAH2_NS::iter_value_t<I>));
+                    return {first + len, result + len};
+                }
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<I> && RAH2_NS::sentinel_for<S, I>
+                        && not RAH2_NS::sized_sentinel_for<S, I> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<I, O> operator()(I first, S last, O result) const
+                { // not sized sentinel
+                    return impl(RAH2_STD::move(first), RAH2_STD::move(last), RAH2_STD::move(result));
+                }
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_iterator<I> && RAH2_NS::sized_sentinel_for<S, I>
+                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<I, O> operator()(I first, S last, O result) const
+                { // Sized sentinel
+                    return impl_n(
+                        RAH2_STD::move(first),
+                        RAH2_NS::ranges::distance(first, last),
+                        RAH2_STD::move(result));
+                }
+                template <
                     typename R,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                        RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>
+                        && not RAH2_NS::ranges::sized_range<R>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
-                operator()(R&& r, O result) const
+                operator()(R&& r, O result) const // not sized range
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(result));
+                }
+                template <
+                    typename R,
+                    typename O,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::input_range<R> && RAH2_NS::weakly_incrementable<O>
+                        && RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                constexpr RAH2_NS::ranges::move_result<RAH2_NS::ranges::borrowed_iterator_t<R>, O>
+                operator()(R&& r, O result) const // sized range
+                {
+                    return impl_n(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r), RAH2_STD::move(result));
                 }
             };
         } // namespace niebloids
@@ -131,17 +220,13 @@ namespace RAH2_NS
         {
             struct copy_fn
             {
-                template <typename I>
-                constexpr static bool CanUseMemcpy =
-                    RAH2_NS::contiguous_iterator<I>
-                    && RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value;
-
                 template <
                     typename I,
                     typename S,
                     typename O,
-                    RAH2_STD::enable_if_t<!(
-                        CanUseMemcpy<I> && CanUseMemcpy<O> && RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        !(details::CanUseMemcpy<I> && details::CanUseMemcpy<O>
+                          && RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
                 static constexpr RAH2_NS::ranges::copy_result<I, O> impl(I first, S last, O result)
                 {
                     for (; first != last; ++first, (void)++result)
@@ -154,7 +239,8 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     RAH2_STD::enable_if_t<
-                        CanUseMemcpy<I> && CanUseMemcpy<O> && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                        details::CanUseMemcpy<I> && details::CanUseMemcpy<O>
+                        && RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
                 static constexpr RAH2_NS::ranges::copy_result<I, O> impl(I first, S last, O result)
                 {
                     auto last2 = RAH2_NS::ranges::next(first, last);
@@ -1039,23 +1125,51 @@ namespace RAH2_NS
                 template <
                     typename I,
                     typename O,
-                    RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && !RAH2_NS::random_access_iterator<I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                    RAH2_STD::enable_if_t<not(details::CanUseMemcpy<I> && details::CanUseMemcpy<O>)>* = nullptr>
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
-                    for (RAH2_NS::iter_difference_t<I> i{}; i != n; ++i, ++first, ++result)
-                        *result = *first;
-                    return {RAH2_STD::move(first), RAH2_STD::move(result)};
+                    auto first_u = details::unwrap_begin(RAH2_MOV(first));
+                    auto result_u = details::unwrap_begin(RAH2_MOV(result));
+                    auto first2 = first_u.iterator;
+                    auto result2 = RAH2_MOV(result_u.iterator);
+                    // RAH2_FOR_N(n, *result2 = *first2; ++first2; ++result2;);
+                    for (size_t i = n / 4; i != 0; --i)
+                    {
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                    }
+                    for (size_t i = n % 4; i != 0; --i)
+                    {
+                        *result2 = *first2;
+                        ++first2;
+                        ++result2;
+                    }
+                    //for (auto i = n; i != 0; --i)
+                    //{
+                    //    *result2 = *first2;
+                    //    ++first2;
+                    //    ++result2;
+                    //}
+                    return {
+                        first_u.wrap_iterator(RAH2_MOV(first2)),
+                        result_u.wrap_iterator(RAH2_MOV(result2))};
                 }
 
                 template <
                     typename I,
                     typename O,
-                    RAH2_STD::enable_if_t<
-                        RAH2_NS::input_iterator<I> && RAH2_NS::random_access_iterator<I>
-                        && RAH2_NS::weakly_incrementable<O>>* = nullptr>
+                    RAH2_STD::enable_if_t<details::CanUseMemcpy<I> && details::CanUseMemcpy<O>>* = nullptr>
                 constexpr RAH2_NS::ranges::copy_n_result<I, O>
                 operator()(I first, iter_difference_t<I> n, O result) const
                 {
@@ -1924,38 +2038,6 @@ namespace RAH2_NS
 
         namespace niebloids
         {
-            struct generate_fn
-            {
-                template <typename O, typename S, typename F>
-                constexpr O operator()(O first, S last, F gen) const
-                {
-                    for (; first != last; *first = RAH2_INVOKE_0(gen), ++first)
-                    {
-                    }
-                    return first;
-                }
-
-                template <typename R, typename F>
-                constexpr borrowed_iterator_t<R> operator()(R&& r, F gen) const
-                {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_STD::move(gen));
-                }
-            };
-        } // namespace niebloids
-
-        /// generate
-        ///
-        /// Iterates the range of [first, last) and assigns to each element the
-        /// result of the function generator. Generator is a function which takes
-        /// no arguments.
-        ///
-        /// Complexity: Exactly 'last - first' invocations of generator and assignments.
-        ///
-        constexpr niebloids::generate_fn generate{};
-
-        namespace niebloids
-        {
             struct generate_n_fn
             {
                 template <
@@ -1963,12 +2045,16 @@ namespace RAH2_NS
                     typename F,
                     RAH2_STD::enable_if_t<
                         RAH2_NS::input_or_output_iterator<O> && RAH2_NS::copy_constructible<F>>* = nullptr>
-                constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, F gen) const
+                inline constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, F gen) const
                 {
-                    for (; n-- > 0; *first = gen(), ++first)
+                    auto first_handle = details::unwrap_begin(RAH2_STD::move(first));
+                    auto first2 = first_handle.iterator;
+
+                    for (; n != 0; (void)++first2, (void)--n)
                     {
+                        *first2 = gen();
                     }
-                    return first;
+                    return first_handle.wrap_iterator(RAH2_MOV(first2));
                 }
             };
         } // namespace niebloids
@@ -1982,6 +2068,59 @@ namespace RAH2_NS
         /// Complexity: Exactly n invocations of generator and assignments.
         ///
         constexpr niebloids::generate_n_fn generate_n{};
+
+        namespace niebloids
+        {
+            struct generate_fn
+            {
+                template <
+                    typename O,
+                    typename S,
+                    typename F,
+                    std::enable_if_t<RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
+                constexpr O operator()(O first, S last, F&& gen) const
+                {
+                    return generate_n(first, RAH2_NS::ranges::distance(first, last), RAH2_FWD(gen));
+                }
+
+                template <
+                    typename O,
+                    typename S,
+                    typename F,
+                    std::enable_if_t<not RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
+                constexpr O operator()(O first, S last, F&& gen) const
+                {
+                    for (; first != last; ++first)
+                    {
+                        *first = RAH2_INVOKE_0(gen);
+                    }
+                    return first;
+                }
+
+                template <typename R, typename F, std::enable_if_t<not RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                constexpr borrowed_iterator_t<R> operator()(R&& r, F&& gen) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_FWD(gen));
+                }
+
+                template <typename R, typename F, std::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                constexpr borrowed_iterator_t<R> operator()(R&& r, F&& gen) const
+                {
+                    return generate_n(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r), RAH2_FWD(gen));
+                }
+            };
+        } // namespace niebloids
+
+        /// generate
+        ///
+        /// Iterates the range of [first, last) and assigns to each element the
+        /// result of the function generator. Generator is a function which takes
+        /// no arguments.
+        ///
+        /// Complexity: Exactly 'last - first' invocations of generator and assignments.
+        ///
+        constexpr niebloids::generate_fn generate{};
 
         template <class I, class O>
         using unary_transform_result = RAH2_NS::ranges::in_out_result<I, O>;
@@ -5769,15 +5908,22 @@ namespace RAH2_NS
             {
                 // TODO use the eastl version when possible
 
-                template <
-                    class T,
-                    class O,
-                    class S,
-                    RAH2_STD::enable_if_t<output_iterator<O, T> && sentinel_for<S, O>>* = nullptr>
+                template <class T, class O, class S, RAH2_STD::enable_if_t<sized_sentinel_for<S, O>>* = nullptr>
+                constexpr O impl(O first, S last, T const& value) const
+                {
+                    auto const range_len = RAH2_NS::ranges::distance(first, last);
+                    RAH2_FOR_N(range_len, *first++ = value;);
+                    return first;
+                }
+
+                template <class T, class O, class S, RAH2_STD::enable_if_t<!sized_sentinel_for<S, O>>* = nullptr>
                 constexpr O impl(O first, S last, T const& value) const
                 {
                     while (first != last)
-                        *first++ = value;
+                    {
+                        *first = value;
+                        ++first;
+                    }
 
                     return first;
                 }
@@ -5810,9 +5956,29 @@ namespace RAH2_NS
                 template <typename T, typename O, RAH2_STD::enable_if_t<output_iterator<O, T const&>>* = nullptr>
                 constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, T const& value) const
                 {
-                    for (RAH2_NS::iter_difference_t<O> i{}; i != n; ++first, ++i)
-                        *first = value;
-                    return first;
+                    if (n == 0)
+                    {
+                        return first;
+                    }
+                    auto first_u = details::unwrap_begin(RAH2_MOV(first));
+                    auto iter = RAH2_MOV(first_u.iterator);
+                    for (auto u = n / 4; u != 0; --u)
+                    {
+                        *iter = value;
+                        ++iter;
+                        *iter = value;
+                        ++iter;
+                        *iter = value;
+                        ++iter;
+                        *iter = value;
+                        ++iter;
+                    }
+                    for (auto u = n % 4; u != 0; --u)
+                    {
+                        *iter = value;
+                        ++iter;
+                    }
+                    return first_u.wrap_iterator(RAH2_MOV(iter));
                 }
             };
         } // namespace niebloids

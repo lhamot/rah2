@@ -560,7 +560,7 @@ struct test_find_if_not_
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
-            "find_if",
+            "find_if_not",
             range_type,
             [&]
             {
@@ -569,7 +569,7 @@ struct test_find_if_not_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            "find_if_proj",
+            "find_if_not_proj",
             range_type,
             [&]
             {

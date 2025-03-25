@@ -1308,7 +1308,7 @@ std::chrono::nanoseconds compute_duration(
 #endif
 }
 
-constexpr static auto PerfTolerency = 10.;
+constexpr static auto PerfTolerency = 5.;
 
 template <typename F, typename F2>
 auto compare_duration(

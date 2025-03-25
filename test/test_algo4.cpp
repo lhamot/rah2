@@ -5980,7 +5980,7 @@ struct test_sort_heap_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == CommonOrSent::Common,
-                "sort_iter",
+                "sort_heap_iter",
                 range_type,
                 (
                     [&]
@@ -5995,7 +5995,7 @@ struct test_sort_heap_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "sort_ranges",
+                "sort_heap_ranges",
                 range_type,
                 ((
                     [&]
@@ -7313,7 +7313,7 @@ struct test_iota_
         {
             COMPARE_DURATION_TO_STD_ALGO_11_AND_RANGES_23(
                 CS == Common,
-                "copy_iter",
+                "iota_iter",
                 range_type,
                 (
                     [&]
@@ -7325,7 +7325,7 @@ struct test_iota_
 
         {
             COMPARE_DURATION_TO_STD_RANGES_23(
-                "copy_ranges",
+                "iota_ranges",
                 range_type,
                 (
                     [&]

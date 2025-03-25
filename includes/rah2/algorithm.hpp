@@ -769,19 +769,64 @@ namespace RAH2_NS
         {
             struct swap_ranges_fn
             {
-                template <
-                    typename I1,
-                    typename S1,
-                    typename I2,
-                    typename S2,
-                    RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2> && indirectly_swappable<I1, I2>>* = nullptr>
-                constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
+                template <typename I1, typename S1, typename I2, typename S2>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
                 impl(I1 first1, S1 last1, I2 first2, S2 last2) const
                 {
-                    for (; !(first1 == last1 or first2 == last2); ++first1, ++first2)
+                    for (; first1 != last1 and first2 != last2; ++first1, ++first2)
+                    {
                         RAH2_NS::ranges::iter_swap(first1, first2);
+                    }
+                    return {RAH2_STD::move(first1), RAH2_STD::move(first2)};
+                }
+
+                template <
+                    typename I1,
+                    typename I2,
+                    RAH2_STD::enable_if_t<not(
+                        is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I1>>
+                        && is_trivially_constructible_v<RAH2_NS::iter_value_t<I1>>
+                        && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
+                        && RAH2_NS::contiguous_iterator<I1> && RAH2_NS::contiguous_iterator<I2>)>* = nullptr>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
+                impl(I1 first1, I2 first2, size_t size) const
+                {
+                    RAH2_FOR_N(size, {
+                        RAH2_NS::ranges::iter_swap(first1, first2);
+                        ++first1;
+                        ++first2;
+                    });
+                    return {RAH2_STD::move(first1), RAH2_STD::move(first2)};
+                }
+
+                template <
+                    typename I1,
+                    typename I2,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I1>>
+                        && RAH2_NS::is_trivially_constructible_v<RAH2_NS::iter_value_t<I1>>
+                        && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
+                        && RAH2_NS::contiguous_iterator<I1> && RAH2_NS::contiguous_iterator<I2>>* = nullptr>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
+                impl(I1 first1, I2 first2, size_t size) const
+                {
+                    const auto value_size = sizeof(RAH2_NS::iter_value_t<I1>);
+                    const auto buffer_size = value_size > 256 ? 1 : 256 / value_size;
+                    RAH2_NS::iter_value_t<I1> buffer[buffer_size];
+                    while (size >= buffer_size)
+                    {
+                        memcpy((void*)buffer, (void*)first1, buffer_size * value_size);
+                        memcpy((void*)first1, (void*)first2, buffer_size * value_size);
+                        memcpy((void*)first2, (void*)buffer, buffer_size * value_size);
+                        first1 += buffer_size;
+                        first2 += buffer_size;
+                        size -= buffer_size;
+                    }
+                    memcpy((void*)buffer, (void*)first1, size * value_size);
+                    memcpy((void*)first1, (void*)first2, size * value_size);
+                    memcpy((void*)first2, (void*)buffer, size * value_size);
+                    first1 += size;
+                    first2 += size;
                     return {RAH2_STD::move(first1), RAH2_STD::move(first2)};
                 }
 
@@ -790,10 +835,31 @@ namespace RAH2_NS
                     typename S1,
                     typename I2,
                     typename S2,
-                    RAH2_STD::enable_if_t<
-                        input_iterator<I1> && sentinel_for<S1, I1> && input_iterator<I2>
-                        && sentinel_for<S2, I2> && indirectly_swappable<I1, I2>>* = nullptr>
-                constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
+                    RAH2_STD::enable_if_t<sized_sentinel_for<S1, I1> && sized_sentinel_for<S2, I2>>* = nullptr>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
+                operator()(I1 first1, S1 last1, I2 first2, S2 last2) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_STD::move(first2), RAH2_STD::move(last2));
+                    auto result = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::min(
+                            RAH2_NS::ranges::distance(first1, last1),
+                            RAH2_NS::ranges::distance(first2, last2)));
+                    return {
+                        first_last.wrap_iterator(RAH2_STD::move(result.in1)),
+                        first2_last2.wrap_iterator(RAH2_STD::move(result.in2))};
+                }
+
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
+                    typename S2,
+                    RAH2_STD::enable_if_t<not(sized_sentinel_for<S1, I1> && sized_sentinel_for<S2, I2>)>* = nullptr>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
                 operator()(I1 first1, S1 last1, I2 first2, S2 last2) const
                 {
                     auto first_last = details::unwrap(RAH2_STD::move(first1), RAH2_STD::move(last1));
@@ -812,11 +878,9 @@ namespace RAH2_NS
                 template <
                     typename R1,
                     typename R2,
-                    RAH2_STD::enable_if_t<
-                        input_range<R1> && input_range<R2>
-                        && indirectly_swappable<RAH2_NS::ranges::iterator_t<R1>, RAH2_NS::ranges::iterator_t<R2>>>* =
-                        nullptr>
-                RAH2_NS::ranges::swap_ranges_result<
+                    RAH2_STD::enable_if_t<not(
+                        RAH2_NS::ranges::sized_range<R1> && RAH2_NS::ranges::sized_range<R2>)>* = nullptr>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<
                     RAH2_NS::ranges::borrowed_iterator_t<R1>,
                     RAH2_NS::ranges::borrowed_iterator_t<R2>>
                 operator()(R1&& r1, R2&& r2) const
@@ -826,6 +890,29 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(r1),
                         RAH2_NS::ranges::begin(r2),
                         RAH2_NS::ranges::end(r2));
+                }
+
+                template <
+                    typename R1,
+                    typename R2,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::sized_range<R1> && RAH2_NS::ranges::sized_range<R2>>* = nullptr>
+                inline constexpr RAH2_NS::ranges::swap_ranges_result<
+                    RAH2_NS::ranges::borrowed_iterator_t<R1>,
+                    RAH2_NS::ranges::borrowed_iterator_t<R2>>
+                operator()(R1&& r1, R2&& r2) const
+                {
+                    auto first_last =
+                        details::unwrap(RAH2_NS::ranges::begin(r1), RAH2_NS::ranges::end(r1));
+                    auto first2_last2 =
+                        details::unwrap(RAH2_NS::ranges::begin(r2), RAH2_NS::ranges::end(r2));
+                    auto out1_out2 = impl(
+                        RAH2_STD::move(first_last.iterator),
+                        RAH2_STD::move(first2_last2.iterator),
+                        RAH2_STD::min(RAH2_NS::ranges::size(r1), RAH2_NS::ranges::size(r2)));
+                    return {
+                        first_last.wrap_iterator(RAH2_STD::move(out1_out2.in1)),
+                        first2_last2.wrap_iterator(RAH2_STD::move(out1_out2.in2))};
                 }
             };
         } // namespace niebloids
@@ -1009,44 +1096,71 @@ namespace RAH2_NS
         {
             struct sample_fn
             {
-                template <
-                    typename I,
-                    typename S,
-                    typename O,
-                    class Gen,
-                    RAH2_STD::enable_if_t<!RAH2_NS::forward_iterator<I>>* = nullptr>
-                O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                template <typename DistibType, typename I, typename S, typename O, class Gen>
+                inline constexpr O sample_sized_impl(
+                    I first,
+                    S last,
+                    RAH2_NS::iter_difference_t<I> input_size,
+                    O out,
+                    RAH2_NS::iter_difference_t<I> n,
+                    Gen&& gen) const
                 {
-#ifdef RAH2_USE_EASTL
-                    using difference_type = int32_t;
-#else
-                    using difference_type = typename RAH2_STD::iterator_traits<I>::difference_type;
-#endif
-                    using unsigned_difference_type =
-                        typename RAH2_STD::make_unsigned<difference_type>::type;
-
-                    using uniform_int_distrib =
-                        RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
-                    using uniform_int_distribution_param_type =
-                        typename uniform_int_distrib::param_type;
-
-                    uniform_int_distrib uid;
-
-                    // O is a random_access_iterator
-                    difference_type sample_size{};
-                    // copy [first, first + M) elements to "random access" output
-                    for (; first != last && sample_size != n; ++first)
-                        out[sample_size++] = *first;
-                    // overwrite some of the copied elements with randomly selected ones
-                    for (auto pop_size{sample_size}; first != last; ++first, ++pop_size)
+                    if (n == 0 or input_size == 0)
                     {
-                        auto const i{
-                            uid(gen,
-                                uniform_int_distribution_param_type{
-                                    static_cast<unsigned_difference_type>(0),
-                                    static_cast<unsigned_difference_type>(pop_size)})};
-                        if (i < unsigned_difference_type(n))
-                            out[i] = *first;
+                        return out;
+                    }
+
+                    using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto first2 = first_last.iterator;
+                    auto out_iter = details::unwrap_begin(RAH2_STD::move(out));
+                    auto out2 = out_iter.iterator;
+
+                    n = std::min(n, input_size);
+                    for (; input_size > 0; ++first2, (void)--input_size)
+                    {
+                        uniform_int_distrib distrib(
+                            DistibType(), static_cast<DistibType>(input_size - 1));
+                        if (distrib(gen) < DistibType(n))
+                        {
+                            --n;
+                            *out2 = *first2;
+                            ++out2;
+                        }
+                    }
+
+                    return out_iter.wrap_iterator(RAH2_STD::move(out2));
+                }
+
+                template <typename DistibType, typename I, typename S, typename O, class Gen>
+                inline constexpr O sample_unsized_impl(
+                    I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                {
+                    if (n == 0 or first == last)
+                    {
+                        return out;
+                    }
+
+                    using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    auto first2 = first_last.iterator;
+                    auto last2 = first_last.sentinel;
+                    auto out_iter = details::unwrap_begin(RAH2_STD::move(out));
+                    auto out2 = out_iter.iterator;
+
+                    DistibType sample_size{};
+                    // copy [first, first + M) elements to "random access" output
+                    for (; first2 != last2 && sample_size != DistibType(n); ++first2, ++sample_size)
+                    {
+                        out2[sample_size] = *first2;
+                    }
+                    // overwrite some of the copied elements with randomly selected ones
+                    for (auto pop_size{sample_size}; first2 != last2; ++first2, ++pop_size)
+                    {
+                        uniform_int_distrib distrib(DistibType(), static_cast<DistibType>(pop_size));
+                        auto const i = distrib(gen);
+                        if (i < DistibType(n))
+                            out2[i] = *first2;
                     }
                     return out + sample_size;
                 }
@@ -1056,50 +1170,68 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     class Gen,
-                    RAH2_STD::enable_if_t<RAH2_NS::forward_iterator<I>>* = nullptr>
-                O operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                    RAH2_STD::enable_if_t<!(
+                        RAH2_NS::forward_iterator<I> || RAH2_NS::sized_sentinel_for<S, I>)>* = nullptr>
+                inline constexpr O
+                operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
-#ifdef RAH2_USE_EASTL
-                    using difference_type = int32_t;
-#else
-                    using difference_type = typename RAH2_STD::iterator_traits<I>::difference_type;
-#endif
-                    using unsigned_difference_type =
-                        typename RAH2_STD::make_unsigned<difference_type>::type;
-
-                    using uniform_int_distrib =
-                        RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
-                    using uniform_int_distribution_param_type =
-                        typename uniform_int_distrib::param_type;
-
-                    uniform_int_distrib uid;
-
-                    // this branch preserves "stability" of the sample elements
-                    auto rest{RAH2_NS::ranges::distance(first, last)};
-                    for (n = RAH2_NS::details::min(n, rest); n != 0; ++first)
+                    if (n >= RAH2_STD::numeric_limits<uint16_t>::max())
                     {
-                        if (uid(gen,
-                                uniform_int_distribution_param_type(
-                                    unsigned_difference_type(0),
-                                    static_cast<unsigned_difference_type>(--rest)))
-                            < unsigned_difference_type(n))
-                        {
-                            *out++ = *first;
-                            --n;
-                        }
+                        return this->sample_unsized_impl<uint32_t>(
+                            RAH2_MOV(first), RAH2_MOV(last), RAH2_MOV(out), n, RAH2_MOV(gen));
                     }
-                    return out;
+                    else
+                    {
+                        return this->sample_unsized_impl<uint16_t>(
+                            RAH2_MOV(first), RAH2_MOV(last), RAH2_MOV(out), n, RAH2_MOV(gen));
+                    }
                 }
 
-                template <typename R, typename O, class Gen>
-                O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
+                template <
+                    typename I,
+                    typename S,
+                    typename O,
+                    class Gen,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::forward_iterator<I> || RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                inline constexpr O
+                operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
+                {
+                    auto input_size = RAH2_NS::ranges::distance(first, last);
+                    return this->sample_sized_impl<uint32_t>(
+                        RAH2_MOV(first), RAH2_MOV(last), input_size, RAH2_MOV(out), n, RAH2_MOV(gen));
+                }
+
+                template <
+                    typename R,
+                    typename O,
+                    class Gen,
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                inline constexpr O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
+                {
+                    auto input_size = RAH2_NS::ranges::size(r);
+                    return this->sample_sized_impl<uint32_t>(
+                        RAH2_NS::ranges::begin(r),
+                        RAH2_NS::ranges::end(r),
+                        input_size,
+                        RAH2_MOV(out),
+                        n,
+                        RAH2_MOV(gen));
+                }
+
+                template <
+                    typename R,
+                    typename O,
+                    class Gen,
+                    RAH2_STD::enable_if_t<!RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                inline constexpr O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
                 {
                     return (*this)(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
-                        RAH2_STD::move(out),
+                        RAH2_MOV(out),
                         n,
-                        RAH2_STD::forward<Gen>(gen));
+                        RAH2_MOV(gen));
                 }
             };
         } // namespace niebloids
@@ -1866,7 +1998,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr>
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
@@ -1898,7 +2030,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr>
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
@@ -1916,7 +2048,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::ranges::sized_range<IR> and RAH2_NS::ranges::sized_range<OR>
                         and RAH2_NS::ranges::contiguous_range<IR> and RAH2_NS::ranges::contiguous_range<OR>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::ranges::range_value_t<IR>>::value
+                        and is_trivially_copyable_v<RAH2_NS::ranges::range_value_t<IR>>
                         and RAH2_NS::is_same_v<
                             RAH2_NS::ranges::range_value_t<IR>,
                             RAH2_NS::ranges::range_value_t<OR>>)>* = nullptr
@@ -1941,7 +2073,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::ranges::sized_range<IR> and RAH2_NS::ranges::sized_range<OR>
                         and RAH2_NS::ranges::contiguous_range<IR> and RAH2_NS::ranges::contiguous_range<OR>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::ranges::range_value_t<IR>>::value
+                        and is_trivially_copyable_v<RAH2_NS::ranges::range_value_t<IR>>
                         and RAH2_NS::is_same_v<
                             RAH2_NS::ranges::range_value_t<IR>,
                             RAH2_NS::ranges::range_value_t<OR>>>* = nullptr>
@@ -1974,7 +2106,7 @@ namespace RAH2_NS
                     typename S, // no-throw-sentinel-for<O>
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr>
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_n_result<I, O>
@@ -2003,7 +2135,7 @@ namespace RAH2_NS
                     typename S, // no-throw-sentinel-for<O>
                     RAH2_STD::enable_if_t<
                         RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr>
                 RAH2_NS::ranges::uninitialized_copy_n_result<I, O>
                 operator()(I ifirst, RAH2_NS::iter_difference_t<I> count, O ofirst, S olast) const
@@ -2096,7 +2228,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr>
                 //requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_rvalue_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_move_result<I, O>
@@ -2130,7 +2262,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
                 operator()(I ifirst, S1 ilast, O ofirst, S2 olast) const
@@ -2147,7 +2279,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::ranges::sized_range<IR> and RAH2_NS::ranges::sized_range<OR>
                         and RAH2_NS::ranges::contiguous_range<IR> and RAH2_NS::ranges::contiguous_range<OR>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::ranges::range_value_t<IR>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::ranges::range_value_t<IR>>
                         and RAH2_NS::is_same_v<
                             RAH2_NS::ranges::range_value_t<IR>,
                             RAH2_NS::ranges::range_value_t<OR>>)>* = nullptr>
@@ -2170,7 +2302,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::ranges::sized_range<IR> and RAH2_NS::ranges::sized_range<OR>
                         and RAH2_NS::ranges::contiguous_range<IR> and RAH2_NS::ranges::contiguous_range<OR>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::ranges::range_value_t<IR>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::ranges::range_value_t<IR>>
                         and RAH2_NS::is_same_v<
                             RAH2_NS::ranges::range_value_t<IR>,
                             RAH2_NS::ranges::range_value_t<OR>>>* = nullptr>
@@ -2202,7 +2334,7 @@ namespace RAH2_NS
                     typename S, // no-throw-sentinel-for<O>
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr>
                 RAH2_NS::ranges::uninitialized_move_n_result<I, O>
                 operator()(I ifirst, RAH2_NS::iter_difference_t<I> n, O ofirst, S olast) const
@@ -2232,7 +2364,7 @@ namespace RAH2_NS
                     typename S, // no-throw-sentinel-for<O>
                     RAH2_STD::enable_if_t<
                         RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>>* = nullptr>
                 RAH2_NS::ranges::uninitialized_copy_n_result<I, O>
                 operator()(I ifirst, RAH2_NS::iter_difference_t<I> count, O ofirst, S olast) const
@@ -2251,8 +2383,8 @@ namespace RAH2_NS
                 template <
                     typename I, // no-throw-forward-iterator
                     typename S, // no-throw-sentinel-for<I>
-                    RAH2_STD::enable_if_t<RAH2_STD::is_trivially_default_constructible<
-                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>::value>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::is_trivially_default_constructible_v<
+                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>>* = nullptr>
                 // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
                 I operator()(I first, S last) const
                 {
@@ -2261,8 +2393,8 @@ namespace RAH2_NS
                 template <
                     typename I, // no-throw-forward-iterator
                     typename S, // no-throw-sentinel-for<I>
-                    RAH2_STD::enable_if_t<!RAH2_STD::is_trivially_default_constructible<
-                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>::value>* = nullptr>
+                    RAH2_STD::enable_if_t<!RAH2_NS::is_trivially_default_constructible_v<
+                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>>* = nullptr>
                 // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
                 I operator()(I first, S last) const
                 {
@@ -2299,8 +2431,8 @@ namespace RAH2_NS
             {
                 template <
                     typename I, // no-throw-forward-iterator
-                    RAH2_STD::enable_if_t<RAH2_STD::is_trivially_default_constructible<
-                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>::value>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::is_trivially_default_constructible_v<
+                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>>* = nullptr>
                 // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
                 I operator()(I first, RAH2_NS::iter_difference_t<I> n) const
                 {
@@ -2309,8 +2441,8 @@ namespace RAH2_NS
 
                 template <
                     typename I, // no-throw-forward-iterator
-                    RAH2_STD::enable_if_t<!RAH2_STD::is_trivially_default_constructible<
-                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>::value>* = nullptr>
+                    RAH2_STD::enable_if_t<!RAH2_NS::is_trivially_default_constructible_v<
+                        RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>>>* = nullptr>
                 // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
                 I operator()(I first, RAH2_NS::iter_difference_t<I> n) const
                 {
@@ -2333,57 +2465,7 @@ namespace RAH2_NS
             };
         } // namespace niebloids
         constexpr niebloids::uninitialized_default_construct_n_fn uninitialized_default_construct_n{};
-        namespace niebloids
-        {
-            struct uninitialized_value_construct_fn
-            {
-                template <
-                    typename I, // no-throw-forward-iterator
-                    typename S, // no-throw-sentinel-for<I>
-                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
-                    RAH2_STD::enable_if_t<
-                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value>* = nullptr>
-                // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
-                I operator()(I first, S last) const
-                {
-                    return RAH2_NS::ranges::fill(first, last, T());
-                }
 
-                template <
-                    typename I, // no-throw-forward-iterator
-                    typename S, // no-throw-sentinel-for<I>
-                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
-                    RAH2_STD::enable_if_t<!(
-                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value)>* = nullptr>
-                // requires RAH2_STD::default_initializable<RAH2_STD::iter_value_t<I>>
-                I operator()(I first, S last) const
-                {
-                    I rollback{first};
-                    try
-                    {
-                        for (; !(first == last); ++first)
-                            ::new (const_cast<void*>(
-                                static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) T();
-                        return first;
-                    }
-                    catch (...) // rollback: destroy constructed elements
-                    {
-                        for (; rollback != first; ++rollback)
-                            RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*rollback));
-                        throw;
-                    }
-                }
-
-                template <typename R // no-throw-forward-range
-                          >
-                // requires RAH2_STD::default_initializable<ranges::range_value_t<R>>
-                RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const
-                {
-                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
-                }
-            };
-        } // namespace niebloids
-        constexpr niebloids::uninitialized_value_construct_fn uninitialized_value_construct{};
         namespace niebloids
         {
             struct uninitialized_value_construct_n_fn
@@ -2391,8 +2473,8 @@ namespace RAH2_NS
                 template <
                     typename I, // no-throw-forward-iterator
                     typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
-                    RAH2_STD::enable_if_t<(
-                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value)>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        (RAH2_NS::is_trivial_v<T> && RAH2_NS::is_copy_assignable_v<T>)>* = nullptr>
                 I operator()(I first, RAH2_NS::iter_difference_t<I> n) const
                 {
                     return RAH2_NS::ranges::fill_n(first, n, T());
@@ -2401,8 +2483,8 @@ namespace RAH2_NS
                 template <
                     typename I, // no-throw-forward-iterator
                     typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
-                    RAH2_STD::enable_if_t<!(
-                        RAH2_STD::is_trivial<T>::value && RAH2_STD::is_copy_assignable<T>::value)>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        !(RAH2_NS::is_trivial_v<T> && RAH2_NS::is_copy_assignable_v<T>)>* = nullptr>
                 I operator()(I first, RAH2_NS::iter_difference_t<I> n) const
                 {
                     I rollback{first};
@@ -2423,6 +2505,73 @@ namespace RAH2_NS
             };
         } // namespace niebloids
         constexpr niebloids::uninitialized_value_construct_n_fn uninitialized_value_construct_n{};
+
+        namespace niebloids
+        {
+            struct uninitialized_value_construct_fn
+            {
+                template <
+                    typename I,
+                    typename S,
+                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
+                    RAH2_STD::enable_if_t<RAH2_NS::is_trivial_v<T> && RAH2_NS::is_copy_assignable_v<T>>* = nullptr>
+                I impl(I first, S last) const
+                {
+                    return RAH2_NS::ranges::fill(first, last, T());
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    typename T = RAH2_STD::remove_reference_t<RAH2_NS::iter_reference_t<I>>,
+                    RAH2_STD::enable_if_t<
+                        !(RAH2_NS::is_trivial_v<T> && RAH2_NS::is_copy_assignable_v<T>)>* = nullptr>
+                I impl(I first, S last) const
+                {
+                    I rollback{first};
+                    try
+                    {
+                        for (; !(first == last); ++first)
+                            ::new (const_cast<void*>(
+                                static_cast<void const volatile*>(RAH2_STD::addressof(*first)))) T();
+                        return first;
+                    }
+                    catch (...) // rollback: destroy constructed elements
+                    {
+                        for (; rollback != first; ++rollback)
+                            RAH2_NS::ranges::destroy_at(RAH2_STD::addressof(*rollback));
+                        throw;
+                    }
+                }
+
+                template <typename I, typename S, RAH2_STD::enable_if_t<!RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                I operator()(I first, S last) const
+                {
+                    return impl(RAH2_MOV(first), RAH2_MOV(last));
+                }
+
+                template <typename I, typename S, RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, I>>* = nullptr>
+                I operator()(I first, S last) const
+                {
+                    return uninitialized_value_construct_n(
+                        RAH2_MOV(first), RAH2_NS::ranges::distance(first, last));
+                }
+
+                template <typename R, RAH2_STD::enable_if_t<!RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const
+                {
+                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r));
+                }
+
+                template <typename R, RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                RAH2_NS::ranges::borrowed_iterator_t<R> operator()(R&& r) const
+                {
+                    return uninitialized_value_construct_n(
+                        RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r));
+                }
+            };
+        } // namespace niebloids
+        constexpr niebloids::uninitialized_value_construct_fn uninitialized_value_construct{};
 
         namespace niebloids
         {
@@ -2447,45 +2596,119 @@ namespace RAH2_NS
                 ///
                 // See the C++11 Standard, 26.5.1.3, Uniform random number generator requirements.
                 // Also http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
-                template <typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
-                void operator()(
-                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                template <typename DistibType, typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
+                void
+                impl(RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
                 {
                     if (first != last)
                     {
-#ifdef RAH2_USE_EASTL
-                        using unsigned_difference_type = uint32_t;
-#else
-                        using difference_type =
-                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::difference_type;
-                        using unsigned_difference_type =
-                            typename RAH2_STD::make_unsigned<difference_type>::type;
-#endif
-                        using uniform_int_distrib =
-                            RAH2_STD::uniform_int_distribution<unsigned_difference_type>;
+                        using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
                         using uniform_int_distribution_param_type =
                             typename uniform_int_distrib::param_type;
 
                         uniform_int_distrib uid;
 
                         for (RandomAccessIterator i = first + 1; i != last; ++i)
-                            RAH2_NS::ranges::iter_swap(
-                                i,
-                                first
-                                    + static_cast<iter_difference_t<RandomAccessIterator>>(
-                                        uid(urng,
-                                            uniform_int_distribution_param_type(
-                                                0u, unsigned_difference_type(i - first)))));
+                        {
+                            auto const random_index =
+                                static_cast<iter_difference_t<RandomAccessIterator>>(uid(
+                                    urng,
+                                    uniform_int_distribution_param_type(0u, DistibType(i - first))));
+                            RAH2_NS::ranges::iter_swap(i, first + random_index);
+                        }
                     }
                 }
 
-                template <typename RandomRange, typename UniformRandomNumberGenerator>
+                template <typename D, typename RandomAccessIterator, typename N, typename UniformRandomNumberGenerator>
+                void impl_n(RandomAccessIterator first, N len, UniformRandomNumberGenerator&& urng) const
+                {
+                    if (len != 0)
+                    {
+                        using distrib = RAH2_STD::uniform_int_distribution<D>;
+                        RandomAccessIterator i = first + 1;
+                        --len;
+                        for (auto u = len / 4; u != 0; --u)
+                        {
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                        }
+                        for (auto u = len % 4; u != 0; --u)
+                        {
+                            RAH2_NS::ranges::iter_swap(i, first + distrib(0, D(i - first))(urng));
+                            ++i;
+                        }
+                    }
+                }
+
+                template <typename RandomAccessIterator, typename Sentinel, typename UniformRandomNumberGenerator>
+                void dispatch(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
+                    impl<uint32_t>(
+                        RAH2_MOV(first_last.iterator), RAH2_MOV(first_last.sentinel), RAH2_FWD(urng));
+                }
+
+                template <typename RandomAccessIterator, typename N, typename UniformRandomNumberGenerator>
+                void dispatch_n(
+                    RandomAccessIterator first, N input_size, UniformRandomNumberGenerator&& urng) const
+                {
+                    auto first_last = details::unwrap_begin(RAH2_STD::move(first));
+                    if (input_size >= RAH2_STD::numeric_limits<uint16_t>::max())
+                    {
+                        impl_n<uint32_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
+                    }
+                    else
+                    {
+                        impl_n<uint16_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
+                    }
+                }
+
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<not RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    dispatch(RAH2_MOV(first), RAH2_MOV(last), RAH2_FWD(urng));
+                }
+                template <
+                    typename RandomAccessIterator,
+                    typename Sentinel,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                void operator()(
+                    RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
+                {
+                    dispatch_n(
+                        RAH2_MOV(first), RAH2_NS::ranges::distance(first, last), RAH2_FWD(urng));
+                }
+
+                template <
+                    typename RandomRange,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
+                void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
+                {
+                    dispatch_n(
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::size(range), RAH2_FWD(urng));
+                }
+                template <
+                    typename RandomRange,
+                    typename UniformRandomNumberGenerator,
+                    std::enable_if_t<not RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
                 void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
                 {
                     (*this)(
-                        RAH2_NS::ranges::begin(range),
-                        RAH2_NS::ranges::end(range),
-                        RAH2_STD::forward<UniformRandomNumberGenerator>(urng));
+                        RAH2_NS::ranges::begin(range), RAH2_NS::ranges::end(range), RAH2_FWD(urng));
                 }
             };
         } // namespace niebloids

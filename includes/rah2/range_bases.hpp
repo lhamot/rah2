@@ -121,6 +121,28 @@ namespace RAH2_NS
     template <class T>
     constexpr bool is_signed_v = RAH2_STD::is_signed<T>::value;
 
+    template <class T>
+    constexpr bool is_trivial_v = RAH2_STD::is_trivial<T>::value;
+
+    template <class T>
+    constexpr bool is_move_constructible_v = RAH2_STD::is_move_constructible<T>::value;
+
+    template <class T>
+    constexpr bool is_copy_assignable_v = RAH2_STD::is_copy_assignable<T>::value;
+
+    template <class T>
+    constexpr bool is_copy_constructible_v = RAH2_STD::is_copy_constructible<T>::value;
+
+    template <class T>
+    constexpr bool is_trivially_move_assignable_v = RAH2_STD::is_trivially_move_assignable<T>::value;
+
+    template <class T>
+    constexpr bool is_trivially_copyable_v = RAH2_STD::is_trivially_copyable<T>::value;
+
+    template <class T>
+    constexpr bool is_trivially_default_constructible_v =
+        RAH2_STD::is_trivially_default_constructible<T>::value;
+
     template <class T, class... Args>
     constexpr bool is_constructible_v = RAH2_STD::is_constructible<T, Args...>::value;
     template <class T, class... Args>

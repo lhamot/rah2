@@ -1598,7 +1598,7 @@ struct test_fill_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_iter",
+                "fill_iter",
                 range_type,
                 [&]
                 {
@@ -1609,7 +1609,7 @@ struct test_fill_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_ranges",
+                "fill_ranges",
                 range_type,
                 (
                     [&]
@@ -1620,7 +1620,7 @@ struct test_fill_
         }
     }
     // Only use an output iterator, so no need to test several input iterator types
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
+    static constexpr bool do_test = true;
 };
 void test_fill()
 {
@@ -1669,7 +1669,7 @@ struct test_fill_n_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_iter",
+                "fill_n_iter",
                 range_type,
                 [&]
                 {
@@ -1680,7 +1680,7 @@ struct test_fill_n_
         }
     }
     // Only use an output iterator, so no need to test several input iterator types
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
+    static constexpr bool do_test = true;
 };
 void test_fill_n()
 {
@@ -1940,27 +1940,32 @@ void test_generate()
 #endif
 }
 
+template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_generate_n_
 {
+    template <bool = true>
     void test()
     {
         testSuite.test_case("iter");
-        RAH2_STD::array<int, 8> u = {};
+        RAH2_STD::array<int, 8> u_ = {};
+        auto u = make_test_view_adapter<CS, Tag, Sized>(u_);
         RAH2_NS::ranges::generate_n(u.begin(), 8, [n = 1]() mutable { return n++; });
-        assert(u == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
+        assert(u_ == (RAH2_STD::array<int, 8>{1, 2, 3, 4, 5, 6, 7, 8}));
 
         testSuite.test_case("empty");
-        RAH2_STD::array<int, 3> e = {};
+        RAH2_STD::array<int, 3> e_ = {};
+        auto e = make_test_view_adapter<CS, Tag, Sized>(e_);
         RAH2_NS::ranges::generate_n(e.begin(), 0, [n = 1]() mutable { return n++; });
-        assert(e == (RAH2_STD::array<int, 3>{0, 0, 0}));
+        assert(e_ == (RAH2_STD::array<int, 3>{0, 0, 0}));
     }
 
-    void test_perf()
+    template <bool = true>
+    void test_perf(char const* range_type)
     {
         testSuite.test_case("perf");
-        RAH2_STD::vector<int> out;
-        out.resize(1000000 * RELEASE_MULTIPLIER);
-        char const* range_type = "no";
+        RAH2_STD::vector<int> out_;
+        out_.resize(1000000 * RELEASE_MULTIPLIER);
+        auto out = make_test_view_adapter<CS, Tag, Sized>(out_);
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
@@ -1974,6 +1979,7 @@ struct test_generate_n_
                 });
         }
     }
+    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>;
 };
 void test_generate_n()
 {
@@ -1985,11 +1991,7 @@ void test_generate_n()
     assert(v == (RAH2_STD::array<int, 8>{0, 1, 2, 3, 4, 5, 6, 7}));
     /// [rah2::ranges::generate_n]
 
-    test_generate_n_ test_generate;
-    test_generate.test();
-#if defined(PERF_TEST)
-    test_generate.test_perf();
-#endif
+    foreach_range_combination<test_algo<test_generate_n_>>();
 }
 
 template <CommonOrSent CS, typename Tag, bool Sized>
@@ -2985,7 +2987,7 @@ struct test_swap_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "swap_iter",
+                "swap_ranges_iter",
                 range_type,
                 [&]
                 {
@@ -2998,7 +3000,7 @@ struct test_swap_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "swap_ranges",
+                "swap_ranges_ranges",
                 range_type,
                 (
                     [&]

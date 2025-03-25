@@ -1178,8 +1178,8 @@ namespace RAH2_NS
                     RandomAccessIterator first,
                     Sentinel last,
                     Size kRecursionCount,
-                    typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                    typename RAH2_STD::enable_if<RAH2_NS::is_copy_constructible_v<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>>::type* =
                         nullptr)
                 {
                     using value_type =
@@ -1196,10 +1196,10 @@ namespace RAH2_NS
                     Sentinel last,
                     Size kRecursionCount,
                     typename RAH2_STD::enable_if<
-                        RAH2_STD::is_move_constructible<
-                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
-                        && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
-                            RandomAccessIterator>::value_type>::value>::type* = nullptr)
+                        RAH2_NS::is_move_constructible_v<
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>
+                        && !RAH2_NS::is_copy_constructible_v<typename RAH2_STD::iterator_traits<
+                            RandomAccessIterator>::value_type>>::type* = nullptr)
                 {
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
@@ -1215,8 +1215,8 @@ namespace RAH2_NS
                     Sentinel last,
                     Size kRecursionCount,
                     Compare compare,
-                    typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                    typename RAH2_STD::enable_if<RAH2_NS::is_copy_constructible_v<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>>::type* =
                         nullptr)
                 {
                     using value_type =
