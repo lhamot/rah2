@@ -808,7 +808,7 @@ namespace RAH2_NS
                         && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
                         && RAH2_NS::contiguous_iterator<I1> && RAH2_NS::contiguous_iterator<I2>>* = nullptr>
                 inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
-                impl(I1 first1, I2 first2, size_t size) constis_trivially_constructible_v
+                impl(I1 first1, I2 first2, size_t size) const
                 {
                     const auto value_size = sizeof(RAH2_NS::iter_value_t<I1>);
                     const auto buffer_size = value_size > 256 ? 1 : 256 / value_size;
