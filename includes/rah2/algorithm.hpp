@@ -2660,11 +2660,7 @@ namespace RAH2_NS
                     RandomAccessIterator first, N input_size, UniformRandomNumberGenerator&& urng) const
                 {
                     auto first_last = details::unwrap_begin(RAH2_STD::move(first));
-                    if (input_size >= RAH2_STD::numeric_limits<uint32_t>::max())
-                    {
-                        impl_n<uint64_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
-                    }
-                    else if (input_size >= RAH2_STD::numeric_limits<uint16_t>::max())
+                    if (input_size >= RAH2_STD::numeric_limits<uint16_t>::max())
                     {
                         impl_n<uint32_t>(RAH2_MOV(first_last.iterator), input_size, RAH2_FWD(urng));
                     }
