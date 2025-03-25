@@ -5956,9 +5956,29 @@ namespace RAH2_NS
                 template <typename T, typename O, RAH2_STD::enable_if_t<output_iterator<O, T const&>>* = nullptr>
                 constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, T const& value) const
                 {
-                    for (RAH2_NS::iter_difference_t<O> i{}; i != n; ++first, ++i)
-                        *first = value;
-                    return first;
+                    if (n == 0)
+                    {
+                        return first;
+                    }
+                    auto first_u = details::unwrap_begin(RAH2_MOV(first));
+                    auto iter = RAH2_MOV(first_u.iterator);
+                    for (auto u = n / 4; u != 0; --u)
+                    {
+                        *iter = value;
+                        ++iter;
+                        *iter = value;
+                        ++iter;
+                        *iter = value;
+                        ++iter;
+                        *iter = value;
+                        ++iter;
+                    }
+                    for (auto u = n % 4; u != 0; --u)
+                    {
+                        *iter = value;
+                        ++iter;
+                    }
+                    return first_u.wrap_iterator(RAH2_MOV(iter));
                 }
             };
         } // namespace niebloids

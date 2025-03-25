@@ -1603,7 +1603,7 @@ struct test_fill_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_iter",
+                "fill_iter",
                 range_type,
                 [&]
                 {
@@ -1614,7 +1614,7 @@ struct test_fill_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "copy_ranges",
+                "fill_ranges",
                 range_type,
                 (
                     [&]
@@ -1625,7 +1625,7 @@ struct test_fill_
         }
     }
     // Only use an output iterator, so no need to test several input iterator types
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
+    static constexpr bool do_test = true;
 };
 void test_fill()
 {
@@ -1674,7 +1674,7 @@ struct test_fill_n_
         {
             COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
                 CS == Common,
-                "copy_iter",
+                "fill_n_iter",
                 range_type,
                 [&]
                 {
@@ -1685,7 +1685,7 @@ struct test_fill_n_
         }
     }
     // Only use an output iterator, so no need to test several input iterator types
-    static constexpr bool do_test = RAH2_NS::derived_from<Tag, RAH2_NS::contiguous_iterator_tag>;
+    static constexpr bool do_test = true;
 };
 void test_fill_n()
 {
