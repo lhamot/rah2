@@ -157,7 +157,7 @@ namespace RAH2_NS
                         and RAH2_NS::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I>>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
                 {
-                    memcpy(&(*result), &(*first), len * sizeof(RAH2_STD::iter_value_t<I>));
+                    memcpy(&(*result), &(*first), len * sizeof(RAH2_NS::iter_value_t<I>));
                     return {first + len, result + len};
                 }
                 template <

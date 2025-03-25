@@ -810,9 +810,9 @@ namespace RAH2_NS
                 inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
                 impl(I1 first1, I2 first2, size_t size) const
                 {
-                    const auto value_size = sizeof(RAH2_STD::iter_value_t<I1>);
+                    const auto value_size = sizeof(RAH2_NS::iter_value_t<I1>);
                     const auto buffer_size = value_size > 256 ? 1 : 256 / value_size;
-                    RAH2_STD::iter_value_t<I1> buffer[buffer_size];
+                    RAH2_NS::iter_value_t<I1> buffer[buffer_size];
                     while (size >= buffer_size)
                     {
                         memcpy((void*)buffer, (void*)first1, buffer_size * value_size);
