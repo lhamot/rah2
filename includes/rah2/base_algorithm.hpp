@@ -137,7 +137,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::contiguous_iterator<I> && RAH2_NS::contiguous_iterator<O>
                         && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>
-                        and RAH2_STD::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I>>)>* = nullptr>
+                        and RAH2_NS::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I>>)>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
                 {
                     RAH2_FOR_N(len, {
@@ -154,7 +154,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::contiguous_iterator<I> && RAH2_NS::contiguous_iterator<O>
                         && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>
-                        and RAH2_STD::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I>>>* = nullptr>
+                        and RAH2_NS::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I>>>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
                 {
                     memcpy(&(*result), &(*first), len * sizeof(RAH2_STD::iter_value_t<I>));

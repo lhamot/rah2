@@ -40,14 +40,16 @@ struct test_all_of_
     void test()
     {
         std::vector<int> raw_yes = {4, 4, 4, 4};
-        CHECK(RAH2_NS::ranges::all_of(
-            make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
+        CHECK(
+            RAH2_NS::ranges::all_of(
+                make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {4, 4, 3, 4};
         CHECK(!RAH2_NS::ranges::all_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
         std::vector<int> raw_empty = {};
-        CHECK(RAH2_NS::ranges::all_of(
-            make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
+        CHECK(
+            RAH2_NS::ranges::all_of(
+                make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -84,8 +86,9 @@ void test_all_of()
     testSuite.test_case("range");
     testSuite.test_case("yes");
     /// [rah2::ranges::all_of]
-    assert(RAH2_NS::ranges::all_of(
-        std::initializer_list<int>{4, 4, 4, 4}, [](auto a) { return a == 4; }));
+    assert(
+        RAH2_NS::ranges::all_of(
+            std::initializer_list<int>{4, 4, 4, 4}, [](auto a) { return a == 4; }));
     /// [rah2::ranges::all_of]
     testSuite.test_case("no");
     RAH2_STD::vector<int> vec = {4, 4, 3, 4};
@@ -104,8 +107,9 @@ struct test_any_of_
     void test()
     {
         std::vector<int> raw_yes = {3, 3, 4, 3};
-        assert(RAH2_NS::ranges::any_of(
-            make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
+        assert(
+            RAH2_NS::ranges::any_of(
+                make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {3, 2, 3, 5};
         assert(!RAH2_NS::ranges::any_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
@@ -148,8 +152,9 @@ void test_any_of()
     testSuite.test_case("yes");
     testSuite.test_case("range");
     /// [rah2::ranges::any_of]
-    assert(RAH2_NS::ranges::any_of(
-        std::initializer_list<int>{3, 0, 1, 3, 4, 6}, [](auto a) { return a == 3; }));
+    assert(
+        RAH2_NS::ranges::any_of(
+            std::initializer_list<int>{3, 0, 1, 3, 4, 6}, [](auto a) { return a == 3; }));
     /// [rah2::ranges::any_of]
     testSuite.test_case("no");
     testSuite.test_case("iter");
@@ -168,14 +173,16 @@ struct test_none_of_
     void test()
     {
         std::vector<int> raw_yes = {3, 2, 3, 5};
-        assert(RAH2_NS::ranges::none_of(
-            make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
+        assert(
+            RAH2_NS::ranges::none_of(
+                make_test_view_adapter<CS, Tag, Sized>(raw_yes), [](auto a) { return a == 4; }));
         std::vector<int> raw_no = {3, 2, 4, 5};
         assert(!RAH2_NS::ranges::none_of(
             make_test_view_adapter<CS, Tag, Sized>(raw_no), [](auto a) { return a == 4; }));
         std::vector<int> raw_empty = {};
-        assert(RAH2_NS::ranges::none_of(
-            make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
+        assert(
+            RAH2_NS::ranges::none_of(
+                make_test_view_adapter<CS, Tag, Sized>(raw_empty), [](auto a) { return a == 4; }));
     }
     template <bool = true>
     void test_perf(char const* range_type)
@@ -232,9 +239,6 @@ struct test_for_each_
     template <bool = true>
     void test()
     {
-#if defined(TEST_DISPLAY_ALL)
-        std::cout << "range_type : " << range_type << std::endl;
-#endif
         size_t sum = 0;
         std::vector<int> vec(1000000 * RELEASE_MULTIPLIER, 1);
         auto func = [&sum](auto v)

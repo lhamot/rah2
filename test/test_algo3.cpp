@@ -2992,7 +2992,7 @@ struct test_swap_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "swap_iter",
+                "swap_ranges_iter",
                 range_type,
                 [&]
                 {
@@ -3005,7 +3005,7 @@ struct test_swap_
 
         {
             COMPARE_DURATION_TO_STD_RANGES(
-                "swap_ranges",
+                "swap_ranges_ranges",
                 range_type,
                 (
                     [&]

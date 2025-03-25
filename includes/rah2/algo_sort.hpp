@@ -1044,8 +1044,9 @@ namespace RAH2_NS
                     auto lasti = result;
                     while ((lasti - first) > 5)
                     {
-                        auto&& midValue(RAH2_NS::ranges::median(
-                            *first, *(first + (lasti - first) / 2), *(lasti - 1)));
+                        auto&& midValue(
+                            RAH2_NS::ranges::median(
+                                *first, *(first + (lasti - first) / 2), *(lasti - 1)));
                         RandomAccessIterator const midPos(
                             RAH2_NS::ranges::get_partition(first, lasti, RAH2_STD::move(midValue)));
 
@@ -1088,8 +1089,9 @@ namespace RAH2_NS
                     auto lasti = result;
                     while ((lasti - first) > 5)
                     {
-                        auto const midValue(RAH2_NS::ranges::median(
-                            *first, *(first + (lasti - first) / 2), *(lasti - 1), pred_proj));
+                        auto const midValue(
+                            RAH2_NS::ranges::median(
+                                *first, *(first + (lasti - first) / 2), *(lasti - 1), pred_proj));
                         RandomAccessIterator const midPos(
                             RAH2_NS::ranges::get_partition(first, lasti, midValue, pred_proj));
 
@@ -1136,11 +1138,12 @@ namespace RAH2_NS
                 {
                     while (((last - first) > details::kQuickSortLimit) && (kRecursionCount > 0))
                     {
-                        RandomAccessIterator const position(RAH2_NS::ranges::get_partition(
-                            first,
-                            last,
-                            RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median(
-                                *first, *(first + (last - first) / 2), *(last - 1)))));
+                        RandomAccessIterator const position(
+                            RAH2_NS::ranges::get_partition(
+                                first,
+                                last,
+                                RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median(
+                                    *first, *(first + (last - first) / 2), *(last - 1)))));
 
                         quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, PivotValueType>(
                             position, last, --kRecursionCount);
@@ -1157,12 +1160,13 @@ namespace RAH2_NS
                 {
                     while (((last - first) > details::kQuickSortLimit) && (kRecursionCount > 0))
                     {
-                        RandomAccessIterator const position(RAH2_NS::ranges::get_partition(
-                            first,
-                            last,
-                            RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median(
-                                *first, *(first + (last - first) / 2), *(last - 1), compare)),
-                            compare));
+                        RandomAccessIterator const position(
+                            RAH2_NS::ranges::get_partition(
+                                first,
+                                last,
+                                RAH2_STD::forward<PivotValueType>(RAH2_NS::ranges::median(
+                                    *first, *(first + (last - first) / 2), *(last - 1), compare)),
+                                compare));
 
                         quick_sort_impl_helper<RandomAccessIterator, Sentinel, Size, Compare, PivotValueType>(
                             position, last, --kRecursionCount, compare);
@@ -1178,8 +1182,8 @@ namespace RAH2_NS
                     RandomAccessIterator first,
                     Sentinel last,
                     Size kRecursionCount,
-                    typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                    typename RAH2_STD::enable_if<RAH2_NS::is_copy_constructible_v<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>>::type* =
                         nullptr)
                 {
                     using value_type =
@@ -1196,10 +1200,10 @@ namespace RAH2_NS
                     Sentinel last,
                     Size kRecursionCount,
                     typename RAH2_STD::enable_if<
-                        RAH2_STD::is_move_constructible<
-                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value
-                        && !RAH2_STD::is_copy_constructible<typename RAH2_STD::iterator_traits<
-                            RandomAccessIterator>::value_type>::value>::type* = nullptr)
+                        RAH2_NS::is_move_constructible_v<
+                            typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>
+                        && !RAH2_NS::is_copy_constructible_v<typename RAH2_STD::iterator_traits<
+                            RandomAccessIterator>::value_type>>::type* = nullptr)
                 {
                     using value_type =
                         typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type;
@@ -1215,8 +1219,8 @@ namespace RAH2_NS
                     Sentinel last,
                     Size kRecursionCount,
                     Compare compare,
-                    typename RAH2_STD::enable_if<RAH2_STD::is_copy_constructible<
-                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>::value>::type* =
+                    typename RAH2_STD::enable_if<RAH2_NS::is_copy_constructible_v<
+                        typename RAH2_STD::iterator_traits<RandomAccessIterator>::value_type>>::type* =
                         nullptr)
                 {
                     using value_type =

@@ -285,13 +285,11 @@ struct test_lexicographical_compare_
             testSuite.test_case("iter");
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
                 r1.begin(), r1.end(), r1.begin(), r1.end()));
-            CHECK(RAH2_NS::ranges::lexicographical_compare(
-                r1.begin(), r1.end(), r2.begin(), r2.end()));
+            CHECK(RAH2_NS::ranges::lexicographical_compare(r1.begin(), r1.end(), r2.begin(), r2.end()));
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
                 r2.begin(), r2.end(), r1.begin(), r1.end()));
             testSuite.test_case("empty");
-            CHECK(RAH2_NS::ranges::lexicographical_compare(
-                r3.begin(), r3.end(), r1.begin(), r1.end()));
+            CHECK(RAH2_NS::ranges::lexicographical_compare(r3.begin(), r3.end(), r1.begin(), r1.end()));
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
                 r2.begin(), r2.end(), r3.begin(), r3.end()));
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
@@ -307,8 +305,9 @@ struct test_lexicographical_compare_
             auto r1 = make_test_view_adapter<CS, Tag, Sized>(v1);
             auto r2 = make_test_view_adapter<CS, Tag, Sized>(v2);
             auto r3 = make_test_view_adapter<CS, Tag, Sized>(v3);
-            CHECK(RAH2_NS::ranges::lexicographical_compare(
-                r1, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            CHECK(
+                RAH2_NS::ranges::lexicographical_compare(
+                    r1, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
                 r1, r2, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
@@ -316,8 +315,9 @@ struct test_lexicographical_compare_
             testSuite.test_case("empty");
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
                 r2, r3, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
-            CHECK(RAH2_NS::ranges::lexicographical_compare(
-                r3, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
+            CHECK(
+                RAH2_NS::ranges::lexicographical_compare(
+                    r3, r1, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
             CHECK(not RAH2_NS::ranges::lexicographical_compare(
                 r3, r3, [](auto a, auto b) { return a > b; }, &Coord::x, &Coord::y));
         }
@@ -344,11 +344,12 @@ struct test_lexicographical_compare_
             range_type,
             [&]
             {
-                assert(STD::lexicographical_compare(
-                    fwd(coordRange1.begin()),
-                    fwd(coordRange1.end()),
-                    coordRange2.begin(),
-                    coordRange2.end()));
+                assert(
+                    STD::lexicographical_compare(
+                        fwd(coordRange1.begin()),
+                        fwd(coordRange1.end()),
+                        coordRange2.begin(),
+                        coordRange2.end()));
             });
         COMPARE_DURATION_TO_STD_RANGES(
             "lexicographical_compare_pred",
@@ -442,8 +443,9 @@ void test_find()
     /// [rah2::ranges::find]
     RAH2_STD::vector<int> in{1, 2, 3, 4};
     auto const iter = RAH2_NS::ranges::find(in, 3);
-    assert(RAH2_NS::ranges::equal(
-        RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
+    assert(
+        RAH2_NS::ranges::equal(
+            RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::ranges::find]
 
     foreach_range_combination<test_algo<test_find_>>();
@@ -513,8 +515,9 @@ void test_find_if()
     /// [rah2::ranges::find_if]
     RAH2_STD::vector<int> in{1, 2, 3, 4};
     auto const iter = RAH2_NS::ranges::find_if(in, [](int i) { return i == 3; });
-    assert(RAH2_NS::ranges::equal(
-        RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
+    assert(
+        RAH2_NS::ranges::equal(
+            RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::ranges::find_if]
 
     foreach_range_combination<test_algo<test_find_if_>>();
@@ -560,7 +563,7 @@ struct test_find_if_not_
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
-            "find_if",
+            "find_if_not",
             range_type,
             [&]
             {
@@ -569,7 +572,7 @@ struct test_find_if_not_
                 assert((*iter == Coord{3, 4}));
             });
         COMPARE_DURATION_TO_STD_RANGES(
-            "find_if_proj",
+            "find_if_not_proj",
             range_type,
             [&]
             {
@@ -586,8 +589,9 @@ void test_find_if_not()
     /// [rah2::ranges::find_if_not]
     RAH2_STD::vector<int> in{1, 2, 3, 4};
     auto const iter = RAH2_NS::ranges::find_if_not(in, [](int i) { return i < 3; });
-    assert(RAH2_NS::ranges::equal(
-        RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
+    assert(
+        RAH2_NS::ranges::equal(
+            RAH2_NS::ranges::make_subrange(iter, end(in)), std::initializer_list<int>({3, 4})));
     /// [rah2::ranges::find_if_not]
 
     foreach_range_combination<test_algo<test_find_if_not_>>();
