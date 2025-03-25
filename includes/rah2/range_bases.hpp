@@ -133,6 +133,16 @@ namespace RAH2_NS
     template <class T>
     constexpr bool is_copy_constructible_v = RAH2_STD::is_copy_constructible<T>::value;
 
+    template <class T>
+    constexpr bool is_trivially_move_assignable_v = RAH2_STD::is_trivially_move_assignable<T>::value;
+
+    template <class T>
+    constexpr bool is_trivially_copyable_v = RAH2_STD::is_trivially_copyable<T>::value;
+
+    template <class T>
+    constexpr bool is_trivially_default_constructible_v =
+        RAH2_STD::is_trivially_default_constructible<T>::value;
+
     template <class T, class... Args>
     constexpr bool is_constructible_v = RAH2_STD::is_constructible<T, Args...>::value;
     template <class T, class... Args>
@@ -141,14 +151,6 @@ namespace RAH2_NS
     template <class T, class... Args>
     constexpr bool is_nothrow_constructible_v =
         RAH2_STD::is_nothrow_constructible<T, Args...>::value;
-    template <class T, class... Args>
-    constexpr bool is_trivially_move_assignable_v =
-        RAH2_STD::is_trivially_move_assignable<T, Args...>::value;
-    template <class T, class... Args>
-    constexpr bool is_trivially_copyable_v = RAH2_STD::is_trivially_copyable<T, Args...>::value;
-    template <class T, class... Args>
-    constexpr bool is_trivially_default_constructible_v =
-        RAH2_STD::is_trivially_default_constructible<T, Args...>::value;
 
     template <class T>
     constexpr bool is_destructible_v = RAH2_STD::is_destructible<T>::value;
