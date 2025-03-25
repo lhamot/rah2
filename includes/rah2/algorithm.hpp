@@ -786,7 +786,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I1>>
                         && is_trivially_constructible_v<RAH2_NS::iter_value_t<I1>>
-                        && RAH2_STD::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
+                        && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
                         && RAH2_NS::contiguous_iterator<I1> && RAH2_NS::contiguous_iterator<I2>)>* = nullptr>
                 inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
                 impl(I1 first1, I2 first2, size_t size) const
@@ -803,12 +803,12 @@ namespace RAH2_NS
                     typename I1,
                     typename I2,
                     RAH2_STD::enable_if_t<
-                        RAH2_STD::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I1>>
-                        && RAH2_STD::is_trivially_constructible_v<RAH2_NS::iter_value_t<I1>>
-                        && RAH2_STD::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
+                        RAH2_NS::is_trivially_move_assignable_v<RAH2_NS::iter_value_t<I1>>
+                        && RAH2_NS::is_trivially_constructible_v<RAH2_NS::iter_value_t<I1>>
+                        && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>
                         && RAH2_NS::contiguous_iterator<I1> && RAH2_NS::contiguous_iterator<I2>>* = nullptr>
                 inline constexpr RAH2_NS::ranges::swap_ranges_result<I1, I2>
-                impl(I1 first1, I2 first2, size_t size) const
+                impl(I1 first1, I2 first2, size_t size) constis_trivially_constructible_v
                 {
                     const auto value_size = sizeof(RAH2_NS::iter_value_t<I1>);
                     const auto buffer_size = value_size > 256 ? 1 : 256 / value_size;
@@ -2019,7 +2019,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::sized_sentinel_for<I, S1> and RAH2_NS::sized_sentinel_for<O, S2>
                         and RAH2_NS::contiguous_iterator<I> and RAH2_NS::contiguous_iterator<O>
-                        and RAH2_STD::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>)>* = nullptr>
                 // requires RAH2_STD::constructible_from<RAH2_STD::iter_value_t<O>, RAH2_STD::iter_reference_t<I>>
                 RAH2_NS::ranges::uninitialized_copy_result<I, O>
