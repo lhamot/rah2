@@ -1175,14 +1175,14 @@ namespace RAH2_NS
                 inline constexpr O
                 operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
-                    if (n >= RAH2_STD::numeric_limits<uint32_t>::max())
+                    if (n >= RAH2_STD::numeric_limits<uint16_t>::max())
                     {
-                        return this->sample_unsized_impl<uint64_t>(
+                        return this->sample_unsized_impl<uint32_t>(
                             RAH2_MOV(first), RAH2_MOV(last), RAH2_MOV(out), n, RAH2_MOV(gen));
                     }
                     else
                     {
-                        return this->sample_unsized_impl<uint32_t>(
+                        return this->sample_unsized_impl<uint16_t>(
                             RAH2_MOV(first), RAH2_MOV(last), RAH2_MOV(out), n, RAH2_MOV(gen));
                     }
                 }
