@@ -1197,6 +1197,7 @@ namespace RAH2_NS
                 inline constexpr O
                 operator()(I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
+                    auto input_size = RAH2_NS::ranges::distance(first, last);
                     return this->sample_sized_impl<uint32_t>(
                         RAH2_MOV(first), RAH2_MOV(last), input_size, RAH2_MOV(out), n, RAH2_MOV(gen));
                 }
@@ -1208,6 +1209,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
                 inline constexpr O operator()(R&& r, O out, range_difference_t<R> n, Gen&& gen) const
                 {
+                    auto input_size = RAH2_NS::ranges::size(r);
                     return this->sample_sized_impl<uint32_t>(
                         RAH2_NS::ranges::begin(r),
                         RAH2_NS::ranges::end(r),
