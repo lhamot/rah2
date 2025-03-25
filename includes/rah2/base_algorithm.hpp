@@ -2038,6 +2038,39 @@ namespace RAH2_NS
 
         namespace niebloids
         {
+            struct generate_n_fn
+            {
+                template <
+                    typename O,
+                    typename F,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::input_or_output_iterator<O> && RAH2_NS::copy_constructible<F>>* = nullptr>
+                inline constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, F gen) const
+                {
+                    auto first_handle = details::unwrap_begin(RAH2_STD::move(first));
+                    auto first2 = first_handle.iterator;
+
+                    for (; n != 0; (void)++first2, (void)--n)
+                    {
+                        *first2 = gen();
+                    }
+                    return first_handle.wrap_iterator(RAH2_MOV(first2));
+                }
+            };
+        } // namespace niebloids
+
+        /// generate_n
+        ///
+        /// Iterates an interator n times and assigns the result of generator
+        /// to each succeeding element. Generator is a function which takes
+        /// no arguments.
+        ///
+        /// Complexity: Exactly n invocations of generator and assignments.
+        ///
+        constexpr niebloids::generate_n_fn generate_n{};
+
+        namespace niebloids
+        {
             struct generate_fn
             {
                 template <
@@ -2088,39 +2121,6 @@ namespace RAH2_NS
         /// Complexity: Exactly 'last - first' invocations of generator and assignments.
         ///
         constexpr niebloids::generate_fn generate{};
-
-        namespace niebloids
-        {
-            struct generate_n_fn
-            {
-                template <
-                    typename O,
-                    typename F,
-                    RAH2_STD::enable_if_t<
-                        RAH2_NS::input_or_output_iterator<O> && RAH2_NS::copy_constructible<F>>* = nullptr>
-                inline constexpr O operator()(O first, RAH2_NS::iter_difference_t<O> n, F gen) const
-                {
-                    auto first_handle = details::unwrap_begin(RAH2_STD::move(first));
-                    auto first2 = first_handle.iterator;
-
-                    for (; n != 0; (void)++first2, (void)--n)
-                    {
-                        *first2 = gen();
-                    }
-                    return first_handle.wrap_iterator(RAH2_MOV(first2));
-                }
-            };
-        } // namespace niebloids
-
-        /// generate_n
-        ///
-        /// Iterates an interator n times and assigns the result of generator
-        /// to each succeeding element. Generator is a function which takes
-        /// no arguments.
-        ///
-        /// Complexity: Exactly n invocations of generator and assignments.
-        ///
-        constexpr niebloids::generate_n_fn generate_n{};
 
         template <class I, class O>
         using unary_transform_result = RAH2_NS::ranges::in_out_result<I, O>;
