@@ -1111,9 +1111,6 @@ namespace RAH2_NS
                     }
 
                     using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
-                    using uniform_int_distribution_param_type =
-                        typename uniform_int_distrib::param_type;
-
                     auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
                     auto first2 = first_last.iterator;
                     auto out_iter = details::unwrap_begin(RAH2_STD::move(out));
@@ -1145,11 +1142,6 @@ namespace RAH2_NS
                     }
 
                     using uniform_int_distrib = RAH2_STD::uniform_int_distribution<DistibType>;
-                    using uniform_int_distribution_param_type =
-                        typename uniform_int_distrib::param_type;
-
-                    uniform_int_distrib uid;
-
                     auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last));
                     auto first2 = first_last.iterator;
                     auto last2 = first_last.sentinel;
