@@ -3307,13 +3307,23 @@ struct test_binary_search_
         }
         auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
 
-        auto const RangeMultiplier = Sized ? 50 * RELEASE_MULTIPLIER : 1;
+        auto const IterSized =
+            (CS == Common && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)
+            || (CS == Sentinel && Sized);
 
-        auto const IterMultiplier =
-            (Sized
-             and (CS == CommonOrSent::Sentinel or RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)) ?
-                50 * (RELEASE_MULTIPLIER > 1 ? 10 : 1) :
+#ifdef _DEBUG
+        auto const IterSizedMultiplier =
+            IterSized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
                 1;
+        auto const RangeSizedMultiplier =
+            Sized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+#else
+        auto const IterSizedMultiplier = IterSized ? 1000 * RELEASE_MULTIPLIER : 1;
+        auto const RangeSizedMultiplier = Sized ? 1000 * RELEASE_MULTIPLIER : 1;
+#endif
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -3321,7 +3331,7 @@ struct test_binary_search_
             range_type,
             [&]
             {
-                for (auto i = 0; i < IterMultiplier; ++i)
+                for (auto i = 0; i < IterSizedMultiplier; ++i)
                 {
                     auto found = STD::binary_search(fwd(r1.begin()), r1.end(), Coord{3, 4});
                     CHECK(found);
@@ -3332,7 +3342,7 @@ struct test_binary_search_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeMultiplier; ++i)
+                for (auto i = 0; i < RangeSizedMultiplier; ++i)
                 {
                     auto found = STD::binary_search(r2, 1, comp_64, &Coord::x);
                     CHECK(found);
