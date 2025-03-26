@@ -579,8 +579,8 @@ struct test_sample_
             auto result = RAH2_NS::ranges::sample(
                 RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), 3, g);
             CHECK(result == out.begin() + 3);
-            CHECK(RAH2_NS::ranges::none_of(
-                out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
+            CHECK(
+                RAH2_NS::ranges::none_of(out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
         }
 
         {
@@ -588,8 +588,8 @@ struct test_sample_
             RAH2_STD::vector<int> out{0, 0, 0, 0, 0, 0, 4, 5};
             auto result = RAH2_NS::ranges::sample(in, out.begin(), 3, g);
             CHECK(result == out.begin() + 3);
-            CHECK(RAH2_NS::ranges::none_of(
-                out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
+            CHECK(
+                RAH2_NS::ranges::none_of(out.begin(), out.begin() + 3, [](auto v) { return v == 0; }));
         }
 
         testSuite.test_case("empty");
@@ -2839,8 +2839,8 @@ struct test_nth_element_
             CHECK(RAH2_NS::ranges::all_of(out.begin(), midle, [](auto const& v) { return v < 5; }));
             auto after_middle = midle;
             ++after_middle;
-            CHECK(RAH2_NS::ranges::all_of(
-                after_middle, out.end(), [](auto const& v) { return v > 5; }));
+            CHECK(
+                RAH2_NS::ranges::all_of(after_middle, out.end(), [](auto const& v) { return v > 5; }));
             CHECK_EQUAL(midle->i, 5);
         }
 
@@ -2880,12 +2880,12 @@ struct test_nth_element_
             auto midle = RAH2_NS::ranges::next(out.begin(), 2);
             auto result = RAH2_NS::ranges::nth_element(out, midle, comp_64, &Coord::x);
             CHECK(result == out.end());
-            CHECK(RAH2_NS::ranges::all_of(
-                out.begin(), midle, [](auto v) { return v > 3; }, &Coord::x));
+            CHECK(RAH2_NS::ranges::all_of(out.begin(), midle, [](auto v) { return v > 3; }, &Coord::x));
             auto after_middle = midle;
             ++after_middle;
-            CHECK(RAH2_NS::ranges::all_of(
-                after_middle, out.end(), [](auto v) { return v < 3; }, &Coord::x));
+            CHECK(
+                RAH2_NS::ranges::all_of(
+                    after_middle, out.end(), [](auto v) { return v < 3; }, &Coord::x));
             CHECK(midle->x == 3);
         }
     }
@@ -3048,10 +3048,23 @@ struct test_lower_bound_
         in2.push_back(Coord{1, 3});
         auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
 
-        auto const RangeTypeMultiplier =
-            RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ? 100 : 1;
+        auto const IterSized =
+            (CS == Common && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)
+            || (CS == Sentinel && Sized);
 
-        auto const RangeSizedMultiplier = Sized ? 10 : 1;
+#ifdef _DEBUG
+        auto const IterSizedMultiplier =
+            IterSized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+        auto const RangeSizedMultiplier =
+            Sized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+#else
+        auto const IterSizedMultiplier = IterSized ? 1000 * RELEASE_MULTIPLIER : 1;
+        auto const RangeSizedMultiplier = Sized ? 1000 * RELEASE_MULTIPLIER : 1;
+#endif
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -3059,7 +3072,7 @@ struct test_lower_bound_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                for (auto i = 0; i < IterSizedMultiplier; ++i)
                 {
                     auto iter = STD::lower_bound(fwd(r1.begin()), r1.end(), Coord{3, 4});
                     assert((*iter == Coord{3, 4}));
@@ -3070,7 +3083,7 @@ struct test_lower_bound_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                for (auto i = 0; i < RangeSizedMultiplier; ++i)
                 {
                     auto iter = STD::lower_bound(r2, 1, comp_64, &Coord::x);
                     assert((*iter == Coord{1, 4}));
