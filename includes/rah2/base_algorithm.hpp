@@ -1421,14 +1421,9 @@ namespace RAH2_NS
         {
             struct count_fn
             {
-                template <
-                    typename I,
-                    typename S,
-                    class T,
-                    class Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
+                template <typename I, typename S, class T, class Proj>
                 constexpr RAH2_NS::iter_difference_t<I>
-                operator()(I first_w, S last_w, T const& value, Proj proj) const
+                impl(I first_w, S last_w, T const& value, Proj proj) const
                 {
                     auto first_last =
                         details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
@@ -1443,27 +1438,23 @@ namespace RAH2_NS
                     return counter;
                 }
 
-                template <
-                    typename R,
-                    class T,
-                    class Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
-                constexpr range_difference_t<R> operator()(R&& r, T const& value, Proj proj) const
+                template <typename I, typename N, class T, class Proj>
+                constexpr RAH2_NS::iter_difference_t<I>
+                impl_n(I first_w, N len, T const& value, Proj proj) const
                 {
-                    return (*this)(
-                        RAH2_NS::ranges::begin(r),
-                        RAH2_NS::ranges::end(r),
-                        value,
-                        RAH2_STD::move(proj));
+                    auto first_last = details::unwrap_begin(RAH2_STD::move(first_w));
+                    auto first = RAH2_STD::move(first_last.iterator);
+                    RAH2_NS::iter_difference_t<I> counter = 0;
+                    RAH2_FOR_N(len, {
+                        if (RAH2_INVOKE_1(proj, *first) == value)
+                            ++counter;
+                        ++first;
+                    });
+                    return counter;
                 }
 
-                template <
-                    typename I,
-                    typename S,
-                    class T,
-                    RAH2_STD::enable_if_t<input_iterator<I> && sentinel_for<S, I>>* = nullptr>
-                constexpr RAH2_NS::iter_difference_t<I>
-                operator()(I first_w, S last_w, T const& value) const
+                template <typename I, typename S, class T>
+                constexpr RAH2_NS::iter_difference_t<I> impl(I first_w, S last_w, T const& value) const
                 {
                     auto first_last =
                         details::unwrap(RAH2_STD::move(first_w), RAH2_STD::move(last_w));
@@ -1471,15 +1462,99 @@ namespace RAH2_NS
                     auto last = RAH2_STD::move(first_last.sentinel);
                     RAH2_NS::iter_difference_t<I> counter = 0;
                     for (; first != last; ++first)
-                        if (*first == value)
-                            ++counter;
+                        counter += (*first == value);
                     return counter;
                 }
 
-                template <typename R, class T, RAH2_STD::enable_if_t<input_range<R>>* = nullptr>
+                template <typename I, typename N, class T>
+                constexpr RAH2_NS::iter_difference_t<I> impl_n(I first_w, N len, T const& value) const
+                {
+                    auto first_last = details::unwrap_begin(RAH2_STD::move(first_w));
+                    auto first = RAH2_STD::move(first_last.iterator);
+                    RAH2_NS::iter_difference_t<I> counter = 0;
+                    RAH2_FOR_N(len, {
+                        counter += (*first == value);
+                        ++first;
+                    });
+                    return counter;
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<I> && sentinel_for<S, I> && !sized_sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::iter_difference_t<I>
+                operator()(I first_w, S last_w, T const& value, Proj proj) const
+                {
+                    return impl(first_w, last_w, value, proj);
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_iterator<I> && sized_sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::iter_difference_t<I>
+                operator()(I first_w, S last_w, T const& value, Proj proj) const
+                {
+                    return impl_n(first_w, RAH2_NS::ranges::distance(first_w, last_w), value, proj);
+                }
+
+                template <
+                    typename R,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<R> && sized_range<R>>* = nullptr>
+                constexpr range_difference_t<R> operator()(R&& r, T const& value, Proj proj) const
+                {
+                    return impl_n(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r), value, proj);
+                }
+                template <
+                    typename R,
+                    class T,
+                    class Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<input_range<R> && !sized_range<R>>* = nullptr>
+                constexpr range_difference_t<R> operator()(R&& r, T const& value, Proj proj) const
+                {
+                    return impl(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value, proj);
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    RAH2_STD::enable_if_t<
+                        input_iterator<I> && sentinel_for<S, I> && !sized_sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::iter_difference_t<I>
+                operator()(I first_w, S last_w, T const& value) const
+                {
+                    return impl(first_w, last_w, value);
+                }
+
+                template <
+                    typename I,
+                    typename S,
+                    class T,
+                    RAH2_STD::enable_if_t<input_iterator<I> && sized_sentinel_for<S, I>>* = nullptr>
+                constexpr RAH2_NS::iter_difference_t<I>
+                operator()(I first_w, S last_w, T const& value) const
+                {
+                    return impl_n(first_w, RAH2_NS::ranges::distance(first_w, last_w), value);
+                }
+
+                template <typename R, class T, RAH2_STD::enable_if_t<input_range<R> && sized_range<R>>* = nullptr>
                 constexpr range_difference_t<R> operator()(R&& r, T const& value) const
                 {
-                    return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value);
+                    return impl_n(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::size(r), value);
+                }
+                template <typename R, class T, RAH2_STD::enable_if_t<input_range<R> && !sized_range<R>>* = nullptr>
+                constexpr range_difference_t<R> operator()(R&& r, T const& value) const
+                {
+                    return impl(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), value);
                 }
             };
         } // namespace niebloids
