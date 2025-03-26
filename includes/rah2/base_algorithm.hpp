@@ -1305,15 +1305,27 @@ namespace RAH2_NS
                     typename S1,
                     typename I2,
                     RAH2_STD::enable_if_t<not(
-                        RAH2_NS::sized_sentinel_for<I1, S1> and RAH2_NS::contiguous_iterator<I1>
-                        and RAH2_NS::contiguous_iterator<I2>
+                        RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2>
                         and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I1>>::value
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>)>* = nullptr>
                 constexpr copy_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
-                    I1 const last1{RAH2_NS::ranges::next(first, RAH2_STD::move(last))};
-                    for (I1 i{last1}; i != first;)
+                    size_t item_count = 0;
+                    I1 last1 = first;
+                    for (; last1 != last; ++last1, ++item_count)
+                        ;
+                    I1 i = last1;
+                    for (auto u = item_count / 4; u != 0; --u)
+                    {
                         *--result = *--i;
+                        *--result = *--i;
+                        *--result = *--i;
+                        *--result = *--i;
+                    }
+                    for (auto u = item_count % 4; u != 0; --u)
+                    {
+                        *--result = *--i;
+                    }
                     return {RAH2_STD::move(last1), RAH2_STD::move(result)};
                 }
 
@@ -1321,11 +1333,31 @@ namespace RAH2_NS
                     typename I1,
                     typename S1,
                     typename I2,
+                    RAH2_STD::enable_if_t<
+                        not(RAH2_NS::sized_sentinel_for<I1, S1>)
+                        and (RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2> and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I1>>::value and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>)>* =
+                        nullptr>
+                constexpr copy_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
+                {
+                    size_t item_count = 0;
+                    I1 last1 = first;
+                    for (; last1 != last; ++last1, ++item_count)
+                        ;
+                    memmove(
+                        &(*(result - item_count)),
+                        &(*first),
+                        item_count * sizeof(RAH2_NS::iter_value_t<I2>));
+                    return {last1, result - item_count};
+                }
+
+                template <
+                    typename I1,
+                    typename S1,
+                    typename I2,
                     RAH2_STD::enable_if_t<(
-                        RAH2_NS::sized_sentinel_for<I1, S1> and RAH2_NS::contiguous_iterator<I1>
-                        and RAH2_NS::contiguous_iterator<I2>
-                        and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I1>>::value
-                        and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>)>* = nullptr>
+                        RAH2_NS::sized_sentinel_for<I1, S1>
+                        and (RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2> and RAH2_STD::is_trivially_copyable<RAH2_NS::iter_value_t<I1>>::value and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>))>* =
+                        nullptr>
                 constexpr copy_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
                     auto const item_count = RAH2_NS::ranges::distance(first, last);
