@@ -1410,25 +1410,18 @@ namespace RAH2_NS
         {
             struct partition_point_fn
             {
-                template <
-                    typename ForwardIt,
-                    typename Sentinel,
-                    typename UnaryPredicate,
-                    typename Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIt>>* = nullptr>
-                constexpr ForwardIt
-                operator()(ForwardIt first, Sentinel last, UnaryPredicate pred, Proj proj = {}) const
+                template <typename ForwardIt, typename N, typename UnaryPredicate>
+                inline constexpr ForwardIt impl(ForwardIt first, N length, UnaryPredicate pred) const
                 {
-                    auto pred_proj =
-                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
-
-                    for (auto length = RAH2_NS::ranges::distance(first, last); 0 < length;)
+                    while (length > 0)
                     {
-                        auto half = length / 2;
-                        auto middle = RAH2_STD::next(first, half);
-                        if (pred_proj(*middle))
+                        auto const half = length / 2;
+                        auto middle = first;
+                        RAH2_NS::ranges::advance(middle, half);
+                        if (pred(*middle))
                         {
-                            first = RAH2_STD::next(middle);
+                            first = middle;
+                            ++first;
                             length -= (half + 1);
                         }
                         else
@@ -1439,11 +1432,28 @@ namespace RAH2_NS
                 }
 
                 template <
+                    typename ForwardIt,
+                    typename Sentinel,
+                    typename UnaryPredicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<sentinel_for<Sentinel, ForwardIt>>* = nullptr>
+                inline constexpr ForwardIt
+                operator()(ForwardIt first, Sentinel last, UnaryPredicate pred, Proj proj = {}) const
+                {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+                    auto length = RAH2_NS::ranges::distance(first, last);
+                    return impl(RAH2_STD::move(first), length, RAH2_STD::move(pred_proj));
+                }
+
+                template <
                     typename ForwardRange,
                     typename UnaryPredicate,
                     typename Proj = RAH2_NS::details::identity,
-                    RAH2_STD::enable_if_t<RAH2_NS::ranges::range<ForwardRange>>* = nullptr>
-                constexpr borrowed_iterator_t<ForwardRange>
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::range<ForwardRange>
+                        && !RAH2_NS::ranges::sized_range<ForwardRange>>* = nullptr>
+                inline constexpr borrowed_iterator_t<ForwardRange>
                 operator()(ForwardRange&& range, UnaryPredicate pred, Proj proj = {}) const
                 {
                     return (*this)(
@@ -1451,6 +1461,22 @@ namespace RAH2_NS
                         RAH2_NS::ranges::end(range),
                         RAH2_STD::move(pred),
                         RAH2_STD::move(proj));
+                }
+
+                template <
+                    typename ForwardRange,
+                    typename UnaryPredicate,
+                    typename Proj = RAH2_NS::details::identity,
+                    RAH2_STD::enable_if_t<
+                        RAH2_NS::ranges::range<ForwardRange>
+                        && RAH2_NS::ranges::sized_range<ForwardRange>>* = nullptr>
+                inline constexpr borrowed_iterator_t<ForwardRange>
+                operator()(ForwardRange&& range, UnaryPredicate pred, Proj proj = {}) const
+                {
+                    auto pred_proj =
+                        details::wrap_pred_proj(RAH2_STD::move(pred), RAH2_STD::move(proj));
+                    auto length = RAH2_NS::ranges::size(range);
+                    return impl(RAH2_NS::ranges::begin(range), length, RAH2_STD::move(pred_proj));
                 }
             };
         } // namespace niebloids

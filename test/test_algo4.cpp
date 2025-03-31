@@ -1681,12 +1681,26 @@ struct test_partition_point_
     template <bool = true>
     void test_perf(char const* range_type)
     {
-        size_t PerfMultiplier =
-            (RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> && Sized) ? 100llu :
-                                                                                         10llu;
+        auto const IterSized =
+            (CS == Common && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)
+            || (CS == Sentinel && Sized);
+
+#ifdef _DEBUG
+        auto const IterSizedMultiplier =
+            IterSized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+        auto const RangeSizedMultiplier =
+            Sized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+#else
+        auto const IterSizedMultiplier = IterSized ? 1000 * RELEASE_MULTIPLIER : 1;
+        auto const RangeSizedMultiplier = Sized ? 1000 * RELEASE_MULTIPLIER : 1;
+#endif
 
         testSuite.test_case("perf");
-        RAH2_STD::vector<Coord> in(10000000llu * RELEASE_MULTIPLIER, Coord{1, 2});
+        RAH2_STD::vector<Coord> in(1000000llu * RELEASE_MULTIPLIER, Coord{1, 2});
         in.push_back(Coord{3, 4});
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
@@ -1696,7 +1710,7 @@ struct test_partition_point_
             range_type,
             [&]
             {
-                for (size_t i = 0; i < PerfMultiplier; ++i)
+                for (int i = 0; i < IterSizedMultiplier; ++i)
                 {
                     auto iter = STD::partition_point(
                         fwd(r1.begin()), r1.end(), [](auto c) { return c.x < 3; });
@@ -1708,7 +1722,7 @@ struct test_partition_point_
             range_type,
             [&]
             {
-                for (size_t i = 0; i < PerfMultiplier; ++i)
+                for (int i = 0; i < RangeSizedMultiplier; ++i)
                 {
                     auto iter = STD::partition_point(r1, [](int64_t c) { return c < 3; }, &Coord::x);
                     assert((*iter == Coord{3, 4}));
