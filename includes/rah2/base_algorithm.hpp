@@ -1196,11 +1196,11 @@ namespace RAH2_NS
                 template <
                     typename It,
                     typename Sent,
-                    std::enable_if_t<RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
                 static auto advance_and_count(It& it, Sent sent)
                 {
-                    auto dist = std::ranges::distance(it, sent);
-                    std::ranges::advance(it, sent);
+                    auto dist = RAH2_NS::ranges::distance(it, sent);
+                    RAH2_NS::ranges::advance(it, sent);
                     return dist;
                 }
 
@@ -1210,7 +1210,7 @@ namespace RAH2_NS
                     std::enable_if_t<!RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
                 static auto advance_and_count(It& it, Sent sent)
                 {
-                    std::iter_difference_t<It> dist = 0;
+                    RAH2_NS::iter_difference_t<It> dist = 0;
                     while (it != sent)
                     {
                         ++it;
@@ -5925,7 +5925,7 @@ namespace RAH2_NS
             {
                 template <typename ForwardIterator, typename ForwardSentinel>
                 subrange<ForwardIterator>
-                operator()(ForwardIterator first, ForwardIterator middle, ForwardSentinel last) const
+                impl(ForwardIterator first, ForwardIterator middle, ForwardSentinel last) const
                 {
                     if (middle != first)
                     {
@@ -5964,6 +5964,21 @@ namespace RAH2_NS
                     }
                     auto last_it = RAH2_NS::ranges::next(first, last);
                     return {last_it, last_it};
+                }
+
+                template <typename ForwardIterator, typename ForwardSentinel>
+                subrange<ForwardIterator>
+                operator()(ForwardIterator first, ForwardIterator middle, ForwardSentinel last) const
+                {
+                    auto last2 = RAH2_NS::ranges::next(first, last);
+                    auto middle_u = details::unwrap(RAH2_STD::move(middle), last2);
+                    auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last2));
+                    auto res = impl(
+                        RAH2_MOV(first_last.iterator),
+                        RAH2_MOV(middle_u.iterator),
+                        RAH2_MOV(first_last.sentinel));
+                    return {
+                        first_last.wrap_iterator(res.begin()), first_last.wrap_iterator(res.end())};
                 }
 
                 template <typename ForwardRange>
