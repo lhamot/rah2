@@ -459,7 +459,7 @@ public:
 
     test_view_adapter() = default;
     explicit test_view_adapter(Range r)
-        : base_(std::move(r))
+        : base_(RAH2_MOV(r))
     {
     }
 
@@ -797,7 +797,7 @@ struct check_size
     }
     static intptr_t get_stop_iter()
     {
-        return std::numeric_limits<intptr_t>::max();
+        return RAH2_STD::numeric_limits<intptr_t>::max();
     }
 };
 

@@ -1116,7 +1116,7 @@ namespace RAH2_NS
                     auto out_iter = details::unwrap_begin(RAH2_STD::move(out));
                     auto out2 = out_iter.iterator;
 
-                    auto n = std::min(output_size, input_size);
+                    auto n = RAH2_STD::min(output_size, input_size);
                     for (; input_size > 0; ++first2, (void)--input_size)
                     {
                         uniform_int_distrib distrib(
@@ -1138,7 +1138,7 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     class Gen,
-                    std::enable_if_t<RAH2_NS::random_access_iterator<O>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::random_access_iterator<O>>* = nullptr>
                 inline constexpr O sample_unsized_impl(
                     I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
@@ -1177,13 +1177,14 @@ namespace RAH2_NS
                     typename S,
                     typename O,
                     class Gen,
-                    std::enable_if_t<!RAH2_NS::random_access_iterator<O> && RAH2_NS::forward_iterator<I>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        !RAH2_NS::random_access_iterator<O> && RAH2_NS::forward_iterator<I>>* = nullptr>
                 inline constexpr O sample_unsized_impl(
                     I first, S last, O out, RAH2_NS::iter_difference_t<I> n, Gen&& gen) const
                 {
                     auto last1 = first;
                     auto const input_size = details::advance_and_count(last1, last);
-                    if (input_size < std::numeric_limits<uint16_t>::max())
+                    if (input_size < RAH2_STD::numeric_limits<uint16_t>::max())
                     {
                         return this->sample_sized_impl<uint16_t>(
                             first, RAH2_MOV(last1), input_size, RAH2_MOV(out), n, RAH2_MOV(gen));
@@ -1229,7 +1230,7 @@ namespace RAH2_NS
                 {
                     auto last1 = first;
                     size_t const input_size = details::advance_and_count(last1, last);
-                    if (input_size < std::numeric_limits<uint16_t>::max())
+                    if (input_size < RAH2_STD::numeric_limits<uint16_t>::max())
                     {
                         return this->sample_sized_impl<uint16_t>(
                             RAH2_MOV(first),
@@ -1261,7 +1262,7 @@ namespace RAH2_NS
                 {
                     auto const input_size = RAH2_NS::ranges::size(r);
                     auto const last1 = RAH2_NS::ranges::next(RAH2_NS::ranges::begin(r), input_size);
-                    if (input_size < std::numeric_limits<uint16_t>::max())
+                    if (input_size < RAH2_STD::numeric_limits<uint16_t>::max())
                     {
                         return this->sample_sized_impl<uint16_t>(
                             RAH2_NS::ranges::begin(r),
@@ -1944,9 +1945,9 @@ namespace RAH2_NS
                     {
                         V new_val(*first);
                         if (pred_proj(new_val, result.min))
-                            result.min = std::move(new_val);
+                            result.min = RAH2_MOV(new_val);
                         else if (pred_proj(result.max, new_val))
-                            result.max = std::move(new_val);
+                            result.max = RAH2_MOV(new_val);
                     }
                     return result;
                 }
@@ -2765,7 +2766,8 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     typename UniformRandomNumberGenerator,
-                    std::enable_if_t<not RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                    RAH2_STD::enable_if_t<
+                        not RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 void operator()(
                     RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
                 {
@@ -2775,7 +2777,7 @@ namespace RAH2_NS
                     typename RandomAccessIterator,
                     typename Sentinel,
                     typename UniformRandomNumberGenerator,
-                    std::enable_if_t<RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<Sentinel, RandomAccessIterator>>* = nullptr>
                 void operator()(
                     RandomAccessIterator first, Sentinel last, UniformRandomNumberGenerator&& urng) const
                 {
@@ -2786,7 +2788,7 @@ namespace RAH2_NS
                 template <
                     typename RandomRange,
                     typename UniformRandomNumberGenerator,
-                    std::enable_if_t<RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
                 void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
                 {
                     dispatch_n(
@@ -2795,7 +2797,7 @@ namespace RAH2_NS
                 template <
                     typename RandomRange,
                     typename UniformRandomNumberGenerator,
-                    std::enable_if_t<not RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
+                    RAH2_STD::enable_if_t<not RAH2_NS::ranges::sized_range<RandomRange>>* = nullptr>
                 void operator()(RandomRange&& range, UniformRandomNumberGenerator&& urng) const
                 {
                     (*this)(

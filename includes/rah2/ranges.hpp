@@ -914,7 +914,7 @@ namespace RAH2_NS
             {
                 return range_.begin();
             }
-            template <typename Range = R const, std::enable_if_t<range<Range>>* = nullptr>
+            template <typename Range = R const, RAH2_STD::enable_if_t<range<Range>>* = nullptr>
             auto begin() const
             {
                 return range_.begin();
@@ -923,7 +923,7 @@ namespace RAH2_NS
             {
                 return range_.end();
             }
-            template <typename Range = R const, std::enable_if_t<range<Range>>* = nullptr>
+            template <typename Range = R const, RAH2_STD::enable_if_t<range<Range>>* = nullptr>
             auto end() const
             {
                 return range_.end();

@@ -42,7 +42,7 @@ struct TestSuite
 
     void addTest(RAH2_STD::string const& group, RAH2_STD::string const& name, std::function<void()> test)
     {
-        testMap.emplace(group + " - " + name, std::move(test));
+        testMap.emplace(group + " - " + name, RAH2_MOV(test));
     }
 
     char const* currentTest = nullptr;

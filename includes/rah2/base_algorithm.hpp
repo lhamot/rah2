@@ -137,7 +137,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::contiguous_iterator<I> && RAH2_NS::contiguous_iterator<O>
                         && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>
-                        and std::is_trivially_move_assignable<RAH2_NS::iter_value_t<I>>::value)>* = nullptr>
+                        and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I>>::value)>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
                 {
                     RAH2_FOR_N(len, {
@@ -154,7 +154,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<
                         RAH2_NS::contiguous_iterator<I> && RAH2_NS::contiguous_iterator<O>
                         && RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I>, RAH2_NS::iter_value_t<O>>
-                        and std::is_trivially_move_assignable<RAH2_NS::iter_value_t<I>>::value>* = nullptr>
+                        and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I>>::value>* = nullptr>
                 constexpr RAH2_NS::ranges::move_result<I, O> impl_n(I first, N len, O result) const
                 {
                     memcpy(&(*result), &(*first), len * sizeof(RAH2_NS::iter_value_t<I>));
@@ -1199,7 +1199,10 @@ namespace RAH2_NS
                 return dist;
             }
 
-            template <typename It, typename Sent, std::enable_if_t<!RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
+            template <
+                typename It,
+                typename Sent,
+                RAH2_STD::enable_if_t<!RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
             static auto advance_and_count(It& it, Sent sent)
             {
                 RAH2_NS::iter_difference_t<It> dist = 0;
@@ -2228,7 +2231,7 @@ namespace RAH2_NS
                     typename O,
                     typename S,
                     typename F,
-                    std::enable_if_t<RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
+                    RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
                 constexpr O operator()(O first, S last, F&& gen) const
                 {
                     return generate_n(first, RAH2_NS::ranges::distance(first, last), RAH2_FWD(gen));
@@ -2238,7 +2241,7 @@ namespace RAH2_NS
                     typename O,
                     typename S,
                     typename F,
-                    std::enable_if_t<not RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
+                    RAH2_STD::enable_if_t<not RAH2_NS::sized_sentinel_for<S, O>>* = nullptr>
                 constexpr O operator()(O first, S last, F&& gen) const
                 {
                     for (; first != last; ++first)
@@ -2248,13 +2251,13 @@ namespace RAH2_NS
                     return first;
                 }
 
-                template <typename R, typename F, std::enable_if_t<not RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                template <typename R, typename F, RAH2_STD::enable_if_t<not RAH2_NS::ranges::sized_range<R>>* = nullptr>
                 constexpr borrowed_iterator_t<R> operator()(R&& r, F&& gen) const
                 {
                     return (*this)(RAH2_NS::ranges::begin(r), RAH2_NS::ranges::end(r), RAH2_FWD(gen));
                 }
 
-                template <typename R, typename F, std::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
+                template <typename R, typename F, RAH2_STD::enable_if_t<RAH2_NS::ranges::sized_range<R>>* = nullptr>
                 constexpr borrowed_iterator_t<R> operator()(R&& r, F&& gen) const
                 {
                     return generate_n(

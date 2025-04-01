@@ -175,13 +175,13 @@ struct test_search_
         assert(RAH2_STD::distance(haystack.begin(), found5.end()) == 4);
     }
 
-    template <typename I, std::enable_if_t<RAH2_NS::input_iterator<RAH2_NS::remove_cvref_t<I>>>* = nullptr>
+    template <typename I, RAH2_STD::enable_if_t<RAH2_NS::input_iterator<RAH2_NS::remove_cvref_t<I>>>* = nullptr>
     static auto get_begin(I&& i) -> decltype(std::forward<I>(i))
     {
         return std::forward<I>(i);
     }
 
-    template <typename I, std::enable_if_t<!RAH2_NS::input_iterator<RAH2_NS::remove_cvref_t<I>>>* = nullptr>
+    template <typename I, RAH2_STD::enable_if_t<!RAH2_NS::input_iterator<RAH2_NS::remove_cvref_t<I>>>* = nullptr>
     static auto get_begin(I&& i) -> decltype(i.begin())
     {
         return i.begin();
