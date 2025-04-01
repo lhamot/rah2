@@ -1186,6 +1186,32 @@ namespace RAH2_NS
         ///
         constexpr niebloids::copy_n_fn copy_n{};
 
+        namespace details
+        {
+            template <
+                typename It,
+                typename Sent,
+                RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
+            static auto advance_and_count(It& it, Sent sent)
+            {
+                auto dist = RAH2_NS::ranges::distance(it, sent);
+                RAH2_NS::ranges::advance(it, sent);
+                return dist;
+            }
+
+            template <typename It, typename Sent, std::enable_if_t<!RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
+            static auto advance_and_count(It& it, Sent sent)
+            {
+                RAH2_NS::iter_difference_t<It> dist = 0;
+                while (it != sent)
+                {
+                    ++it;
+                    ++dist;
+                }
+                return dist;
+            }
+        } // namespace details
+
         template <class I, class O>
         using move_backward_result = RAH2_NS::ranges::in_out_result<I, O>;
 
@@ -1193,32 +1219,6 @@ namespace RAH2_NS
         {
             struct move_backward_fn
             {
-                template <
-                    typename It,
-                    typename Sent,
-                    RAH2_STD::enable_if_t<RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
-                static auto advance_and_count(It& it, Sent sent)
-                {
-                    auto dist = RAH2_NS::ranges::distance(it, sent);
-                    RAH2_NS::ranges::advance(it, sent);
-                    return dist;
-                }
-
-                template <
-                    typename It,
-                    typename Sent,
-                    std::enable_if_t<!RAH2_NS::sized_sentinel_for<Sent, It>>* = nullptr>
-                static auto advance_and_count(It& it, Sent sent)
-                {
-                    RAH2_NS::iter_difference_t<It> dist = 0;
-                    while (it != sent)
-                    {
-                        ++it;
-                        ++dist;
-                    }
-                    return dist;
-                }
-
                 template <
                     typename I1,
                     typename S1,
@@ -1230,7 +1230,7 @@ namespace RAH2_NS
                 constexpr move_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
                     I1 last1 = first;
-                    size_t const item_count = advance_and_count(last1, last);
+                    size_t const item_count = details::advance_and_count(last1, last);
                     I1 i = last1;
                     for (auto u = item_count / 4; u != 0; --u)
                     {
@@ -1257,7 +1257,7 @@ namespace RAH2_NS
                 constexpr move_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
                     I1 last1 = first;
-                    size_t const item_count = advance_and_count(last1, last);
+                    size_t const item_count = details::advance_and_count(last1, last);
                     memmove(
                         &(*(result - item_count)),
                         &(*first),

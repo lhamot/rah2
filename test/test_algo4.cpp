@@ -565,6 +565,11 @@ void test_shift_right()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_sample_
 {
+    using OutTag = std::conditional<
+        RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>,
+        Tag,
+        RAH2_NS::random_access_iterator_tag>::type;
+
     template <bool = true>
     void test()
     {
@@ -621,10 +626,11 @@ struct test_sample_
                 in_.push_back(i % 15);
             }
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
-            RAH2_STD::vector<int> out;
-            out.resize(1000000 * RELEASE_MULTIPLIER);
-            out.emplace_back();
-            out.emplace_back();
+            RAH2_STD::vector<int> out_;
+            out_.resize(1000000 * RELEASE_MULTIPLIER);
+            out_.emplace_back();
+            out_.emplace_back();
+            auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
 
             COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
@@ -640,6 +646,20 @@ struct test_sample_
                         g);
                     DONT_OPTIM(result);
                 });
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                CS == Common,
+                "sample_iter_smallout",
+                range_type,
+                [&]
+                {
+                    auto result = STD::sample(
+                        fwd(RAH2_NS::ranges::begin(in)),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        100 * RELEASE_MULTIPLIER,
+                        g);
+                    DONT_OPTIM(result);
+                });
         }
 #endif
 
@@ -651,10 +671,11 @@ struct test_sample_
             }
             auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
 
-            RAH2_STD::vector<Coord> out2;
-            out2.resize(1000000 * RELEASE_MULTIPLIER);
-            out2.emplace_back();
-            out2.emplace_back();
+            RAH2_STD::vector<Coord> out2_;
+            out2_.resize(1000000 * RELEASE_MULTIPLIER);
+            out2_.emplace_back();
+            out2_.emplace_back();
+            auto out2 = make_test_view_adapter<CS, OutTag, Sized>(out2_);
 
             COMPARE_DURATION_TO_STD_RANGES(
                 "sample_range",
@@ -664,6 +685,15 @@ struct test_sample_
                     {
                         auto result2 =
                             STD::sample(in2, out2.begin(), 1000000 * RELEASE_MULTIPLIER, g);
+                        DONT_OPTIM(result2);
+                    }));
+            COMPARE_DURATION_TO_STD_RANGES(
+                "sample_range_smallout",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::sample(in2, out2.begin(), 100 * RELEASE_MULTIPLIER, g);
                         DONT_OPTIM(result2);
                     }));
         }
