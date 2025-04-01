@@ -565,7 +565,7 @@ void test_shift_right()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_sample_
 {
-    using OutTag = std::conditional<
+    using OutTag = typename RAH2_STD::conditional<
         RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>,
         Tag,
         RAH2_NS::random_access_iterator_tag>::type;
