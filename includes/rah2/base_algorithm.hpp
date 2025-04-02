@@ -5974,6 +5974,10 @@ namespace RAH2_NS
                 operator()(ForwardIterator first, ForwardIterator middle, ForwardSentinel last) const
                 {
                     auto last2 = RAH2_NS::ranges::next(first, last);
+                    if (middle == last)
+                    {
+                        return {first, last2};
+                    }
                     auto middle_u = details::unwrap(RAH2_STD::move(middle), last2);
                     auto first_last = details::unwrap(RAH2_STD::move(first), RAH2_STD::move(last2));
                     auto res = impl(
