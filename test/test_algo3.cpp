@@ -2943,6 +2943,19 @@ struct test_swap_
             CHECK(out == (RAH2_STD::vector<int>{1, 2, 3, 4, 5}));
             CHECK(in_ == (RAH2_STD::vector<int>{10, 11, 12}));
         }
+        {
+            RAH2_STD::vector<int> in_(1000);
+            in_[3] = 12;
+            auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
+            RAH2_STD::vector<int> out(1000);
+            out[4] = 79;
+            auto result = RAH2_NS::ranges::swap_ranges(
+                RAH2_NS::ranges::begin(in), RAH2_NS::ranges::end(in), out.begin(), out.end());
+            CHECK(result.in2 == out.begin() + in_.size());
+            CHECK(result.in1 == in.end());
+            CHECK_EQUAL(out[3], 12);
+            CHECK_EQUAL(in_[4], 79);
+        }
 
         {
             testSuite.test_case("range");
