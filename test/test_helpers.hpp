@@ -459,7 +459,7 @@ public:
 
     test_view_adapter() = default;
     explicit test_view_adapter(Range r)
-        : base_(std::move(r))
+        : base_(RAH2_MOV(r))
     {
     }
 
@@ -797,7 +797,7 @@ struct check_size
     }
     static intptr_t get_stop_iter()
     {
-        return std::numeric_limits<intptr_t>::max();
+        return RAH2_STD::numeric_limits<intptr_t>::max();
     }
 };
 
@@ -1308,7 +1308,7 @@ std::chrono::nanoseconds compute_duration(
 #endif
 }
 
-constexpr static auto PerfTolerency = 5.;
+constexpr static auto PerfTolerency = 4.;
 
 template <typename F, typename F2>
 auto compare_duration(

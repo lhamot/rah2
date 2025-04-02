@@ -565,6 +565,11 @@ void test_shift_right()
 template <CommonOrSent CS, typename Tag, bool Sized>
 struct test_sample_
 {
+    using OutTag = typename RAH2_STD::conditional<
+        RAH2_NS::derived_from<Tag, RAH2_NS::forward_iterator_tag>,
+        Tag,
+        RAH2_NS::random_access_iterator_tag>::type;
+
     template <bool = true>
     void test()
     {
@@ -621,10 +626,11 @@ struct test_sample_
                 in_.push_back(i % 15);
             }
             auto in = make_test_view_adapter<CS, Tag, Sized>(in_);
-            RAH2_STD::vector<int> out;
-            out.resize(1000000 * RELEASE_MULTIPLIER);
-            out.emplace_back();
-            out.emplace_back();
+            RAH2_STD::vector<int> out_;
+            out_.resize(1000000 * RELEASE_MULTIPLIER);
+            out_.emplace_back();
+            out_.emplace_back();
+            auto out = make_test_view_adapter<CS, OutTag, Sized>(out_);
 
             COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
                 CS == Common,
@@ -640,6 +646,20 @@ struct test_sample_
                         g);
                     DONT_OPTIM(result);
                 });
+            COMPARE_DURATION_TO_STD_ALGO_17_AND_RANGES(
+                CS == Common,
+                "sample_iter_smallout",
+                range_type,
+                [&]
+                {
+                    auto result = STD::sample(
+                        fwd(RAH2_NS::ranges::begin(in)),
+                        RAH2_NS::ranges::end(in),
+                        out.begin(),
+                        100 * RELEASE_MULTIPLIER,
+                        g);
+                    DONT_OPTIM(result);
+                });
         }
 #endif
 
@@ -651,10 +671,11 @@ struct test_sample_
             }
             auto in2 = make_test_view_adapter<CS, Tag, Sized>(in2_);
 
-            RAH2_STD::vector<Coord> out2;
-            out2.resize(1000000 * RELEASE_MULTIPLIER);
-            out2.emplace_back();
-            out2.emplace_back();
+            RAH2_STD::vector<Coord> out2_;
+            out2_.resize(1000000 * RELEASE_MULTIPLIER);
+            out2_.emplace_back();
+            out2_.emplace_back();
+            auto out2 = make_test_view_adapter<CS, OutTag, Sized>(out2_);
 
             COMPARE_DURATION_TO_STD_RANGES(
                 "sample_range",
@@ -664,6 +685,15 @@ struct test_sample_
                     {
                         auto result2 =
                             STD::sample(in2, out2.begin(), 1000000 * RELEASE_MULTIPLIER, g);
+                        DONT_OPTIM(result2);
+                    }));
+            COMPARE_DURATION_TO_STD_RANGES(
+                "sample_range_smallout",
+                range_type,
+                (
+                    [&]
+                    {
+                        auto result2 = STD::sample(in2, out2.begin(), 100 * RELEASE_MULTIPLIER, g);
                         DONT_OPTIM(result2);
                     }));
         }
@@ -1681,12 +1711,26 @@ struct test_partition_point_
     template <bool = true>
     void test_perf(char const* range_type)
     {
-        size_t PerfMultiplier =
-            (RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> && Sized) ? 100llu :
-                                                                                         10llu;
+        auto const IterSized =
+            (CS == Common && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)
+            || (CS == Sentinel && Sized);
+
+#ifdef _DEBUG
+        auto const IterSizedMultiplier =
+            IterSized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+        auto const RangeSizedMultiplier =
+            Sized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+#else
+        auto const IterSizedMultiplier = IterSized ? 1000 * RELEASE_MULTIPLIER : 1;
+        auto const RangeSizedMultiplier = Sized ? 1000 * RELEASE_MULTIPLIER : 1;
+#endif
 
         testSuite.test_case("perf");
-        RAH2_STD::vector<Coord> in(10000000llu * RELEASE_MULTIPLIER, Coord{1, 2});
+        RAH2_STD::vector<Coord> in(1000000llu * RELEASE_MULTIPLIER, Coord{1, 2});
         in.push_back(Coord{3, 4});
         auto r1 = make_test_view_adapter<CS, Tag, Sized>(in);
 
@@ -1696,7 +1740,7 @@ struct test_partition_point_
             range_type,
             [&]
             {
-                for (size_t i = 0; i < PerfMultiplier; ++i)
+                for (int i = 0; i < IterSizedMultiplier; ++i)
                 {
                     auto iter = STD::partition_point(
                         fwd(r1.begin()), r1.end(), [](auto c) { return c.x < 3; });
@@ -1708,7 +1752,7 @@ struct test_partition_point_
             range_type,
             [&]
             {
-                for (size_t i = 0; i < PerfMultiplier; ++i)
+                for (int i = 0; i < RangeSizedMultiplier; ++i)
                 {
                     auto iter = STD::partition_point(r1, [](int64_t c) { return c < 3; }, &Coord::x);
                     assert((*iter == Coord{3, 4}));
@@ -3048,10 +3092,23 @@ struct test_lower_bound_
         in2.push_back(Coord{1, 3});
         auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
 
-        auto const RangeTypeMultiplier =
-            RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ? 100 : 1;
+        auto const IterSized =
+            (CS == Common && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)
+            || (CS == Sentinel && Sized);
 
-        auto const RangeSizedMultiplier = Sized ? 10 : 1;
+#ifdef _DEBUG
+        auto const IterSizedMultiplier =
+            IterSized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+        auto const RangeSizedMultiplier =
+            Sized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+#else
+        auto const IterSizedMultiplier = IterSized ? 1000 * RELEASE_MULTIPLIER : 1;
+        auto const RangeSizedMultiplier = Sized ? 1000 * RELEASE_MULTIPLIER : 1;
+#endif
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -3059,7 +3116,7 @@ struct test_lower_bound_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                for (auto i = 0; i < IterSizedMultiplier; ++i)
                 {
                     auto iter = STD::lower_bound(fwd(r1.begin()), r1.end(), Coord{3, 4});
                     assert((*iter == Coord{3, 4}));
@@ -3070,7 +3127,7 @@ struct test_lower_bound_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeTypeMultiplier * RangeSizedMultiplier; ++i)
+                for (auto i = 0; i < RangeSizedMultiplier; ++i)
                 {
                     auto iter = STD::lower_bound(r2, 1, comp_64, &Coord::x);
                     assert((*iter == Coord{1, 4}));
@@ -3294,13 +3351,23 @@ struct test_binary_search_
         }
         auto r2 = make_test_view_adapter<CS, Tag, Sized>(in2);
 
-        auto const RangeMultiplier = Sized ? 50 * RELEASE_MULTIPLIER : 1;
+        auto const IterSized =
+            (CS == Common && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)
+            || (CS == Sentinel && Sized);
 
-        auto const IterMultiplier =
-            (Sized
-             and (CS == CommonOrSent::Sentinel or RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag>)) ?
-                50 * (RELEASE_MULTIPLIER > 1 ? 10 : 1) :
+#ifdef _DEBUG
+        auto const IterSizedMultiplier =
+            IterSized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
                 1;
+        auto const RangeSizedMultiplier =
+            Sized && RAH2_NS::derived_from<Tag, RAH2_NS::random_access_iterator_tag> ?
+                1000 * RELEASE_MULTIPLIER :
+                1;
+#else
+        auto const IterSizedMultiplier = IterSized ? 1000 * RELEASE_MULTIPLIER : 1;
+        auto const RangeSizedMultiplier = Sized ? 1000 * RELEASE_MULTIPLIER : 1;
+#endif
 
         COMPARE_DURATION_TO_STD_ALGO_AND_RANGES(
             CS == Common,
@@ -3308,7 +3375,7 @@ struct test_binary_search_
             range_type,
             [&]
             {
-                for (auto i = 0; i < IterMultiplier; ++i)
+                for (auto i = 0; i < IterSizedMultiplier; ++i)
                 {
                     auto found = STD::binary_search(fwd(r1.begin()), r1.end(), Coord{3, 4});
                     CHECK(found);
@@ -3319,7 +3386,7 @@ struct test_binary_search_
             range_type,
             [&]
             {
-                for (auto i = 0; i < RangeMultiplier; ++i)
+                for (auto i = 0; i < RangeSizedMultiplier; ++i)
                 {
                     auto found = STD::binary_search(r2, 1, comp_64, &Coord::x);
                     CHECK(found);
