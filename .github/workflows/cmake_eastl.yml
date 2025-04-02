@@ -31,6 +31,10 @@ jobs:
         repository: electronicarts/EASTL
         path: eastl
         submodules: true
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.31.x'
     - name: Configure CMake EASTL
       working-directory: ${{github.workspace}}/eastl
       run: cmake -B ${{github.workspace}}/eastl/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DCMAKE_CXX_STANDARD=${{matrix.cppstd}} -D CMAKE_C_COMPILER=${{matrix.compiler.c}} -D CMAKE_CXX_COMPILER=${{matrix.compiler.cpp}}
