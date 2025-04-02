@@ -1231,6 +1231,7 @@ namespace RAH2_NS
                     RAH2_STD::enable_if_t<not(
                         RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2>
                         and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I1>>::value
+                        and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I1>>
                         and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>)>* = nullptr>
                 constexpr move_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
@@ -1257,7 +1258,7 @@ namespace RAH2_NS
                     typename I2,
                     RAH2_STD::enable_if_t<
                         not(RAH2_NS::sized_sentinel_for<I1, S1>)
-                        and (RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2> and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I1>>::value and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>)>* =
+                        and (RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2> and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>> and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I1>>::value and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I1>>)>* =
                         nullptr>
                 constexpr move_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
@@ -1276,7 +1277,7 @@ namespace RAH2_NS
                     typename I2,
                     RAH2_STD::enable_if_t<(
                         RAH2_NS::sized_sentinel_for<I1, S1>
-                        and (RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2> and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I1>>::value and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>))>* =
+                        and (RAH2_NS::contiguous_iterator<I1> and RAH2_NS::contiguous_iterator<I2> and RAH2_STD::is_trivially_move_assignable<RAH2_NS::iter_value_t<I1>>::value and RAH2_NS::is_trivially_copyable_v<RAH2_NS::iter_value_t<I1>> and RAH2_NS::is_same_v<RAH2_NS::iter_value_t<I1>, RAH2_NS::iter_value_t<I2>>))>* =
                         nullptr>
                 constexpr move_backward_result<I1, I2> impl(I1 first, S1 last, I2 result) const
                 {
